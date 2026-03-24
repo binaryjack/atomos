@@ -1,9 +1,11 @@
+import type { Signal } from '../../../core/types/signal.types.js';
+
 export type EdgePosition = 'top' | 'bottom' | 'left' | 'right';
 export type AnchorState = 'idle' | 'hover' | 'dragging' | 'connecting' | 'connected';
 
 export interface AnchorProps {
   readonly id: string;
-  readonly position: { x: number; y: number };
+  readonly position: Signal<{ x: number; y: number }>;
   readonly edgePosition: EdgePosition;
   readonly connected: boolean;
   readonly linkId?: string;

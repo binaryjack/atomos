@@ -24,7 +24,15 @@ export const createEntityWithEdges = function(props: EntityWithEdgesProps): Enti
   
   let currentPosition = getPosition();
   let currentDimensions = getDimensions();
-  
+
+  // Normalize position/dimensions to Signal for edge subscriptions
+  const positionSignal = ('set' in (props.position as object))
+    ? (props.position as import('../../core/types/signal.types.js').Signal<{ x: number; y: number }>)
+    : createSignal(currentPosition);
+  const dimensionsSignal = ('set' in (props.dimensions as object))
+    ? (props.dimensions as import('../../core/types/signal.types.js').Signal<{ width: number; height: number }>)
+    : createSignal(currentDimensions);
+
   // Edge hover state signals
   const edgeHoverSignals = {
     top: createSignal(false),
@@ -42,18 +50,15 @@ export const createEntityWithEdges = function(props: EntityWithEdgesProps): Enti
       const edge = createEdge({
         position: edgePosition,
         entityId: props.id,
-        x: currentPosition.x,
-        y: currentPosition.y,
-        width: currentDimensions.width,
-        height: currentDimensions.height,
+        entityPosition: positionSignal,
+        entityDimensions: dimensionsSignal,
         thickness: edgeConfig.thickness,
-        hovered: hoverSignal.value,
         anchorId: edgeConfig.anchor.id,
-        onHover: (hovered) => {
+        onHover: (hovered: boolean) => {
           hoverSignal.set(hovered);
           if (edgeConfig.onHover) edgeConfig.onHover(hovered);
         },
-        onAnchorConnect: (anchorId, linkId) => {
+        onAnchorConnect: (anchorId: string, linkId: string) => {
           if (edgeConfig.anchor.onConnect) {
             edgeConfig.anchor.onConnect(linkId);
           }

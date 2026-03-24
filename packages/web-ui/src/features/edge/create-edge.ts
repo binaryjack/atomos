@@ -1,160 +1,165 @@
 import type { EdgeProps, EdgeResult, EdgeState } from './types/edge.types.js';
 export type { EdgeProps, EdgeResult, EdgeState };
-import { createSvgRectangle } from '../svg-rectangle/create-svg-rectangle.js';
 import { createAnchor } from '../anchor/create-anchor.js';
 import { createSignal } from '../../core/create-signal.js';
 
+const HIT_SIZE = 12;
+
+const applyRect = (el: SVGRectElement, g: { x: number; y: number; width: number; height: number }) => {
+  el.setAttribute('x', g.x.toString());
+  el.setAttribute('y', g.y.toString());
+  el.setAttribute('width', g.width.toString());
+  el.setAttribute('height', g.height.toString());
+};
+
 export const createEdge = function(props: EdgeProps): EdgeResult {
   const container = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  const cleanups: Array<() => void> = [];
   const listeners: Array<{ target: EventTarget; type: string; listener: EventListener }> = [];
-  const cleanupFunctions: Array<() => void> = [];
-  
-  // State management for visual feedback
-  const edgeState = createSignal<EdgeState>(props.state || 'default');
-  cleanupFunctions.push(() => edgeState.subscribe(() => {})());
-  
-  Object.defineProperty(container, 'className', { 
-    value: `edge edge-${props.position}`, 
-    enumerable: false 
-  });
-  
-  // Add CSS transition support
-  container.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
-  
-  // Calculate edge geometry based on position
-  const getEdgeGeometry = () => {
+
+  const edgeState = createSignal<EdgeState>(props.state ?? 'default');
+
+  // Geometry computations — all derived from entity position + dimensions signals
+
+  const computeBar = (pos: { x: number; y: number }, dims: { width: number; height: number }) => {
+    const t = props.thickness;
     switch (props.position) {
-      case 'top':
-        return { 
-          x: props.x, 
-          y: props.y - props.thickness, 
-          width: props.width, 
-          height: props.thickness 
-        };
-      case 'bottom':
-        return { 
-          x: props.x, 
-          y: props.y + props.height, 
-          width: props.width, 
-          height: props.thickness 
-        };
-      case 'left':
-        return { 
-          x: props.x - props.thickness, 
-          y: props.y, 
-          width: props.thickness, 
-          height: props.height 
-        };
-      case 'right':
-        return { 
-          x: props.x + props.width, 
-          y: props.y, 
-          width: props.thickness, 
-          height: props.height 
-        };
+      case 'top':    return { x: pos.x,               y: pos.y - t,               width: dims.width,  height: t           };
+      case 'bottom': return { x: pos.x,               y: pos.y + dims.height,     width: dims.width,  height: t           };
+      case 'left':   return { x: pos.x - t,           y: pos.y,                   width: t,           height: dims.height };
+      case 'right':  return { x: pos.x + dims.width,  y: pos.y,                   width: t,           height: dims.height };
     }
   };
-  
-  const geometry = getEdgeGeometry();
-  
-  // State-based styling
-  const getStateColor = (state: EdgeState) => {
-    switch (state) {
-      case 'default': return '#374151';
-      case 'hover': return '#3b82f6';
-      case 'active': return '#10b981';
-      case 'connected': return '#8b5cf6';
-    }
-  };
-  
-  const getStateOpacity = (state: EdgeState) => {
-    switch (state) {
-      case 'default': return '0.6';
-      case 'hover': return '1';
-      case 'active': return '1';
-      case 'connected': return '0.8';
-    }
-  };
-  
-  // Create edge visual area
-  const edgeRect = createSvgRectangle({
-    x: geometry.x,
-    y: geometry.y,
-    width: geometry.width,
-    height: geometry.height,
-    fill: 'transparent',
-    stroke: props.hovered ? '#3b82f6' : 'transparent',
-    strokeWidth: 1,
-    className: 'edge-area'
-  });
-  
-  container.appendChild(edgeRect.element);
-  cleanupFunctions.push(edgeRect.cleanup.destroy);
-  
-  // Calculate anchor position (center of edge)
-  const getAnchorPosition = () => {
+
+  const computeHit = (pos: { x: number; y: number }, dims: { width: number; height: number }) => {
     switch (props.position) {
-      case 'top':
-        return { x: props.x + props.width / 2, y: props.y };
-      case 'bottom':
-        return { x: props.x + props.width / 2, y: props.y + props.height };
-      case 'left':
-        return { x: props.x, y: props.y + props.height / 2 };
-      case 'right':
-        return { x: props.x + props.width, y: props.y + props.height / 2 };
+      case 'top':    return { x: pos.x,               y: pos.y - HIT_SIZE,        width: dims.width,  height: HIT_SIZE    };
+      case 'bottom': return { x: pos.x,               y: pos.y + dims.height,     width: dims.width,  height: HIT_SIZE    };
+      case 'left':   return { x: pos.x - HIT_SIZE,    y: pos.y,                   width: HIT_SIZE,    height: dims.height };
+      case 'right':  return { x: pos.x + dims.width,  y: pos.y,                   width: HIT_SIZE,    height: dims.height };
     }
   };
-  
-  const anchorPos = getAnchorPosition();
-  
-  // Create anchor
-  const anchor = createAnchor({
+
+  const computeAnchorPos = (pos: { x: number; y: number }, dims: { width: number; height: number }) => {
+    switch (props.position) {
+      case 'top':    return { x: pos.x + dims.width / 2,  y: pos.y               };
+      case 'bottom': return { x: pos.x + dims.width / 2,  y: pos.y + dims.height };
+      case 'left':   return { x: pos.x,                   y: pos.y + dims.height / 2 };
+      case 'right':  return { x: pos.x + dims.width,      y: pos.y + dims.height / 2 };
+    }
+  };
+
+  const pos0  = props.entityPosition.value;
+  const dims0 = props.entityDimensions.value;
+
+  // Visual bar — subtle by default, blue on hover
+  const bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  bar.setAttribute('fill', '#9ca3af');
+  bar.setAttribute('opacity', '0.3');
+  bar.setAttribute('rx', '1');
+  bar.style.pointerEvents = 'none';
+  bar.style.transition = 'opacity 0.12s ease, fill 0.12s ease';
+  applyRect(bar, computeBar(pos0, dims0));
+
+  // Transparent hit area — wider than bar for comfortable hover
+  const hit = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  hit.setAttribute('fill', 'transparent');
+  hit.setAttribute('pointer-events', 'all');
+  hit.style.cursor = 'crosshair';
+  applyRect(hit, computeHit(pos0, dims0));
+
+  // Anchor position signal — updated reactively when entity moves
+  const anchorPos = createSignal(computeAnchorPos(pos0, dims0));
+
+  // Single update function for all geometry — called when entity position or dimensions change
+  const onEntityChange = () => {
+    const p = props.entityPosition.value;
+    const d = props.entityDimensions.value;
+    applyRect(bar, computeBar(p, d));
+    applyRect(hit, computeHit(p, d));
+    anchorPos.set(computeAnchorPos(p, d));
+  };
+
+  cleanups.push(props.entityPosition.subscribe(onEntityChange));
+  cleanups.push(props.entityDimensions.subscribe(onEntityChange));
+
+  // Container-level hover using mouseover/mouseout with relatedTarget guard.
+  // This correctly handles pointer movement between bar/hit/anchor without false leave events.
+  let hovered = false;
+  let anchorResult: ReturnType<typeof createAnchor> | undefined;
+
+  const onHoverEnter = () => {
+    if (hovered) return;
+    hovered = true;
+    bar.setAttribute('fill', '#3b82f6');
+    bar.setAttribute('opacity', '0.85');
+    anchorResult?.updateState('hover');
+    props.onHover?.(true);
+  };
+
+  const onHoverLeave = () => {
+    if (!hovered) return;
+    hovered = false;
+    bar.setAttribute('fill', '#9ca3af');
+    bar.setAttribute('opacity', '0.3');
+    anchorResult?.updateState('idle');
+    props.onHover?.(false);
+  };
+
+  const onMouseOver = (e: Event) => {
+    const me = e as MouseEvent;
+    if (me.relatedTarget && container.contains(me.relatedTarget as Node)) return;
+    onHoverEnter();
+  };
+
+  const onMouseOut = (e: Event) => {
+    const me = e as MouseEvent;
+    if (me.relatedTarget && container.contains(me.relatedTarget as Node)) return;
+    onHoverLeave();
+  };
+
+  container.addEventListener('mouseover', onMouseOver);
+  container.addEventListener('mouseout', onMouseOut);
+  listeners.push(
+    { target: container, type: 'mouseover', listener: onMouseOver },
+    { target: container, type: 'mouseout', listener: onMouseOut }
+  );
+
+  // Anchor — edge is sole controller of its idle/hover state
+  anchorResult = createAnchor({
     id: props.anchorId,
     position: anchorPos,
     edgePosition: props.position,
     connected: false,
-    radius: 4,
-    onConnect: (linkId) => {
-      if (props.onAnchorConnect) {
-        props.onAnchorConnect(props.anchorId, linkId);
-      }
-    }
+    radius: 5,
+    onConnect: (linkId) => props.onAnchorConnect?.(props.anchorId, linkId),
+    onMouseDown: (event) => props.onAnchorMouseDown?.(event, props.anchorId)
   });
-  
-  container.appendChild(anchor.element);
-  cleanupFunctions.push(anchor.cleanup.destroy);
-  
-  // Hover handling for edge area
-  if (props.onHover) {
-    const handleMouseEnter = () => props.onHover!(true);
-    const handleMouseLeave = () => props.onHover!(false);
-    
-    edgeRect.element.addEventListener('mouseenter', handleMouseEnter);
-    edgeRect.element.addEventListener('mouseleave', handleMouseLeave);
-    
-    listeners.push(
-      { target: edgeRect.element, type: 'mouseenter', listener: handleMouseEnter },
-      { target: edgeRect.element, type: 'mouseleave', listener: handleMouseLeave }
-    );
-  }
-  
-  // State update method
+
+  // DOM order: bar (bottom visual), anchor (above bar), hit (top — captures hover events)
+  // hit is last so it covers bar area; anchor circle is above bar but below hit by index
+  // SVG: later elements receive events first. Anchor circle must come AFTER hit to receive clicks.
+  // Solution: put anchor AFTER hit so it is on top and captures its own events.
+  container.appendChild(bar);
+  container.appendChild(hit);
+  container.appendChild(anchorResult.element);
+  cleanups.push(anchorResult.cleanup.destroy);
+
   const updateState = (state: EdgeState) => {
     edgeState.set(state);
     props.onStateChange?.(state);
   };
-  
+
   return {
     element: container,
     updateState,
+    getAnchorPosition: () => anchorPos.value,
     cleanup: {
       destroy: () => {
-        listeners.forEach(({ target, type, listener }) => {
-          target.removeEventListener(type, listener);
-        });
-        cleanupFunctions.forEach(fn => fn());
+        listeners.forEach(({ target, type, listener }) => target.removeEventListener(type, listener));
+        cleanups.forEach(fn => fn());
         listeners.length = 0;
-        cleanupFunctions.length = 0;
+        cleanups.length = 0;
       }
     }
   };

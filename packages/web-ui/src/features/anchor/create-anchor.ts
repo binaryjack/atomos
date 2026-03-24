@@ -49,12 +49,17 @@ export const createAnchor = function(props: AnchorProps): AnchorResult {
   };
   
   const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  circle.setAttribute('cx', props.position.x.toString());
-  circle.setAttribute('cy', props.position.y.toString());
   circle.setAttribute('stroke', '#ffffff');
   circle.setAttribute('stroke-width', '2');
   circle.style.cursor = 'pointer';
-  circle.style.transition = 'opacity 0.2s ease, fill 0.2s ease, r 0.2s ease';
+  circle.style.transition = 'opacity 0.15s ease, fill 0.15s ease';
+
+  const updateCirclePosition = (pos: { x: number; y: number }) => {
+    circle.setAttribute('cx', pos.x.toString());
+    circle.setAttribute('cy', pos.y.toString());
+  };
+  updateCirclePosition(props.position.value);
+  cleanupFunctions.push(props.position.subscribe(updateCirclePosition));
   
   // Apply initial state styling
   const applyStateStyles = (state: AnchorState) => {
@@ -69,57 +74,33 @@ export const createAnchor = function(props: AnchorProps): AnchorResult {
   
   container.appendChild(circle);
   
-  // Enhanced interaction handlers
-  const handleMouseEnter = () => {
-    if (anchorState.value === 'idle') {
-      anchorState.set('hover');
-    }
-  };
-  
-  const handleMouseLeave = () => {
-    if (anchorState.value === 'hover') {
-      anchorState.set('idle');
-    }
-  };
-  
-  const handleMouseDown = (event: MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    if (anchorState.value === 'hover' || anchorState.value === 'idle') {
-      anchorState.set('dragging');
-      props.onMouseDown?.(event);
-    }
-  };
-  
-  const handleClick = (event: MouseEvent) => {
-    event.stopPropagation();
-    
-    if (props.connected && props.onDisconnect) {
-      props.onDisconnect();
-    } else if (!props.connected && props.onConnect) {
-      const linkId = `link-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      props.onConnect(linkId);
-    }
-  };
-  
-  // State update method
+  // State update method — edge controls show/hide externally
   const updateState = (state: AnchorState) => {
     anchorState.set(state);
     props.onStateChange?.(state);
   };
-  
-  
-  circle.addEventListener('mouseenter', handleMouseEnter);
-  circle.addEventListener('mouseleave', handleMouseLeave);
+
+  // Only mousedown is self-managed — triggers link creation
+  const handleMouseDown = (event: MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    anchorState.set('dragging');
+    props.onMouseDown?.(event);
+  };
+
+  // Reset dragging state on global mouseup
+  const handleMouseUp = () => {
+    if (anchorState.value === 'dragging') {
+      anchorState.set('hover');
+    }
+  };
+
   circle.addEventListener('mousedown', handleMouseDown);
-  circle.addEventListener('click', handleClick);
-  
+  document.addEventListener('mouseup', handleMouseUp);
+
   listeners.push(
-    { target: circle, type: 'mouseenter', listener: handleMouseEnter },
-    { target: circle, type: 'mouseleave', listener: handleMouseLeave },
     { target: circle, type: 'mousedown', listener: handleMouseDown as EventListener },
-    { target: circle, type: 'click', listener: handleClick as EventListener }
+    { target: document, type: 'mouseup', listener: handleMouseUp }
   );
   
   return {
