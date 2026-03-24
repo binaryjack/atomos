@@ -28,6 +28,7 @@ export interface WorkspaceManager {
   readonly unregisterEntity: (entityId: string) => void;
   readonly screenToSvgCoords: (clientX: number, clientY: number) => { x: number; y: number };
   readonly startLinkFromAnchor: (anchorId: string, anchorPos: { x: number; y: number }, entityId: string, event: MouseEvent) => void;
+  readonly appendToCanvas: (element: SVGElement) => void;
   readonly handleCanvasClick: (event: MouseEvent) => void;
   readonly handleCanvasMouseMove: (event: MouseEvent) => void;
   readonly createEntityAtCursor: (entityType: string) => string;
@@ -175,6 +176,7 @@ export const createWorkspaceManager = function(svgContainer: SVGSVGElement): Wor
     unregisterEntity,
     screenToSvgCoords,
     startLinkFromAnchor,
+    appendToCanvas: (element: SVGElement) => { svgContainer.appendChild(element); },
     handleCanvasClick,
     handleCanvasMouseMove,
     createEntityAtCursor,
