@@ -5,7 +5,6 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "allowImportingTsExtensions": false,
     "isolatedModules": true,
     "strict": true,
     "noUncheckedIndexedAccess": true,

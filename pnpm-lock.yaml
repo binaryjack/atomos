@@ -93,6 +93,9 @@ importers:
 
   packages/web-ui:
     dependencies:
+      '@vbs/vbs-mod':
+        specifier: workspace:*
+        version: link:../vbs-mod
       '@vbs/vbs-style':
         specifier: workspace:*
         version: link:../vbs-style

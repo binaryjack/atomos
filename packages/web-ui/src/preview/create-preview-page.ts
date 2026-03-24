@@ -9,6 +9,8 @@ import { createCard } from '../features/card/create-card.js';
 import { createAccordion } from '../features/accordion/create-accordion.js';
 import { createSkeleton } from '../features/skeleton/create-skeleton.js';
 import { createIcon } from '../features/icon/create-icon.js';
+import { createWorkspaceManager } from '../core/workspace-manager.js';
+import { createInteractiveEntityDemo } from '../features/entity-with-edges/create-interactive-entity-demo.js';
 import { createPreviewSection } from './create-preview-section.js';
 
 export const createPreviewPage = function() {
@@ -329,6 +331,43 @@ export const createPreviewPage = function() {
   cleanupFunctions.push(accordionSection.cleanup.destroy);
   cleanupFunctions.push(accordion.cleanup.destroy);
   
+  // Interactive Entity Workspace
+  const workspaceContainer = document.createElement('div');
+  workspaceContainer.className = 'relative w-full bg-base-50 border border-base-200 rounded-lg overflow-hidden';
+  workspaceContainer.style.height = '600px';
+  
+  // Create SVG canvas for entity interactions
+  const svgCanvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svgCanvas.setAttribute('width', '100%');
+  svgCanvas.setAttribute('height', '100%');
+  svgCanvas.setAttribute('viewBox', '0 0 1000 600');
+  svgCanvas.style.cursor = 'default';
+  
+  // Initialize workspace manager
+  const workspaceManager = createWorkspaceManager(svgCanvas);
+  cleanupFunctions.push(workspaceManager.cleanup.destroy);
+  
+  // Create interactive entity demo
+  createInteractiveEntityDemo(workspaceManager);
+  
+  workspaceContainer.appendChild(svgCanvas);
+  
+  // Add workspace instructions
+  const instructionsHeader = document.createElement('div');
+  instructionsHeader.className = 'absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded px-3 py-2 text-xs text-base-700 border border-base-200 max-w-md';
+  instructionsHeader.innerHTML = `
+    <div class="font-medium mb-1">Interactive Entity Workspace</div>
+    <div class="text-xs opacity-75">• Drag entities to move them • Resize using corner handles • Click anchors to create links • ESC to cancel operations</div>
+  `;
+  workspaceContainer.appendChild(instructionsHeader);
+  
+  const workspaceSection = createPreviewSection({
+    title: 'Interactive Entity Architecture',
+    children: [workspaceContainer]
+  });
+  main.appendChild(workspaceSection.element);
+  cleanupFunctions.push(workspaceSection.cleanup.destroy);
+
   container.appendChild(main);
   
   return {

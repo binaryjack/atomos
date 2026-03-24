@@ -25,6 +25,11 @@ export { createSvgLine, type SvgLineProps, type SvgLineResult } from './features
 
 // Molecule components
 export { createEntityFrame, type EntityFrameProps, type EntityFrameResult } from './features/entity-frame/create-entity-frame';
+export { createEntityWithEdges, type EntityWithEdgesProps, type EntityWithEdgesResult } from './features/entity-with-edges/create-entity-with-edges';
+
+// Edge and Anchor components
+export { createEdge, type EdgeProps, type EdgeResult } from './features/edge/create-edge';
+export { createAnchor, type AnchorProps, type AnchorResult } from './features/anchor/create-anchor';
 
 // Preview system
 export { createPreviewPage } from './preview/create-preview-page';

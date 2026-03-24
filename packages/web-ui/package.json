@@ -19,7 +19,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@vbs/vbs-style": "workspace:*"
+    "@vbs/vbs-style": "workspace:*",
+    "@vbs/vbs-mod": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.3.0",
