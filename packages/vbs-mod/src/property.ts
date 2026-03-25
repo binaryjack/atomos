@@ -25,11 +25,11 @@ export const property = function(this: PropertyProps, props: PropertyProps) {
     writable: false 
   });
   
-  Object.defineProperty(this, 'validation', { 
-    value: props.validation, 
-    enumerable: false, 
-    writable: false 
+  Object.defineProperty(this, 'schema', {
+    value: props.schema,
+    enumerable: false,
+    writable: false
   });
-  
+
   return this;
 };

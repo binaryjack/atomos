@@ -65,6 +65,10 @@ importers:
         version: 1.0.0(@types/node@20.0.0)
 
   packages/vbs-mod:
+    dependencies:
+      '@binaryjack/formular.dev':
+        specifier: ^1.0.57
+        version: 1.0.57
     devDependencies:
       typescript:
         specifier: ^5.3.0
@@ -113,6 +117,10 @@ packages:
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
     dev: true
+
+  /@binaryjack/formular.dev@1.0.57:
+    resolution: {integrity: sha512-TG5EAaZf38UwdzTeboBzq/1QZ0vvlVebooJtUG/bRSn9jcHvVPr++yB8wvD2/8T8rV1Hphch0Pp6Q5yd9lIdMw==}
+    dev: false
 
   /@esbuild/aix-ppc64@0.19.12:
     resolution: {integrity: sha512-bmoCYyWdEL3wDQIVbcyzRyeKLgk2WtWLTWz1ZIAZF/EGbNOwSA6ew3PftJ1PqMiOOGu0OyFMzG53L0zqIpPeNA==}
