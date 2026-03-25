@@ -6,17 +6,23 @@ export const property = function(this: PropertyProps, props: PropertyProps) {
     enumerable: false, 
     writable: false 
   });
+
+  Object.defineProperty(this, 'label', { 
+    value: props.label, 
+    enumerable: false, 
+    writable: true 
+  });
+
+  Object.defineProperty(this, 'dataType', { 
+    value: props.dataType, 
+    enumerable: false, 
+    writable: true 
+  });
   
   Object.defineProperty(this, 'value', { 
     value: props.value, 
     enumerable: false, 
     writable: true 
-  });
-  
-  Object.defineProperty(this, 'type', { 
-    value: props.type, 
-    enumerable: false, 
-    writable: false 
   });
   
   Object.defineProperty(this, 'componentType', { 

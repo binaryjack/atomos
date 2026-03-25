@@ -1,23 +1,14 @@
 import type { ISchemaBase } from '@binaryjack/formular.dev';
+import type { ComponentType } from '../shared/component-type';
+import type { DataType } from '../shared/data-type';
 
-export type PropertyType =
-  | 'number'
-  | 'string'
-  | 'boolean'
-  | 'date'
-  | 'enum'
-  | 'literal'
-  | 'array'
-  | 'object'
-  | 'union'
-  | 'record';
-
-export type ComponentType = 'input' | 'select' | 'checkbox' | 'textarea';
+export type { ComponentType, DataType };
 
 export interface PropertyProps {
   readonly key: string;
+  readonly label: string;
   readonly value: unknown;
-  readonly type: PropertyType;
+  readonly dataType: DataType;
   readonly componentType: ComponentType;
   readonly schema: ISchemaBase;
 }

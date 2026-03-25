@@ -17,21 +17,27 @@ export const createEntityDemo = (): HTMLElement => {
   // Create sample property data
   const nameProperty: PropertyProps = { 
     key: 'name', 
+    label: 'Name',
     value: 'John Doe', 
-    type: 'string', 
-    componentType: 'input' 
+    dataType: 'string', 
+    componentType: 'input',
+    schema: { } as never
   };
   const ageProperty: PropertyProps = { 
     key: 'age', 
+    label: 'Age',
     value: 30, 
-    type: 'number', 
-    componentType: 'input' 
+    dataType: 'number', 
+    componentType: 'input',
+    schema: { } as never
   };
   const activeProperty: PropertyProps = { 
     key: 'active', 
+    label: 'Active',
     value: true, 
-    type: 'boolean', 
-    componentType: 'checkbox' 
+    dataType: 'boolean', 
+    componentType: 'checkbox',
+    schema: { } as never
   };
 
   const propertiesRows: PropertiesRowProps[] = [

@@ -1,1 +1,0 @@
-{"version":3,"file":"properties-row.types.d.ts","sourceRoot":"","sources":["properties-row.types.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,qBAAqB,CAAC;AAEzD,MAAM,WAAW,kBAAkB;IACjC,QAAQ,CAAC,EAAE,EAAE,MAAM,CAAC;IACpB,QAAQ,CAAC,UAAU,EAAE,aAAa,EAAE,CAAC;IACrC,QAAQ,CAAC,KAAK,EAAE,MAAM,CAAC;CACxB"}

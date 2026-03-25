@@ -1,5 +1,7 @@
-export type RenderType = 'linear' | 'bezier' | 'orthogonal';
-export type Cardinality = '1' | '*' | '0..1' | '1..*';
+import type { RenderType } from '../shared/render-type';
+import type { Cardinality } from '../shared/cardinality';
+
+export type { RenderType, Cardinality };
 
 export interface LinkProps {
   readonly id: string;

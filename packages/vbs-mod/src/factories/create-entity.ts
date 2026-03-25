@@ -1,5 +1,6 @@
 import type { IObjectSchema, IObjectShape, ISchemaBase } from '@binaryjack/formular.dev';
-import type { ComponentType, PropertyProps } from '../types/property.types';
+import type { ComponentType } from '../shared/component-type';
+import type { PropertyProps } from '../types/property.types';
 import type { EntityProps, Position, Dimensions } from '../types/entity.types';
 import type { EdgeProps } from '../types/edge.types';
 import type { PropertiesRowProps } from '../types/properties-row.types';

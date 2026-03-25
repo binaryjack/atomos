@@ -1,7 +1,8 @@
-import type { EdgePosition } from './anchor.types';
+import type { EdgePosition } from '../shared/edge-position';
+import type { EdgeThickness } from '../shared/edge-thickness';
 import type { AnchorProps } from './anchor.types';
 
-export type EdgeThickness = 3 | 5;
+export type { EdgeThickness };
 
 export interface EdgeProps {
   readonly position: EdgePosition;
