@@ -23,6 +23,7 @@ export interface EntityContentProps {
 
 export interface EntityContentResult {
   readonly foreignObject: SVGForeignObjectElement;
+  readonly dragHandle: HTMLDivElement;
   readonly updateSize: (width: number, height: number) => void;
   readonly cleanup: { destroy: () => void };
 }
@@ -177,6 +178,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
 
   return {
     foreignObject: fo,
+    dragHandle: header.element,
     updateSize,
     cleanup: {
       destroy: () => {

@@ -45,8 +45,11 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
   settingsBtn.title = 'Entity settings';
   settingsBtn.appendChild(settingsIcon.element);
   settingsBtn.addEventListener('click', props.onSettingsClick);
+  const stopSettingsMd = (e: Event): void => e.stopPropagation();
+  settingsBtn.addEventListener('mousedown', stopSettingsMd);
   cleanups.push(() => {
     settingsBtn.removeEventListener('click', props.onSettingsClick);
+    settingsBtn.removeEventListener('mousedown', stopSettingsMd);
     settingsIcon.cleanup.destroy();
   });
 
@@ -58,8 +61,11 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
   deleteBtn.title = 'Delete entity';
   deleteBtn.appendChild(deleteIcon.element);
   deleteBtn.addEventListener('click', props.onDeleteClick);
+  const stopDeleteMd = (e: Event): void => e.stopPropagation();
+  deleteBtn.addEventListener('mousedown', stopDeleteMd);
   cleanups.push(() => {
     deleteBtn.removeEventListener('click', props.onDeleteClick);
+    deleteBtn.removeEventListener('mousedown', stopDeleteMd);
     deleteIcon.cleanup.destroy();
   });
 

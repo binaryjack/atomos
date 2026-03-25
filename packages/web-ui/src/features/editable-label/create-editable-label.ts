@@ -22,7 +22,7 @@ export const createEditableLabel = function(props: EditableLabelProps): Editable
   span.style.userSelect = 'none';
   span.style.flex = '1';
   span.style.minWidth = '0';
-  span.textContent = props.value.value || props.placeholder ?? '';
+  span.textContent = props.value.value || (props.placeholder ?? '');
 
   // Input (edit mode) — created lazily
   let input: HTMLInputElement | null = null;
@@ -85,9 +85,14 @@ export const createEditableLabel = function(props: EditableLabelProps): Editable
   span.addEventListener('dblclick', enterEdit);
   cleanups.push(() => span.removeEventListener('dblclick', enterEdit));
 
+  // Prevent mousedown from bubbling out of wrapper (e.g. into SVG drag handler)
+  const stopMouseDown = (e: Event): void => { e.stopPropagation(); };
+  wrapper.addEventListener('mousedown', stopMouseDown);
+  cleanups.push(() => wrapper.removeEventListener('mousedown', stopMouseDown));
+
   // Keep span text in sync with external signal changes
   const unsub = props.value.subscribe((v: string) => {
-    span.textContent = v || props.placeholder ?? '';
+    span.textContent = v || (props.placeholder ?? '');
     if (input) input.value = v;
   });
   cleanups.push(unsub);

@@ -3,7 +3,7 @@ import type { EntityInstance } from '../../core/types/entity-instance.types.js';
 import type { EdgePosition } from '../edge/types/edge-position.types.js';
 import { createEdge } from '../edge/create-edge.js';
 import { createSignal } from '../../core/create-signal.js';
-import { createEntityBody } from './create-entity-body.js';
+import { createEntityContent } from './create-entity-content.js';
 import { createEntitySelectionRing } from './create-entity-selection-ring.js';
 import { createEntityResizeHandles } from './create-entity-resize-handles.js';
 import { createEntityDragBehavior } from './create-entity-drag-behavior.js';
@@ -17,22 +17,25 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
 
   const selected = createSignal(false);
 
-  // --- Body ---
-  const { body, label } = createEntityBody(props.title);
-  root.appendChild(body);
-  root.appendChild(label);
+  // --- HTML content inside foreignObject ---
+  const content = createEntityContent({
+    entitySignal: props.entitySignal,
+    globalConfig:  props.globalConfig,
+    onDelete: () => props.workspace.unregisterEntity(props.id),
+    onSettingsClick: () => { /* TODO: open settings panel */ },
+    onHeightChange: (h) => {
+      props.dimensions.set({ width: props.dimensions.value.width, height: h });
+    },
+  });
+  root.appendChild(content.foreignObject);
+  cleanups.push(content.cleanup.destroy);
 
   // --- Geometry sync ---
   const syncGeometry = (): void => {
     const { x, y } = props.position.value;
     const { width, height } = props.dimensions.value;
     root.setAttribute('transform', `translate(${x},${y})`);
-    body.setAttribute('x', '0');
-    body.setAttribute('y', '0');
-    body.setAttribute('width', width.toString());
-    body.setAttribute('height', height.toString());
-    label.setAttribute('x', (width / 2).toString());
-    label.setAttribute('y', (height / 2).toString());
+    content.updateSize(width, height);
     resizeHandles.syncHandles(width, height, selected.value);
     selectionRing.syncRing(width, height, selected.value);
   };
@@ -89,8 +92,8 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
     });
   });
 
-  // --- Drag behavior ---
-  const drag = createEntityDragBehavior(body, props.position, selected, props.workspace);
+  // --- Drag behavior (attached to header div so it only triggers from header) ---
+  const drag = createEntityDragBehavior(content.dragHandle, props.position, selected, props.workspace);
   cleanups.push(drag.cleanup);
 
   // Initial render

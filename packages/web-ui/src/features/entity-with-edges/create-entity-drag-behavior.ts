@@ -6,7 +6,7 @@ export interface EntityDragBehaviorResult {
 }
 
 export const createEntityDragBehavior = function(
-  bodyElement: SVGRectElement,
+  bodyElement: Element,
   position: Signal<{ x: number; y: number }>,
   selected: Signal<boolean>,
   workspace: WorkspaceManager
