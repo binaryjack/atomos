@@ -3,6 +3,7 @@ import type { WorkspaceState } from './types/workspace-state.types.js';
 import type { LinkManager } from './types/link-manager.types.js';
 import type { EdgePosition } from '../features/edge/types/edge-position.types.js';
 import { bezierMidpoint } from './bezier.js';
+import { openLinkSettingsModal } from '../features/modal/create-link-settings-modal.js';
 
 export interface LinkFinalizer {
   readonly finalizeLinkToAnchor: (
@@ -190,7 +191,7 @@ export const createLinkFinalizer = function(
 
     const fo = createLinkLabelFO(
       bezierMidpoint(srcPos, srcEdge, dstAnchorPos, dstEdge),
-      () => { openLinkSettingsModalLazy(linkId); },
+      () => { openLinkSettingsModal(linkId); },
       () => removeLinkById(linkId)
     );
     contentRoot.appendChild(fo);
@@ -242,13 +243,4 @@ export const createLinkFinalizer = function(
       }
     }
   };
-};
-
-// ─── Lazy modal open — avoids circular dep at module load time ────────────────
-let _openLinkModal: ((linkId: string) => void) | undefined;
-export const registerLinkModalOpener = (fn: (linkId: string) => void): void => {
-  _openLinkModal = fn;
-};
-const openLinkSettingsModalLazy = (linkId: string): void => {
-  _openLinkModal?.(linkId);
 };

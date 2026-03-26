@@ -1,6 +1,4 @@
-import './vbs-modal.js';
-import './vbs-modal-header.js';
-import './vbs-modal-footer.js';
+import './index.js';
 import type { VbsModal } from './vbs-modal.js';
 
 export const createPropertySettingsModal = function(propertyId: string): VbsModal {
