@@ -1,5 +1,5 @@
-import type { BaseEntityProps } from './base-entity.types';
-import type { PropertiesRowProps } from './properties-row.types';
+import type { BaseEntity } from './base-entity.types';
+import type { Property } from './property.types';
 import type { EdgeProps } from './edge.types';
 
 export interface Position {
@@ -12,9 +12,9 @@ export interface Dimensions {
   readonly height: number;
 }
 
-export interface EntityProps extends BaseEntityProps {
+export interface Entity extends BaseEntity {
   readonly name: string;
-  readonly propertiesRows: PropertiesRowProps[];
+  readonly properties: Property[];
   readonly position: Position;
   readonly dimensions: Dimensions;
   readonly edges: EdgeProps[];

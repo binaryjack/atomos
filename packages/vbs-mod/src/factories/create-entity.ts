@@ -1,11 +1,8 @@
-import type { IObjectSchema, IObjectShape, ISchemaBase } from '@binaryjack/formular.dev';
+import type { IObjectSchema, IObjectShape, ISchemaBase, IValidationOptions } from '@binaryjack/formular.dev';
 import type { ComponentType } from '../shared/component-type';
-import type { PropertyProps } from '../types/property.types';
-import type { EntityProps, Position, Dimensions } from '../types/entity.types';
+import type { Property } from '../types/property.types';
+import type { Entity, Position, Dimensions } from '../types/entity.types';
 import type { EdgeProps } from '../types/edge.types';
-import type { PropertiesRowProps } from '../types/properties-row.types';
-import { entity } from '../entity';
-import { propertiesRow } from '../properties-row';
 import { createProperty } from './create-property';
 
 const schemaToDefaultComponentType = (schema: ISchemaBase): ComponentType => {
@@ -30,21 +27,22 @@ export interface CreateEntityOptions<T extends IObjectShape> {
 
 export const createEntity = <T extends IObjectShape>(
   opts: CreateEntityOptions<T>
-): EntityProps => {
-  const properties: PropertyProps[] = Object.keys(opts.schema.shape).map((key) => {
+): Entity => {
+  const properties: Property[] = Object.keys(opts.schema.shape).map((key) => {
     const fieldSchema = opts.schema.shape[key] as ISchemaBase;
     const componentType =
       (opts.componentTypes?.[key as keyof T & string]) ??
       schemaToDefaultComponentType(fieldSchema);
 
-    return createProperty({ key, schema: fieldSchema, componentType });
+    // Extract validation from schema if available
+    const validation = (fieldSchema as any).validation as IValidationOptions | undefined;
+    
+    return validation !== undefined
+      ? createProperty({ key, validation, componentType })
+      : createProperty({ key, componentType });
   });
 
-  const row: PropertiesRowProps = new (
-    propertiesRow as unknown as new (p: PropertiesRowProps) => PropertiesRowProps
-  )({ id: `${opts.id}-row-1`, properties, order: 1 });
-
-  const props: EntityProps = {
+  return {
     id: opts.id,
     code: opts.code,
     name: opts.name,
@@ -52,9 +50,7 @@ export const createEntity = <T extends IObjectShape>(
     updatedAt: Date.now(),
     position: opts.position,
     dimensions: opts.dimensions,
-    propertiesRows: [row],
+    properties,
     edges: opts.edges ?? []
   };
-
-  return new (entity as unknown as new (p: EntityProps) => EntityProps)(props);
 };

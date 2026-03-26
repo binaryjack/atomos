@@ -1,7 +1,7 @@
-import type { EntityProps, LinkProps, SettingsProps } from '@vbs/vbs-mod';
+import type { Entity, LinkProps, SettingsProps } from '@vbs/vbs-mod';
 
 export interface SchemaBuilderState {
-  readonly entities: Map<string, EntityProps>;
+  readonly entities: Map<string, Entity>;
   readonly links: Map<string, LinkProps>;
   readonly selectedEntityId: string | undefined;
   readonly settings: SettingsProps;
@@ -9,7 +9,7 @@ export interface SchemaBuilderState {
 
 export const createSchemaBuilderState = function(): SchemaBuilderState {
   return {
-    entities: new Map<string, EntityProps>(),
+    entities: new Map<string, Entity>(),
     links: new Map<string, LinkProps>(),
     selectedEntityId: undefined,
     settings: {

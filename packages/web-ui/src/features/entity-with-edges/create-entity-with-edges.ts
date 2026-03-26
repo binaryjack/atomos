@@ -124,38 +124,36 @@ export const createEntityWithEdges = function(props: EntityWithEdgesProps): Enti
     const propertiesDiv = document.createElement('div');
     propertiesDiv.className = 'space-y-2 mt-3 border-t border-gray-200 pt-3';
     
-    getProperties().forEach(propRow => {
-      propRow.properties.forEach((prop: any) => {
-        const propContainer = document.createElement('div');
-        propContainer.className = 'flex items-center gap-2';
-        
-        // Property key label
-        const keyTypography = createTypography({
-          variant: 'span',
-          children: `${prop.key}:`,
-          className: 'text-xs font-medium text-gray-600 w-16 flex-shrink-0'
-        });
-        propContainer.appendChild(keyTypography.element);
-        cleanupFunctions.push(keyTypography.cleanup.destroy);
-        
-        // Property value input
-        const valueInput = createInput({
-          type: prop.type === 'number' ? 'number' : 'text',
-          value: String(prop.value),
-          onChange: (value) => {
-            if (props.onPropertyChange) {
-              const convertedValue = prop.type === 'number' ? Number(value) : value;
-              props.onPropertyChange(prop.key, convertedValue);
-            }
-          },
-          className: 'text-xs'
-        });
-        valueInput.element.style.cssText += 'flex: 1; min-width: 0;';
-        propContainer.appendChild(valueInput.element);
-        cleanupFunctions.push(valueInput.cleanup.destroy);
-        
-        propertiesDiv.appendChild(propContainer);
+    getProperties().forEach((prop: any) => {
+      const propContainer = document.createElement('div');
+      propContainer.className = 'flex items-center gap-2';
+      
+      // Property key label
+      const keyTypography = createTypography({
+        variant: 'span',
+        children: `${prop.key}:`,
+        className: 'text-xs font-medium text-gray-600 w-16 flex-shrink-0'
       });
+      propContainer.appendChild(keyTypography.element);
+      cleanupFunctions.push(keyTypography.cleanup.destroy);
+      
+      // Property value input
+      const valueInput = createInput({
+        type: prop.type === 'number' ? 'number' : 'text',
+        value: String(prop.value),
+        onChange: (value) => {
+          if (props.onPropertyChange) {
+            const convertedValue = prop.type === 'number' ? Number(value) : value;
+            props.onPropertyChange(prop.key, convertedValue);
+          }
+        },
+        className: 'text-xs'
+      });
+      valueInput.element.style.cssText += 'flex: 1; min-width: 0;';
+      propContainer.appendChild(valueInput.element);
+      cleanupFunctions.push(valueInput.cleanup.destroy);
+      
+      propertiesDiv.appendChild(propContainer);
     });
     
     entityCard.content.appendChild(propertiesDiv);
@@ -252,36 +250,34 @@ export const createEntityWithEdges = function(props: EntityWithEdgesProps): Enti
       const propertiesDiv = document.createElement('div');
       propertiesDiv.className = 'space-y-2 mt-3 border-t border-gray-200 pt-3';
       
-      getProperties().forEach(propRow => {
-        propRow.properties.forEach((prop: any) => {
-          const propContainer = document.createElement('div');
-          propContainer.className = 'flex items-center gap-2';
-          
-          const keyTypography = createTypography({
-            variant: 'span',
-            children: `${prop.key}:`,
-            className: 'text-xs font-medium text-gray-600 w-16 flex-shrink-0'
-          });
-          propContainer.appendChild(keyTypography.element);
-          cleanupFunctions.push(keyTypography.cleanup.destroy);
-          
-          const valueInput = createInput({
-            type: prop.type === 'number' ? 'number' : 'text',
-            value: String(prop.value),
-            onChange: (value) => {
-              if (props.onPropertyChange) {
-                const convertedValue = prop.type === 'number' ? Number(value) : value;
-                props.onPropertyChange(prop.key, convertedValue);
-              }
-            },
-            className: 'text-xs'
-          });
-          valueInput.element.style.cssText += 'flex: 1; min-width: 0;';
-          propContainer.appendChild(valueInput.element);
-          cleanupFunctions.push(valueInput.cleanup.destroy);
-          
-          propertiesDiv.appendChild(propContainer);
+      getProperties().forEach((prop: any) => {
+        const propContainer = document.createElement('div');
+        propContainer.className = 'flex items-center gap-2';
+        
+        const keyTypography = createTypography({
+          variant: 'span',
+          children: `${prop.key}:`,
+          className: 'text-xs font-medium text-gray-600 w-16 flex-shrink-0'
         });
+        propContainer.appendChild(keyTypography.element);
+        cleanupFunctions.push(keyTypography.cleanup.destroy);
+        
+        const valueInput = createInput({
+          type: prop.type === 'number' ? 'number' : 'text',
+          value: String(prop.value),
+          onChange: (value) => {
+            if (props.onPropertyChange) {
+              const convertedValue = prop.type === 'number' ? Number(value) : value;
+              props.onPropertyChange(prop.key, convertedValue);
+            }
+          },
+          className: 'text-xs'
+        });
+        valueInput.element.style.cssText += 'flex: 1; min-width: 0;';
+        propContainer.appendChild(valueInput.element);
+        cleanupFunctions.push(valueInput.cleanup.destroy);
+        
+        propertiesDiv.appendChild(propContainer);
       });
       
       entityCard.content.appendChild(propertiesDiv);

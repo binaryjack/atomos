@@ -1,5 +1,5 @@
 import type { SchemaBuilderState } from './schema-builder-state';
-import type { EntityProps } from '@vbs/vbs-mod';
+import type { Entity } from '@vbs/vbs-mod';
 import { createVbsCanvas } from '@vbs/web-ui';
 
 export interface SchemaBuilderProps {
@@ -36,7 +36,7 @@ export const createSchemaBuilder = function(props: SchemaBuilderProps) {
     // TODO: Implement drag and drop logic
   }
   
-  function addEntity(entity: EntityProps): void {
+  function addEntity(entity: Entity): void {
     // TODO: Add entity to state and render
     console.log('Adding entity:', entity);
   }
@@ -46,7 +46,7 @@ export const createSchemaBuilder = function(props: SchemaBuilderProps) {
     console.log('Removing entity:', entityId);
   }
   
-  function updateEntity(entity: EntityProps): void {
+  function updateEntity(entity: Entity): void {
     // TODO: Update entity in state and re-render
     console.log('Updating entity:', entity);
   }

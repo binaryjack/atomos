@@ -1,6 +1,6 @@
 import type { Signal } from './types/signal.types.js';
 import type { SchemaModel } from './types/schema-model.types.js';
-import type { EntityProps, LinkProps } from '@vbs/vbs-mod';
+import type { Entity, LinkProps } from '@vbs/vbs-mod';
 import type { EntityCanvasState } from './types/entity-canvas-state.types.js';
 import { registry } from './create-signal-registry.js';
 import { schemaKey } from './registry-keys.js';
@@ -10,7 +10,7 @@ import { ENTITY_DEFAULT_WIDTH, ENTITY_DEFAULT_HEIGHT } from './entity-defaults.j
 
 export interface SchemaStore {
   readonly signal: Signal<SchemaModel>;
-  readonly addEntity: (entity: EntityProps, canvas?: EntityCanvasState) => void;
+  readonly addEntity: (entity: Entity, canvas?: EntityCanvasState) => void;
   readonly removeEntity: (entityId: string) => void;
   readonly updateEntityCanvas: (entityId: string, patch: Partial<Omit<EntityCanvasState, 'entityId'>>) => void;
   readonly addLink: (link: LinkProps) => void;
@@ -30,7 +30,7 @@ export const createSchemaStore = function(schema: SchemaModel): SchemaStore {
     return entity ? createEntityStore(entity) : undefined;
   };
 
-  const addEntity = (entity: EntityProps, canvas?: EntityCanvasState): void => {
+  const addEntity = (entity: Entity, canvas?: EntityCanvasState): void => {
     const cs: EntityCanvasState = canvas ?? {
       entityId: entity.id,
       x: 100, y: 100,

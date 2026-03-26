@@ -8,6 +8,14 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #0f172a; }
   </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "@binaryjack/formular.dev": "./node_modules/@binaryjack/formular.dev/dist/formular-dev.es.js",
+      "@vbs/vbs-mod": "../vbs-mod/dist/index.js"
+    }
+  }
+  </script>
 </head>
 <body>
   <nav style="position:fixed;top:0;left:0;right:0;z-index:999;background:rgba(15,23,42,0.92);backdrop-filter:blur(8px);border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:8px;padding:0 16px;height:40px;font-family:system-ui,sans-serif;font-size:13px;pointer-events:auto;">

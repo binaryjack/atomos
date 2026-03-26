@@ -1,4 +1,4 @@
-export interface BaseEntityProps {
+export interface BaseEntity {
   readonly id: string;
   readonly code: string;
   readonly createdAt: number;

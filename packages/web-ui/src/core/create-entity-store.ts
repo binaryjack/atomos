@@ -1,36 +1,36 @@
 import type { Signal } from './types/signal.types.js';
-import type { EntityProps } from '@vbs/vbs-mod';
+import type { Entity, Property } from '@vbs/vbs-mod';
 import { registry } from './create-signal-registry.js';
 import { entityKey } from './registry-keys.js';
 
 export interface EntityStore {
-  readonly signal: Signal<EntityProps>;
+  readonly signal: Signal<Entity>;
   readonly updateLabel: (label: string) => void;
-  readonly addProperty: (prop: EntityProps['propertiesRows'][number]) => void;
-  readonly removeProperty: (rowId: string) => void;
+  readonly addProperty: (prop: Property) => void;
+  readonly removeProperty: (propKey: string) => void;
 }
 
 export const createEntityStore = function(
-  entity: EntityProps
+  entity: Entity
 ): EntityStore {
-  const signal = registry.getOrCreate<EntityProps>(entityKey(entity.id), entity);
+  const signal = registry.getOrCreate<Entity>(entityKey(entity.id), entity);
 
   const updateLabel = (label: string): void => {
     signal.set({ ...signal.value, name: label, updatedAt: Date.now() });
   };
 
-  const addProperty = (row: EntityProps['propertiesRows'][number]): void => {
+  const addProperty = (prop: Property): void => {
     signal.set({
       ...signal.value,
-      propertiesRows: [...signal.value.propertiesRows, row],
+      properties: [...signal.value.properties, prop],
       updatedAt: Date.now()
     });
   };
 
-  const removeProperty = (rowId: string): void => {
+  const removeProperty = (propKey: string): void => {
     signal.set({
       ...signal.value,
-      propertiesRows: signal.value.propertiesRows.filter(r => r.id !== rowId),
+      properties: signal.value.properties.filter(p => p.key !== propKey),
       updatedAt: Date.now()
     });
   };

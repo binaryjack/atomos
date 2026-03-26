@@ -21,6 +21,7 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
   const content = createEntityContent({
     entitySignal: props.entitySignal,
     globalConfig:  props.globalConfig,
+    storageProvider: props.storageProvider,
     onDelete: () => props.workspace.unregisterEntity(props.id),
     onSettingsClick: () => { /* TODO: open settings panel */ },
     onHeightChange: (h) => {

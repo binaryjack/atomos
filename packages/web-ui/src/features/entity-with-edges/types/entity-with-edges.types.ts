@@ -1,5 +1,5 @@
 import type { Signal } from '../../../core/types/signal.types.js';
-import type { PropertiesRowProps } from '@vbs/vbs-mod';
+import type { Property } from '@vbs/vbs-mod';
 import type { EdgePosition } from '../../edge/types/edge.types.js';
 
 export interface AnchorConfig {
@@ -22,7 +22,7 @@ export interface EdgeConfig {
 export interface EntityWithEdgesProps {
   readonly id: string;
   readonly title: Signal<string> | string;
-  readonly properties: Signal<PropertiesRowProps[]> | PropertiesRowProps[];
+  readonly properties: Signal<Property[]> | Property[];
   readonly position: Signal<{ x: number; y: number }> | { x: number; y: number };
   readonly dimensions: Signal<{ width: number; height: number }> | { width: number; height: number };
   readonly collapsed: Signal<boolean>;

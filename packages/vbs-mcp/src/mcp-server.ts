@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import type { EntityProps, LinkProps } from '@vbs/vbs-mod';
+import type { Entity, LinkProps } from '@vbs/vbs-mod';
 
 export interface McpRequest {
   readonly method: string;
@@ -17,7 +17,7 @@ export interface McpResponse {
 }
 
 export class VbsMcpServer {
-  private entities: Map<string, EntityProps> = new Map();
+  private entities: Map<string, Entity> = new Map();
   private links: Map<string, LinkProps> = new Map();
   
   async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -64,7 +64,7 @@ export class VbsMcpServer {
   }
   
   private createEntity(request: McpRequest): McpResponse {
-    const entity = request.params as EntityProps;
+    const entity = request.params as Entity;
     this.entities.set(entity.id, entity);
     
     return {
@@ -91,7 +91,7 @@ export class VbsMcpServer {
   }
   
   private updateEntity(request: McpRequest): McpResponse {
-    const entity = request.params as EntityProps;
+    const entity = request.params as Entity;
     
     if (!this.entities.has(entity.id)) {
       return {

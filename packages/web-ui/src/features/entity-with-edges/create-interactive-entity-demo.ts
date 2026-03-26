@@ -2,10 +2,11 @@
 import { createDemoEntity } from './create-demo-entity.js';
 import { createAppStore } from '../../core/create-app-store.js';
 import { createEntityStore } from '../../core/create-entity-store.js';
+import { createLocalStorageProvider } from '../../core/storage/create-local-storage-provider.js';
 import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js';
 import type { EntityInstance } from '../../core/types/entity-instance.types.js';
 import type { EntitySpawnFactory } from '../../core/types/entity-spawn-factory.types.js';
-import type { EntityProps } from '@vbs/vbs-mod';
+import type { Entity } from '@vbs/vbs-mod';
 import { ENTITY_DEFAULT_WIDTH, ENTITY_DEFAULT_HEIGHT } from '../../core/entity-defaults.js';
 
 interface DemoConfig {
@@ -15,26 +16,27 @@ interface DemoConfig {
   readonly y: number;
 }
 
-const makeEntityProps = (id: string, name: string, x: number, y: number): EntityProps => ({
+const makeEntityProps = (id: string, name: string, x: number, y: number): Entity => ({
   id,
   code: id,
   name,
   createdAt: Date.now(),
   updatedAt: Date.now(),
-  propertiesRows: [],
+  properties: [],
   position: { x, y },
   dimensions: { width: ENTITY_DEFAULT_WIDTH, height: ENTITY_DEFAULT_HEIGHT },
   edges: [],
 });
 
 const spawnEntity = (
-  entityProps: EntityProps,
+  entityProps: Entity,
   workspace: WorkspaceManager,
   globalConfigSignal: ReturnType<typeof createAppStore>['globalStore']['signal']
 ): EntityInstance => {
   const { signal: entitySignal } = createEntityStore(entityProps);
   const posSignal  = createSignal({ x: entityProps.position.x, y: entityProps.position.y });
   const dimsSignal = createSignal({ width: entityProps.dimensions.width, height: entityProps.dimensions.height });
+  const storageProvider = createLocalStorageProvider<Entity>({ prefix: 'vbe2' });
   const entity = createDemoEntity({
     id: entityProps.id,
     entitySignal,
@@ -42,6 +44,7 @@ const spawnEntity = (
     position: posSignal,
     dimensions: dimsSignal,
     workspace,
+    storageProvider,
   });
   entity.edgeElements.forEach(el => workspace.appendToCanvas(el));
   return entity.instance;

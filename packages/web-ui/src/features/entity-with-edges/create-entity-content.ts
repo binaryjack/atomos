@@ -1,6 +1,7 @@
 import type { Signal } from '../../core/types/signal.types.js';
-import type { EntityProps, DataType } from '@vbs/vbs-mod';
+import type { Entity, Property, DataType } from '@vbs/vbs-mod';
 import type { GlobalConfig } from '../../core/types/global-config.types.js';
+import type { IStorageProvider } from '../../core/storage/types/storage-provider.types.js';
 import { createSignal } from '../../core/create-signal.js';
 import { createEntityStore } from '../../core/create-entity-store.js';
 import { createEntityHeader } from './create-entity-header.js';
@@ -15,8 +16,9 @@ const ROW_H    = 30;
 const MIN_BODY_ROWS = 2;
 
 export interface EntityContentProps {
-  readonly entitySignal: Signal<EntityProps>;
+  readonly entitySignal: Signal<Entity>;
   readonly globalConfig: Signal<GlobalConfig>;
+  readonly storageProvider: IStorageProvider<Entity>;
   readonly onDelete: (entityId: string) => void;
   readonly onSettingsClick: (entityId: string) => void;
   /** Called whenever the required height changes so SVG geometry can update */
@@ -80,72 +82,65 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   scrollBody.style.cssText = 'flex:1;overflow-y:auto;overflow-x:hidden;';
   body.appendChild(scrollBody);
 
-  // Track row cleanup fns by row id
-  const rowCleanups = new Map<string, () => void>();
+  // Track row cleanup fns by property key
+  const propCleanups = new Map<string, () => void>();
 
-  const renderRows = (entity: EntityProps): void => {
+  const renderRows = (entity: Entity): void => {
     // Clear existing
-    rowCleanups.forEach(fn => fn());
-    rowCleanups.clear();
+    propCleanups.forEach(fn => fn());
+    propCleanups.clear();
     scrollBody.innerHTML = '';
 
-    entity.propertiesRows.forEach(row => {
-      row.properties.forEach(prop => {
-        const propLabelSignal = createSignal(prop.label);
-        const propTypeSignal  = createSignal<DataType>(prop.dataType);
+    entity.properties.forEach((prop) => {
+      const propLabelSignal = createSignal(prop.label);
+      const propTypeSignal  = createSignal<DataType>(prop.dataType);
 
-        const rowEl = createEntityPropertyRow({
-          id: prop.key,
-          label: propLabelSignal,
-          dataType: propTypeSignal,
-          availableDataTypes: props.globalConfig.value.dataTypes,
-          onLabelChange: (v) => {
-            propLabelSignal.set(v);
-            // Persist back into entity store — replace matching property
-            const updated = store.signal.value;
-            store.signal.set({
-              ...updated,
-              propertiesRows: updated.propertiesRows.map(r => ({
-                ...r,
-                properties: r.properties.map(p =>
-                  p.key === prop.key ? { ...p, label: v } : p
-                )
-              }))
-            });
-          },
-          onDataTypeChange: (v) => {
-            propTypeSignal.set(v);
-            const updated = store.signal.value;
-            store.signal.set({
-              ...updated,
-              propertiesRows: updated.propertiesRows.map(r => ({
-                ...r,
-                properties: r.properties.map(p =>
-                  p.key === prop.key ? { ...p, dataType: v } : p
-                )
-              }))
-            });
-          },
-          onSettingsClick: () => {
-            const propModal = createPropertySettingsModal(prop.key);
-            propModal.open().catch(console.error);
-          },
-          onDeleteClick: () => store.removeProperty(row.id),
-        });
-
-        rowCleanups.set(`${row.id}-${prop.key}`, rowEl.cleanup.destroy);
-        scrollBody.appendChild(rowEl.element);
+      const rowEl = createEntityPropertyRow({
+        id: prop.key,
+        label: propLabelSignal,
+        dataType: propTypeSignal,
+        availableDataTypes: props.globalConfig.value.dataTypes,
+        onLabelChange: (v) => {
+          propLabelSignal.set(v);
+          // Persist back into entity store — replace matching property
+          const updated = store.signal.value;
+          store.signal.set({
+            ...updated,
+            properties: updated.properties.map(p =>
+              p.key === prop.key ? { ...p, label: v } : p
+            )
+          });
+        },
+        onDataTypeChange: (v) => {
+          propTypeSignal.set(v);
+          const updated = store.signal.value;
+          store.signal.set({
+            ...updated,
+            properties: updated.properties.map(p =>
+              p.key === prop.key ? { ...p, dataType: v } : p
+            )
+          });
+        },
+        onSettingsClick: () => {
+          const propModal = createPropertySettingsModal({
+            property: prop,
+            entityStore: store,
+            storageProvider: props.storageProvider,
+          });
+          propModal.open().catch(console.error);
+        },
+        onDeleteClick: () => store.removeProperty(prop.key),
       });
+
+      propCleanups.set(prop.key, rowEl.cleanup.destroy);
+      scrollBody.appendChild(rowEl.element);
     });
 
     recalcHeight(entity);
   };
 
-  const recalcHeight = (entity: EntityProps): void => {
-    const rowCount = entity.propertiesRows.reduce(
-      (acc, r) => acc + r.properties.length, 0
-    );
-    const bodyRows = Math.max(rowCount, MIN_BODY_ROWS);
+  const recalcHeight = (entity: Entity): void => {
+    const bodyRows = Math.max(entity.properties.length, MIN_BODY_ROWS);
     const total = HEADER_H + bodyRows * ROW_H + FOOTER_H;
     props.onHeightChange(total);
   };
@@ -161,19 +156,14 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   const footer = createEntityFooter({
     onAddProperty: () => {
       const entity = store.signal.value;
-      const newProp = {
+      const newProp: Property = {
         key: `prop-${Date.now()}`,
         label: 'new property',
         value: undefined,
-        dataType: 'string' as DataType,
-        componentType: 'input' as const,
-        schema: {} as never,
+        dataType: 'string',
+        componentType: 'input',
       };
-      store.addProperty({
-        id: `row-${Date.now()}`,
-        properties: [newProp],
-        order: entity.propertiesRows.length + 1,
-      });
+      store.addProperty(newProp);
     },
   });
   cleanups.push(footer.cleanup.destroy);
@@ -192,8 +182,8 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
     updateSize,
     cleanup: {
       destroy: () => {
-        rowCleanups.forEach(fn => fn());
-        rowCleanups.clear();
+        propCleanups.forEach(fn => fn());
+        propCleanups.clear();
         cleanups.forEach(fn => fn());
         cleanups.length = 0;
         if (entitySettingsModal.parentNode) entitySettingsModal.parentNode.removeChild(entitySettingsModal);

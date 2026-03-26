@@ -1,5 +1,5 @@
 import type { EntityWithEdgesProps } from './types/entity-with-edges.types.js';
-import type { PropertiesRowProps, PropertyProps } from '@vbs/vbs-mod';
+import type { Property } from '@vbs/vbs-mod';
 import { createSignal } from '../../core/create-signal.js';
 
 export const createEntityDemo = (): HTMLElement => {
@@ -15,49 +15,33 @@ export const createEntityDemo = (): HTMLElement => {
   svg.setAttribute('class', 'w-full h-full');
 
   // Create sample property data
-  const nameProperty: PropertyProps = { 
+  const nameProperty: Property = { 
     key: 'name', 
     label: 'Name',
     value: 'John Doe', 
     dataType: 'string', 
     componentType: 'input',
-    schema: { } as never
   };
-  const ageProperty: PropertyProps = { 
+  const ageProperty: Property = { 
     key: 'age', 
     label: 'Age',
     value: 30, 
     dataType: 'number', 
     componentType: 'input',
-    schema: { } as never
   };
-  const activeProperty: PropertyProps = { 
+  const activeProperty: Property = { 
     key: 'active', 
     label: 'Active',
     value: true, 
     dataType: 'boolean', 
     componentType: 'checkbox',
-    schema: { } as never
   };
-
-  const propertiesRows: PropertiesRowProps[] = [
-    {
-      id: 'row1',
-      properties: [nameProperty, ageProperty],
-      order: 1
-    },
-    {
-      id: 'row2', 
-      properties: [activeProperty],
-      order: 2
-    }
-  ];
 
   // Create sample entity data
   const entityProps: EntityWithEdgesProps = {
     id: 'demo-entity-1',
     title: createSignal('Sample Entity'),
-    properties: createSignal(propertiesRows),
+    properties: createSignal([nameProperty, ageProperty, activeProperty]),
     position: createSignal({ x: 200, y: 100 }),
     dimensions: createSignal({ width: 200, height: 150 }),
     collapsed: createSignal(false),
