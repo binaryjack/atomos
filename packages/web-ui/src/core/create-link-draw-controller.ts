@@ -1,6 +1,7 @@
 import type { LinkManager } from './types/link-manager.types.js';
 import type { InteractiveBehaviorManager } from './types/interactive-behavior-manager.types.js';
 import type { EdgePosition } from '../features/edge/types/edge-position.types.js';
+import type { LinkFinalizer } from './create-link-finalizer.js';
 
 export interface LinkDrawController {
   readonly startLinkFromAnchor: (
@@ -18,18 +19,26 @@ export interface LinkDrawController {
   readonly getActiveTempSrcAnchorId: () => string | undefined;
   readonly getActiveTempSrcEntityId: () => string | undefined;
   readonly getActiveTempSrcEdge: () => EdgePosition | undefined;
+  readonly isReconnecting: () => boolean;
+  readonly getReconnectLinkId: () => string | undefined;
+  readonly consumeReconnectLinkId: () => string | undefined;
 }
 
 export const createLinkDrawController = function(
   linkManager: LinkManager,
   behaviorManager: InteractiveBehaviorManager,
-  contentRoot: SVGElement
+  contentRoot: SVGElement,
+  linkFinalizer?: LinkFinalizer
 ): LinkDrawController {
   let activeTempLinkId: string | undefined;
   let activeTempLinkSourcePos: { x: number; y: number } | undefined;
   let activeTempSrcAnchorId: string | undefined;
   let activeTempSrcEntityId: string | undefined;
   let activeTempSrcEdge: EdgePosition | undefined;
+
+  // ── Reconnect state ─────────────────────────────────────────────────────────
+  let reconnectLinkId: string | undefined;
+  let reconnectMode = false;
 
   const clearTempLink = (): void => {
     if (activeTempLinkId !== undefined) {
@@ -40,6 +49,8 @@ export const createLinkDrawController = function(
       activeTempSrcEntityId = undefined;
       activeTempSrcEdge = undefined;
     }
+    reconnectMode = false;
+    // reconnectLinkId intentionally NOT cleared — callers read it after clearTempLink
   };
 
   const startLinkFromAnchor = (
@@ -49,7 +60,24 @@ export const createLinkDrawController = function(
     srcEdge: EdgePosition,
     event: MouseEvent
   ): void => {
+    // ── Reconnect check: is there a permanent link whose TARGET is this anchor? ──
+    let pendingReconnectId: string | undefined;
+    linkManager.links.value.forEach((lr, id) => {
+      if (lr.targetAnchorId === anchorId) pendingReconnectId = id;
+    });
+
     clearTempLink();
+
+    if (pendingReconnectId && linkFinalizer) {
+      // Fully remove the old link (path + label FO + subscriptions)
+      linkFinalizer.removeLinkById(pendingReconnectId);
+      reconnectLinkId = pendingReconnectId;
+      reconnectMode = true;
+    } else {
+      reconnectLinkId = undefined;
+      reconnectMode = false;
+    }
+
     behaviorManager.startLinkCreation({ entityId, anchorId, position: anchorPos, event });
 
     const tempId = `temp-${Date.now()}`;
@@ -61,7 +89,7 @@ export const createLinkDrawController = function(
       sourceEdge: srcEdge,
       temporary: true,
       animated: true,
-      strokeColor: '#3b82f6'
+      strokeColor: reconnectMode ? '#a78bfa' : '#3b82f6'
     });
 
     contentRoot.appendChild(tempLink.element);
@@ -81,11 +109,26 @@ export const createLinkDrawController = function(
   const isDrawing = (): boolean =>
     behaviorManager.behaviorState.value.linkCreation === 'drawing';
 
+  const isReconnecting = (): boolean => reconnectMode;
+
+  const getReconnectLinkId = (): string | undefined => reconnectLinkId;
+
+  /** Returns reconnectLinkId then clears it — used by canvas event handler after finalizing. */
+  const consumeReconnectLinkId = (): string | undefined => {
+    const id = reconnectLinkId;
+    reconnectLinkId = undefined;
+    reconnectMode = false;
+    return id;
+  };
+
   return {
     startLinkFromAnchor,
     clearTempLink,
     updateTempLink,
     isDrawing,
+    isReconnecting,
+    getReconnectLinkId,
+    consumeReconnectLinkId,
     getActiveTempLinkId: () => activeTempLinkId,
     getActiveTempLinkSourcePos: () => activeTempLinkSourcePos,
     getActiveTempSrcAnchorId: () => activeTempSrcAnchorId,

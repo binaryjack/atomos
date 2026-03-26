@@ -17,8 +17,8 @@ export const createWorkspaceManager = function(
   const linkManager      = createLinkManager();
   const transformer      = createCoordinateTransformer(svgContainer, contentRoot);
   const registry         = createEntityRegistry(contentRoot);
-  const linkDrawCtrl     = createLinkDrawController(linkManager, behaviorManager, contentRoot);
   const linkFinalizer    = createLinkFinalizer(linkManager, registry.workspaceState, contentRoot);
+  const linkDrawCtrl     = createLinkDrawController(linkManager, behaviorManager, contentRoot, linkFinalizer);
 
   let spawnFactory: EntitySpawnFactory | undefined;
 
@@ -47,7 +47,10 @@ export const createWorkspaceManager = function(
     linkManager,
 
     registerEntity:    registry.registerEntity,
-    unregisterEntity:  registry.unregisterEntity,
+    unregisterEntity:  (entityId: string) => {
+      linkFinalizer.removeLinksForEntity(entityId);
+      registry.unregisterEntity(entityId);
+    },
     screenToSvgCoords: transformer.screenToSvgCoords,
 
     startLinkFromAnchor: (anchorId, anchorPos, entityId, srcEdge, event) => {

@@ -2,6 +2,8 @@ import type { EdgePosition } from '../../features/edge/types/edge-position.types
 
 export interface LinkResult {
   readonly element: SVGPathElement;
+  readonly sourceAnchorId: string;
+  readonly targetAnchorId?: string;
   readonly updatePath: (
     sourcePos: { x: number; y: number },
     targetPos: { x: number; y: number },

@@ -19,6 +19,8 @@ export interface LinkProps {
 
 export interface LinkResult {
   readonly element: SVGPathElement;
+  readonly sourceAnchorId: string;
+  readonly targetAnchorId?: string;
   readonly updatePath: (sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition) => void;
   readonly setTemporary: (temporary: boolean) => void;
   readonly cleanup: {
@@ -54,6 +56,7 @@ export const createLinkManager = function(): LinkManager {
     path.setAttribute('stroke-linecap', 'round');
     path.style.pointerEvents = 'stroke';
     path.style.cursor = 'pointer';
+    path.style.transition = 'stroke-width 0.15s ease, opacity 0.15s ease';
 
     // Inject animation keyframe once
     if (!document.querySelector('#vbs-link-anim')) {
@@ -93,10 +96,28 @@ export const createLinkManager = function(): LinkManager {
       }
     };
 
+    // Hover highlight — only on permanent links
+    if (!props.temporary) {
+      const baseStroke = props.strokeColor ?? '#374151';
+      const baseWidth  = (props.strokeWidth ?? 2).toString();
+      path.addEventListener('mouseenter', () => {
+        path.setAttribute('stroke', '#818cf8');
+        path.setAttribute('stroke-width', '4');
+        path.setAttribute('opacity', '1');
+      });
+      path.addEventListener('mouseleave', () => {
+        path.setAttribute('stroke', baseStroke);
+        path.setAttribute('stroke-width', baseWidth);
+        path.setAttribute('opacity', '1');
+      });
+    }
+
     updatePath(props.sourcePosition, props.targetPosition);
 
     const linkResult: LinkResult = {
       element: path,
+      sourceAnchorId: props.sourceAnchorId,
+      ...(props.targetAnchorId !== undefined ? { targetAnchorId: props.targetAnchorId } : {}),
       updatePath,
       setTemporary,
       cleanup: {

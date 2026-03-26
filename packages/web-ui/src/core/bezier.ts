@@ -52,3 +52,33 @@ export const bezierPath = (
     `C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${dst.x} ${dst.y}`
   );
 };
+
+/**
+ * Returns the point at t=0.5 on the cubic bezier that bezierPath would draw.
+ * Useful for positioning labels at the visual centre of a link.
+ */
+export const bezierMidpoint = (
+  src: { x: number; y: number },
+  srcEdge: EdgePosition,
+  dst: { x: number; y: number },
+  dstEdge?: EdgePosition
+): { x: number; y: number } => {
+  const dx = dst.x - src.x;
+  const dy = dst.y - src.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  const cp1 = offsetForEdge(src, srcEdge, dist);
+  const inferredDstEdge: EdgePosition = dstEdge ?? (
+    srcEdge === 'top'    ? 'bottom' :
+    srcEdge === 'bottom' ? 'top'    :
+    srcEdge === 'left'   ? 'right'  : 'left'
+  );
+  const cp2 = offsetForEdge(dst, inferredDstEdge, dist);
+
+  const t = 0.5;
+  const mt = 1 - t;
+  return {
+    x: mt * mt * mt * src.x + 3 * mt * mt * t * cp1.x + 3 * mt * t * t * cp2.x + t * t * t * dst.x,
+    y: mt * mt * mt * src.y + 3 * mt * mt * t * cp1.y + 3 * mt * t * t * cp2.y + t * t * t * dst.y,
+  };
+};

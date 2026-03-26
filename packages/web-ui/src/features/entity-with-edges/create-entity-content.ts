@@ -6,6 +6,8 @@ import { createEntityStore } from '../../core/create-entity-store.js';
 import { createEntityHeader } from './create-entity-header.js';
 import { createEntityPropertyRow } from './create-entity-property-row.js';
 import { createEntityFooter } from './create-entity-footer.js';
+import { createEntitySettingsModal } from '../modal/create-entity-settings-modal.js';
+import { createPropertySettingsModal } from '../modal/create-property-settings-modal.js';
 
 const HEADER_H = 36;
 const FOOTER_H = 30;
@@ -31,6 +33,7 @@ export interface EntityContentResult {
 export const createEntityContent = function(props: EntityContentProps): EntityContentResult {
   const cleanups: Array<() => void> = [];
   const store = createEntityStore(props.entitySignal.value);
+  const entitySettingsModal = createEntitySettingsModal(props.entitySignal.value.id);
 
   // ─── foreignObject shell ───────────────────────────────────────────────────
   const fo = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
@@ -50,6 +53,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
     'border:1.5px solid #334155',
     'box-sizing:border-box',
     'font-family:system-ui,sans-serif',
+    'color:#e2e8f0',
   ].join(';');
 
   fo.appendChild(body);
@@ -62,7 +66,10 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
     onLabelChange: (v) => {
       store.updateLabel(v);
     },
-    onSettingsClick: () => props.onSettingsClick(props.entitySignal.value.id),
+    onSettingsClick: () => {
+      props.onSettingsClick(props.entitySignal.value.id);
+      entitySettingsModal.open().catch(console.error);
+    },
     onDeleteClick:   () => props.onDelete(props.entitySignal.value.id),
   });
   cleanups.push(header.cleanup.destroy);
@@ -119,7 +126,10 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
               }))
             });
           },
-          onSettingsClick: () => {},
+          onSettingsClick: () => {
+            const propModal = createPropertySettingsModal(prop.key);
+            propModal.open().catch(console.error);
+          },
           onDeleteClick: () => store.removeProperty(row.id),
         });
 
@@ -186,6 +196,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
         rowCleanups.clear();
         cleanups.forEach(fn => fn());
         cleanups.length = 0;
+        if (entitySettingsModal.parentNode) entitySettingsModal.parentNode.removeChild(entitySettingsModal);
       }
     }
   };

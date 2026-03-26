@@ -40,13 +40,13 @@ export const createEditableLabel = function(props: EditableLabelProps): Editable
     input.style.flex = '1';
     input.style.minWidth = '0';
     input.style.width = '100%';
-    input.style.background = 'transparent';
+    input.style.background = '#1e293b';
     input.style.border = 'none';
-    input.style.outline = '1px solid #3b82f6';
+    input.style.outline = '1px solid #6366f1';
     input.style.borderRadius = '2px';
     input.style.padding = '0 2px';
     input.style.font = 'inherit';
-    input.style.color = 'inherit';
+    input.style.color = '#f1f5f9';
 
     const commit = (): void => {
       if (!editing) return;
