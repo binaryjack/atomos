@@ -21,6 +21,10 @@ export const createWorkspaceManager = function(
     // Forward to workspace manager's onLinkCreated callback if set
     console.log('[WORKSPACE-MANAGER] Link created via finalizer:', link);
     (manager as any).onLinkCreated?.(link);
+  }, (linkId) => {
+    // Forward to workspace manager's onLinkDeleted callback if set
+    console.log('[WORKSPACE-MANAGER] Link deleted via finalizer:', linkId);
+    (manager as any).onLinkDeleted?.(linkId);
   });
   const linkDrawCtrl     = createLinkDrawController(linkManager, behaviorManager, contentRoot, linkFinalizer);
 
@@ -54,6 +58,10 @@ export const createWorkspaceManager = function(
     unregisterEntity:  (entityId: string) => {
       linkFinalizer.removeLinksForEntity(entityId);
       registry.unregisterEntity(entityId);
+      // Notify deletion callback for Redux store cleanup
+      if ((manager as any).onEntityDeleted) {
+        (manager as any).onEntityDeleted(entityId);
+      }
     },
     screenToSvgCoords: transformer.screenToSvgCoords,
 

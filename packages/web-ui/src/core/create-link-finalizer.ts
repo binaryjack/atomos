@@ -143,20 +143,60 @@ export const createLinkFinalizer = function(
   linkManager: LinkManager,
   workspaceState: Signal<WorkspaceState>,
   contentRoot: SVGElement,
-  onLinkCreated?: (link: { id: string; sourceAnchorId: string; targetAnchorId: string; leftEntityId: string; rightEntityId: string }) => void
+  onLinkCreated?: (link: { id: string; sourceAnchorId: string; targetAnchorId: string; leftEntityId: string; rightEntityId: string }) => void,
+  onLinkDeleted?: (linkId: string) => void
 ): LinkFinalizer {
   const linkSubscriptions = new Map<string, Array<() => void>>();
   const linkEntityMap     = new Map<string, { srcEntityId: string; dstEntityId: string }>();
   const linkLabelFOs      = new Map<string, SVGForeignObjectElement>();
+  let isEntityCascadeDeletion = false;
 
   const removeLinkById = (linkId: string): void => {
+    console.log(`[LINK-FINALIZER] 🗑️ removeLinkById(${linkId}) - starting cleanup`);
+    
+    // Clean up subscriptions
     const subs = linkSubscriptions.get(linkId);
-    if (subs) { subs.forEach(fn => fn()); linkSubscriptions.delete(linkId); }
+    if (subs) { 
+      console.log(`[LINK-FINALIZER] Cleaning up ${subs.length} subscriptions for ${linkId}`);
+      subs.forEach(fn => fn()); 
+      linkSubscriptions.delete(linkId); 
+    }
+    
+    // Clean up label foreign object
     const fo = linkLabelFOs.get(linkId);
-    if (fo && fo.parentNode) fo.parentNode.removeChild(fo);
+    if (fo && fo.parentNode) {
+      console.log(`[LINK-FINALIZER] Removing label FO for ${linkId}`);
+      fo.parentNode.removeChild(fo);
+    }
     linkLabelFOs.delete(linkId);
+    
+    // Clean up entity mapping
     linkEntityMap.delete(linkId);
+    
+    // Clean up the visual link element via link manager
+    console.log(`[LINK-FINALIZER] Calling linkManager.removeLink(${linkId})`);
     linkManager.removeLink(linkId);
+    
+    // Double-check: manually remove any remaining visual elements with this ID
+    const remainingElements = contentRoot.querySelectorAll(`[id="${linkId}"]`);
+    if (remainingElements.length > 0) {
+      console.warn(`[LINK-FINALIZER] ⚠️ Found ${remainingElements.length} orphaned visual elements for ${linkId}, manually removing`);
+      remainingElements.forEach(el => {
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+      });
+    }
+    
+    // Only notify Redux store about individual link deletions, not during entity cascade
+    if (!isEntityCascadeDeletion && onLinkDeleted) {
+      console.log('[LINK-FINALIZER] ✓ Calling onLinkDeleted callback for individual deletion:', linkId);
+      onLinkDeleted(linkId);
+    } else if (isEntityCascadeDeletion) {
+      console.log('[LINK-FINALIZER] ℹ Skipping onLinkDeleted callback during entity cascade deletion');
+    }
+    
+    console.log(`[LINK-FINALIZER] ✓ removeLinkById(${linkId}) - cleanup completed`);
   };
 
   const finalizeLinkToAnchor = (
@@ -245,11 +285,40 @@ export const createLinkFinalizer = function(
   };
 
   const removeLinksForEntity = (entityId: string): void => {
+    console.log(`[LINK-FINALIZER] 🔍 Removing all links for entity: ${entityId}`);
+    console.log(`[LINK-FINALIZER] Current linkEntityMap contents:`, Array.from(linkEntityMap.entries()));
+    console.log(`[LINK-FINALIZER] Current linkSubscriptions:`, Array.from(linkSubscriptions.keys()));
+    console.log(`[LINK-FINALIZER] Current linkLabelFOs:`, Array.from(linkLabelFOs.keys()));
+    
+    isEntityCascadeDeletion = true;
     const toRemove: string[] = [];
     linkEntityMap.forEach(({ srcEntityId, dstEntityId }, linkId) => {
-      if (srcEntityId === entityId || dstEntityId === entityId) toRemove.push(linkId);
+      if (srcEntityId === entityId || dstEntityId === entityId) {
+        console.log(`[LINK-FINALIZER] ✓ Found connected link to remove: ${linkId} (${srcEntityId} → ${dstEntityId})`);
+        toRemove.push(linkId);
+      }
     });
-    toRemove.forEach(removeLinkById);
+    
+    console.log(`[LINK-FINALIZER] Found ${toRemove.length} links to remove:`, toRemove);
+    
+    // Also check if there are any visual elements that might not be tracked
+    const allSVGLinks = contentRoot.querySelectorAll('path[id^="link-"], g[id^="link-"]');
+    console.log(`[LINK-FINALIZER] 🔍 Found ${allSVGLinks.length} visual link elements in DOM:`, 
+      Array.from(allSVGLinks).map(el => el.id));
+    
+    toRemove.forEach(linkId => {
+      console.log(`[LINK-FINALIZER] 🗑️ Removing link: ${linkId}`);
+      removeLinkById(linkId);
+    });
+    
+    // Double-check for orphaned visual elements
+    const remainingLinks = contentRoot.querySelectorAll('path[id^="link-"], g[id^="link-"]');
+    if (remainingLinks.length > 0) {
+      console.warn(`[LINK-FINALIZER] ⚠️ ${remainingLinks.length} visual link elements remain after cleanup:`, 
+        Array.from(remainingLinks).map(el => el.id));
+    }
+    
+    isEntityCascadeDeletion = false;
   };
 
   return {

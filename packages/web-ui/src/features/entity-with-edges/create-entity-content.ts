@@ -9,6 +9,7 @@ import { createEntityPropertyRow } from './create-entity-property-row.js';
 import { createEntityFooter } from './create-entity-footer.js';
 import { createEntitySettingsModal } from '../modal/create-entity-settings-modal.js';
 import { createPropertySettingsModal } from '../modal/create-property-settings-modal.js';
+import { createPropertyRepository } from '../../core/repository/create-property-repository.js';
 
 const HEADER_H = 36;
 const FOOTER_H = 30;
@@ -129,7 +130,21 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
           });
           propModal.open().catch(console.error);
         },
-        onDeleteClick: () => store.removeProperty(prop.key),
+        onDeleteClick: async () => {
+          console.log(`[ENTITY-CONTENT] Deleting property ${prop.key} via repository...`);
+          const repository = createPropertyRepository({
+            entityId: store.signal.value.id,
+            entitySignal: store.signal,
+            storageProvider: props.storageProvider
+          });
+          
+          try {
+            await repository.delete(prop.key);
+            console.log(`[ENTITY-CONTENT] ✓ Property ${prop.key} deleted and persisted`);
+          } catch (err) {
+            console.error(`[ENTITY-CONTENT] ✗ Failed to delete property ${prop.key}:`, err);
+          }
+        },
       });
 
       propCleanups.set(prop.key, rowEl.cleanup.destroy);
@@ -154,16 +169,25 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
 
   // ─── footer ───────────────────────────────────────────────────────────────
   const footer = createEntityFooter({
-    onAddProperty: () => {
-      const entity = store.signal.value;
-      const newProp: Property = {
-        key: `prop-${Date.now()}`,
-        label: 'new property',
-        value: undefined,
-        dataType: 'string',
-        componentType: 'input',
-      };
-      store.addProperty(newProp);
+    onAddProperty: async () => {
+      console.log('[ENTITY-CONTENT] Adding new property via repository...');
+      const repository = createPropertyRepository({
+        entityId: store.signal.value.id,
+        entitySignal: store.signal,
+        storageProvider: props.storageProvider
+      });
+      
+      try {
+        const newProp = await repository.create({
+          key: `prop-${Date.now()}`,
+          label: 'new property',
+          dataType: 'string',
+          componentType: 'input',
+        });
+        console.log('[ENTITY-CONTENT] ✓ Property added and persisted:', newProp.key);
+      } catch (err) {
+        console.error('[ENTITY-CONTENT] ✗ Failed to add property:', err);
+      }
     },
   });
   cleanups.push(footer.cleanup.destroy);

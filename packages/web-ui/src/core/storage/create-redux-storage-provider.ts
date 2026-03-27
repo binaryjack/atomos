@@ -20,15 +20,19 @@ export const createReduxStorageProvider = function<T extends Entity>(
   };
 
   const set = async (key: string, data: T): Promise<void> => {
-    console.log(`[REDUX-STORAGE] Setting entity ${key}:`, data);
+    console.log(`[REDUX-STORAGE] 💾 Setting entity ${key}:`, data);
+    console.log(`[REDUX-STORAGE] Entity properties:`, data.properties?.map(p => `${p.key}:${p.dataType}`));
     
     // Check if entity exists in store
     const existing = config.schemaStore.signal.value.entities.find(e => e.id === key);
     
     if (existing) {
+      console.log(`[REDUX-STORAGE] ✏️ Updating existing entity ${key}`);
+      console.log(`[REDUX-STORAGE] Before update properties:`, existing.properties?.map(p => `${p.key}:${p.dataType}`));
       // Update existing entity
       config.schemaStore.updateEntity(key, data);
     } else {
+      console.log(`[REDUX-STORAGE] ➕ Adding new entity ${key}`);
       // Add new entity
       config.schemaStore.addEntity(data);
     }

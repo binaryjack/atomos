@@ -197,6 +197,7 @@ export const createSchemaStore = function(schema: SchemaModel): SchemaStore {
 
   const updateEntity = (entityId: string, updatedEntity: Entity): void => {
     console.log(`🏪 [REDUX-SCHEMA-STORE] updateEntity(${entityId})`);
+    console.log(`🏪 [REDUX-SCHEMA-STORE] Updated properties:`, updatedEntity.properties?.map(p => `${p.key}:${p.dataType}`));
     
     // Update local signal
     const currentState = signal.value;
@@ -204,6 +205,7 @@ export const createSchemaStore = function(schema: SchemaModel): SchemaStore {
       e.id === entityId ? updatedEntity : e
     );
     
+    console.log(`🏪 [REDUX-SCHEMA-STORE] Setting local signal with updated entities`);
     signal.set({
       ...currentState,
       entities: updatedEntities,
@@ -214,6 +216,7 @@ export const createSchemaStore = function(schema: SchemaModel): SchemaStore {
     if (redux_store) {
       const schema_id = 'schema-default';
       const canvasState = currentState.canvasStates.find(cs => cs.entityId === entityId);
+      console.log(`🏪 [REDUX-SCHEMA-STORE] Dispatching entity-updated to Redux store`);
       redux_store.dispatch({
         type: 'entity-updated',
         schema_id,
@@ -223,10 +226,15 @@ export const createSchemaStore = function(schema: SchemaModel): SchemaStore {
           dimensions: canvasState ? { width: canvasState.width, height: canvasState.height } : { width: ENTITY_DEFAULT_WIDTH, height: ENTITY_DEFAULT_HEIGHT }
         }
       });
+      console.log(`🏪 [REDUX-SCHEMA-STORE] ✓ Redux dispatch completed`);
+    } else {
+      console.error(`🏪 [REDUX-SCHEMA-STORE] ❌ No Redux store found!`);
     }
   };
 
   const removeEntity = (entityId: string): void => {
+    console.log(`🏪 [REDUX-SCHEMA-STORE] removeEntity(${entityId}) - starting cascade deletion`);
+    
     // Clean up entity subscription to prevent memory leak
     const subKey = `${schema.id}:${entityId}`;
     const unsub = _entitySubs.get(subKey);
@@ -235,6 +243,13 @@ export const createSchemaStore = function(schema: SchemaModel): SchemaStore {
       unsub();
       _entitySubs.delete(subKey);
     }
+    
+    // Filter out connected links for logging
+    const connectedLinks = signal.value.links.filter(
+      l => l.leftEntityId === entityId || l.rightEntityId === entityId
+    );
+    console.log(`🏪 [REDUX-SCHEMA-STORE] Found ${connectedLinks.length} connected links to cascade delete:`, 
+                connectedLinks.map(l => l.id));
     
     signal.set({
       ...signal.value,
@@ -245,15 +260,21 @@ export const createSchemaStore = function(schema: SchemaModel): SchemaStore {
       canvasStates: signal.value.canvasStates.filter(cs => cs.entityId !== entityId),
     });
     
+    console.log(`🏪 [REDUX-SCHEMA-STORE] Local signal updated - entity and ${connectedLinks.length} links removed`);
+    
     // REDUX INTEGRATION: Remove entity from Redux store
     const redux_store = getReduxStore();
     if (redux_store) {
       const schema_id = 'schema-default';
+      console.log(`🏪 [REDUX-SCHEMA-STORE] Dispatching entity-removed action to Redux store`);
       redux_store.dispatch({
         type: 'entity-removed',
         schema_id,
         entity_id: entityId
       });
+      console.log(`🏪 [REDUX-SCHEMA-STORE] Redux dispatch completed for entity ${entityId}`);
+    } else {
+      console.error(`🏪 [REDUX-SCHEMA-STORE] No Redux store found! Entity deletion won't be persisted!`);
     }
   };
 

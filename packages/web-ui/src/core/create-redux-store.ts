@@ -50,12 +50,20 @@ const reduce_state = function(state: ReduxState, action: ReduxAction): ReduxStat
     }
     
     case 'entity-updated': {
+      console.log(`🏬 [REDUX-STORE] entity-updated action received for: ${action.entity.id}`);
+      console.log(`🏬 [REDUX-STORE] Entity properties:`, action.entity.properties?.map(p => `${p.key}:${p.dataType}`));
+      
       const schema = state.schemas[action.schema_id];
-      if (!schema) return state;
+      if (!schema) {
+        console.error(`🏬 [REDUX-STORE] Schema ${action.schema_id} not found!`);
+        return state;
+      }
       
       const entities = schema.entities.map(e =>
         e.id === action.entity.id ? action.entity : e
       );
+      
+      console.log(`🏬 [REDUX-STORE] ✓ Entity updated in Redux store`);
       
       return {
         ...state,
@@ -86,13 +94,23 @@ const reduce_state = function(state: ReduxState, action: ReduxAction): ReduxStat
     }
     
     case 'entity-removed': {
+      console.log(`🏬 [REDUX-STORE] entity-removed action received: ${action.entity_id}`);
       const schema = state.schemas[action.schema_id];
-      if (!schema) return state;
+      if (!schema) {
+        console.error(`🏬 [REDUX-STORE] Schema ${action.schema_id} not found!`);
+        return state;
+      }
+      
+      const entitiesBeforeFilter = schema.entities.length;
+      const linksBeforeFilter = schema.links.length;
       
       const entities = schema.entities.filter(e => e.id !== action.entity_id);
       const links = schema.links.filter(l => 
         l.leftEntityId !== action.entity_id && l.rightEntityId !== action.entity_id
       );
+      
+      console.log(`🏬 [REDUX-STORE] Entity removal: ${entitiesBeforeFilter} → ${entities.length} entities`);
+      console.log(`🏬 [REDUX-STORE] Link cascade: ${linksBeforeFilter} → ${links.length} links`);
       
       return {
         ...state,

@@ -120,7 +120,14 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
 
   // Wire up entity deletion to schema store persistence
   (workspace as any).onEntityDeleted = (entityId: string) => {
+    console.log('[CANVAS-PERSIST] Entity deleted:', entityId);
     schemaStore?.removeEntity(entityId);
+  };
+
+  // Wire up individual link deletion to schema store persistence (not during cascade)
+  (workspace as any).onLinkDeleted = (linkId: string) => {
+    console.log('[CANVAS-PERSIST] Individual link deleted:', linkId);
+    schemaStore?.removeLink(linkId);
   };
 
   // Register spawn factory so workspace can auto-create entities on link-drop
