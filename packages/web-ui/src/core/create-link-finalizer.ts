@@ -167,7 +167,8 @@ export const createLinkFinalizer = function(
     srcAnchorId: string,
     srcEntityId: string,
     srcEdge: EdgePosition,
-    srcPos: { x: number; y: number }
+    srcPos: { x: number; y: number },
+    isRestoration = false
   ): void => {
     console.log('[LINK-FINALIZER] finalizeLinkToAnchor called:', {
       src: `${srcEntityId}:${srcAnchorId}`,
@@ -226,9 +227,9 @@ export const createLinkFinalizer = function(
     workspaceState.value.entities.get(dstEntityId)
       ?.notifyAnchorConnected?.(dstAnchorId, linkId);
 
-    // Notify callback about link creation for persistence
-    if (onLinkCreated) {
-      console.log('[LINK-FINALIZER] ✓ Calling onLinkCreated callback');
+    // Notify callback about link creation for persistence (only for new links, not restoration)
+    if (!isRestoration && onLinkCreated) {
+      console.log('[LINK-FINALIZER] ✓ Calling onLinkCreated callback for new link');
       onLinkCreated({
         id: linkId,
         sourceAnchorId: srcAnchorId,
@@ -236,8 +237,10 @@ export const createLinkFinalizer = function(
         leftEntityId: srcEntityId,
         rightEntityId: dstEntityId
       });
-    } else {
+    } else if (!isRestoration) {
       console.error('[LINK-FINALIZER] ✗ No onLinkCreated callback! Link will not be persisted!');
+    } else {
+      console.log('[LINK-FINALIZER] ℹ Restored link - skipping persistence callback');
     }
   };
 

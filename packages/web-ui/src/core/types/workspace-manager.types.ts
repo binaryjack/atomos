@@ -28,6 +28,16 @@ export interface WorkspaceManager {
   ) => void;
   readonly setEntitySpawnFactory: (factory: EntitySpawnFactory) => void;
   readonly appendToCanvas: (element: SVGElement) => void;
+  readonly restoreLink: (
+    srcAnchorId: string,
+    srcPos: { x: number; y: number },
+    srcEntityId: string,
+    srcEdge: EdgePosition,
+    dstAnchorId: string,
+    dstPos: { x: number; y: number },
+    dstEntityId: string,
+    dstEdge: EdgePosition
+  ) => void;
   readonly notifyAnchorHoverStart: (anchorId: string, entityId: string, edge: EdgePosition) => void;
   readonly notifyAnchorHoverEnd: () => void;
   readonly handleCanvasMouseMove: (event: MouseEvent) => void;

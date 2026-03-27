@@ -4,7 +4,7 @@ import { createAppStore } from '../../core/create-app-store.js';
 import { createEntityStore } from '../../core/create-entity-store.js';
 import { createSchemaStore } from '../../core/create-schema-store.js';
 import { createLinkStore } from '../../core/create-link-store.js';
-import { createLocalStorageProvider } from '../../core/storage/create-local-storage-provider.js';
+import { createReduxStorageProvider } from '../../core/storage/create-redux-storage-provider.js';
 import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js';
 import type { EdgePosition } from '../edge/types/edge-position.types.js';
 import type { EntityInstance } from '../../core/types/entity-instance.types.js';
@@ -54,7 +54,9 @@ const spawnEntity = (
     schemaStore.updateEntityCanvas(entityProps.id, { width: dims.width, height: dims.height });
   });
   
-  const storageProvider = createLocalStorageProvider<Entity>({ prefix: 'vbe2' });
+  const storageProvider = createReduxStorageProvider<Entity>({ 
+    schemaStore: schemaStore 
+  });
   const entity = createDemoEntity({
     id: entityProps.id,
     entityStore: entityStore,
@@ -238,27 +240,17 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
             const leftEdge = getEdgePosition(link.leftAnchorId);
             const rightEdge = getEdgePosition(link.rightAnchorId);
             
-            // Simulate link creation process: start from source, then finalize to destination
-            // This mimics the user interaction flow
-            
-            // First start the link from the source anchor
-            workspace.startLinkFromAnchor(
-              link.leftAnchorId,
-              leftAnchorPos,
-              link.leftEntityId,
-              leftEdge,
-              {} as MouseEvent // Dummy event
+            // Use the proper workspace API to restore the link
+            workspace.restoreLink(
+              link.leftAnchorId,     // srcAnchorId
+              leftAnchorPos,         // srcPos
+              link.leftEntityId,     // srcEntityId
+              leftEdge,             // srcEdge
+              link.rightAnchorId,    // dstAnchorId
+              rightAnchorPos,        // dstPos
+              link.rightEntityId,    // dstEntityId
+              rightEdge             // dstEdge
             );
-            
-            // Then immediately finalize it to the destination anchor
-            setTimeout(() => {
-              workspace.finalizeLinkToAnchor(
-                link.rightAnchorId,
-                rightAnchorPos,
-                link.rightEntityId,
-                rightEdge
-              );
-            }, 10); // Small delay to ensure the source state is set
             
             console.log(`[CANVAS-LOAD] ✓ Successfully recreated visual link ${link.id}`);
           } catch (err) {

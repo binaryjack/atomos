@@ -28,6 +28,7 @@ export const __clearSchemaStoreCaches = (): void => {
 export interface SchemaStore {
   readonly signal: Signal<SchemaModel>;
   readonly addEntity: (entity: Entity, canvas?: EntityCanvasState) => void;
+  readonly updateEntity: (entityId: string, entity: Entity) => void;
   readonly removeEntity: (entityId: string) => void;
   readonly updateEntityCanvas: (entityId: string, patch: Partial<Omit<EntityCanvasState, 'entityId'>>) => void;
   readonly addLink: (link: LinkProps) => void;
@@ -194,6 +195,37 @@ export const createSchemaStore = function(schema: SchemaModel): SchemaStore {
     }
   };
 
+  const updateEntity = (entityId: string, updatedEntity: Entity): void => {
+    console.log(`🏪 [REDUX-SCHEMA-STORE] updateEntity(${entityId})`);
+    
+    // Update local signal
+    const currentState = signal.value;
+    const updatedEntities = currentState.entities.map(e => 
+      e.id === entityId ? updatedEntity : e
+    );
+    
+    signal.set({
+      ...currentState,
+      entities: updatedEntities,
+    });
+    
+    // REDUX INTEGRATION: Update entity in Redux store
+    const redux_store = getReduxStore();
+    if (redux_store) {
+      const schema_id = 'schema-default';
+      const canvasState = currentState.canvasStates.find(cs => cs.entityId === entityId);
+      redux_store.dispatch({
+        type: 'entity-updated',
+        schema_id,
+        entity: {
+          ...updatedEntity,
+          position: canvasState ? { x: canvasState.x, y: canvasState.y } : { x: 100, y: 100 },
+          dimensions: canvasState ? { width: canvasState.width, height: canvasState.height } : { width: ENTITY_DEFAULT_WIDTH, height: ENTITY_DEFAULT_HEIGHT }
+        }
+      });
+    }
+  };
+
   const removeEntity = (entityId: string): void => {
     // Clean up entity subscription to prevent memory leak
     const subKey = `${schema.id}:${entityId}`;
@@ -326,7 +358,7 @@ export const createSchemaStore = function(schema: SchemaModel): SchemaStore {
   };
 
   const store: SchemaStore = { 
-    signal, addEntity, removeEntity, updateEntityCanvas, addLink, removeLink, getEntityStore, cleanup 
+    signal, addEntity, updateEntity, removeEntity, updateEntityCanvas, addLink, removeLink, getEntityStore, cleanup 
   };
   _schemaStores.set(schema.id, store);
   
