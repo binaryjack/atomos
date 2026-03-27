@@ -1,19 +1,19 @@
 // Shared
 export type { EdgePosition, EdgeThickness, RenderType, Cardinality, ComponentType, Theme, DataType } from './shared/index';
-export { DATA_TYPES } from './shared/index';
+export { DATA_TYPES } from './shared/index.js';
 
 // Types
-export type { BaseEntity } from './types/base-entity.types';
-export type { Property } from './types/property.types';
-export type { AnchorProps } from './types/anchor.types';
-export type { EdgeProps } from './types/edge.types';
-export type { LinkProps } from './types/link.types';
-export type { Entity, Position, Dimensions } from './types/entity.types';
-export type { SettingsProps } from './types/settings.types';
+export type { BaseEntity } from './types/base-entity.types.js';
+export type { Property } from './types/property.types.js';
+export type { AnchorProps } from './types/anchor.types.js';
+export type { EdgeProps } from './types/edge.types.js';
+export type { LinkProps } from './types/link.types.js';
+export type { Entity, Position, Dimensions } from './types/entity.types.js';
+export type { SettingsProps } from './types/settings.types.js';
 
 // Schemas (f.object definitions — one per model)
-export { baseEntitySchema, anchorSchema, edgeSchema, linkSchema, settingsSchema, entitySchema } from './schemas/index';
+export { baseEntitySchema, anchorSchema, edgeSchema, linkSchema, settingsSchema, entitySchema } from './schemas/index.js';
 
 // Factories + schema builder (f from @binaryjack/formular.dev)
-export { f, createProperty, createEntity } from './factories/index';
-export type { CreatePropertyOptions, CreateEntityOptions } from './factories/index';
+export { f, createProperty, createEntity } from './factories/index.js';
+export type { CreatePropertyOptions, CreateEntityOptions } from './factories/index.js';

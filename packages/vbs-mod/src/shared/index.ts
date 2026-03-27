@@ -1,8 +1,8 @@
-export type { EdgePosition } from './edge-position';
-export type { EdgeThickness } from './edge-thickness';
-export type { RenderType } from './render-type';
-export type { Cardinality } from './cardinality';
-export type { ComponentType } from './component-type';
-export type { Theme } from './theme';
-export type { DataType } from './data-type';
-export { DATA_TYPES } from './data-type';
+export type { EdgePosition } from './edge-position.js';
+export type { EdgeThickness } from './edge-thickness.js';
+export type { RenderType } from './render-type.js';
+export type { Cardinality } from './cardinality.js';
+export type { ComponentType } from './component-type.js';
+export type { Theme } from './theme.js';
+export type { DataType } from './data-type.js';
+export { DATA_TYPES } from './data-type.js';

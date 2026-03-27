@@ -3,7 +3,7 @@ import type { ComponentType } from '../shared/component-type';
 import type { Property } from '../types/property.types';
 import type { Entity, Position, Dimensions } from '../types/entity.types';
 import type { EdgeProps } from '../types/edge.types';
-import { createProperty } from './create-property';
+import { createProperty } from './create-property.js';
 
 const schemaToDefaultComponentType = (schema: ISchemaBase): ComponentType => {
   const name = Object.getPrototypeOf(schema).constructor.name as string;

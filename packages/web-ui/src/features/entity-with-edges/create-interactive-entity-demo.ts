@@ -2,6 +2,7 @@
 import { createDemoEntity } from './create-demo-entity.js';
 import { createAppStore } from '../../core/create-app-store.js';
 import { createEntityStore } from '../../core/create-entity-store.js';
+import { createSchemaStore } from '../../core/create-schema-store.js';
 import { createLocalStorageProvider } from '../../core/storage/create-local-storage-provider.js';
 import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js';
 import type { EntityInstance } from '../../core/types/entity-instance.types.js';
@@ -31,15 +32,28 @@ const makeEntityProps = (id: string, name: string, x: number, y: number): Entity
 const spawnEntity = (
   entityProps: Entity,
   workspace: WorkspaceManager,
-  globalConfigSignal: ReturnType<typeof createAppStore>['globalStore']['signal']
+  globalConfigSignal: ReturnType<typeof createAppStore>['globalStore']['signal'],
+  schemaStore: ReturnType<typeof createSchemaStore>
 ): EntityInstance => {
-  const { signal: entitySignal } = createEntityStore(entityProps);
+  // Get entity signal from schema store (wired into persistence chain)
+  const entityStore = schemaStore.getEntityStore(entityProps.id);
+  if (!entityStore) throw new Error(`Entity ${entityProps.id} not in schema store`);
+  
   const posSignal  = createSignal({ x: entityProps.position.x, y: entityProps.position.y });
   const dimsSignal = createSignal({ width: entityProps.dimensions.width, height: entityProps.dimensions.height });
+  
+  // Wire canvas position/size changes to schema store persistence
+  posSignal.subscribe(pos => {
+    schemaStore.updateEntityCanvas(entityProps.id, { x: pos.x, y: pos.y });
+  });
+  dimsSignal.subscribe(dims => {
+    schemaStore.updateEntityCanvas(entityProps.id, { width: dims.width, height: dims.height });
+  });
+  
   const storageProvider = createLocalStorageProvider<Entity>({ prefix: 'vbe2' });
   const entity = createDemoEntity({
     id: entityProps.id,
-    entitySignal,
+    entitySignal: entityStore.signal,
     globalConfig: globalConfigSignal,
     position: posSignal,
     dimensions: dimsSignal,
@@ -60,7 +74,7 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
   const factory: EntitySpawnFactory = (id, pos, ws) => {
     const ep = makeEntityProps(id, 'New Entity', pos.x, pos.y);
     schemaStore?.addEntity(ep, { entityId: id, x: pos.x, y: pos.y, width: ep.dimensions.width, height: ep.dimensions.height });
-    return spawnEntity(ep, ws, globalConfig);
+    return spawnEntity(ep, ws, globalConfig, schemaStore!);
   };
   workspace.setEntitySpawnFactory(factory);
 
@@ -85,7 +99,7 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
     if (!existing) {
       schemaStore?.addEntity(ep, { entityId: cfg.id, x: cfg.x, y: cfg.y, width: ep.dimensions.width, height: ep.dimensions.height });
     }
-    const instance = spawnEntity(ep, workspace, globalConfig);
+    const instance = spawnEntity(ep, workspace, globalConfig, schemaStore!);
     workspace.registerEntity(instance);
   });
 };

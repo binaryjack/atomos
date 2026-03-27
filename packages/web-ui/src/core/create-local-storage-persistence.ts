@@ -12,10 +12,12 @@ export const createLocalStoragePersistence = function<T>(
 ): { destroy: () => void } {
   let timer: ReturnType<typeof setTimeout> | undefined;
 
-  const write = (value: T): void => {
+  const write = (): void => {
     clearTimeout(timer);
     timer = setTimeout(() => {
       try {
+        const value = signal.value; // Read latest value when debounce fires
+        console.log(`[persistence] Writing to localStorage[${key}]`);
         localStorage.setItem(key, JSON.stringify(value));
       } catch {
         // storage full or unavailable — silent

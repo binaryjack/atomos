@@ -1,6 +1,6 @@
-export { baseEntitySchema } from './base-entity.schema';
-export { anchorSchema } from './anchor.schema';
-export { edgeSchema } from './edge.schema';
-export { linkSchema } from './link.schema';
-export { settingsSchema } from './settings.schema';
-export { entitySchema } from './entity.schema';
+export { baseEntitySchema } from './base-entity.schema.js';
+export { anchorSchema } from './anchor.schema.js';
+export { edgeSchema } from './edge.schema.js';
+export { linkSchema } from './link.schema.js';
+export { settingsSchema } from './settings.schema.js';
+export { entitySchema } from './entity.schema.js';

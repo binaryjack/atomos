@@ -41,6 +41,7 @@ export const createPropertyRepository = function(
       updatedAt: Date.now()
     };
 
+    console.log(`[property-repo] Updating property ${key} in entity ${config.entityId}, calling entitySignal.set`);
     config.entitySignal.set(updated);
     await config.storageProvider.set(config.entityId, updated);
     

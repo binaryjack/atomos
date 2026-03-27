@@ -12,6 +12,15 @@ import { createGlobalStore } from './create-global-store.js';
 const LS_SCHEMAS = 'vbe2-schemas';
 const LS_APP     = 'vbe2-app';
 
+// Module-level dedup: prevents double-subscribing across createAppStore() calls.
+const _schemaSubs = new Map<string, () => void>(); // key: schemaId
+
+/** TESTING ONLY: Clear module-level subscription cache */
+export const __clearAppStoreCaches = (): void => {
+  _schemaSubs.forEach(unsub => unsub());
+  _schemaSubs.clear();
+};
+
 export interface AppStore {
   readonly appSignal: Signal<AppState>;
   readonly schemasSignal: Signal<SchemaModel[]>;
@@ -46,8 +55,23 @@ export const createAppStore = function(): AppStore {
 
   const appSignal = registry.getOrCreate<AppState>(APP_KEY, initial);
 
-  // Hydrate schema stores
-  savedSchemas.forEach(s => createSchemaStore(s));
+  // Subscribe a schema signal → schemasSignal (idempotent via _schemaSubs).
+  const subscribeSchema = (s: SchemaModel): void => {
+    if (_schemaSubs.has(s.id)) {
+      console.log(`[app-store] SKIPPING schema ${s.id} - already subscribed`);
+      return;
+    }
+    console.log(`[app-store] SUBSCRIBING schema ${s.id}, entities:`, s.entities.map(e => e.id));
+    const store = createSchemaStore(s);
+    const unsub = store.signal.subscribe((updated: SchemaModel) => {
+      console.log(`[app-store] Schema ${updated.id} changed, syncing to schemasSignal`);
+      schemasSignal.set(schemasSignal.value.map(sc => sc.id === updated.id ? updated : sc));
+    });
+    _schemaSubs.set(s.id, unsub);
+  };
+
+  // Hydrate schema stores and wire up subscriptions.
+  savedSchemas.forEach(subscribeSchema);
 
   const sync = (): void => {
     appSignal.set({
@@ -68,7 +92,7 @@ export const createAppStore = function(): AppStore {
   };
 
   const addSchema = (schema: SchemaModel): void => {
-    createSchemaStore(schema);
+    subscribeSchema(schema);
     schemasSignal.set([...schemasSignal.value, schema]);
   };
 

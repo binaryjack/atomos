@@ -1,5 +1,4 @@
 import type { InputDataTypes } from '@binaryjack/formular.dev';
-import { newEvent, EventsEnum } from '@binaryjack/formular.dev';
 import { createCheckbox } from '../../checkbox/create-checkbox.js';
 import '../vbs-field-set.js';
 import '../vbs-validation-result.js';
@@ -24,18 +23,7 @@ export const createFormularCheckbox = function(props: FormularCheckboxProps): Fo
   cleanups.push(() => cbResult.cleanup.destroy());
 
   const focusHandler = () => validation.setFocused(true);
-  const blurHandler = () => {
-    const fld = form.getField(fieldName);
-    const afterValidate = () => validation.setFocused(false);
-    if (fld) {
-      (fld.input as unknown as { handleValidationAsync: (e: unknown) => Promise<unknown[]> })
-        .handleValidationAsync(newEvent(fieldName, 'vbs', EventsEnum.onBlur, 'blur', fieldName, fld))
-        .then(afterValidate)
-        .catch(afterValidate);
-    } else {
-      afterValidate();
-    }
-  };
+  const blurHandler  = () => validation.setFocused(false);
   cbResult.input.addEventListener('focus', focusHandler);
   cbResult.input.addEventListener('blur', blurHandler);
   cleanups.push(() => {
