@@ -1,14 +1,14 @@
 import type { InputDataTypes } from '@binaryjack/formular.dev';
-import { newEvent, EventsEnum } from '@binaryjack/formular.dev';
+import { EventsEnum, newEvent } from '@binaryjack/formular.dev';
 import { createInput } from '../../input/create-input.js';
+import type { FormularAtomProps, FormularAtomResult } from '../types/formular-atom.types.js';
 import '../vbs-field-set.js';
 import '../vbs-validation-result.js';
 import type { VbsValidationResult } from '../vbs-validation-result.js';
-import type { FormularAtomProps, FormularAtomResult } from '../types/formular-atom.types.js';
 
 export interface FormularInputProps extends FormularAtomProps {
   readonly placeholder?: string;
-  readonly type?: 'text' | 'number' | 'email' | 'password';
+  readonly type?: 'text' | 'number' | 'email' | 'password' | 'color';
 }
 
 export const createFormularInput = function(props: FormularInputProps): FormularAtomResult {

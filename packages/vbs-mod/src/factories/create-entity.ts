@@ -1,8 +1,9 @@
 import type { IObjectSchema, IObjectShape, ISchemaBase, IValidationOptions } from '@binaryjack/formular.dev';
 import type { ComponentType } from '../shared/component-type';
-import type { Property } from '../types/property.types';
-import type { Entity, Position, Dimensions } from '../types/entity.types';
 import type { EdgeProps } from '../types/edge.types';
+import type { EntityShape } from '../types/entity-shape.types';
+import type { Dimensions, Entity, Position } from '../types/entity.types';
+import type { Property } from '../types/property.types';
 import { createProperty } from './create-property.js';
 
 const schemaToDefaultComponentType = (schema: ISchemaBase): ComponentType => {
@@ -18,6 +19,8 @@ export interface CreateEntityOptions<T extends IObjectShape> {
   readonly id: string;
   readonly code: string;
   readonly name: string;
+  readonly shape?: EntityShape;
+  readonly nodeType?: string;
   readonly schema: IObjectSchema<T>;
   readonly position: Position;
   readonly dimensions: Dimensions;
@@ -46,11 +49,13 @@ export const createEntity = <T extends IObjectShape>(
     id: opts.id,
     code: opts.code,
     name: opts.name,
+    ...(opts.shape !== undefined ? { shape: opts.shape } : {}),
+    ...(opts.nodeType !== undefined ? { nodeType: opts.nodeType } : {}),
     createdAt: Date.now(),
     updatedAt: Date.now(),
     position: opts.position,
     dimensions: opts.dimensions,
     properties,
-    edges: opts.edges ?? []
+    edges: opts.edges ?? [],
   };
 };

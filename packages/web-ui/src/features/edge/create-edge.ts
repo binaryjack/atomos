@@ -48,10 +48,10 @@ export const createEdge = function(props: EdgeProps): EdgeResult {
   const pos0  = props.entityPosition.value;
   const dims0 = props.entityDimensions.value;
 
-  // Visual bar — subtle by default, blue+thick on hover
-  const bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-  bar.setAttribute('fill', '#9ca3af');
-  bar.setAttribute('opacity', '0.3');
+// Visual bar — now invisible as requested
+  const bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');   
+  bar.setAttribute('fill', 'transparent');
+  bar.setAttribute('opacity', '0');
   bar.setAttribute('rx', '1');
   bar.style.pointerEvents = 'none';
   // CSS transition for color/opacity; thickness is changed via attribute in hover handlers
@@ -90,8 +90,8 @@ export const createEdge = function(props: EdgeProps): EdgeResult {
   const onHoverEnter = () => {
     if (hovered) return;
     hovered = true;
-    bar.setAttribute('fill', '#3b82f6');
-    bar.setAttribute('opacity', '0.85');
+    bar.setAttribute('fill', 'transparent');
+    bar.setAttribute('opacity', '0');
     // Grow bar thickness
     const p = props.entityPosition.value;
     const d = props.entityDimensions.value;
@@ -110,8 +110,8 @@ export const createEdge = function(props: EdgeProps): EdgeResult {
   const onHoverLeave = () => {
     if (!hovered) return;
     hovered = false;
-    bar.setAttribute('fill', '#9ca3af');
-    bar.setAttribute('opacity', '0.3');
+    bar.setAttribute('fill', 'transparent');
+    bar.setAttribute('opacity', '0');
     // Reset bar to normal thickness
     applyRect(bar, computeBar(props.entityPosition.value, props.entityDimensions.value));
     anchorResult?.updateState('idle');

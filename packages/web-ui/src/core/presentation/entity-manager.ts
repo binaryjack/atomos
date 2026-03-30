@@ -2,20 +2,21 @@
  * Presentation Layer - Clean Facade for UI Components
  * Provides simple interface hiding architectural complexity
  */
-import type { Property } from '@vbs/vbs-mod';
-import type { ApplicationEvent } from '../application/entity-service.js';
-import { createEntityApplicationService } from '../application/entity-service.js';
-import type { DomainEntity, DomainLink, EntityDimensions, EntityPosition } from '../domain/entity-aggregate.js';
-import { createEventBus, createPersistedEntityRepository, createPersistedLinkRepository } from '../infrastructure/entity-repository.js';
+import type { Property } from '@vbs/vbs-mod'
+import type { ApplicationEvent } from '../application/entity-service.js'
+import { createEntityApplicationService } from '../application/entity-service.js'
+import type { DomainEntity, DomainLink, EntityDimensions, EntityPosition } from '../domain/entity-aggregate.js'
+import { createEventBus, createPersistedEntityRepository, createPersistedLinkRepository } from '../infrastructure/entity-repository.js'
 
 // Simplified UI Interface - Hide CQRS complexity  
 export interface EntityManager {
   // Entity Commands (UI Actions)
-  readonly createEntity: (id: string, name: string, position?: EntityPosition, dimensions?: EntityDimensions) => void;
+  readonly createEntity: (id: string, name: string, position?: EntityPosition, dimensions?: EntityDimensions, metadata?: { shape?: string; color?: string; description?: string }) => void;
   readonly moveEntity: (entityId: string, position: EntityPosition) => void;
   readonly resizeEntity: (entityId: string, dimensions: EntityDimensions) => void;
   readonly updateEntityProperties: (entityId: string, properties: readonly Property[]) => void;
   readonly updateEntityName: (entityId: string, name: string) => void;
+  readonly updateEntityMetadata: (entityId: string, metadata: { name?: string; description?: string; shape?: string; color?: string }) => void;
   readonly removeEntity: (entityId: string) => void;
   
   // Entity Queries (UI Data)
@@ -71,14 +72,16 @@ export const createEntityManager = function(): EntityManager {
     id: string, 
     name: string, 
     position?: EntityPosition, 
-    dimensions?: EntityDimensions
+    dimensions?: EntityDimensions,
+    metadata?: { shape?: string; color?: string; description?: string }
   ): void {
     applicationService.executeCommand({
       type: 'CreateEntity',
       id,
       name,
       position: position || { x: 0, y: 0 },
-      dimensions: dimensions || { width: 200, height: 100 }
+      dimensions: dimensions || { width: 200, height: 100 },
+      ...(metadata ? { metadata } : {}) // fix for undefined assignment
     });
   };
   
@@ -111,6 +114,14 @@ export const createEntityManager = function(): EntityManager {
       type: 'UpdateEntityName',
       entityId,
       name
+    });
+  };
+
+  const updateEntityMetadata = function(entityId: string, metadata: { name?: string; description?: string; shape?: string; color?: string }): void {
+    applicationService.executeCommand({
+      type: 'UpdateEntityMetadata',
+      entityId,
+      metadata
     });
   };
   
@@ -246,6 +257,7 @@ export const createEntityManager = function(): EntityManager {
     resizeEntity,
     updateEntityProperties,
     updateEntityName,
+    updateEntityMetadata,
     removeEntity,
     getEntity,
     getAllEntities,

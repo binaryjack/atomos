@@ -17,6 +17,9 @@ export interface EntityDimensions {
 export interface DomainEntity {
   readonly id: string;
   readonly name: string;
+  readonly description?: string | undefined;
+  readonly shape?: string | undefined;
+  readonly color?: string | undefined;
   readonly properties: readonly Property[];
   readonly position: EntityPosition;
   readonly dimensions: EntityDimensions;
@@ -35,13 +38,17 @@ export const createEntityAggregate = function(
   id: string,
   name: string,
   position: EntityPosition = { x: 100, y: 100 },
-  dimensions: EntityDimensions = { width: 200, height: 150 }
+  dimensions: EntityDimensions = { width: 200, height: 150 },
+  options?: { shape?: string; color?: string; description?: string }
 ): DomainEntity {
   const now = Date.now();
   
   return {
     id,
     name,
+    ...(options?.description ? { description: options.description } : {}),
+    shape: options?.shape ?? 'box',
+    color: options?.color ?? '#1e293b',
     properties: [],
     position,
     dimensions, 
@@ -90,6 +97,17 @@ export const updateEntityName = function(
   return {
     ...entity,
     name,
+    updatedAt: Date.now()
+  };
+};
+
+export const updateEntityMetadata = function(
+  entity: DomainEntity,
+  metadata: { name?: string; description?: string; shape?: string; color?: string }
+): DomainEntity {
+  return {
+    ...entity,
+    ...metadata,
     updatedAt: Date.now()
   };
 };

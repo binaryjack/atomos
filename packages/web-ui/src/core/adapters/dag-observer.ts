@@ -1,5 +1,5 @@
-import type { EntityManager } from '../presentation/entity-manager.js';
 import type { DAGExport } from '../application/dag-service.js';
+import type { EntityManager } from '../presentation/entity-manager.js';
 
 export type DAGSubscriber = (dag: DAGExport) => void;
 

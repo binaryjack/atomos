@@ -1,6 +1,6 @@
 import { applyCommonStyles } from './apply-common-styles.js';
 
-export const createChevron = (width: number, height: number): SVGPolygonElement => {
+export const createChevron = (width: number, height: number, color?: string): SVGPolygonElement => {
   const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
   const arrowWidth = width * 0.2;
   const points = [
@@ -12,6 +12,6 @@ export const createChevron = (width: number, height: number): SVGPolygonElement 
     `${arrowWidth},${height / 2}`,
   ].join(' ');
   polygon.setAttribute('points', points);
-  applyCommonStyles(polygon);
+  applyCommonStyles(polygon, color);
   return polygon;
 };

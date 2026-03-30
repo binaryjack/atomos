@@ -43,7 +43,7 @@ const computeAnchorPos = (entity: any, edge: string): { x: number; y: number } =
 };
 
 const spawnEntity = (
-  entityProps: Entity,
+  entityProps: Entity & { shape?: string, color?: string | undefined },
   workspace: WorkspaceManager,
   globalConfigSignal: any, // Legacy parameter kept for compatibility
   adapter: ReturnType<typeof getCanvasAdapter>
@@ -59,10 +59,14 @@ const spawnEntity = (
       entityProps.position.x, 
       entityProps.position.y,
       entityProps.dimensions.width,
-      entityProps.dimensions.height
+      entityProps.dimensions.height,
+      { 
+        ...(entityProps.shape ? { shape: entityProps.shape } : {}), 
+        ...(entityProps.color ? { color: entityProps.color } : {}) 
+      }
     );
   }
-  
+
   // Create UI-only signals (ReactiveX pattern, no domain pollution)
   const posSignal = createSignal({ x: entityProps.position.x, y: entityProps.position.y });
   const dimsSignal = createSignal({ width: entityProps.dimensions.width, height: entityProps.dimensions.height });
@@ -118,6 +122,8 @@ const spawnEntity = (
   
   const entity = createDemoEntity({
     id: entityProps.id,
+    shape: entityProps.shape as any,
+    color: entityProps.color,
     // Bridge: connects existing property UI to clean architecture
     entityStore: entityStore,
     globalConfig: globalConfigSignal,
@@ -164,9 +170,38 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
         const exists = workspace.workspaceState.value.entities.has(event.entity.id);
         if (!exists) {
           const domainEntity = event.entity;
-          const ep = makeEntityProps(domainEntity.id, domainEntity.name, domainEntity.position.x, domainEntity.position.y, domainEntity.dimensions.width, domainEntity.dimensions.height, domainEntity.properties as any[]);
+          const ep: Entity & { shape?: string, color?: string | undefined } = makeEntityProps(domainEntity.id, domainEntity.name, domainEntity.position.x, domainEntity.position.y, domainEntity.dimensions.width, domainEntity.dimensions.height, domainEntity.properties as any[]);
+          ep.shape = domainEntity.shape as any;
+          ep.color = domainEntity.color;
           const instance = spawnEntity(ep, workspace, { value: DEFAULT_GLOBAL_CONFIG }, canvasAdapter);
           workspace.registerEntity(instance);
+        }
+        break;
+      }
+      case 'EntityNameUpdated': {
+        const instance = workspace.workspaceState.value.entities.get(event.entityId);
+        if (instance) {
+          // It would update via signal if mapped, or we can force recreation 
+          // For now, let's let the store sync
+        }
+        break;
+      }
+      case 'EntityMetadataUpdated': {
+        const instance = workspace.workspaceState.value.entities.get(event.entityId);
+        if (instance) {
+          // If shape or color change, the simplest reliable way in this DOM architecture
+          // is to recreate the entity instance entirely on the canvas.
+          workspace.unregisterEntity(event.entityId);
+          setTimeout(() => {
+            const domainEntity = canvasAdapter.getEntity(event.entityId);
+            if (domainEntity) {
+              const ep: Entity & { shape?: string, color?: string | undefined } = makeEntityProps(domainEntity.id, domainEntity.name, domainEntity.position.x, domainEntity.position.y, domainEntity.dimensions.width, domainEntity.dimensions.height, domainEntity.properties as any[]);
+              ep.shape = domainEntity.shape as any;
+              ep.color = domainEntity.color;
+              const newInstance = spawnEntity(ep, workspace, { value: DEFAULT_GLOBAL_CONFIG }, canvasAdapter);
+              workspace.registerEntity(newInstance);
+            }
+          }, 0);
         }
         break;
       }
@@ -237,7 +272,9 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
 
   // Spawn existing entities and register with workspace
   canvasAdapter.getAllEntities().forEach(domainEntity => {
-    const ep = makeEntityProps(domainEntity.id, domainEntity.name, domainEntity.position.x, domainEntity.position.y, domainEntity.dimensions.width, domainEntity.dimensions.height, domainEntity.properties as any[]);
+    const ep: Entity & { shape?: string, color?: string | undefined } = makeEntityProps(domainEntity.id, domainEntity.name, domainEntity.position.x, domainEntity.position.y, domainEntity.dimensions.width, domainEntity.dimensions.height, domainEntity.properties as any[]);
+    ep.shape = domainEntity.shape as any;
+    ep.color = domainEntity.color;
     console.log(`[CANVAS-PAGE] 🎨 Rendering entity ${domainEntity.id} at (${domainEntity.position.x}, ${domainEntity.position.y})`);
     
     const instance = spawnEntity(ep, workspace, { value: DEFAULT_GLOBAL_CONFIG }, canvasAdapter);

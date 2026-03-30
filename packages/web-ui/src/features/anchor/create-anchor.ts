@@ -1,6 +1,6 @@
+import { createSignal } from '../../core/create-signal.js';
 import type { AnchorProps, AnchorResult, AnchorState } from './types/anchor.types.js';
 export type { AnchorProps, AnchorResult, AnchorState };
-import { createSignal } from '../../core/create-signal.js';
 
 export const createAnchor = function(props: AnchorProps): AnchorResult {
   const container = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -20,39 +20,40 @@ export const createAnchor = function(props: AnchorProps): AnchorResult {
   // State-based styling
   const getStateColor = (state: AnchorState) => {
     switch (state) {
-      case 'idle': return '#6b7280';
+      case 'idle': return '#94a3b8'; // Lighter gray for idle so it sits nicely
       case 'hover': return '#4b5563';
       case 'dragging': return '#3b82f6';
       case 'connecting': return '#f59e0b';
       case 'connected': return '#10b981';
     }
   };
-  
+
   const getStateOpacity = (state: AnchorState) => {
     switch (state) {
-      case 'idle': return '0';
+      case 'idle': return '1';
       case 'hover': return '1';
       case 'dragging': return '1';
       case 'connecting': return '1';
       case 'connected': return '1';
     }
   };
-  
+
   const getStateRadius = (state: AnchorState) => {
     switch (state) {
-      case 'idle': return props.radius;
-      case 'hover': return props.radius + 2;
-      case 'dragging': return props.radius + 3;
-      case 'connecting': return props.radius + 2;
-      case 'connected': return props.radius;
+      case 'idle': return props.radius - 3; // Shrink more so it's unobtrusive
+      case 'hover': return props.radius + 6; // Grow much larger when hovered
+      case 'dragging': return props.radius + 6;
+      case 'connecting': return props.radius + 4;
+      case 'connected': return props.radius - 3; // Stay small when connected
     }
   };
-  
+
   const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
   circle.setAttribute('stroke', '#ffffff');
   circle.setAttribute('stroke-width', '2');
   circle.style.cursor = 'pointer';
-  circle.style.transition = 'opacity 0.15s ease, fill 0.15s ease';
+  // Avoid 'all' so cx/cy don't transition, which causes dragging lag
+  circle.style.transition = 'opacity 0.15s ease, fill 0.15s ease, r 0.15s ease';
 
   const updateCirclePosition = (pos: { x: number; y: number }) => {
     circle.setAttribute('cx', pos.x.toString());

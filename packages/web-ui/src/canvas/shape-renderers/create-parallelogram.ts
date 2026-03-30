@@ -1,6 +1,6 @@
 import { applyCommonStyles } from './apply-common-styles.js';
 
-export const createParallelogram = (width: number, height: number): SVGPolygonElement => {
+export const createParallelogram = (width: number, height: number, color?: string): SVGPolygonElement => {
   const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
   const skew = width * 0.2;
   const points = [
@@ -10,6 +10,6 @@ export const createParallelogram = (width: number, height: number): SVGPolygonEl
     `0,${height}`,
   ].join(' ');
   polygon.setAttribute('points', points);
-  applyCommonStyles(polygon);
+  applyCommonStyles(polygon, color);
   return polygon;
 };

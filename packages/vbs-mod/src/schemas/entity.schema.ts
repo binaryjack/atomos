@@ -9,6 +9,8 @@ export const entitySchema = f.object({
   createdAt:  f.number(),
   updatedAt:  f.number(),
   name:       f.string().nonempty(),
+  shape:      f.enum(['rectangle', 'diamond', 'circle', 'oval', 'parallelogram', 'chevron', 'trapeze'] as const).optional(),
+  nodeType:   f.string().optional(),
   properties: f.array(f.object({
     key:           f.string().nonempty(),
     label:         f.string(),

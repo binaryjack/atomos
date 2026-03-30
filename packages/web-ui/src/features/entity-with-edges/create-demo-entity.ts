@@ -24,13 +24,18 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
   let dragHandleElement: HTMLElement | SVGElement;
   let updateSize: (w: number, h: number) => void;
   
-  if (props.shape === 'rectangle' || !props.shape) {
+  if (props.shape === 'box' || props.shape === 'rectangle' || !props.shape) {
     const content = createEntityContent({
       entityStore: props.entityStore,
       globalConfig: props.globalConfig,
       storageProvider: props.storageProvider,
+      color: props.color,
       onDelete: () => props.workspace.unregisterEntity(props.id),
-      onSettingsClick: () => { /* TODO: open settings panel */ },
+      onSettingsClick: () => {
+        const modal = createEntitySettingsModal(props.id);
+        document.body.appendChild(modal);
+        modal.open().catch(err => console.error(err));
+      },
       onHeightChange: (h) => {
         props.dimensions.set({ width: props.dimensions.value.width, height: h });
       },
@@ -40,9 +45,10 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
     updateSize = content.updateSize;
     cleanups.push(content.cleanup.destroy);
   } else {
-    // For compact shapes (circle, diamond, etc)
+    // For compact shapes (cylinder, actor, document, note)
     const content = createCompactEntityContent({
-      shape: props.shape,
+      shape: props.shape as any,
+      color: props.color,
       entitySignal: props.entityStore.signal,
       onDoubleClick: () => {
         const modal = createEntitySettingsModal(props.id);
@@ -97,7 +103,7 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
     const edge = createEdge({
       position: side,
       entityId: props.id,
-      shape: props.shape,
+      shape: props.shape as any,
       entityPosition: props.position,
       entityDimensions: props.dimensions,
       thickness: EDGE_THICKNESS,

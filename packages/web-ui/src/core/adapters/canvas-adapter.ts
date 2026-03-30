@@ -10,12 +10,11 @@ import { createCanvasViewStore } from '../view/canvas-view-store.js'
 
 export interface CanvasAdapter {
   // Entity Operations (Domain)
-  readonly createEntity: (id: string, name: string, x?: number, y?: number, width?: number, height?: number) => void;
+  readonly createEntity: (id: string, name: string, x?: number, y?: number, width?: number, height?: number, metadata?: { shape?: string; color?: string; description?: string }) => void;
   readonly moveEntity: (entityId: string, x: number, y: number) => void;
   readonly resizeEntity: (entityId: string, width: number, height: number) => void;
   readonly updateEntityProperties: (entityId: string, properties: any[]) => void;
-  readonly updateEntityName: (entityId: string, name: string) => void;
-  readonly removeEntity: (entityId: string) => void;
+  readonly updateEntityName: (entityId: string, name: string) => void;  readonly updateEntityMetadata: (entityId: string, metadata: { name?: string; description?: string; shape?: string; color?: string }) => void;  readonly removeEntity: (entityId: string) => void;
   readonly getEntity: (entityId: string) => DomainEntity | undefined;
   readonly getAllEntities: () => readonly DomainEntity[];
   
@@ -50,8 +49,8 @@ export const createCanvasAdapter = function(): CanvasAdapter {
   const viewStore = createCanvasViewStore();
   
   // Entity Operations - Delegate to Domain Layer
-  const createEntity = function(id: string, name: string, x = 100, y = 100, width?: number, height?: number): void {
-    entityManager.createEntity(id, name, { x, y }, width && height ? { width, height } : undefined);
+  const createEntity = function(id: string, name: string, x = 100, y = 100, width?: number, height?: number, metadata?: { shape?: string; color?: string; description?: string }): void {
+    entityManager.createEntity(id, name, { x, y }, width && height ? { width, height } : undefined, metadata);
   };
   
   const moveEntity = function(entityId: string, x: number, y: number): void {
@@ -70,6 +69,10 @@ export const createCanvasAdapter = function(): CanvasAdapter {
     entityManager.updateEntityName(entityId, name);
   };
   
+  const updateEntityMetadata = function(entityId: string, metadata: { name?: string; description?: string; shape?: string; color?: string }): void {
+    entityManager.updateEntityMetadata(entityId, metadata);
+  };
+
   const removeEntity = function(entityId: string): void {
     entityManager.removeEntity(entityId);
   };
@@ -180,6 +183,7 @@ export const createCanvasAdapter = function(): CanvasAdapter {
     resizeEntity, 
     updateEntityProperties,
     updateEntityName,
+    updateEntityMetadata,
     removeEntity,
     getEntity,
     getAllEntities,

@@ -1,7 +1,7 @@
 import type { Signal } from '../../../core/types/signal.types';
 
 export interface InputProps {
-  readonly type: 'text' | 'number' | 'email' | 'password' | 'search';
+  readonly type: 'text' | 'number' | 'email' | 'password' | 'search' | 'color';
   readonly value?: string | Signal<string>;
   readonly placeholder?: string;
   readonly disabled?: boolean | Signal<boolean>;

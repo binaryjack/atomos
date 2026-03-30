@@ -1,4 +1,4 @@
-import type { Entity, EntityShape } from '@vbs/vbs-mod';
+import type { Entity } from '@vbs/vbs-mod';
 import type { EntityStore } from '../../../core/create-entity-store.js';
 import type { IStorageProvider } from '../../../core/storage/types/storage-provider.types.js';
 import type { EntityInstance } from '../../../core/types/entity-instance.types.js';
@@ -8,7 +8,8 @@ import type { WorkspaceManager } from '../../../core/types/workspace-manager.typ
 
 export interface DemoEntityProps {
   readonly id: string;
-  readonly shape?: EntityShape | undefined;
+  readonly shape?: string | undefined;
+  readonly color?: string | undefined;
   readonly entityStore: EntityStore;
   readonly globalConfig: Signal<GlobalConfig>;
   readonly position: Signal<{ x: number; y: number }>;

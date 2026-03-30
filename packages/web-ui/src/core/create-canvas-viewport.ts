@@ -1,6 +1,6 @@
+import { createLocalStoragePersistence, readLocalStorage } from './create-local-storage-persistence.js';
 import { createSignal } from './create-signal.js';
 import type { Signal } from './types/signal.types.js';
-import { createLocalStoragePersistence, readLocalStorage } from './create-local-storage-persistence.js';
 
 export const CANVAS_SIZE = 4000;
 export const ZOOM_MIN = 0.1;
@@ -17,6 +17,7 @@ export interface CanvasViewport {
   /** SVG transform string for the content group */
   readonly transform: () => string;
   readonly panBy: (dx: number, dy: number) => void;
+  readonly panTo: (x: number, y: number) => void;
   readonly zoomTo: (zoom: number, originX?: number, originY?: number) => void;
   readonly zoomBy: (delta: number, originX?: number, originY?: number) => void;
   readonly reset: () => void;
@@ -48,6 +49,10 @@ export const createCanvasViewport = function(container: HTMLElement, svgElement?
   const panBy = (dx: number, dy: number) => {
     const { pan, zoom } = state.value;
     state.set({ pan: { x: pan.x + dx, y: pan.y + dy }, zoom });
+  };
+
+  const panTo = (x: number, y: number) => {
+    state.set({ ...state.value, pan: { x, y } });
   };
 
   const zoomTo = (zoom: number, originX = 0, originY = 0) => {
@@ -131,6 +136,7 @@ export const createCanvasViewport = function(container: HTMLElement, svgElement?
     state,
     transform,
     panBy,
+    panTo,
     zoomTo,
     zoomBy,
     reset,

@@ -52,7 +52,10 @@ export const createEntitySettingsModal = function(entityId: string): VbsModal {
     fieldCleanups = [];
 
     const schemaShape: Record<string, any> = {
-      name: f.string().min(1, 'Name is required')
+      name: f.string().min(1, 'Name is required'),
+      description: f.string().optional(),
+      shape: f.enum(['box', 'cylinder', 'actor', 'document', 'note']).optional(),
+      color: f.string().optional()
     };
     
     // Dynamically build schema based on entity's properties
@@ -69,7 +72,10 @@ export const createEntitySettingsModal = function(entityId: string): VbsModal {
     const schema = f.object(schemaShape);
 
     const defaultValues: Record<string, any> = {
-      name: preservedData?.name ?? liveEntity.name
+      name: preservedData?.name ?? liveEntity.name,
+      description: preservedData?.description ?? liveEntity.description ?? '',
+      shape: preservedData?.shape ?? liveEntity.shape ?? 'box',
+      color: preservedData?.color ?? liveEntity.color ?? '#1e293b'
     };
     
     liveEntity.properties.forEach(prop => {
@@ -91,8 +97,44 @@ export const createEntitySettingsModal = function(entityId: string): VbsModal {
       placeholder: 'Enter entity name'
     });
 
+    const descField = createFormularTextarea({
+      fieldName: 'description',
+      form: form as unknown as IFormular<IObjectShape>,
+      label: 'Description',
+      placeholder: 'Enter entity description'
+    });
+
+    const shapeField = createFormularDropdown({
+      fieldName: 'shape',
+      form: form as unknown as IFormular<IObjectShape>,
+      label: 'Shape Type',
+      options: [
+        { label: 'Box', value: 'box' },
+        { label: 'Database / Cylinder', value: 'cylinder' },
+        { label: 'Actor', value: 'actor' },
+        { label: 'Document', value: 'document' },
+        { label: 'Note / Comment', value: 'note' }
+      ]
+    });
+
+    const colorField = createFormularInput({
+      fieldName: 'color',
+      form: form as unknown as IFormular<IObjectShape>,
+      label: 'Background Color',
+      type: 'color'
+    });
+
     body.appendChild(nameField.element);
-    fieldCleanups.push(nameField.cleanup.destroy);
+    body.appendChild(descField.element);
+    body.appendChild(shapeField.element);
+    body.appendChild(colorField.element);
+    
+    fieldCleanups.push(
+      nameField.cleanup.destroy, 
+      descField.cleanup.destroy,
+      shapeField.cleanup.destroy,
+      colorField.cleanup.destroy
+    );
 
     // Render property fields dynamically
     liveEntity.properties.forEach(prop => {
@@ -157,8 +199,11 @@ export const createEntitySettingsModal = function(entityId: string): VbsModal {
 
         const manualName = (currentForm.getField('name')?.input as any)?.value;
         const finalName = data.name || manualName || liveEntity.name;
+        const description = data.description !== undefined ? data.description : liveEntity.description;
+        const shape = data.shape || liveEntity.shape;
+        const color = data.color || liveEntity.color;
 
-        adapter.updateEntityName(entityId, finalName);
+        adapter.updateEntityMetadata(entityId, { name: finalName, description, shape, color });
         
         const updatedProperties = liveEntity.properties.map(prop => ({
           ...prop,

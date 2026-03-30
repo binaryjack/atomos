@@ -1,6 +1,6 @@
-export const applyCommonStyles = (element: SVGElement): void => {
+export const applyCommonStyles = (element: SVGElement, color?: string | undefined): void => {
   const style = `
-    fill: #1e293b;
+    fill: ${color || '#1e293b'};
     stroke: #3b82f6;
     stroke-width: 2;
     transition: all 0.2s ease-in-out;

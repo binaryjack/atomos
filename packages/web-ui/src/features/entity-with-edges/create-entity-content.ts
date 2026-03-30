@@ -22,6 +22,7 @@ export interface EntityContentProps {
   readonly storageProvider: IStorageProvider<Entity>;
   readonly onDelete: (entityId: string) => void;
   readonly onSettingsClick: (entityId: string) => void;
+  readonly color?: string | undefined;
   /** Called whenever the required height changes so SVG geometry can update */
   readonly onHeightChange: (height: number) => void;
 }
@@ -52,7 +53,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
     'width:100%', 'height:100%',
     'overflow:hidden',
     'border-radius:6px',
-    'background:#0f172a',
+    `background:${props.color || '#0f172a'}`,
     'border:1.5px solid #334155',
     'box-sizing:border-box',
     'font-family:system-ui,sans-serif',

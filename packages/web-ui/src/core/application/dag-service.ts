@@ -30,7 +30,11 @@ export const deserializeDAG = function(
 
     // Restore Entities
     data.nodes.forEach(node => {
-      entityManager.createEntity(node.id, node.name, node.position, node.dimensions);
+      entityManager.createEntity(node.id, node.name, node.position, node.dimensions, {
+        shape: (node as any).shape,
+        color: (node as any).color,
+        description: (node as any).description
+      });
       entityManager.updateEntityProperties(node.id, node.properties);
     });
 

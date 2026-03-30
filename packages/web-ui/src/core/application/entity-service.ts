@@ -4,16 +4,19 @@
  */
 import type { Property } from '@vbs/vbs-mod';
 import type { DomainEntity, DomainLink, EntityDimensions, EntityPosition, EntityRepository, LinkRepository } from '../domain/entity-aggregate.js';
-import { createEntityAggregate, createLinkAggregate, moveEntity, resizeEntity, updateEntityName, updateEntityProperties, updateLinkProperties, updateLinkEndpoints } from '../domain/entity-aggregate.js';
+import { createEntityAggregate, createLinkAggregate, moveEntity, resizeEntity, updateEntityMetadata, updateEntityName, updateEntityProperties, updateLinkEndpoints, updateLinkProperties } from '../domain/entity-aggregate.js';
 
-// Commands (Write Operations)
+// ...
 export interface CreateEntityCommand {
   readonly type: 'CreateEntity';
   readonly id: string;
   readonly name: string;
   readonly position?: EntityPosition;
-  readonly dimensions?: EntityDimensions;
-}
+  readonly dimensions?: EntityDimensions;  readonly metadata?: {
+    readonly shape?: string;
+    readonly color?: string;
+    readonly description?: string;
+  };}
 
 export interface MoveEntityCommand {
   readonly type: 'MoveEntity';
@@ -39,6 +42,17 @@ export interface UpdateEntityNameCommand {
   readonly name: string;
 }
 
+export interface UpdateEntityMetadataCommand {
+  readonly type: 'UpdateEntityMetadata';
+  readonly entityId: string;
+  readonly metadata: {
+    readonly name?: string;
+    readonly description?: string;
+    readonly shape?: string;
+    readonly color?: string;
+  };
+}
+
 export interface RemoveEntityCommand {
   readonly type: 'RemoveEntity';
   readonly entityId: string;
@@ -50,6 +64,7 @@ export type EntityCommand =
   | ResizeEntityCommand
   | UpdateEntityPropertiesCommand
   | UpdateEntityNameCommand
+  | UpdateEntityMetadataCommand
   | RemoveEntityCommand;
 
 // Queries (Read Operations)
@@ -147,6 +162,17 @@ export interface EntityNameUpdatedEvent {
   readonly name: string;
 }
 
+export interface EntityMetadataUpdatedEvent {
+  readonly type: 'EntityMetadataUpdated';
+  readonly entityId: string;
+  readonly metadata: {
+    readonly name?: string;
+    readonly description?: string;
+    readonly shape?: string;
+    readonly color?: string;
+  };
+}
+
 export interface EntityRemovedEvent {
   readonly type: 'EntityRemoved';
   readonly entityId: string;
@@ -158,6 +184,7 @@ export type EntityEvent =
   | EntityResizedEvent 
   | EntityPropertiesUpdatedEvent
   | EntityNameUpdatedEvent
+  | EntityMetadataUpdatedEvent
   | EntityRemovedEvent;
 
 // Link Event System for UI Updates
@@ -220,7 +247,8 @@ export const createEntityApplicationService = function(
           command.id,
           command.name, 
           command.position,
-          command.dimensions
+          command.dimensions,
+          command.metadata
         );
         repository.save(entity);
         eventBus.publish({ type: 'EntityCreated', entity });
@@ -279,6 +307,20 @@ export const createEntityApplicationService = function(
           type: 'EntityNameUpdated',
           entityId: command.entityId,
           name: command.name
+        });
+        break;
+      }
+      
+      case 'UpdateEntityMetadata': {
+        const entity = repository.getById(command.entityId);
+        if (!entity) throw new Error(`Entity ${command.entityId} not found`);
+        
+        const updatedEntity = updateEntityMetadata(entity, command.metadata);
+        repository.save(updatedEntity);
+        eventBus.publish({
+          type: 'EntityMetadataUpdated',
+          entityId: command.entityId,
+          metadata: command.metadata
         });
         break;
       }
