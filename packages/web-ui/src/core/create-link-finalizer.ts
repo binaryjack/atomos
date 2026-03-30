@@ -2,13 +2,13 @@ import type { EdgePosition } from '../features/edge/types/edge-position.types.js
 import { openLinkSettingsModal } from '../features/modal/create-link-settings-modal.js';
 import { getCanvasAdapter } from './adapters/canvas-adapter.js';
 import { bezierMidpoint } from './bezier.js';
+import { registry } from './create-signal-registry.js';
+import { validateTopologicalConnection } from './domain/validate-topological-connection.js';
+import { GLOBAL_KEY } from './registry-keys.js';
+import type { GlobalConfig } from './types/global-config.types.js';
 import type { LinkManager } from './types/link-manager.types.js';
 import type { Signal } from './types/signal.types.js';
 import type { WorkspaceState } from './types/workspace-state.types.js';
-import { validateTopologicalConnection } from './domain/validate-topological-connection.js';
-import { registry } from './create-signal-registry.js';
-import { GLOBAL_KEY } from './registry-keys.js';
-import type { GlobalConfig } from './types/global-config.types.js';
 
 export interface LinkFinalizer {
   readonly finalizeLinkToAnchor: (

@@ -1,7 +1,7 @@
-import { createSignal } from './create-signal.js';
-import type { Signal } from './types/signal.types.js';
 import type { EdgePosition } from '../features/edge/types/edge.types.js';
 import { bezierPath } from './bezier.js';
+import { createSignal } from './create-signal.js';
+import type { Signal } from './types/signal.types.js';
 
 export interface LinkProps {
   readonly id: string;

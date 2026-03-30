@@ -1,7 +1,7 @@
-import type { LinkManager } from './types/link-manager.types.js';
-import type { InteractiveBehaviorManager } from './types/interactive-behavior-manager.types.js';
 import type { EdgePosition } from '../features/edge/types/edge-position.types.js';
 import type { LinkFinalizer } from './create-link-finalizer.js';
+import type { InteractiveBehaviorManager } from './types/interactive-behavior-manager.types.js';
+import type { LinkManager } from './types/link-manager.types.js';
 
 export interface LinkDrawController {
   readonly startLinkFromAnchor: (

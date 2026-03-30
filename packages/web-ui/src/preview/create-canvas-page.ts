@@ -2,8 +2,9 @@ import { createCanvasViewport } from '../core/create-canvas-viewport.js';
 import { createWorkspaceManager } from '../core/create-workspace-manager.js';
 import { createInteractiveEntityDemo } from '../features/entity-with-edges/create-interactive-entity-demo.js';
 
-import { getEntityManager } from '../core/presentation/entity-manager.js';
 import { autoLayoutDAG, deserializeDAG, serializeDAG } from '../core/application/dag-service.js';
+import { getEntityManager } from '../core/presentation/entity-manager.js';
+import { createDAGObserver } from '../core/adapters/dag-observer.js';
 
 export const createCanvasPage = function() {
   const cleanups: Array<() => void> = [];
@@ -159,6 +160,28 @@ export const createCanvasPage = function() {
   floatMenu.appendChild(importBtn);
   floatMenu.appendChild(autoLayoutBtn);
   canvasWrap.appendChild(floatMenu);
+
+  // Phase 4: Output Adapter / Framework Consumer Test
+  const outputPanel = document.createElement('div');
+  outputPanel.style.cssText = 'position:absolute;bottom:16px;right:16px;width:300px;background:#1e293b;border:1px solid #334155;border-radius:6px;padding:12px;color:#f1f5f9;font-family:monospace;font-size:11px;max-height:200px;overflow-y:auto;z-index:20;box-shadow:0 10px 15px -3px rgba(0,0,0,0.2);';
+  
+  const outputTitle = document.createElement('div');
+  outputTitle.textContent = 'Live Framework DAG Output (Observer)';
+  outputTitle.style.cssText = 'font-weight:bold;margin-bottom:8px;color:#38bdf8;';
+  outputPanel.appendChild(outputTitle);
+
+  const outputContent = document.createElement('pre');
+  outputPanel.appendChild(outputContent);
+  canvasWrap.appendChild(outputPanel);
+
+  const dagObserver = createDAGObserver(getEntityManager());
+  const unsubscribeObserver = dagObserver.subscribe((dag) => {
+    outputContent.textContent = `Nodes: ${dag.nodes.length}\nEdges: ${dag.edges.length}\nLast Updated: ${new Date().toLocaleTimeString()}\n\nRaw DAG Head:\n${JSON.stringify(dag.nodes.slice(0, 1), null, 2)}`;
+  });
+  cleanups.push(() => {
+    unsubscribeObserver();
+    dagObserver.cleanup();
+  });
 
   return {
     element: root,

@@ -24,3 +24,8 @@ export type { LinkFinalizer } from './create-link-finalizer.js';
 export type { CanvasEventHandler } from './create-canvas-event-handler.js';
 export { serializeDAG, deserializeDAG, autoLayoutDAG } from './application/dag-service.js';
 export type { DAGExport } from './application/dag-service.js';
+
+export { createDAGObserver } from './adapters/dag-observer.js';
+export type { DAGObserver, DAGSubscriber } from './adapters/dag-observer.js';
+export { createReactDAGHook } from './adapters/react-hook-adapter.js';
+export type { DAGReactHookAdapter } from './adapters/react-hook-adapter.js';

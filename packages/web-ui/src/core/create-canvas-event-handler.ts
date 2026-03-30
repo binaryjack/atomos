@@ -1,20 +1,20 @@
-import type { Signal } from './types/signal.types.js';
-import type { WorkspaceState } from './types/workspace-state.types.js';
-import type { EntityInstance } from './types/entity-instance.types.js';
-import type { EntitySpawnFactory } from './types/entity-spawn-factory.types.js';
-import type { WorkspaceManager } from './types/workspace-manager.types.js';
-import type { InteractiveBehaviorManager } from './types/interactive-behavior-manager.types.js';
 import type { EdgePosition } from '../features/edge/types/edge-position.types.js';
+import { getCanvasAdapter } from './adapters/canvas-adapter.js';
+import { testEdgeHit } from './create-edge-hit-tester.js';
 import type { LinkDrawController } from './create-link-draw-controller.js';
 import type { LinkFinalizer } from './create-link-finalizer.js';
 import { computeAnchorWorldPos } from './create-link-finalizer.js';
-import { testEdgeHit } from './create-edge-hit-tester.js';
-import { ENTITY_DEFAULT_WIDTH, ENTITY_DEFAULT_HEIGHT } from './entity-defaults.js';
-import { getCanvasAdapter } from './adapters/canvas-adapter.js';
-import { validateTopologicalConnection } from './domain/validate-topological-connection.js';
 import { registry } from './create-signal-registry.js';
+import { validateTopologicalConnection } from './domain/validate-topological-connection.js';
+import { ENTITY_DEFAULT_HEIGHT, ENTITY_DEFAULT_WIDTH } from './entity-defaults.js';
 import { GLOBAL_KEY } from './registry-keys.js';
+import type { EntityInstance } from './types/entity-instance.types.js';
+import type { EntitySpawnFactory } from './types/entity-spawn-factory.types.js';
 import type { GlobalConfig } from './types/global-config.types.js';
+import type { InteractiveBehaviorManager } from './types/interactive-behavior-manager.types.js';
+import type { Signal } from './types/signal.types.js';
+import type { WorkspaceManager } from './types/workspace-manager.types.js';
+import type { WorkspaceState } from './types/workspace-state.types.js';
 
 export interface CanvasEventHandler {
   readonly handleCanvasMouseMove: (event: MouseEvent) => void;
