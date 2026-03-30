@@ -201,12 +201,40 @@ export const createValidationModal = function(
     };
 
     const saveHandler = async () => {
-      const isValid = await form.validateForm();
-      if (!isValid) {
-        return;
+      let isValid = false;
+      try {
+        isValid = await form.validateForm();
+      } catch (err) {
+        console.warn('[VALIDATION-MODAL] validateForm threw an error, trying to extract anyway:', err);
       }
 
-      const data = form.getData() as any;
+      if (!isValid) {
+        console.warn('[VALIDATION-MODAL] Form validation failed, proceeding with extracted data...');
+      }
+
+      let data: any = {};
+      try {
+        data = form.getData() || {};
+      } catch (err) {
+        console.warn('[VALIDATION-MODAL] form.getData() threw:', err);
+      }
+      
+      // Fallback: manually extract
+      try {
+        // Safe manual extraction by field
+        const extract = (field: string) => {
+           const val = (form.getField(field)?.input as any)?.value;
+           if (val !== undefined && val !== null) data[field] = val;
+        };
+        extract('required');
+        extract('minLength');
+        extract('maxLength');
+        extract('pattern');
+        extract('min');
+        extract('max');
+      } catch(err) {
+        console.warn('[VALIDATION-MODAL] Manual extraction failed:', err);
+      }
       const validation: IValidationOptions = {};
 
       if (data.required === true) {

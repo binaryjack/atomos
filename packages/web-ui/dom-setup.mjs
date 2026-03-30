@@ -1,0 +1,10 @@
+import { JSDOM } from "jsdom";
+const dom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`, { url: 'http://localhost' });
+global.window = dom.window;
+global.document = dom.window.document;
+global.HTMLElement = dom.window.HTMLElement;
+global.CustomEvent = dom.window.CustomEvent;
+global.Event = dom.window.Event;
+global.customElements = dom.window.customElements;
+global.requestAnimationFrame = dom.window.requestAnimationFrame;
+global.localStorage = { store: {}, getItem: function(key) { return this.store[key] || null; }, setItem: function(key, val) { this.store[key] = val; }, removeItem: function(key) { delete this.store[key]; }, clear: function() { this.store = {}; } };

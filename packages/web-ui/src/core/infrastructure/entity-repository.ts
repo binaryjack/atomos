@@ -1,191 +1,121 @@
-/**
+﻿/**
  * Infrastructure Layer - Repository Implementation
- * Handles persistence with proper error handling and caching
+ * Handles persistence through the Global Redux Store
  */
 import type { DomainEntity, DomainLink, EntityRepository, LinkRepository } from '../domain/entity-aggregate.js';
+import { getGlobalReduxStore } from '../create-redux-store.js';
 
-const STORAGE_KEY = 'vbe2:entities';
-const LINKS_STORAGE_KEY = 'vbe2:links';
-
-export const createInMemoryEntityRepository = function(): EntityRepository {
-  const entities = new Map<string, DomainEntity>();
-  
-  const getById = function(id: string): DomainEntity | undefined {
-    const entity = entities.get(id);
-    console.log('[ENTITY-REPOSITORY] 🔍 Get entity by ID:', id, '→', entity ? 'FOUND' : 'NOT FOUND');
-    if (!entity) {
-      console.log('[ENTITY-REPOSITORY] 🗂️ Available entity IDs:', Array.from(entities.keys()));
-    }
-    return entity;
-  };
-  
-  const save = function(entity: DomainEntity): void {
-    entities.set(entity.id, entity);
-  };
-  
-  const remove = function(id: string): void {
-    entities.delete(id);
-  };
-  
-  const getAll = function(): readonly DomainEntity[] {
-    return Array.from(entities.values());
-  };
-  
-  return { getById, save, remove, getAll };
-};
+const SCHEMA_ID = 'schema-default';
 
 export const createPersistedEntityRepository = function(): EntityRepository {
-  const memoryRepo = createInMemoryEntityRepository();
-  
-  // Load from localStorage on initialization
-  const loadFromStorage = function(): void {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const entities = JSON.parse(stored) as DomainEntity[];
-        entities.forEach(entity => memoryRepo.save(entity));
-        console.log(`[EntityRepository] ✓ Loaded ${entities.length} entities from storage`);
-      }
-    } catch (error) {
-      console.error('[EntityRepository] ✗ Failed to load from storage:', error);
+  const store = getGlobalReduxStore();
+
+  const getById = function(id: string): DomainEntity | undefined {
+    const state = store.get_state();
+    const schema = state.schemas[SCHEMA_ID];
+    if (!schema) return undefined;
+    return schema.entities.find((e: any) => e.id === id) as unknown as DomainEntity;
+  };
+
+  const save = function(entity: DomainEntity): void {
+    const state = store.get_state();
+    const schema = state.schemas[SCHEMA_ID];
+    const exists = schema?.entities.some((e: any) => e.id === entity.id);
+
+    // Convert DomainEntity to Entity
+    const reduxEntity = {
+      ...entity,
+      code: entity.name, // Fallback if necessary
+      edges: []          // Default requirement for Redux 'Entity' type
+    } as any;
+
+    if (exists) {
+      store.dispatch({
+        type: 'entity-updated',
+        schema_id: SCHEMA_ID,
+        entity: reduxEntity
+      });
+    } else {
+      store.dispatch({
+        type: 'entity-added',
+        schema_id: SCHEMA_ID,
+        entity: reduxEntity
+      });
     }
   };
-  
-  // Save to localStorage (debounced)
-  let saveTimer: number | undefined;
-  const SAVE_DELAY = 300; // ms
-  
-  const saveToStorage = function(): void {
-    if (saveTimer) clearTimeout(saveTimer);
-    
-    saveTimer = window.setTimeout(() => {
-      try {
-        const entities = memoryRepo.getAll();
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(entities));
-        console.log(`[EntityRepository] ✓ Saved ${entities.length} entities to storage`);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-          console.error('[EntityRepository] ✗ Storage quota exceeded');
-          // Could implement cleanup strategy here
-        } else {
-          console.error('[EntityRepository] ✗ Failed to save to storage:', error);  
-        }
-      }
-      saveTimer = undefined;
-    }, SAVE_DELAY);
-  };
-  
-  // Initialize
-  loadFromStorage();
-  
-  const getById = memoryRepo.getById;
-  
-  const save = function(entity: DomainEntity): void {
-    memoryRepo.save(entity);
-    saveToStorage();
-  };
-  
-  const remove = function(id: string): void {
-    memoryRepo.remove(id);
-    saveToStorage();
-  };
-  
-  const getAll = memoryRepo.getAll;
-  
-  return { getById, save, remove, getAll };
-};
 
-export const createInMemoryLinkRepository = function(): LinkRepository {
-  const links = new Map<string, DomainLink>();
-  
-  const getById = function(id: string): DomainLink | undefined {
-    return links.get(id);
-  };
-  
-  const save = function(link: DomainLink): void {
-    links.set(link.id, link);
-  };
-  
   const remove = function(id: string): void {
-    links.delete(id);
+    store.dispatch({ type: 'entity-removed', schema_id: SCHEMA_ID, entity_id: id });
   };
-  
-  const getAll = function(): readonly DomainLink[] {
-    return Array.from(links.values());
+
+  const getAll = function(): readonly DomainEntity[] {
+    const state = store.get_state();
+    const schema = state.schemas[SCHEMA_ID];
+    if (!schema) return [];
+    return schema.entities as unknown as DomainEntity[];
   };
-  
+
   return { getById, save, remove, getAll };
 };
 
 export const createPersistedLinkRepository = function(): LinkRepository {
-  const memoryRepo = createInMemoryLinkRepository();
-  
-  // Load from localStorage on initialization
-  const loadFromStorage = function(): void {
-    try {
-      const stored = localStorage.getItem(LINKS_STORAGE_KEY);
-      if (stored) {
-        const links = JSON.parse(stored) as DomainLink[];
-        links.forEach(link => memoryRepo.save(link));
-        console.log(`[LinkRepository] ✓ Loaded ${links.length} links from storage`);
-      }
-    } catch (error) {
-      console.error('[LinkRepository] ✗ Failed to load from storage:', error);
-    }
-  };
-  
-  // Save to localStorage (debounced)
-  let saveTimer: number | undefined;
-  const SAVE_DELAY = 300; // ms
-  
-  const saveToStorage = function(): void {
-    if (saveTimer) clearTimeout(saveTimer);
-    
-    saveTimer = window.setTimeout(() => {
-      try {
-        const links = memoryRepo.getAll();
-        localStorage.setItem(LINKS_STORAGE_KEY, JSON.stringify(links));
-        console.log(`[LinkRepository] ✓ Saved ${links.length} links to storage`);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-          console.error('[LinkRepository] ✗ Storage quota exceeded');
-          // Could implement cleanup strategy here
-        } else {
-          console.error('[LinkRepository] ✗ Failed to save to storage:', error);  
-        }
-      }
-      saveTimer = undefined;
-    }, SAVE_DELAY);
-  };
-  
-  // Initialize
-  loadFromStorage();
-  console.log('[LINK-REPOSITORY] 🔧 Persisted link repository initialized');
-  
+  const store = getGlobalReduxStore();
+
   const getById = function(id: string): DomainLink | undefined {
-    const link = memoryRepo.getById(id);
-    console.log('[LINK-REPOSITORY] 🔍 Get link by ID:', id, '→', link ? 'found' : 'not found');
-    return link;
+    const state = store.get_state();
+    const schema = state.schemas[SCHEMA_ID];
+    if (!schema) return undefined;
+    
+    const link = schema.links.find((l: any) => l.id === id);
+    if (!link) return undefined;
+    
+    return {
+      id: link.id,
+      sourceAnchorId: link.leftAnchorId || 'center',
+      targetAnchorId: link.rightAnchorId || 'center',
+      sourceEntityId: link.leftEntityId,
+      targetEntityId: link.rightEntityId,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
   };
-  
+
   const save = function(link: DomainLink): void {
-    console.log('[LINK-REPOSITORY] 💾 Saving link:', link.id);
-    memoryRepo.save(link);
-    saveToStorage();
+    store.dispatch({
+      type: 'link-created',
+      schema_id: SCHEMA_ID,
+      link_id: link.id,
+      from_id: link.sourceEntityId,
+      to_id: link.targetEntityId,
+      from_anchor: link.sourceAnchorId,
+      to_anchor: link.targetAnchorId
+    });
   };
-  
+
   const remove = function(id: string): void {
-    console.log('[LINK-REPOSITORY] 🗑️ Removing link:', id);
-    memoryRepo.remove(id);
-    saveToStorage();
+    store.dispatch({
+      type: 'link-removed',
+      schema_id: SCHEMA_ID,
+      link_id: id
+    });
   };
-  
+
   const getAll = function(): readonly DomainLink[] {
-    const links = memoryRepo.getAll();
-    console.log('[LINK-REPOSITORY] 📋 Get all links:', links.length, 'total');
-    return links;
+    const state = store.get_state();
+    const schema = state.schemas[SCHEMA_ID];
+    if (!schema) return [];
+    
+    return schema.links.map((l: any) => ({
+      id: l.id,
+      sourceAnchorId: l.leftAnchorId || 'center',
+      targetAnchorId: l.rightAnchorId || 'center',
+      sourceEntityId: l.leftEntityId,
+      targetEntityId: l.rightEntityId,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    }));
   };
-  
+
   return { getById, save, remove, getAll };
 };
 
@@ -197,10 +127,10 @@ import type { ApplicationEvent, EventBus } from '../application/entity-service.j
 
 export const createEventBus = function(): EventBus {
   const handlers = new Set<(event: ApplicationEvent) => void>();
-  
+
   const publish = function(event: ApplicationEvent): void {
     console.log(`[EventBus] Publishing ${event.type}:`, event);
-    
+
     // Handle events asynchronously to prevent cascading updates
     setTimeout(() => {
       handlers.forEach(handler => {
@@ -212,16 +142,16 @@ export const createEventBus = function(): EventBus {
       });
     }, 0);
   };
-  
+
   const subscribe = function(handler: (event: ApplicationEvent) => void): () => void {
     handlers.add(handler);
     console.log(`[EventBus] Subscribed handler (total: ${handlers.size})`);
-    
+
     return function unsubscribe() {
       handlers.delete(handler);
       console.log(`[EventBus] Unsubscribed handler (total: ${handlers.size})`);
     };
   };
-  
+
   return { publish, subscribe };
 };

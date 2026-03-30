@@ -128,9 +128,9 @@ const reduce_state = function(state: ReduxState, action: ReduxAction): ReduxStat
         entities: [],
         links: []
       };
-      
+
       const link: LinkProps = {
-        id: `link-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: action.link_id || `link-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         leftEntityId: action.from_id,
         rightEntityId: action.to_id,
         leftAnchorId: action.from_anchor || 'center',
@@ -257,6 +257,15 @@ export const create_redux_store = function(): ReduxStore {
 
   // Load initial state
   load();
-  
+
   return { get_state, dispatch, subscribe };
+};
+
+let globalReduxStore: ReduxStore | null = null;
+
+export const getGlobalReduxStore = function(): ReduxStore {
+  if (!globalReduxStore) {
+    globalReduxStore = create_redux_store();
+  }
+  return globalReduxStore;
 };

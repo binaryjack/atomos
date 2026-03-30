@@ -22,13 +22,13 @@ export interface PropertySettingsModalProps {
 export const createPropertySettingsModal = function(
   props: PropertySettingsModalProps
 ): VbsModal {
-  const initialProperty = selectPropertyByKey(props.entityId, props.propertyKey);
-  if (!initialProperty) throw new Error(`Property ${props.propertyKey} not found`);
+  const property = selectPropertyByKey(props.entityId, props.propertyKey);
+  if (!property) throw new Error(`Property ${props.propertyKey} not found`);
 
   const modal = document.createElement('vbs-modal') as VbsModal;
   modal.style.setProperty('--vbs-modal-width', '480px');
 
-  let currentValidation = initialProperty.validation;
+  let currentValidation = property.validation;
   let isInitialized = false;
   let currentForm: IFormular<IObjectShape> | null = null;
   let fieldCleanups: Array<() => void> = [];
@@ -38,7 +38,7 @@ export const createPropertySettingsModal = function(
 
   // Header
   const header = document.createElement('vbs-modal-header');
-  header.textContent = `Property: ${initialProperty.label}`;
+  header.textContent = `Property: ${property.label}`;
   header.setAttribute('slot', 'header');
 
   // Body - initially empty, will be populated on first open
@@ -59,12 +59,6 @@ export const createPropertySettingsModal = function(
     console.log('[PROPERTY-MODAL] Initializing form with FormularManager, preserved data:', preservedData);
     
     try {
-      const liveProperty = selectPropertyByKey(props.entityId, props.propertyKey);
-      if (!liveProperty) throw new Error(`Property ${props.propertyKey} not found`);
-
-      // Update header just in case label changed
-      header.textContent = `Property: ${liveProperty.label}`;
-
       // Clear existing UI
       body.innerHTML = '';
       footer.innerHTML = '';
@@ -72,18 +66,18 @@ export const createPropertySettingsModal = function(
       fieldCleanups = [];
 
       const schema = f.object({
-        label: f.string().optional(),
-        dataType: f.string().optional(),
-        componentType: f.string().optional(),
+        label: f.string().min(1, 'Label is required'),
+        dataType: f.string(),
+        componentType: f.string(),
       });
 
       // Use FormularManager for safe form creation
       currentForm = await formManager.createFormForModal(modal, {
         schema,
         defaultValues: {
-          label: preservedData?.label ?? liveProperty.label,
-          dataType: preservedData?.dataType ?? liveProperty.dataType,
-          componentType: preservedData?.componentType ?? liveProperty.componentType,
+          label: preservedData?.label ?? property.label,
+          dataType: preservedData?.dataType ?? property.dataType,
+          componentType: preservedData?.componentType ?? property.componentType,
         }
       }) as unknown as IFormular<IObjectShape>;
 
@@ -216,74 +210,36 @@ export const createPropertySettingsModal = function(
     saveBtn.textContent = 'Save';
     saveBtn.className = 'primary';
     saveBtn.addEventListener('click', async () => {
-      console.log('[PROPERTY-MODAL-DEBUG] Save clicked! Validating form...', { entityId: props.entityId, propertyKey: props.propertyKey });
-
       if (!currentForm) {
-        console.warn('[PROPERTY-MODAL-DEBUG] No form available for validation');
+        console.warn('[PROPERTY-MODAL] No form available for validation');
         return;
       }
 
-      let isValid = false;
-      try {
-        isValid = await currentForm.validateForm();
-      } catch (err) {
-        console.warn('[PROPERTY-MODAL-DEBUG] validateForm threw an error, trying to extract anyway:', err);
-      }
-      
+      const isValid = await currentForm.validateForm();
       if (!isValid) {
-        console.warn('[PROPERTY-MODAL-DEBUG] Form validation failed. Proceeding anyway by extracting what we have...');
+        return;
       }
 
-      let data: any = {};
-      try {
-        data = currentForm.getData() || {};
-      } catch (err) {
-        console.error('[PROPERTY-MODAL-DEBUG] Error getting form data:', err);
-      }
-      
-      // FALLBACK: Manually extract directly from the registered fields
-      // Formular.getData() can sometimes drop fields if they aren't fully validated or pristine.
-      try {
-        const manualLabel = (currentForm.getField('label')?.input as any)?.value;
-        const manualDataType = (currentForm.getField('dataType')?.input as any)?.value;
-        const manualComponentType = (currentForm.getField('componentType')?.input as any)?.value;
-        
-        if (manualLabel !== undefined) data.label = manualLabel;
-        if (manualDataType !== undefined) data.dataType = manualDataType;
-        if (manualComponentType !== undefined) data.componentType = manualComponentType;
-      } catch (err) {
-        console.warn('[PROPERTY-MODAL-DEBUG] Manual extraction failed:', err);
-      }
+      const data = currentForm.getData();
 
-      console.log('[PROPERTY-MODAL-DEBUG] Final form data retrieved:', data);
-
-      // Update via Clean Architecture Adapter
+      // Update via Redux
       const entityToUpdate = selectEntityById(props.entityId);
-      console.log('[PROPERTY-MODAL-DEBUG] Entity to update found?', !!entityToUpdate, entityToUpdate);
-      
       if (entityToUpdate) {
-        const liveProperty = entityToUpdate.properties.find((p: any) => p.key === props.propertyKey);
-        console.log('[PROPERTY-MODAL-DEBUG] Live property found?', !!liveProperty, liveProperty);
-        
-        if (!liveProperty) {
-          console.warn('[PROPERTY-MODAL-DEBUG] Aborting. liveProperty not found for key:', props.propertyKey);
-          return;
-        }
-
-        const newProperties = entityToUpdate.properties.map((p: any) =>
-          p.key === props.propertyKey ? {
-            ...p,
-            label: String(data.label ?? liveProperty.label),
-            dataType: String(data.dataType ?? liveProperty.dataType) as DataType,
-            componentType: String(data.componentType ?? liveProperty.componentType) as any,
-            ...(currentValidation !== undefined ? { validation: currentValidation } : {})
+        const newProperties = entityToUpdate.properties.map((p: any) => 
+          p.key === props.propertyKey ? { 
+            ...p, 
+            label: String(data.label ?? property.label),
+            dataType: String(data.dataType ?? property.dataType) as DataType, 
+            componentType: String(data.componentType ?? property.componentType) as any,
+            ...(currentValidation !== undefined ? { validation: currentValidation } : {}) 
           } : p
         );
 
-        console.log('[PROPERTY-MODAL-DEBUG] Dispatching updateEntityProperties to Clean Architecture. New props:', newProperties);
-        getCanvasAdapter().updateEntityProperties(props.entityId, newProperties as Property[]);
-      } else {
-        console.warn('[PROPERTY-MODAL-DEBUG] Aborting. entityToUpdate not found for id:', props.entityId);
+        getGlobalReduxStore().dispatch({
+          type: 'entity-updated',
+          schema_id: 'schema-default',
+          entity: { ...entityToUpdate, properties: newProperties }
+        });
       }
 
       // Clean up before closing
@@ -328,25 +284,14 @@ export const createPropertySettingsModal = function(
 
   // Override modal's close method to ensure proper cleanup
   const originalClose = modal.close.bind(modal);
-  modal.close = function(result?: any) {
+  modal.close = function() {
     console.log('[PROPERTY-MODAL] Closing modal - cleaning up with FormularManager');
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
     fieldCleanups.forEach(fn => fn());
     fieldCleanups = [];
     formManager.cleanupModal(modal);
     currentForm = null;
-    return originalClose(result);
+    return originalClose();
   };
-
-  // Ensure DOM is completely clean after animation finishes
-  modal.addEventListener('vbs-modal-closed', () => {
-    if (modal.parentElement) {
-      modal.parentElement.removeChild(modal);
-    }
-  });
 
   return modal;
 };
-

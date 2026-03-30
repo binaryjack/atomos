@@ -50,15 +50,18 @@ const spawnEntity = (
 ): EntityInstance => {
   console.log(`[CANVAS-PAGE] 🎨 Spawning entity ${entityProps.id} through CLEAN ARCHITECTURE - No cascading stores!`);
   
-  // Initialize entity in clean domain layer
-  adapter.createEntity(
-    entityProps.id, 
-    entityProps.name, 
-    entityProps.position.x, 
-    entityProps.position.y,
-    entityProps.dimensions.width,
-    entityProps.dimensions.height
-  );
+  // Initialize entity in clean domain layer if it doesn't exist
+  const existingEntity = adapter.getEntity(entityProps.id);
+  if (!existingEntity) {
+    adapter.createEntity(
+      entityProps.id, 
+      entityProps.name, 
+      entityProps.position.x, 
+      entityProps.position.y,
+      entityProps.dimensions.width,
+      entityProps.dimensions.height
+    );
+  }
   
   // Create UI-only signals (ReactiveX pattern, no domain pollution)
   const posSignal = createSignal({ x: entityProps.position.x, y: entityProps.position.y });

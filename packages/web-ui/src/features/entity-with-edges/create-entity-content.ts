@@ -83,72 +83,113 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   scrollBody.style.cssText = 'flex:1;overflow-y:auto;overflow-x:hidden;';
   body.appendChild(scrollBody);
 
-  // Track row cleanup fns by property key
-  const propCleanups = new Map<string, () => void>();
+// Track existing rows by property key
+  const rowCache = new Map<string, {
+    labelSignal: Signal<string>;
+    typeSignal: Signal<DataType>;
+    element: HTMLDivElement;
+    cleanup: () => void;
+  }>();
 
   const renderRows = (entity: Entity): void => {
-    // Clear existing
-    propCleanups.forEach(fn => fn());
-    propCleanups.clear();
-    scrollBody.innerHTML = '';
+    const nextPropKeys = new Set(entity.properties.map(p => p.key));
 
-    entity.properties.forEach((prop) => {
-      const propLabelSignal = createSignal(prop.label);
-      const propTypeSignal  = createSignal<DataType>(prop.dataType);
+    // 1. Remove rows that are no longer in the entity
+    for (const [key, cached] of rowCache.entries()) {
+      if (!nextPropKeys.has(key)) {
+        cached.cleanup();
+        if (cached.element.parentNode) {
+          cached.element.parentNode.removeChild(cached.element);
+        }
+        rowCache.delete(key);
+      }
+    }
 
-      const rowEl = createEntityPropertyRow({
-        id: prop.key,
-        label: propLabelSignal,
-        dataType: propTypeSignal,
-        availableDataTypes: props.globalConfig.value.dataTypes,
-        onLabelChange: (v) => {
-          propLabelSignal.set(v);
-          // Persist back into entity store — replace matching property
-          const updated = store.signal.value;
-          store.signal.set({
-            ...updated,
-            properties: updated.properties.map(p =>
-              p.key === prop.key ? { ...p, label: v } : p
-            )
-          });
-        },
-        onDataTypeChange: (v) => {
-          propTypeSignal.set(v);
-          const updated = store.signal.value;
-          store.signal.set({
-            ...updated,
-            properties: updated.properties.map(p =>
-              p.key === prop.key ? { ...p, dataType: v } : p
-            )
-          });
-        },
-        onSettingsClick: () => {
-          const propModal = createPropertySettingsModal({
-            property: prop,
-            entityStore: store,
-            storageProvider: props.storageProvider,
-          });
-          propModal.open().catch(console.error);
-        },
-        onDeleteClick: async () => {
-          console.log(`[ENTITY-CONTENT] Deleting property ${prop.key} via clean architecture bridge...`);
-          const repository = createLegacyPropertyRepositoryBridge({
-            entityId: store.signal.value.id,
-            entitySignal: store.signal,
-            storageProvider: props.storageProvider
-          });
-          
-          try {
-            await repository.delete(prop.key);
-            console.log(`[ENTITY-CONTENT] ✓ Property ${prop.key} deleted and persisted`);
-          } catch (err) {
-            console.error(`[ENTITY-CONTENT] ✗ Failed to delete property ${prop.key}:`, err);
-          }
-        },
-      });
+    // 2. Add or update rows
+    entity.properties.forEach((prop, index) => {
+      const existing = rowCache.get(prop.key);
+      
+      if (existing) {
+        // Update signals in place without destroying DOM node!
+        if (existing.labelSignal.value !== prop.label) {
+          existing.labelSignal.set(prop.label);
+        }
+        if (existing.typeSignal.value !== prop.dataType) {
+          existing.typeSignal.set(prop.dataType);
+        }
+        
+        // Ensure DOM order matches property array order
+        if (scrollBody.children[index] !== existing.element) {
+          scrollBody.insertBefore(existing.element, scrollBody.children[index] || null);
+        }
+      } else {
+        // Create new row
+        const propLabelSignal = createSignal(prop.label);
+        const propTypeSignal  = createSignal<DataType>(prop.dataType);
 
-      propCleanups.set(prop.key, rowEl.cleanup.destroy);
-      scrollBody.appendChild(rowEl.element);
+        const rowEl = createEntityPropertyRow({
+          id: prop.key,
+          label: propLabelSignal,
+          dataType: propTypeSignal,
+          availableDataTypes: props.globalConfig.value.dataTypes,
+          onLabelChange: (v) => {
+            propLabelSignal.set(v);
+            const updated = store.signal.value;
+            // IMPORTANT: Since we update Clean Architecture directly, 
+            // do NOT just set the local signal, we must persist!
+            const repository = createLegacyPropertyRepositoryBridge({
+              entityId: store.signal.value.id,
+              entitySignal: store.signal,
+              storageProvider: props.storageProvider
+            });
+            repository.update(prop.key, { label: v }).catch(console.error);
+          },
+          onDataTypeChange: (v) => {
+            propTypeSignal.set(v);
+            const repository = createLegacyPropertyRepositoryBridge({
+              entityId: store.signal.value.id,
+              entitySignal: store.signal,
+              storageProvider: props.storageProvider
+            });
+            repository.update(prop.key, { dataType: v }).catch(console.error);
+          },
+          onSettingsClick: () => {
+            const propModal = createPropertySettingsModal({
+              entityId: store.signal.value.id,
+              propertyKey: prop.key,
+            });
+            propModal.open().catch(console.error);
+          },
+          onDeleteClick: async () => {
+            console.log(`[ENTITY-CONTENT] Deleting property ${prop.key} via clean architecture bridge...`);
+            const repository = createLegacyPropertyRepositoryBridge({
+              entityId: store.signal.value.id,
+              entitySignal: store.signal,
+              storageProvider: props.storageProvider
+            });
+
+            try {
+              await repository.delete(prop.key);
+              console.log(`[ENTITY-CONTENT] ✓ Property ${prop.key} deleted and persisted`);
+            } catch (err) {
+              console.error(`[ENTITY-CONTENT] ✗ Failed to delete property ${prop.key}:`, err);
+            }
+          },
+        });
+
+        if (scrollBody.children[index]) {
+          scrollBody.insertBefore(rowEl.element, scrollBody.children[index] || null);
+        } else {
+          scrollBody.appendChild(rowEl.element);
+        }
+
+        rowCache.set(prop.key, {
+          labelSignal: propLabelSignal,
+          typeSignal: propTypeSignal,
+          element: rowEl.element,
+          cleanup: rowEl.cleanup.destroy
+        });
+      }
     });
 
     recalcHeight(entity);
@@ -206,11 +247,10 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
     updateSize,
     cleanup: {
       destroy: () => {
-        propCleanups.forEach(fn => fn());
-        propCleanups.clear();
-        cleanups.forEach(fn => fn());
-        cleanups.length = 0;
-        if (entitySettingsModal.parentNode) entitySettingsModal.parentNode.removeChild(entitySettingsModal);
+          for (const cached of rowCache.values()) {
+            cached.cleanup();
+          }
+          rowCache.clear();
       }
     }
   };

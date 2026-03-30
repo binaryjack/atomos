@@ -25,6 +25,13 @@ export const createEntitySettingsModal = function(entityId: string): VbsModal {
   modal.appendChild(header);
   modal.appendChild(body);
   modal.appendChild(footer);
+
+  modal.addEventListener('vbs-modal-closed', () => {
+    if (modal.parentElement) {
+      modal.parentElement.removeChild(modal);
+    }
+  });
+
   document.body.appendChild(modal);
   return modal;
 };

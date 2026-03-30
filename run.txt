@@ -1,9 +1,9 @@
-﻿import type { ModalResult } from './types/modal-result.types.js';
+import type { ModalResult } from './types/modal-result.types.js';
 import type { ModalOptions } from './types/modal-options.types.js';
 import { modalStack } from './create-modal-stack.js';
 import { animateOpen, animateClose } from './create-modal-animations.js';
 
-// â”€â”€â”€ Shadow DOM template â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Shadow DOM template ────────────────────────────────────────────────────
 const SHADOW_HTML = `<style>
   :host { display: contents; }
 
@@ -15,7 +15,7 @@ const SHADOW_HTML = `<style>
     -webkit-backdrop-filter: blur(4px);
   }
 
-  /* wrapper is pass-through: pointer-events: none â†’ clicks outside dialog hit the backdrop */
+  /* wrapper is pass-through: pointer-events: none → clicks outside dialog hit the backdrop */
   .wrapper {
     position: fixed;
     inset: 0;
@@ -65,9 +65,9 @@ const SHADOW_HTML = `<style>
   </div>
 </div>`;
 
-// â”€â”€â”€ VbsModal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── VbsModal ────────────────────────────────────────────────────────────────
 /**
- * `<vbs-modal>` â€” agnostic dialog web component.
+ * `<vbs-modal>` — agnostic dialog web component.
  *
  * ## Programmatic (returns Promise):
  * ```ts
@@ -80,7 +80,7 @@ const SHADOW_HTML = `<style>
  * <vbs-modal id="my-modal">
  *   <vbs-modal-header slot="header">Title</vbs-modal-header>
  *   <p>Body content</p>
- *   <vbs-modal-footer slot="footer">â€¦buttonsâ€¦</vbs-modal-footer>
+ *   <vbs-modal-footer slot="footer">…buttons…</vbs-modal-footer>
  * </vbs-modal>
  * ```
  * ```ts
@@ -164,7 +164,7 @@ export class VbsModal extends HTMLElement {
     }
   }
 
-  // â”€â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Public API ────────────────────────────────────────────────────────────
 
   /**
    * Open the modal programmatically.
@@ -193,12 +193,10 @@ export class VbsModal extends HTMLElement {
   close(value?: unknown): void {
     if (!this.#isOpen || this.#isAnimating) return;
     this.#isOpen = false;
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
-    void this.#doClose({ value, cancelled: value === undefined });
-  }
-  // â”€â”€â”€ Private â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+  // ─── Private ───────────────────────────────────────────────────────────────
 
   #setVisible(visible: boolean): void {
     const d = visible ? 'block' : 'none';
@@ -245,4 +243,3 @@ export class VbsModal extends HTMLElement {
     );
   }
 }
-
