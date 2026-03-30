@@ -198,16 +198,20 @@ export const createEntitySettingsModal = function(entityId: string): VbsModal {
         }
 
         const manualName = (currentForm.getField('name')?.input as any)?.value;
-        const finalName = data.name || manualName || liveEntity.name;
-        const description = data.description !== undefined ? data.description : liveEntity.description;
-        const shape = data.shape || liveEntity.shape;
-        const color = data.color || liveEntity.color;
+        const manualDesc = (currentForm.getField('description')?.input as any)?.value;
+        const manualShape = (currentForm.getField('shape')?.input as any)?.value;
+        const manualColor = (currentForm.getField('color')?.input as any)?.value;
+
+        const finalName = manualName ?? data.name ?? liveEntity.name;
+        const description = manualDesc ?? data.description ?? liveEntity.description;
+        const shape = manualShape ?? data.shape ?? liveEntity.shape;
+        const color = manualColor ?? data.color ?? liveEntity.color;
 
         adapter.updateEntityMetadata(entityId, { name: finalName, description, shape, color });
         
         const updatedProperties = liveEntity.properties.map(prop => ({
           ...prop,
-          value: data[prop.key] !== undefined ? data[prop.key] : prop.value
+          value: (currentForm?.getField(prop.key)?.input as any)?.value ?? data[prop.key] ?? prop.value
         }));
         
         adapter.updateEntityProperties(entityId, updatedProperties);

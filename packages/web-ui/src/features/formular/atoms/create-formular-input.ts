@@ -41,7 +41,7 @@ export const createFormularInput = function(props: FormularInputProps): Formular
   inputResult.element.style.cssText = [
     'width:100%',
     'box-sizing:border-box',
-    'padding:8px 12px',
+    type === 'color' ? 'padding:2px; height:38px; cursor:pointer;' : 'padding:8px 12px;',
     'background:#1e293b',
     'border:1px solid #334155',
     'border-radius:6px',
