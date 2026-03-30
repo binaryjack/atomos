@@ -12,4 +12,6 @@ export interface LinkProps {
   readonly renderType: RenderType;
   readonly leftAnchorId: string;
   readonly rightAnchorId: string;
+  readonly leftProperty?: string;
+  readonly rightProperty?: string;
 }

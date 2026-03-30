@@ -4,7 +4,7 @@
  */
 import type { Property } from '@vbs/vbs-mod';
 import type { DomainEntity, DomainLink, EntityDimensions, EntityPosition, EntityRepository, LinkRepository } from '../domain/entity-aggregate.js';
-import { createEntityAggregate, createLinkAggregate, moveEntity, resizeEntity, updateEntityName, updateEntityProperties } from '../domain/entity-aggregate.js';
+import { createEntityAggregate, createLinkAggregate, moveEntity, resizeEntity, updateEntityName, updateEntityProperties, updateLinkProperties } from '../domain/entity-aggregate.js';
 
 // Commands (Write Operations)
 export interface CreateEntityCommand {
@@ -72,6 +72,10 @@ export interface CreateLinkCommand {
   readonly targetAnchorId: string;
   readonly sourceEntityId: string;
   readonly targetEntityId: string;
+  readonly sourceCardinality?: string | undefined;
+  readonly targetCardinality?: string | undefined;
+  readonly sourceProperty?: string | undefined;
+  readonly targetProperty?: string | undefined;
 }
 
 export interface RemoveLinkCommand {
@@ -79,7 +83,18 @@ export interface RemoveLinkCommand {
   readonly linkId: string;
 }
 
-export type LinkCommand = CreateLinkCommand | RemoveLinkCommand;
+export interface UpdateLinkPropertiesCommand {
+  readonly type: 'UpdateLinkProperties';
+  readonly linkId: string;
+  readonly properties: {
+    readonly sourceCardinality?: string | undefined;
+    readonly targetCardinality?: string | undefined;
+    readonly sourceProperty?: string | undefined;
+    readonly targetProperty?: string | undefined;
+  };
+}
+
+export type LinkCommand = CreateLinkCommand | RemoveLinkCommand | UpdateLinkPropertiesCommand;
 
 // Link Queries (Read Operations)
 export interface GetLinkQuery {
@@ -147,7 +162,18 @@ export interface LinkRemovedEvent {
   readonly linkId: string;
 }
 
-export type LinkEvent = LinkCreatedEvent | LinkRemovedEvent;
+export interface LinkPropertiesUpdatedEvent {
+  readonly type: 'LinkPropertiesUpdated';
+  readonly linkId: string;
+  readonly properties: {
+    readonly sourceCardinality?: string | undefined;
+    readonly targetCardinality?: string | undefined;
+    readonly sourceProperty?: string | undefined;
+    readonly targetProperty?: string | undefined;
+  };
+}
+
+export type LinkEvent = LinkCreatedEvent | LinkRemovedEvent | LinkPropertiesUpdatedEvent;
 
 export type ApplicationEvent = EntityEvent | LinkEvent;
 
@@ -263,10 +289,27 @@ export const createEntityApplicationService = function(
           command.sourceAnchorId,
           command.targetAnchorId,
           command.sourceEntityId,
-          command.targetEntityId
+          command.targetEntityId,
+          command.sourceCardinality,
+          command.targetCardinality,
+          command.sourceProperty,
+          command.targetProperty
         );
         linkRepository.save(link);
         eventBus.publish({ type: 'LinkCreated', link });
+        break;
+      }
+
+      case 'UpdateLinkProperties': {
+        const link = linkRepository.getById(command.linkId);
+        if (!link) throw new Error(`Link ${command.linkId} not found`);
+        const updatedLink = updateLinkProperties(link, command.properties);
+        linkRepository.save(updatedLink);
+        eventBus.publish({
+          type: 'LinkPropertiesUpdated',
+          linkId: command.linkId,
+          properties: command.properties
+        });
         break;
       }
       

@@ -21,7 +21,9 @@ export interface CanvasAdapter {
   
   // Link Operations (Domain)
   readonly createLink: (id: string, sourceAnchorId: string, targetAnchorId: string, leftEntityId: string, rightEntityId: string) => void;
+  readonly updateLinkProperties: (linkId: string, properties: { sourceCardinality?: string | undefined; targetCardinality?: string | undefined; sourceProperty?: string | undefined; targetProperty?: string | undefined; }) => void;
   readonly removeLink: (linkId: string) => void;
+  readonly getLink: (linkId: string) => any | undefined;
   readonly getAllLinks: () => readonly any[];
   
   // View Operations (UI State)
@@ -93,11 +95,20 @@ export const createCanvasAdapter = function(): CanvasAdapter {
     console.log('[CANVAS-ADAPTER] ✅ Link creation delegated to entity manager');
   };
   
+  const updateLinkProperties = function(linkId: string, properties: { sourceCardinality?: string | undefined; targetCardinality?: string | undefined; sourceProperty?: string | undefined; targetProperty?: string | undefined; }): void {
+    console.log('[CANVAS-ADAPTER] 🔄 Updating link properties:', { linkId, properties });
+    entityManager.updateLinkProperties(linkId, properties);
+  };
+
   const removeLink = function(linkId: string): void {
     console.log('[CANVAS-ADAPTER] 🗑️ Removing link via clean architecture:', linkId);
     entityManager.removeLink(linkId);
   };
   
+  const getLink = function(linkId: string): any | undefined {
+    return entityManager.getLink(linkId);
+  };
+
   const getAllLinks = function(): readonly any[] {
     const links = entityManager.getAllLinks();
     console.log('[CANVAS-ADAPTER] 📋 Getting all links via clean architecture:', links.length, 'found');
@@ -167,7 +178,9 @@ export const createCanvasAdapter = function(): CanvasAdapter {
     getEntity,
     getAllEntities,
     createLink,
+    updateLinkProperties,
     removeLink,
+    getLink,
     getAllLinks,
     setViewport,
     selectEntity,

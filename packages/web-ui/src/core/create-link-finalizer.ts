@@ -1,5 +1,6 @@
 import type { EdgePosition } from '../features/edge/types/edge-position.types.js';
 import { openLinkSettingsModal } from '../features/modal/create-link-settings-modal.js';
+import { getCanvasAdapter } from './adapters/canvas-adapter.js';
 import { bezierMidpoint } from './bezier.js';
 import type { LinkManager } from './types/link-manager.types.js';
 import type { Signal } from './types/signal.types.js';
@@ -15,7 +16,8 @@ export interface LinkFinalizer {
     srcEntityId: string,
     srcEdge: EdgePosition,
     srcPos: { x: number; y: number },
-    isRestoration?: boolean
+    isRestoration?: boolean,
+    linkId?: string
   ) => void;
   readonly removeLinksForEntity: (entityId: string) => void;
   readonly removeLinkById: (linkId: string) => void;
@@ -152,6 +154,39 @@ export const createLinkFinalizer = function(
   const linkLabelFOs      = new Map<string, SVGForeignObjectElement>();
   let isEntityCascadeDeletion = false;
 
+  const updateLinkLabel = (linkId: string, fo: SVGForeignObjectElement) => {
+    const adapter = getCanvasAdapter();
+    const link = adapter.getLink(linkId);
+    const span = fo.querySelector('span');
+    if (span && link) {
+      // Find property label if it exists
+      let label = link.targetProperty || link.sourceProperty;
+      if (link.targetProperty) {
+        const dst = adapter.getEntity(link.targetEntityId);
+        const prop = dst?.properties?.find((p: any) => p.key === link.targetProperty);
+        if (prop?.label) label = prop.label;
+      } else if (link.sourceProperty) {
+        const src = adapter.getEntity(link.sourceEntityId);
+        const prop = src?.properties?.find((p: any) => p.key === link.sourceProperty);
+        if (prop?.label) label = prop.label;
+      }
+      
+      if (!label) {
+        const src = adapter.getEntity(link.sourceEntityId);
+        const dst = adapter.getEntity(link.targetEntityId);
+        label = src && dst ? `${src.name} ↔ ${dst.name}` : 'Link';
+      }
+      span.textContent = label;
+    }
+  };
+
+  const adapter = getCanvasAdapter();
+  const unsubAdapter = adapter.onEntityChanged((e) => {
+    if (e.type === 'LinkPropertiesUpdated' || e.type === 'LinkCreated') {
+      linkLabelFOs.forEach((fo, id) => updateLinkLabel(id, fo));
+    }
+  });
+
   const removeLinkById = (linkId: string): void => {
     console.log(`[LINK-FINALIZER] 🗑️ removeLinkById(${linkId}) - starting cleanup`);
     
@@ -209,14 +244,15 @@ export const createLinkFinalizer = function(
     srcEntityId: string,
     srcEdge: EdgePosition,
     srcPos: { x: number; y: number },
-    isRestoration = false
+    isRestoration = false,
+    optionalLinkId?: string
   ): void => {
     console.log('[LINK-FINALIZER] finalizeLinkToAnchor called:', {
       src: `${srcEntityId}:${srcAnchorId}`,
       dst: `${dstEntityId}:${dstAnchorId}`
     });
-    
-    const linkId = `link-${srcAnchorId}-${dstAnchorId}-${Date.now()}`;
+
+    const linkId = optionalLinkId || `link-${srcAnchorId}-${dstAnchorId}-${Date.now()}`;
 
     const permanentLink = linkManager.createLink({
       id: linkId,
@@ -244,6 +280,11 @@ export const createLinkFinalizer = function(
     );
     contentRoot.appendChild(fo);
     linkLabelFOs.set(linkId, fo);
+    
+    // Defer the initial label update slightly so any Redux state has a chance to be synced
+    setTimeout(() => {
+      updateLinkLabel(linkId, fo);
+    }, 0);
 
     // ── Position subscriptions ───────────────────────────────────────────────
     const srcEntity = workspaceState.value.entities.get(srcEntityId);
@@ -328,6 +369,7 @@ export const createLinkFinalizer = function(
     removeLinkById,
     cleanup: {
       destroy: () => {
+        unsubAdapter();
         linkSubscriptions.forEach(subs => subs.forEach(fn => fn()));
         linkSubscriptions.clear();
         linkLabelFOs.forEach(fo => { if (fo.parentNode) fo.parentNode.removeChild(fo); });

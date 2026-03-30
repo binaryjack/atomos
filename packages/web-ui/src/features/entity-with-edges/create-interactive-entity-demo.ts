@@ -290,6 +290,7 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
             
             // Restore the visual link using workspace restoreLink method
             workspace.restoreLink(
+              savedLink.id,
               savedLink.sourceAnchorId, srcPos, srcEntityId, srcDirection,
               savedLink.targetAnchorId, dstPos, dstEntityId, dstDirection
             );

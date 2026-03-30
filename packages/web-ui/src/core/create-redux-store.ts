@@ -135,8 +135,10 @@ const reduce_state = function(state: ReduxState, action: ReduxAction): ReduxStat
         rightEntityId: action.to_id,
         leftAnchorId: action.from_anchor || 'center',
         rightAnchorId: action.to_anchor || 'center',
-        leftCardinality: '1' as Cardinality,
-        rightCardinality: '1' as Cardinality,
+        leftCardinality: (action.leftCardinality || '1') as Cardinality,
+        rightCardinality: (action.rightCardinality || '1') as Cardinality,
+        ...(action.leftProperty ? { leftProperty: action.leftProperty } : {}),
+        ...(action.rightProperty ? { rightProperty: action.rightProperty } : {}),
         renderType: 'linear' as RenderType
       };
       
@@ -150,7 +152,24 @@ const reduce_state = function(state: ReduxState, action: ReduxAction): ReduxStat
         }
       };
     }
-    
+
+    case 'link-updated': {
+      const schema = state.schemas[action.schema_id];
+      if (!schema) return state;
+
+      const links = schema.links.map(l =>
+        l.id === action.link.id ? { ...l, ...action.link } : l
+      );
+
+      return {
+        ...state,
+        schemas: {
+          ...state.schemas,
+          [action.schema_id]: { ...schema, links }
+        }
+      };
+    }
+
     case 'link-removed': {
       const schema = state.schemas[action.schema_id];
       if (!schema) return state;

@@ -101,6 +101,10 @@ export interface DomainLink {
   readonly targetAnchorId: string;
   readonly sourceEntityId: string;
   readonly targetEntityId: string;
+  readonly sourceCardinality?: string | undefined;
+  readonly targetCardinality?: string | undefined;
+  readonly sourceProperty?: string | undefined;
+  readonly targetProperty?: string | undefined;
   readonly createdAt: number;
   readonly updatedAt: number;
 }
@@ -117,17 +121,44 @@ export const createLinkAggregate = function(
   sourceAnchorId: string,
   targetAnchorId: string,
   sourceEntityId: string,
-  targetEntityId: string
+  targetEntityId: string,
+  sourceCardinality?: string,
+  targetCardinality?: string,
+  sourceProperty?: string,
+  targetProperty?: string
 ): DomainLink {
   const now = Date.now();
-  
+
   return {
     id,
     sourceAnchorId,
     targetAnchorId,
     sourceEntityId,
     targetEntityId,
+    sourceCardinality: sourceCardinality ?? '1',
+    targetCardinality: targetCardinality ?? '1',
+    sourceProperty,
+    targetProperty,
     createdAt: now,
     updatedAt: now
+  };
+};
+
+export const updateLinkProperties = function(
+  link: DomainLink,
+  updates: {
+    readonly sourceCardinality?: string | undefined;
+    readonly targetCardinality?: string | undefined;
+    readonly sourceProperty?: string | undefined;
+    readonly targetProperty?: string | undefined;
+  }
+): DomainLink {
+  return {
+    ...link,
+    sourceCardinality: updates.sourceCardinality ?? link.sourceCardinality,
+    targetCardinality: updates.targetCardinality ?? link.targetCardinality,
+    sourceProperty: updates.sourceProperty !== undefined ? updates.sourceProperty : link.sourceProperty,
+    targetProperty: updates.targetProperty !== undefined ? updates.targetProperty : link.targetProperty,
+    updatedAt: Date.now()
   };
 };

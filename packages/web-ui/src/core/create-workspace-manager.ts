@@ -89,13 +89,14 @@ export const createWorkspaceManager = function(
     setEntitySpawnFactory: (factory) => { spawnFactory = factory; },
     appendToCanvas:        (element) => { contentRoot.appendChild(element); },
 
-    restoreLink: (srcAnchorId, srcPos, srcEntityId, srcEdge, dstAnchorId, dstPos, dstEntityId, dstEdge) => {
+    restoreLink: (linkId, srcAnchorId, srcPos, srcEntityId, srcEdge, dstAnchorId, dstPos, dstEntityId, dstEdge) => {
       // Restore a persisted link using the internal link finalizer
       // Pass isRestoration=true to prevent triggering persistence callbacks
       linkFinalizer.finalizeLinkToAnchor(
         dstAnchorId, dstPos, dstEntityId, dstEdge,
         srcAnchorId, srcEntityId, srcEdge, srcPos,
-        true  // isRestoration flag
+        true, // isRestoration flag
+        linkId // original linkId
       );
     },
 

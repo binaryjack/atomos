@@ -29,6 +29,7 @@ export interface WorkspaceManager {
   readonly setEntitySpawnFactory: (factory: EntitySpawnFactory) => void;
   readonly appendToCanvas: (element: SVGElement) => void;
   readonly restoreLink: (
+    linkId: string,
     srcAnchorId: string,
     srcPos: { x: number; y: number },
     srcEntityId: string,

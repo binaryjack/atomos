@@ -65,31 +65,62 @@ export const createPersistedLinkRepository = function(): LinkRepository {
     const state = store.get_state();
     const schema = state.schemas[SCHEMA_ID];
     if (!schema) return undefined;
-    
+
     const link = schema.links.find((l: any) => l.id === id);
     if (!link) return undefined;
-    
+
     return {
       id: link.id,
       sourceAnchorId: link.leftAnchorId || 'center',
       targetAnchorId: link.rightAnchorId || 'center',
       sourceEntityId: link.leftEntityId,
       targetEntityId: link.rightEntityId,
+      sourceCardinality: link.leftCardinality || '1',
+      targetCardinality: link.rightCardinality || '1',
+      sourceProperty: link.leftProperty,
+      targetProperty: link.rightProperty,
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
   };
 
   const save = function(link: DomainLink): void {
-    store.dispatch({
-      type: 'link-created',
-      schema_id: SCHEMA_ID,
-      link_id: link.id,
-      from_id: link.sourceEntityId,
-      to_id: link.targetEntityId,
-      from_anchor: link.sourceAnchorId,
-      to_anchor: link.targetAnchorId
-    });
+    const state = store.get_state();
+    const schema = state.schemas[SCHEMA_ID];
+    const exists = schema?.links.some((l: any) => l.id === link.id);
+
+    if (exists) {
+      store.dispatch({
+        type: 'link-updated',
+        schema_id: SCHEMA_ID,
+        link: {
+          id: link.id,
+          leftAnchorId: link.sourceAnchorId,
+          rightAnchorId: link.targetAnchorId,
+          leftEntityId: link.sourceEntityId,
+          rightEntityId: link.targetEntityId,
+          leftCardinality: (link.sourceCardinality || '1') as '1' | '*' | '0..1' | '1..*',
+          rightCardinality: (link.targetCardinality || '1') as '1' | '*' | '0..1' | '1..*',
+          renderType: 'bezier',
+          ...(link.sourceProperty ? { leftProperty: link.sourceProperty } : {}),
+          ...(link.targetProperty ? { rightProperty: link.targetProperty } : {})
+        } as unknown as any
+      });
+    } else {
+      store.dispatch({
+        type: 'link-created',
+        schema_id: SCHEMA_ID,
+        link_id: link.id,
+        from_id: link.sourceEntityId,
+        to_id: link.targetEntityId,
+        from_anchor: link.sourceAnchorId,
+        to_anchor: link.targetAnchorId,
+        leftCardinality: link.sourceCardinality,
+        rightCardinality: link.targetCardinality,
+        leftProperty: link.sourceProperty,
+        rightProperty: link.targetProperty
+      } as any);
+    }
   };
 
   const remove = function(id: string): void {
@@ -104,13 +135,17 @@ export const createPersistedLinkRepository = function(): LinkRepository {
     const state = store.get_state();
     const schema = state.schemas[SCHEMA_ID];
     if (!schema) return [];
-    
+
     return schema.links.map((l: any) => ({
       id: l.id,
       sourceAnchorId: l.leftAnchorId || 'center',
       targetAnchorId: l.rightAnchorId || 'center',
       sourceEntityId: l.leftEntityId,
       targetEntityId: l.rightEntityId,
+      sourceCardinality: l.leftCardinality || '1',
+      targetCardinality: l.rightCardinality || '1',
+      sourceProperty: l.leftProperty,
+      targetProperty: l.rightProperty,
       createdAt: Date.now(),
       updatedAt: Date.now()
     }));
