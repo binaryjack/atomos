@@ -48,7 +48,7 @@ export interface WorkspaceManager {
   readonly registerEntity: (entity: EntityInstance) => void;
   readonly unregisterEntity: (entityId: string) => void;
   readonly screenToSvgCoords: (clientX: number, clientY: number) => { x: number; y: number };
-  readonly onLinkCreated?: (link: { id: string; sourceAnchorId: string; targetAnchorId: string; leftEntityId: string; rightEntityId: string }) => void;
+  readonly onLinkCreated?: (link: { id: string; sourceAnchorId: string; targetAnchorId: string; leftEntityId: string; rightEntityId: string }, isReconnect?: boolean) => void;
   readonly onEntityDeleted?: (entityId: string) => void;
   /**
    * Called by an anchor's mousedown. Begins the draw-link flow.

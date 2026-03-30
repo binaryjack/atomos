@@ -45,6 +45,7 @@ export const createCanvasEventHandler = function(
     const srcAnchorId = linkDrawController.getActiveTempSrcAnchorId();
     const srcEdge = linkDrawController.getActiveTempSrcEdge();
     const srcEntityId = linkDrawController.getActiveTempSrcEntityId();
+      const optionalReconnectId = linkDrawController.consumeReconnectLinkId();
     if (!srcPos || !srcAnchorId || !srcEdge || !srcEntityId) return;
 
     const svgCoords = screenToSvgCoords(event.clientX, event.clientY);
@@ -73,7 +74,9 @@ export const createCanvasEventHandler = function(
         srcAnchorId,
         srcEntityId,
         srcEdge,
-        srcPos
+        srcPos,
+        false,
+        optionalReconnectId
       );
       behaviorManager.cancelLinkCreation();
       onWorkspaceStateUpdate({ linkCreationInProgress: false });
@@ -114,7 +117,9 @@ export const createCanvasEventHandler = function(
         srcAnchorId,
         srcEntityId,
         srcEdge,
-        srcPos
+        srcPos,
+        false,
+        optionalReconnectId
       );
       behaviorManager.cancelLinkCreation();
       onWorkspaceStateUpdate({ linkCreationInProgress: false });

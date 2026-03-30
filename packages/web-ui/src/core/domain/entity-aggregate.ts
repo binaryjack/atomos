@@ -176,3 +176,8 @@ export const updateLinkEndpoints = function(
     targetAnchorId,
     sourceEntityId,
     targetEntityId,
+    updatedAt: Date.now() 
+  };
+};
+
+

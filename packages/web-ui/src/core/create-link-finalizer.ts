@@ -20,7 +20,7 @@ export interface LinkFinalizer {
     linkId?: string
   ) => void;
   readonly removeLinksForEntity: (entityId: string) => void;
-  readonly removeLinkById: (linkId: string) => void;
+  readonly removeLinkById: (linkId: string, skipPersistence?: boolean) => void;
   readonly cleanup: {
     readonly destroy: () => void;
   };
@@ -187,7 +187,7 @@ export const createLinkFinalizer = function(
     }
   });
 
-  const removeLinkById = (linkId: string): void => {
+  const removeLinkById = (linkId: string, skipPersistence?: boolean): void => {
     console.log(`[LINK-FINALIZER] 🗑️ removeLinkById(${linkId}) - starting cleanup`);
     
     // Clean up subscriptions
@@ -225,9 +225,11 @@ export const createLinkFinalizer = function(
     }
     
     // Only notify Redux store about individual link deletions, not during entity cascade
-    if (!isEntityCascadeDeletion && onLinkDeleted) {
+    if (!isEntityCascadeDeletion && onLinkDeleted && !skipPersistence) {
       console.log('[LINK-FINALIZER] ✓ Calling onLinkDeleted callback for individual deletion:', linkId);
       onLinkDeleted(linkId);
+    } else if (skipPersistence) {
+      console.log('[LINK-FINALIZER] ℹ️ Skipping onLinkDeleted callback due to skipPersistence (likely reconnect mode)');
     } else if (isEntityCascadeDeletion) {
       console.log('[LINK-FINALIZER] ℹ Skipping onLinkDeleted callback during entity cascade deletion');
     }
@@ -311,14 +313,14 @@ export const createLinkFinalizer = function(
 
     // Notify callback about link creation for persistence (only for new links, not restoration)
     if (!isRestoration && onLinkCreated) {
-      console.log('[LINK-FINALIZER] ✓ Calling onLinkCreated callback for new link');
+      console.log('[LINK-FINALIZER] ✓ Calling onLinkCreated callback for new link. isReconnect:', !!optionalLinkId);
       onLinkCreated({
         id: linkId,
         sourceAnchorId: srcAnchorId,
         targetAnchorId: dstAnchorId,
         leftEntityId: srcEntityId,
         rightEntityId: dstEntityId
-      });
+      }, !!optionalLinkId);
     } else if (!isRestoration) {
       console.error('[LINK-FINALIZER] ✗ No onLinkCreated callback! Link will not be persisted!');
     } else {

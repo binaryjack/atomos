@@ -70,7 +70,8 @@ export const createLinkDrawController = function(
 
     if (pendingReconnectId && linkFinalizer) {
       // Fully remove the old link (path + label FO + subscriptions)
-      linkFinalizer.removeLinkById(pendingReconnectId);
+      // but bypass Redux to retain properties
+      linkFinalizer.removeLinkById(pendingReconnectId, true);
       reconnectLinkId = pendingReconnectId;
       reconnectMode = true;
     } else {

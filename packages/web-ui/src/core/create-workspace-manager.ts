@@ -17,10 +17,10 @@ export const createWorkspaceManager = function(
   const linkManager      = createLinkManager();
   const transformer      = createCoordinateTransformer(svgContainer, contentRoot);
   const registry         = createEntityRegistry(contentRoot);
-  const linkFinalizer    = createLinkFinalizer(linkManager, registry.workspaceState, contentRoot, (link) => {
+  const linkFinalizer    = createLinkFinalizer(linkManager, registry.workspaceState, contentRoot, (link, isReconnect) => {
     // Forward to workspace manager's onLinkCreated callback if set
-    console.log('[WORKSPACE-MANAGER] Link created via finalizer:', link);
-    (manager as any).onLinkCreated?.(link);
+    console.log('[WORKSPACE-MANAGER] Link created via finalizer:', link, { isReconnect });
+    (manager as any).onLinkCreated?.(link, isReconnect);
   }, (linkId) => {
     // Forward to workspace manager's onLinkDeleted callback if set
     console.log('[WORKSPACE-MANAGER] Link deleted via finalizer:', linkId);
@@ -75,12 +75,15 @@ export const createWorkspaceManager = function(
       const srcEntityId = linkDrawCtrl.getActiveTempSrcEntityId();
       const srcEdge     = linkDrawCtrl.getActiveTempSrcEdge();
       const srcPos      = linkDrawCtrl.getActiveTempLinkSourcePos();
+      const optionalReconnectId = linkDrawCtrl.consumeReconnectLinkId();
       if (!srcAnchorId || !srcEntityId || !srcEdge || !srcPos) return;
       if (dstAnchorId === srcAnchorId) { linkDrawCtrl.clearTempLink(); return; }
       linkDrawCtrl.clearTempLink();
       linkFinalizer.finalizeLinkToAnchor(
         dstAnchorId, dstAnchorPos, dstEntityId, dstEdge,
-        srcAnchorId, srcEntityId, srcEdge, srcPos
+        srcAnchorId, srcEntityId, srcEdge, srcPos,
+        false,
+        optionalReconnectId
       );
       behaviorManager.cancelLinkCreation();
       patchState({ linkCreationInProgress: false });

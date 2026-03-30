@@ -162,17 +162,14 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
   });
   
   // Wire up workspace events to clean architecture - Actually persist links
-  (workspace as any).onLinkCreated = (link: any) => {
-    console.log('[CANVAS-PAGE] 🔗 Link created through workspace - Persisting via clean architecture');
-    canvasAdapter.createLink(
-      link.id,
-      link.sourceAnchorId, 
-      link.targetAnchorId,
-      link.leftEntityId,
-      link.rightEntityId
-    );
-  };
-
+    (workspace as any).onLinkCreated = (link: any, isReconnect: boolean) => {
+      console.log('[CANVAS-PAGE] 🔗 Link created through workspace - Persisting via clean architecture');
+      if (isReconnect) {
+        canvasAdapter.updateLinkEndpoints(link.id, link.sourceAnchorId, link.targetAnchorId, link.leftEntityId, link.rightEntityId);
+      } else {
+        canvasAdapter.createLink(link.id, link.sourceAnchorId, link.targetAnchorId, link.leftEntityId, link.rightEntityId);
+      }
+    };
   (workspace as any).onEntityDeleted = (entityId: string) => {
     console.log('[CANVAS-PAGE] 🗑️ Entity deleted from main canvas:', entityId);
     canvasAdapter.removeEntity(entityId);
@@ -310,5 +307,3 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
     
     console.log('🎉 [CANVAS-PAGE] 🎉 SUCCESS! MAIN CANVAS WORKING PROPERLY - No more errors!');
 };
-
-
