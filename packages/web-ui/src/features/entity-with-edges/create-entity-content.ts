@@ -1,15 +1,15 @@
-import type { DataType, Entity } from '@vbs/vbs-mod';
-import { createLegacyPropertyRepositoryBridge } from '../../core/adapters/legacy-property-bridge.js';
-import type { EntityStore } from '../../core/create-entity-store.js';
-import { createSignal } from '../../core/create-signal.js';
-import type { IStorageProvider } from '../../core/storage/types/storage-provider.types.js';
-import type { GlobalConfig } from '../../core/types/global-config.types.js';
-import type { Signal } from '../../core/types/signal.types.js';
-import { createEntitySettingsModal } from '../modal/create-entity-settings-modal.js';
-import { createPropertySettingsModal } from '../modal/create-property-settings-modal.js';
-import { createEntityFooter } from './create-entity-footer.js';
-import { createEntityHeader } from './create-entity-header.js';
-import { createEntityPropertyRow } from './create-entity-property-row.js';
+import type { DataType, Entity } from '@vbs/vbs-mod'
+import { createLegacyPropertyRepositoryBridge } from '../../core/adapters/legacy-property-bridge.js'
+import type { EntityStore } from '../../core/create-entity-store.js'
+import { createSignal } from '../../core/create-signal.js'
+import type { IStorageProvider } from '../../core/storage/types/storage-provider.types.js'
+import type { GlobalConfig } from '../../core/types/global-config.types.js'
+import type { Signal } from '../../core/types/signal.types.js'
+import { createEntitySettingsModal } from '../modal/create-entity-settings-modal.js'
+import { createPropertySettingsModal } from '../modal/create-property-settings-modal.js'
+import { createEntityFooter } from './create-entity-footer.js'
+import { createEntityHeader } from './create-entity-header.js'
+import { createEntityPropertyRow } from './create-entity-property-row.js'
 
 const HEADER_H = 36;
 const FOOTER_H = 30;
@@ -205,8 +205,12 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   renderRows(store.signal.value);
 
   // Re-render on store change
-  const unsubStore = store.signal.subscribe((entity) => renderRows(entity));
-  cleanups.push(unsubStore);
+  const unsubStore = store.signal.subscribe((entity) => {
+    if (labelSignal.value !== entity.name) {
+      labelSignal.set(entity.name);
+    }
+    renderRows(entity);
+  });
 
   // ─── footer ───────────────────────────────────────────────────────────────
   const footer = createEntityFooter({

@@ -1,10 +1,11 @@
+import type { IFormular, IObjectShape, IValidationOptions } from '@binaryjack/formular.dev';
+import { createForm, f } from '@binaryjack/formular.dev';
+import type { DataType } from '@vbs/vbs-mod';
+import { createButton } from '../button/create-button.js';
+import { createFormularCheckbox } from '../formular/atoms/create-formular-checkbox.js';
+import { createFormularInput } from '../formular/atoms/create-formular-input.js';
 import './index.js';
 import type { VbsModal } from './vbs-modal.js';
-import type { IValidationOptions, IFormular, IObjectShape } from '@binaryjack/formular.dev';
-import type { DataType } from '@vbs/vbs-mod';
-import { createForm, f } from '@binaryjack/formular.dev';
-import { createFormularInput } from '../formular/atoms/create-formular-input.js';
-import { createFormularCheckbox } from '../formular/atoms/create-formular-checkbox.js';
 
 export interface ValidationModalProps {
   readonly propertyKey: string;
@@ -175,26 +176,7 @@ export const createValidationModal = function(
     const footer = document.createElement('vbs-modal-footer');
     footer.setAttribute('slot', 'footer');
 
-    const cancelBtn = document.createElement('button');
-    cancelBtn.type = 'button';
-    cancelBtn.textContent = 'Cancel';
-    cancelBtn.className = 'ghost';
-
-    const saveBtn = document.createElement('button');
-    saveBtn.type = 'button';
-    saveBtn.textContent = 'Save Validation';
-    saveBtn.className = 'primary';
-
-    footer.appendChild(cancelBtn);
-    footer.appendChild(saveBtn);
-
-    // Append to modal
-    modal.appendChild(header);
-    modal.appendChild(body);
-    modal.appendChild(footer);
-    document.body.appendChild(modal);
-
-    // Wire up buttons
+    // Wire up buttons definitions
     const cancelHandler = () => {
       cleanups.forEach(fn => fn());
       modal.close();
@@ -275,12 +257,30 @@ export const createValidationModal = function(
       modal.close(validation);
     };
 
-    cancelBtn.onclick = cancelHandler;
-    saveBtn.onclick = saveHandler;
+    const cancelBtn = createButton({
+      variant: 'ghost',
+      size: 'md',
+      children: 'Cancel',
+      onClick: cancelHandler
+    });
+
+    const saveBtn = createButton({
+      variant: 'primary',
+      size: 'md',
+      children: 'Save Validation',
+      onClick: saveHandler
+    });
+
+    footer.appendChild(cancelBtn.element);
+    footer.appendChild(saveBtn.element);
+
+    // Append to modal
+    modal.appendChild(header);
+    modal.appendChild(body);
+    modal.appendChild(footer);
+    document.body.appendChild(modal);
 
     const result = await modal.open<IValidationOptions>();
-    cancelBtn.onclick = null;
-    saveBtn.onclick = null;
     
     if (result.cancelled) {
       return null;

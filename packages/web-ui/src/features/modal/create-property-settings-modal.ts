@@ -2,9 +2,9 @@ import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
 import { f } from '@binaryjack/formular.dev'
 import type { DataType, Property } from '@vbs/vbs-mod'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
-import { getGlobalReduxStore } from '../../core/create-redux-store.js'
-import { selectEntityById, selectPropertyByKey } from '../../core/selectors.js'
 import { createFormularManager } from '../../core/create-formular-manager.js'
+import { selectEntityById, selectPropertyByKey } from '../../core/selectors.js'
+import { createButton } from '../button/create-button.js'
 import { createFormularDropdown } from '../formular/atoms/create-formular-dropdown.js'
 import { createFormularInput } from '../formular/atoms/create-formular-input.js'
 import { createValidationBadge } from './create-validation-badge.js'
@@ -201,33 +201,34 @@ export const createPropertySettingsModal = function(
     body.appendChild(validationSection);
 
     // Create footer buttons
-    const cancelBtn = document.createElement('button');
-    cancelBtn.type = 'button';
-    cancelBtn.textContent = 'Cancel';
-    cancelBtn.className = 'ghost';
-    cancelBtn.addEventListener('click', () => {
-      // FormularManager will automatically clean up when modal closes
-      fieldCleanups.forEach(fn => fn()); 
-      modal.close();
+    const cancelBtn = createButton({
+      variant: 'ghost',
+      size: 'md',
+      children: 'Cancel',
+      onClick: () => {
+        // FormularManager will automatically clean up when modal closes
+        fieldCleanups.forEach(fn => fn()); 
+        modal.close();
+      }
     });
 
-    const saveBtn = document.createElement('button');
-    saveBtn.type = 'button';
-    saveBtn.textContent = 'Save';
-    saveBtn.className = 'primary';
-    saveBtn.addEventListener('click', async () => {
-      console.log('[PROPERTY-MODAL-DEBUG] Save clicked! Validating form...', { entityId: props.entityId, propertyKey: props.propertyKey });
+    const saveBtn = createButton({
+      variant: 'primary',
+      size: 'md',
+      children: 'Save',
+      onClick: async () => {
+        console.log('[PROPERTY-MODAL-DEBUG] Save clicked! Validating form...', { entityId: props.entityId, propertyKey: props.propertyKey });
 
-      if (!currentForm) {
-        console.warn('[PROPERTY-MODAL-DEBUG] No form available for validation');
-        return;
-      }
+        if (!currentForm) {
+          console.warn('[PROPERTY-MODAL-DEBUG] No form available for validation');
+          return;
+        }
 
-      let isValid = false;
-      try {
-        isValid = await currentForm.validateForm();
-      } catch (err) {
-        console.warn('[PROPERTY-MODAL-DEBUG] validateForm threw an error, trying to extract anyway:', err);
+        let isValid = false;
+        try {
+          isValid = await currentForm.validateForm();
+        } catch (err) {
+          console.warn('[PROPERTY-MODAL-DEBUG] validateForm threw an error, trying to extract anyway:', err);
       }
       
       if (!isValid) {
@@ -290,10 +291,11 @@ export const createPropertySettingsModal = function(
       fieldCleanups.forEach(fn => fn());
       formManager.cleanupModal(modal);
       modal.close();
+    }
     });
 
-    footer.appendChild(cancelBtn);
-    footer.appendChild(saveBtn);
+    footer.appendChild(cancelBtn.element);
+    footer.appendChild(saveBtn.element);
     
     console.log('[PROPERTY-MODAL] ✓ Form fields created successfully with FormularManager');
   };

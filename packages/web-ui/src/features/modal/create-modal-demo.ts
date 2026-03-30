@@ -1,11 +1,12 @@
-import './index.js';
-import '../formular/index.js';
-import { createForm, f, newEvent, EventsEnum } from '@binaryjack/formular.dev';
 import type { IFormular, IObjectShape } from '@binaryjack/formular.dev';
-import type { VbsModal } from './vbs-modal.js';
-import type { ModalResult } from './types/modal-result.types.js';
+import { createForm, EventsEnum, f, newEvent } from '@binaryjack/formular.dev';
+import { createButton } from '../button/create-button.js';
 import { createFormularInput } from '../formular/atoms/create-formular-input.js';
 import { createFormularTextarea } from '../formular/atoms/create-formular-textarea.js';
+import '../formular/index.js';
+import './index.js';
+import type { ModalResult } from './types/modal-result.types.js';
+import type { VbsModal } from './vbs-modal.js';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -14,29 +15,13 @@ const btn = (
   variant: 'primary' | 'secondary' | 'danger' | 'ghost',
   onClick: () => void,
 ): HTMLButtonElement => {
-  const styles: Record<typeof variant, string> = {
-    primary:   'background:#3b82f6;color:#fff;border:none;',
-    secondary: 'background:#475569;color:#e2e8f0;border:none;',
-    danger:    'background:#ef4444;color:#fff;border:none;',
-    ghost:     'background:none;color:#94a3b8;border:1px solid #334155;',
-  };
-  const el = document.createElement('button');
-  el.type = 'button';
-  el.textContent = label;
-  el.style.cssText = [
-    styles[variant],
-    'padding:6px 16px',
-    'border-radius:6px',
-    'font-size:13px',
-    'font-family:system-ui,sans-serif',
-    'font-weight:500',
-    'cursor:pointer',
-    'transition:opacity 120ms',
-  ].join(';');
-  el.addEventListener('mouseenter', () => { el.style.opacity = '0.85'; });
-  el.addEventListener('mouseleave', () => { el.style.opacity = '1'; });
-  el.addEventListener('click', onClick);
-  return el;
+  const result = createButton({
+    variant,
+    size: 'md',
+    children: label,
+    onClick
+  });
+  return result.element;
 };
 
 const appendModal = (modal: HTMLElement): void => {
