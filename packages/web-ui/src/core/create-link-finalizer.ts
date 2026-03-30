@@ -159,29 +159,14 @@ export const createLinkFinalizer = function(
     const link = adapter.getLink(linkId);
     const span = fo.querySelector('span');
     if (span && link) {
-      // Prioritize relationshipName, name, or label if provided
-      let label = link.relationshipName || link.name || link.label;
-
-      // Fallback to property label if it exists
-      if (!label) {
-        label = link.targetProperty || link.sourceProperty;
-        if (link.targetProperty) {
-          const dst = adapter.getEntity(link.targetEntityId);
-          const prop = dst?.properties?.find((p: any) => p.key === link.targetProperty);
-          if (prop?.label) label = prop.label;
-        } else if (link.sourceProperty) {
-          const src = adapter.getEntity(link.sourceEntityId);
-          const prop = src?.properties?.find((p: any) => p.key === link.sourceProperty);
-          if (prop?.label) label = prop.label;
-        }
-      }
+      const src = adapter.getEntity(link.sourceEntityId);
+      const dst = adapter.getEntity(link.targetEntityId);
+      const srcName = src?.name || 'Entity';
+      const dstName = dst?.name || 'Entity';
+      const leftCard = link.sourceCardinality || '1';
+      const rightCard = link.targetCardinality || 'n';
       
-      if (!label) {
-        const src = adapter.getEntity(link.sourceEntityId);
-        const dst = adapter.getEntity(link.targetEntityId);
-        label = src && dst ? `${src.name} ↔ ${dst.name}` : 'Link';
-      }
-      span.textContent = label;
+      span.textContent = `${srcName} (${leftCard}) <=> (${rightCard}) ${dstName}`;
     }
   };
 
