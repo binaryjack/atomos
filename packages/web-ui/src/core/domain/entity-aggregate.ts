@@ -162,3 +162,17 @@ export const updateLinkProperties = function(
     updatedAt: Date.now()
   };
 };
+
+export const updateLinkEndpoints = function(
+  link: DomainLink,
+  sourceAnchorId: string,
+  targetAnchorId: string,
+  sourceEntityId: string,
+  targetEntityId: string
+): DomainLink {
+  return {
+    ...link,
+    sourceAnchorId,
+    targetAnchorId,
+    sourceEntityId,
+    targetEntityId,

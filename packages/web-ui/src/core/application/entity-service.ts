@@ -4,7 +4,7 @@
  */
 import type { Property } from '@vbs/vbs-mod';
 import type { DomainEntity, DomainLink, EntityDimensions, EntityPosition, EntityRepository, LinkRepository } from '../domain/entity-aggregate.js';
-import { createEntityAggregate, createLinkAggregate, moveEntity, resizeEntity, updateEntityName, updateEntityProperties, updateLinkProperties } from '../domain/entity-aggregate.js';
+import { createEntityAggregate, createLinkAggregate, moveEntity, resizeEntity, updateEntityName, updateEntityProperties, updateLinkProperties, updateLinkEndpoints } from '../domain/entity-aggregate.js';
 
 // Commands (Write Operations)
 export interface CreateEntityCommand {
@@ -94,7 +94,16 @@ export interface UpdateLinkPropertiesCommand {
   };
 }
 
-export type LinkCommand = CreateLinkCommand | RemoveLinkCommand | UpdateLinkPropertiesCommand;
+export interface UpdateLinkEndpointsCommand {
+  readonly type: 'UpdateLinkEndpoints';
+  readonly linkId: string;
+  readonly sourceAnchorId: string;
+  readonly targetAnchorId: string;
+  readonly sourceEntityId: string;
+  readonly targetEntityId: string;
+}
+
+export type LinkCommand = CreateLinkCommand | RemoveLinkCommand | UpdateLinkPropertiesCommand | UpdateLinkEndpointsCommand;
 
 // Link Queries (Read Operations)
 export interface GetLinkQuery {
@@ -309,6 +318,25 @@ export const createEntityApplicationService = function(
           type: 'LinkPropertiesUpdated',
           linkId: command.linkId,
           properties: command.properties
+        });
+        break;
+      }
+
+      case 'UpdateLinkEndpoints': {
+        const link = linkRepository.getById(command.linkId);
+        if (!link) throw new Error(`Link ${command.linkId} not found`);
+        const updatedLink = updateLinkEndpoints(
+          link,
+          command.sourceAnchorId,
+          command.targetAnchorId,
+          command.sourceEntityId,
+          command.targetEntityId
+        );
+        linkRepository.save(updatedLink);
+        eventBus.publish({
+          type: 'LinkPropertiesUpdated',
+          linkId: command.linkId,
+          properties: {}
         });
         break;
       }

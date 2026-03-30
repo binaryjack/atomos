@@ -146,7 +146,7 @@ export const createLinkFinalizer = function(
   linkManager: LinkManager,
   workspaceState: Signal<WorkspaceState>,
   contentRoot: SVGElement,
-  onLinkCreated?: (link: { id: string; sourceAnchorId: string; targetAnchorId: string; leftEntityId: string; rightEntityId: string }) => void,
+  onLinkCreated?: (link: { id: string; sourceAnchorId: string; targetAnchorId: string; leftEntityId: string; rightEntityId: string }, isReconnect?: boolean) => void,
   onLinkDeleted?: (linkId: string) => void
 ): LinkFinalizer {
   const linkSubscriptions = new Map<string, Array<() => void>>();

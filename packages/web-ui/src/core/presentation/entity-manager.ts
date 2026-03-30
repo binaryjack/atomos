@@ -25,6 +25,7 @@ export interface EntityManager {
   // Link Commands (UI Actions)
   readonly createLink: (id: string, sourceAnchorId: string, targetAnchorId: string, sourceEntityId: string, targetEntityId: string) => void;
   readonly updateLinkProperties: (linkId: string, properties: { sourceCardinality?: string | undefined; targetCardinality?: string | undefined; sourceProperty?: string | undefined; targetProperty?: string | undefined; }) => void;
+  readonly updateLinkEndpoints: (linkId: string, sourceAnchorId: string, targetAnchorId: string, sourceEntityId: string, targetEntityId: string) => void;
   readonly removeLink: (linkId: string) => void;
   
   // Link Queries (UI Data)
@@ -148,6 +149,17 @@ export const createEntityManager = function(): EntityManager {
     });
   };
 
+  const updateLinkEndpoints = function(linkId: string, sourceAnchorId: string, targetAnchorId: string, sourceEntityId: string, targetEntityId: string): void {
+    applicationService.executeCommand({
+      type: 'UpdateLinkEndpoints',
+      linkId,
+      sourceAnchorId,
+      targetAnchorId,
+      sourceEntityId,
+      targetEntityId
+    });
+  };
+
   const removeLink = function(linkId: string): void {
     applicationService.executeCommand({
       type: 'RemoveLink',
@@ -239,6 +251,7 @@ export const createEntityManager = function(): EntityManager {
     getAllEntities,
     createLink,
     updateLinkProperties,
+    updateLinkEndpoints,
     removeLink,
     getLink,
     getAllLinks,

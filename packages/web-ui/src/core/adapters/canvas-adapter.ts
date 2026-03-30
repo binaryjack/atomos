@@ -22,6 +22,7 @@ export interface CanvasAdapter {
   // Link Operations (Domain)
   readonly createLink: (id: string, sourceAnchorId: string, targetAnchorId: string, leftEntityId: string, rightEntityId: string) => void;
   readonly updateLinkProperties: (linkId: string, properties: { sourceCardinality?: string | undefined; targetCardinality?: string | undefined; sourceProperty?: string | undefined; targetProperty?: string | undefined; }) => void;
+  readonly updateLinkEndpoints: (linkId: string, sourceAnchorId: string, targetAnchorId: string, sourceEntityId: string, targetEntityId: string) => void;
   readonly removeLink: (linkId: string) => void;
   readonly getLink: (linkId: string) => any | undefined;
   readonly getAllLinks: () => readonly any[];
@@ -98,6 +99,11 @@ export const createCanvasAdapter = function(): CanvasAdapter {
   const updateLinkProperties = function(linkId: string, properties: { sourceCardinality?: string | undefined; targetCardinality?: string | undefined; sourceProperty?: string | undefined; targetProperty?: string | undefined; }): void {
     console.log('[CANVAS-ADAPTER] 🔄 Updating link properties:', { linkId, properties });
     entityManager.updateLinkProperties(linkId, properties);
+  };
+
+  const updateLinkEndpoints = function(linkId: string, sourceAnchorId: string, targetAnchorId: string, sourceEntityId: string, targetEntityId: string): void {
+    console.log('[CANVAS-ADAPTER] 🔄 Updating link endpoints for reconnect:', { linkId, sourceAnchorId, targetAnchorId, sourceEntityId, targetEntityId });
+    entityManager.updateLinkEndpoints(linkId, sourceAnchorId, targetAnchorId, sourceEntityId, targetEntityId);
   };
 
   const removeLink = function(linkId: string): void {
@@ -179,6 +185,7 @@ export const createCanvasAdapter = function(): CanvasAdapter {
     getAllEntities,
     createLink,
     updateLinkProperties,
+    updateLinkEndpoints,
     removeLink,
     getLink,
     getAllLinks,
