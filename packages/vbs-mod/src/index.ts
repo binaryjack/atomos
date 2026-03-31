@@ -1,8 +1,6 @@
 // Shared
 export type { Cardinality, ComponentType, DataType, EdgePosition, EdgeThickness, RenderType, Theme } from './shared/index';
-export { DATA_TYPES } from './shared/index.js';
-
-// Types
+export { DATA_TYPES, COMPONENT_TYPES } from './shared/index.js';
 export type { AnchorProps } from './types/anchor.types.js';
 export type { BaseEntity } from './types/base-entity.types.js';
 export type { EdgeProps } from './types/edge.types.js';

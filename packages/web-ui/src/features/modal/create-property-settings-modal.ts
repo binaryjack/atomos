@@ -1,5 +1,6 @@
 import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
 import { f } from '@binaryjack/formular.dev'
+import { DATA_TYPES, COMPONENT_TYPES } from '@vbs/vbs-mod'
 import type { DataType, Property } from '@vbs/vbs-mod'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
 import { createFormularManager } from '../../core/create-formular-manager.js'
@@ -121,12 +122,7 @@ export const createPropertySettingsModal = function(
       form,
       label: 'Data Type',
       guide: 'Type of data stored',
-      options: [
-        { value: 'string', label: 'string' },
-        { value: 'number', label: 'number' },
-        { value: 'boolean', label: 'boolean' },
-        { value: 'date', label: 'date' },
-      ],
+      options: DATA_TYPES.map(type => ({ value: type, label: type })),
     });
     body.appendChild(dataTypeField.element);
     fieldCleanups.push(dataTypeField.cleanup.destroy);
@@ -137,13 +133,7 @@ export const createPropertySettingsModal = function(
       form,
       label: 'Component Type',
       guide: 'UI component for editing',
-      options: [
-        { value: 'input', label: 'input' },
-        { value: 'textarea', label: 'textarea' },
-        { value: 'checkbox', label: 'checkbox' },
-        { value: 'select', label: 'select' },
-        { value: 'date', label: 'date' },
-      ],
+      options: COMPONENT_TYPES.map(type => ({ value: type, label: type })),
     });
     body.appendChild(componentTypeField.element);
     fieldCleanups.push(componentTypeField.cleanup.destroy);
