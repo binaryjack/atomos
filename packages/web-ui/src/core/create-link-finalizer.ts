@@ -49,8 +49,8 @@ export const computeAnchorWorldPos = (
 
 // ─── Label foreignObject helpers ─────────────────────────────────────────────
 
-const LABEL_W = 120;
-const LABEL_H = 28;
+const LABEL_W = 240;
+const LABEL_H = 26;
 
 const createLinkLabelFO = (
   mid: { x: number; y: number },
@@ -68,13 +68,15 @@ const createLinkLabelFO = (
   const body = document.createElement('div');
   body.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
   body.style.cssText = [
-    'display:inline-flex',
+    'display:flex',
     'align-items:center',
     'gap:4px',
-    'padding:3px 7px',
+    'padding:0 8px',
+    'height:100%',
+    'box-sizing:border-box',
     'background:rgba(15,23,42,0.88)',
     'border:1px solid #334155',
-    'border-radius:12px',
+    'border-radius:13px',
     'font-family:system-ui,sans-serif',
     'font-size:11px',
     'color:#94a3b8',

@@ -11,6 +11,7 @@ export const createEntitySelectionRing = function(
   dimensions: Signal<{ width: number; height: number }>
 ): EntitySelectionRingResult {
   const ring = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  ring.classList.add('vbs-sel-ring');
   ring.setAttribute('fill', 'none');
   ring.setAttribute('stroke', '#3b82f6');
   ring.setAttribute('stroke-width', '2');

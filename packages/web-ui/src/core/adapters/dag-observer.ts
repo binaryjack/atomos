@@ -46,12 +46,14 @@ export const createDAGObserver = function(entityManager: EntityManager): DAGObse
 
   const scheduleUpdate = () => {
     if (animationFrameId !== null) return;
-    
-    animationFrameId = requestAnimationFrame(() => {
+
+    // Use setTimeout instead of requestAnimationFrame so updates fire even
+    // when the tab is in the background or the browser throttles rAF.
+    animationFrameId = window.setTimeout(() => {  // number in DOM; clearTimeout in cleanup
       animationFrameId = null;
       currentDAG = null; // invalidate cache
       const newDAG = getDAG();
-      
+
       subscribers.forEach(sub => {
         try {
           sub(newDAG);
@@ -59,20 +61,19 @@ export const createDAGObserver = function(entityManager: EntityManager): DAGObse
           console.error('[dag-observer] Subscriber error:', err);
         }
       });
-    });
+    }, 0);
   };
 
   const unsubscribe = entityManager.onApplicationEvent(event => {
-    // Only schedule dag update if structural bounds were modified. 
-    // We ignore Move/Resize events since they don't break the logical DAG graph
-    // (though you could configure this behaviour).
     if (
       event.type === 'EntityCreated' ||
       event.type === 'EntityRemoved' ||
+      event.type === 'EntityNameUpdated' ||
+      event.type === 'EntityMetadataUpdated' ||
+      event.type === 'EntityPropertiesUpdated' ||
       event.type === 'LinkCreated' ||
       event.type === 'LinkRemoved' ||
-      event.type === 'LinkPropertiesUpdated' ||
-      event.type === 'EntityPropertiesUpdated'
+      event.type === 'LinkPropertiesUpdated'
     ) {
       scheduleUpdate();
     }
@@ -92,7 +93,7 @@ export const createDAGObserver = function(entityManager: EntityManager): DAGObse
       unsubscribe();
       subscribers.clear();
       if (animationFrameId !== null) {
-        cancelAnimationFrame(animationFrameId);
+        clearTimeout(animationFrameId);
         animationFrameId = null;
       }
     }

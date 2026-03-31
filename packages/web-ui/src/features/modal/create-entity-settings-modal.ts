@@ -4,6 +4,7 @@ import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
 import { getToolboxConfig } from '../../core/adapters/toolbox-config-manager.js'
 import { createFormularManager } from '../../core/create-formular-manager.js'
 import { createSignal } from '../../core/create-signal.js'
+import { computeContrastColor } from '../../core/utils/compute-contrast-color.js'
 import { createButton } from '../button/create-button.js'
 import { createEntityPropertyRow } from '../entity-with-edges/create-entity-property-row.js'
 import { createFormularDropdown } from '../formular/atoms/create-formular-dropdown.js'
@@ -123,6 +124,61 @@ export const createEntitySettingsModal = function(entityId: string): VbsModal {
       colorField.cleanup.destroy
     );
 
+    // ── Live contrast preview ──────────────────────────────────────────────
+    const contrastBar = document.createElement('div');
+    contrastBar.style.cssText = [
+      'display:flex', 'align-items:center', 'gap:8px',
+      'padding:8px 10px', 'border-radius:6px',
+      'border:1px solid #1e293b',
+      'transition:background 0.15s',
+    ].join(';');
+
+    const contrastSwatch = document.createElement('div');
+    contrastSwatch.style.cssText = [
+      'width:32px', 'height:32px', 'border-radius:4px',
+      'border:1px solid #334155', 'flex-shrink:0',
+      'display:flex', 'align-items:center', 'justify-content:center',
+      'font-size:11px', 'font-weight:700', 'font-family:monospace',
+    ].join(';');
+
+    const contrastInfo = document.createElement('div');
+    contrastInfo.style.cssText = 'display:flex;flex-direction:column;gap:2px;flex:1;';
+
+    const contrastRatioEl = document.createElement('span');
+    contrastRatioEl.style.cssText = 'font-size:12px;font-weight:600;';
+
+    const contrastGradeEl = document.createElement('span');
+    contrastGradeEl.style.cssText = 'font-size:10px;';
+
+    contrastInfo.appendChild(contrastRatioEl);
+    contrastInfo.appendChild(contrastGradeEl);
+    contrastBar.appendChild(contrastSwatch);
+    contrastBar.appendChild(contrastInfo);
+    body.appendChild(contrastBar);
+
+    const updateContrastPreview = (hex: string): void => {
+      const c = computeContrastColor(hex || '#1e293b');
+      contrastBar.style.background   = hex || '#1e293b';
+      contrastSwatch.style.background = hex || '#1e293b';
+      contrastSwatch.style.color      = c.textColor;
+      contrastSwatch.textContent      = 'Aa';
+      contrastRatioEl.style.color     = c.textColor;
+      contrastRatioEl.textContent     = `Contrast ${c.ratio.toFixed(2)}:1`;
+      contrastGradeEl.style.color     = c.mutedColor;
+      const icon = c.grade === 'Fail'     ? '⚠ Fail — text may be unreadable'
+                 : c.grade === 'AA Large' ? '◎ AA Large — OK for big text only'
+                 : c.grade === 'AA'       ? '✓ AA — good'
+                                          : '✓ AAA — excellent';
+      contrastGradeEl.textContent = icon;
+    };
+
+    const colorInputEl = colorField.element.querySelector<HTMLInputElement>('input');
+    updateContrastPreview(colorInputEl?.value ?? liveEntity.color ?? '#1e293b');
+    const onColorInput = (): void => updateContrastPreview(colorInputEl?.value ?? '#1e293b');
+    colorInputEl?.addEventListener('input', onColorInput);
+    fieldCleanups.push(() => colorInputEl?.removeEventListener('input', onColorInput));
+    // ──────────────────────────────────────────────────────────────────────
+
     const localProperties: any[] = structuredClone(liveEntity.properties as any) || [];
 
     const propertiesContainer = document.createElement('div');
@@ -153,16 +209,22 @@ export const createEntitySettingsModal = function(entityId: string): VbsModal {
     const renderLocalProperties = () => {
       scrollBody.innerHTML = '';
       localProperties.forEach((prop, index) => {
-        const propLabelSignal = createSignal(prop.label || prop.key);
-        const propTypeSignal = createSignal<any>(prop.dataType);
+        const propLabelSignal         = createSignal(prop.label || prop.key);
+        const propTypeSignal          = createSignal<any>(prop.dataType);
+        const propComponentTypeSignal = createSignal<any>(prop.componentType ?? 'input');
+        const propValueSignal         = createSignal<unknown>(prop.value ?? '');
 
         const rowEl = createEntityPropertyRow({
           id: prop.key,
           label: propLabelSignal,
           dataType: propTypeSignal,
+          componentType: propComponentTypeSignal,
+          value: propValueSignal,
           availableDataTypes: ['string', 'number', 'boolean', 'integer', 'float', 'datetime', 'select', 'reference'] as any[],
           onLabelChange: (v) => { prop.label = v; },
           onDataTypeChange: (v) => { prop.dataType = v; },
+          onComponentTypeChange: (v) => { prop.componentType = v; },
+          onValueChange: (v) => { prop.value = v; },
           onSettingsClick: () => { /* no-op in simple settings modal for now */ },
           onDeleteClick: () => {
              localProperties.splice(index, 1);

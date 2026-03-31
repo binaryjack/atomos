@@ -1,5 +1,6 @@
 import type { Entity, EntityShape } from '@vbs/vbs-mod';
 import { createSVGShape } from '../../canvas/shape-renderers/create-svg-shape.js';
+import { computeContrastColor } from '../../core/utils/compute-contrast-color.js';
 import type { Signal } from '../../core/types/signal.types.js';
 
 export interface CompactEntityContentResult {
@@ -17,6 +18,7 @@ export const createCompactEntityContent = (props: {
   onDelete?: () => void;
 }): CompactEntityContentResult => {
   const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  const contrast = computeContrastColor(props.color ?? '#1e293b');
   
   // Create wrapper that will receive the rendered shape
   const shapeWrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -30,7 +32,7 @@ export const createCompactEntityContent = (props: {
   textNode.style.fontFamily = 'sans-serif';
   textNode.style.fontWeight = 'bold';
   textNode.style.fontSize = '14px';
-  textNode.style.fill = '#f1f5f9';
+  textNode.style.fill = contrast.textColor;
 
   const propsNode = document.createElementNS('http://www.w3.org/2000/svg', 'text');
   propsNode.setAttribute('text-anchor', 'middle');
@@ -39,7 +41,7 @@ export const createCompactEntityContent = (props: {
   propsNode.style.userSelect = 'none';
   propsNode.style.fontFamily = 'sans-serif';
   propsNode.style.fontSize = '10px';
-  propsNode.style.fill = '#94a3b8'; // Lighter gray for subtext
+  propsNode.style.fill = contrast.mutedColor;
   
   const updateLabel = () => {
     textNode.textContent = props.entitySignal.value.name || props.shape;

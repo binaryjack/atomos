@@ -4,6 +4,7 @@ import { createCanvasViewport } from '../core/create-canvas-viewport.js';
 import { createWorkspaceManager } from '../core/create-workspace-manager.js';
 import { getEntityManager } from '../core/presentation/entity-manager.js';
 import { createInteractiveEntityDemo } from '../features/entity-with-edges/create-interactive-entity-demo.js';
+import { createSchemaPanel } from '../features/schema-panel/index.js';
 import { createCanvasToolbar } from './create-canvas-toolbar.js';
 
 export const createCanvasPage = function() {
@@ -259,25 +260,21 @@ export const createCanvasPage = function() {
   });
   canvasWrap.appendChild(toolbar);
 
-  // Phase 4: Output Adapter / Framework Consumer Test
-  const outputPanel = document.createElement('div');
-  outputPanel.style.cssText = 'position:absolute;bottom:16px;right:16px;width:300px;background:#1e293b;border:1px solid #334155;border-radius:6px;padding:12px;color:#f1f5f9;font-family:monospace;font-size:11px;max-height:200px;overflow-y:auto;z-index:20;box-shadow:0 10px 15px -3px rgba(0,0,0,0.2);';
-  
-  const outputTitle = document.createElement('div');
-  outputTitle.textContent = 'Live Framework DAG Output (Observer)';
-  outputTitle.style.cssText = 'font-weight:bold;margin-bottom:8px;color:#38bdf8;';
-  outputPanel.appendChild(outputTitle);
-
-  const outputContent = document.createElement('pre');
-  outputPanel.appendChild(outputContent);
-  canvasWrap.appendChild(outputPanel);
-
+  // ── Schema Panel (right side, collapsible treeview) ──────────────────────
   const dagObserver = createDAGObserver(getEntityManager());
-  const unsubscribeObserver = dagObserver.subscribe((dag) => {
-    outputContent.textContent = `Nodes: ${dag.nodes.length}\nEdges: ${dag.edges.length}\nLast Updated: ${new Date().toLocaleTimeString()}\n\nRaw DAG Head:\n${JSON.stringify(dag.nodes.slice(0, 1), null, 2)}`;
+
+  const schemaPanel = createSchemaPanel({
+    dagObserver,
+    viewport,
+    behaviorManager: workspace.behaviorManager,
+    canvasContainer: canvasWrap,
   });
+
+  // Append to root so it floats over the canvas on the right side
+  root.appendChild(schemaPanel.element);
+
   cleanups.push(() => {
-    unsubscribeObserver();
+    schemaPanel.cleanup.destroy();
     dagObserver.cleanup();
   });
 

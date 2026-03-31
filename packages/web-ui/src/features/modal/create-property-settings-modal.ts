@@ -29,6 +29,7 @@ export const createPropertySettingsModal = function(
   modal.style.setProperty('--vbs-modal-width', '480px');
 
   let currentValidation = initialProperty.validation;
+  let currentValue: unknown = initialProperty.value ?? '';
   let isInitialized = false;
   let currentForm: IFormular<IObjectShape> | null = null;
   let fieldCleanups: Array<() => void> = [];
@@ -61,6 +62,9 @@ export const createPropertySettingsModal = function(
     try {
       const liveProperty = selectPropertyByKey(props.entityId, props.propertyKey);
       if (!liveProperty) throw new Error(`Property ${props.propertyKey} not found`);
+
+      // Preserve value from live property unless user has already changed it
+      if (!preservedData) currentValue = liveProperty.value ?? '';
 
       // Update header just in case label changed
       header.textContent = `Property: ${liveProperty.label}`;
@@ -144,7 +148,78 @@ export const createPropertySettingsModal = function(
     body.appendChild(componentTypeField.element);
     fieldCleanups.push(componentTypeField.cleanup.destroy);
 
-    // Validation section
+    // ── Value field (adapts to componentType + dataType) ────────────────────
+    const valueSectionWrap = document.createElement('div');
+    valueSectionWrap.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
+
+    const valueLabel = document.createElement('label');
+    valueLabel.textContent = 'Value';
+    valueLabel.style.cssText = 'font-size:12px;font-weight:600;color:#94a3b8;';
+
+    const valueInputWrap = document.createElement('div');
+    valueInputWrap.style.cssText = 'display:flex;align-items:center;';
+
+    const sharedInputStyle = [
+      'width:100%', 'box-sizing:border-box',
+      'background:#0f172a', 'color:#e2e8f0',
+      'border:1px solid #334155', 'border-radius:6px',
+      'font-size:13px', 'padding:7px 10px', 'outline:none',
+    ].join(';');
+
+    let activeValueInput: HTMLElement | null = null;
+
+    const buildValueInput = (): void => {
+      // Read current values from the real native <select> elements already in the DOM.
+      const ct = componentTypeField.element.querySelector<HTMLSelectElement>('select')?.value ?? 'input';
+      const dt = dataTypeField.element.querySelector<HTMLSelectElement>('select')?.value ?? 'string';
+
+      if (activeValueInput) valueInputWrap.removeChild(activeValueInput);
+
+      if (ct === 'checkbox' || dt === 'boolean') {
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = Boolean(currentValue);
+        cb.style.cssText = 'width:18px;height:18px;cursor:pointer;accent-color:#6366f1;';
+        cb.addEventListener('change', () => { currentValue = cb.checked; });
+        activeValueInput = cb;
+      } else if (ct === 'textarea') {
+        const ta = document.createElement('textarea');
+        ta.value = String(currentValue ?? '');
+        ta.rows = 3;
+        ta.style.cssText = sharedInputStyle + ';resize:vertical;';
+        ta.addEventListener('input', () => { currentValue = ta.value; });
+        activeValueInput = ta;
+      } else {
+        const inp = document.createElement('input');
+        if (dt === 'number' || dt === 'integer' || dt === 'float') inp.type = 'number';
+        else if (dt === 'date') inp.type = 'date';
+        else inp.type = 'text';
+        inp.value = String(currentValue ?? '');
+        inp.placeholder = `Enter ${dt} value…`;
+        inp.style.cssText = sharedInputStyle;
+        inp.addEventListener('input', () => { currentValue = inp.value; });
+        activeValueInput = inp;
+      }
+      valueInputWrap.appendChild(activeValueInput);
+    };
+
+    buildValueInput();
+
+    // The real <select> nodes live inside the formular field elements — query them directly.
+    const ctSelect  = componentTypeField.element.querySelector<HTMLSelectElement>('select');
+    const dtSelect  = dataTypeField.element.querySelector<HTMLSelectElement>('select');
+    const rebuildFn = () => buildValueInput();
+    ctSelect?.addEventListener('change', rebuildFn);
+    dtSelect?.addEventListener('change', rebuildFn);
+    fieldCleanups.push(() => {
+      ctSelect?.removeEventListener('change', rebuildFn);
+      dtSelect?.removeEventListener('change', rebuildFn);
+    });
+
+    valueSectionWrap.appendChild(valueLabel);
+    valueSectionWrap.appendChild(valueInputWrap);
+    body.appendChild(valueSectionWrap);
+    // ────────────────────────────────────────────────────────────────────────
     const validationSection = document.createElement('div');
     validationSection.className = 'border-t border-gray-200 pt-4 mt-4';
 
@@ -277,6 +352,7 @@ export const createPropertySettingsModal = function(
             label: String(data.label ?? liveProperty.label),
             dataType: String(data.dataType ?? liveProperty.dataType) as DataType,
             componentType: String(data.componentType ?? liveProperty.componentType) as any,
+            value: currentValue,
             ...(currentValidation !== undefined ? { validation: currentValidation } : {})
           } : p
         );

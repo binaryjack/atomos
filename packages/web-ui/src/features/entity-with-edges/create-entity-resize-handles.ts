@@ -2,8 +2,16 @@ import type { Signal } from '../../core/types/signal.types.js';
 import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js';
 
 const HANDLE_SIZE = 8;
-const MIN_W = 200;
-const MIN_H = 120;
+
+/** Box/rectangle entities need room for the property table. */
+const BOX_MIN_W = 180;
+const BOX_MIN_H = 100;
+/** Compact SVG shapes (actor, diamond, circle, …) can shrink much further. */
+const COMPACT_MIN_W = 48;
+const COMPACT_MIN_H = 48;
+
+const isBoxShape = (shape: string | undefined): boolean =>
+  !shape || shape === 'box' || shape === 'rectangle';
 
 type Corner = 'tl' | 'tr' | 'bl' | 'br';
 const CORNERS: Corner[] = ['tl', 'tr', 'bl', 'br'];
@@ -18,8 +26,11 @@ export const createEntityResizeHandles = function(
   position: Signal<{ x: number; y: number }>,
   dimensions: Signal<{ width: number; height: number }>,
   selected: Signal<boolean>,
-  workspace: WorkspaceManager
+  workspace: WorkspaceManager,
+  shape?: string
 ): EntityResizeHandlesResult {
+  const MIN_W = isBoxShape(shape) ? BOX_MIN_W : COMPACT_MIN_W;
+  const MIN_H = isBoxShape(shape) ? BOX_MIN_H : COMPACT_MIN_H;
   const cleanups: Array<() => void> = [];
   const handles = new Map<Corner, SVGRectElement>();
 

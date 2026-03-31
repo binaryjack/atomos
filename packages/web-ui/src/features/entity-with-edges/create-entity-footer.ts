@@ -1,3 +1,4 @@
+import { computeContrastColor } from '../../core/utils/compute-contrast-color.js';
 import { createIcon } from '../icon/create-icon.js';
 
 export interface EntityFooterProps {
@@ -11,24 +12,27 @@ export interface EntityFooterResult {
 }
 
 export const createEntityFooter = function(props: EntityFooterProps): EntityFooterResult {
+  const bgColor  = props.color || '#1e293b';
+  const contrast = computeContrastColor(bgColor);
+
   const footer = document.createElement('div');
   footer.style.cssText = [
     'display:flex', 'align-items:center', 'gap:4px',
     'padding:4px 8px',
-    `background:${props.color || '#1e293b'}`,
+    `background:${bgColor}`,
     'border-top:1px solid #334155',
     'flex-shrink:0',
     'min-height:30px',
   ].join(';');
 
-  const plusIcon = createIcon({ name: 'plus', size: 12, color: '#3b82f6' });
+  const plusIcon = createIcon({ name: 'plus', size: 12, color: contrast.mutedColor });
 
   const addBtn = document.createElement('button');
   addBtn.type = 'button';
   addBtn.style.cssText = [
     'display:flex', 'align-items:center', 'gap:4px',
     'background:none', 'border:none', 'cursor:pointer',
-    'color:#3b82f6', 'font-size:11px', 'padding:2px 4px',
+    `color:${contrast.textColor}`, 'font-size:11px', 'padding:2px 4px',
     'border-radius:3px',
   ].join(';');
   addBtn.title = 'Add property';

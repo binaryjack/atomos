@@ -180,32 +180,20 @@ export const createEntityManager = function(): EntityManager {
   
   // Simplified Query Interface
   const getEntity = function(entityId: string): DomainEntity | undefined {
-    const entity = applicationService.executeQuery({ type: 'GetEntity', entityId });
-    console.log('[ENTITY-MANAGER] 🔍 Get entity:', entityId, '→', entity ? 'FOUND' : 'NOT FOUND');
-    if (entity) {
-      console.log('[ENTITY-MANAGER] 📄 Found entity details:', { id: entity.id, name: entity.name, position: entity.position });
-    }
-    return entity;
+    return applicationService.executeQuery({ type: 'GetEntity', entityId });
   };
   
   const getAllEntities = function(): readonly DomainEntity[] {
-    const entities = applicationService.executeQuery({ type: 'GetAllEntities' });
-    console.log('[ENTITY-MANAGER] 📋 Get all entities:', entities.length, 'total');
-    entities.forEach(e => console.log('[ENTITY-MANAGER] 📄 Entity:', e.id, 'at', e.position));
-    return entities;
+    return applicationService.executeQuery({ type: 'GetAllEntities' });
   };
   
   // Simplified Link Query Interface
   const getLink = function(linkId: string): DomainLink | undefined {
-    const link = applicationService.executeQuery({ type: 'GetLink', linkId });
-    console.log('[ENTITY-MANAGER] 🔍 Get link:', linkId, '→', link);
-    return link;
+    return applicationService.executeQuery({ type: 'GetLink', linkId });
   };
   
   const getAllLinks = function(): readonly DomainLink[] {
-    const links = applicationService.executeQuery({ type: 'GetAllLinks' });
-    console.log('[ENTITY-MANAGER] 📋 Get all links:', links.length, 'found');
-    return links;
+    return applicationService.executeQuery({ type: 'GetAllLinks' });
   };
   
   // Event Subscription

@@ -14,6 +14,7 @@ const EDGE_THICKNESS = 3 as const;
 
 export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResult {
   const root = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  root.dataset.entityId = props.id;
   const cleanups: Array<() => void> = [];
   const edgeElements: SVGGElement[] = [];
 
@@ -105,7 +106,7 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
     }
 
     // Reattach drag behavior to new handles
-    const drag = createEntityDragBehavior(dragHandleElement, props.position, selected, props.workspace);
+    const drag = createEntityDragBehavior(dragHandleElement, props.position, selected, props.workspace, props.id);
     dragCleanup = drag.cleanup;
 
     // Resync geometry
@@ -136,7 +137,7 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
 
   // --- Resize handles ---
   const resizeHandles = createEntityResizeHandles(
-    props.position, props.dimensions, selected, props.workspace
+    props.position, props.dimensions, selected, props.workspace, props.shape
   );
   resizeHandles.handles.forEach(h => root.appendChild(h));
   cleanups.push(resizeHandles.cleanup);

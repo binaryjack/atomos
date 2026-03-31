@@ -1,4 +1,4 @@
-import type { DataType, Entity } from '@vbs/vbs-mod'
+import type { ComponentType, DataType, Entity } from '@vbs/vbs-mod'
 import { createLegacyPropertyRepositoryBridge } from '../../core/adapters/legacy-property-bridge.js'
 import type { EntityStore } from '../../core/create-entity-store.js'
 import { createSignal } from '../../core/create-signal.js'
@@ -79,13 +79,15 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
 
   // ─── scrollable body ──────────────────────────────────────────────────────
   const scrollBody = document.createElement('div');
-  scrollBody.style.cssText = 'flex:1;overflow-y:auto;overflow-x:hidden;';
+  scrollBody.style.cssText = 'flex:1;overflow-y:auto;overflow-x:hidden;background:#0f172a;';
   body.appendChild(scrollBody);
 
 // Track existing rows by property key
   const rowCache = new Map<string, {
     labelSignal: Signal<string>;
     typeSignal: Signal<DataType>;
+    componentTypeSignal: Signal<ComponentType>;
+    valueSignal: Signal<unknown>;
     element: HTMLDivElement;
     cleanup: () => void;
   }>();
@@ -116,6 +118,12 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
         if (existing.typeSignal.value !== prop.dataType) {
           existing.typeSignal.set(prop.dataType);
         }
+        if (existing.componentTypeSignal.value !== prop.componentType) {
+          existing.componentTypeSignal.set(prop.componentType);
+        }
+        if (existing.valueSignal.value !== prop.value) {
+          existing.valueSignal.set(prop.value);
+        }
         
         // Ensure DOM order matches property array order
         if (scrollBody.children[index] !== existing.element) {
@@ -123,19 +131,20 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
         }
       } else {
         // Create new row
-        const propLabelSignal = createSignal(prop.label);
-        const propTypeSignal  = createSignal<DataType>(prop.dataType);
+        const propLabelSignal         = createSignal(prop.label);
+        const propTypeSignal          = createSignal<DataType>(prop.dataType);
+        const propComponentTypeSignal = createSignal<ComponentType>(prop.componentType);
+        const propValueSignal         = createSignal<unknown>(prop.value);
 
         const rowEl = createEntityPropertyRow({
           id: prop.key,
           label: propLabelSignal,
           dataType: propTypeSignal,
+          componentType: propComponentTypeSignal,
+          value: propValueSignal,
           availableDataTypes: props.globalConfig.value.dataTypes,
           onLabelChange: (v) => {
             propLabelSignal.set(v);
-            const updated = store.signal.value;
-            // IMPORTANT: Since we update Clean Architecture directly, 
-            // do NOT just set the local signal, we must persist!
             const repository = createLegacyPropertyRepositoryBridge({
               entityId: store.signal.value.id,
               entitySignal: store.signal,
@@ -151,6 +160,24 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
               storageProvider: props.storageProvider
             });
             repository.update(prop.key, { dataType: v }).catch(console.error);
+          },
+          onComponentTypeChange: (v) => {
+            propComponentTypeSignal.set(v);
+            const repository = createLegacyPropertyRepositoryBridge({
+              entityId: store.signal.value.id,
+              entitySignal: store.signal,
+              storageProvider: props.storageProvider
+            });
+            repository.update(prop.key, { componentType: v }).catch(console.error);
+          },
+          onValueChange: (v) => {
+            propValueSignal.set(v);
+            const repository = createLegacyPropertyRepositoryBridge({
+              entityId: store.signal.value.id,
+              entitySignal: store.signal,
+              storageProvider: props.storageProvider
+            });
+            repository.update(prop.key, { value: v }).catch(console.error);
           },
           onSettingsClick: () => {
             const propModal = createPropertySettingsModal({
@@ -185,6 +212,8 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
         rowCache.set(prop.key, {
           labelSignal: propLabelSignal,
           typeSignal: propTypeSignal,
+          componentTypeSignal: propComponentTypeSignal,
+          valueSignal: propValueSignal,
           element: rowEl.element,
           cleanup: rowEl.cleanup.destroy
         });

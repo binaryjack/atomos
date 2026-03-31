@@ -1,6 +1,12 @@
 // Core
 export { createSignal } from './core/create-signal';
 export { createComputed } from './core/create-computed';
+export { createToggleable } from './core/create-toggleable.js';
+export type { Toggleable, ToggleState } from './core/create-toggleable.js';
+export { createKeyBindings } from './core/create-key-bindings.js';
+export type { KeyBindings, KeyBindingHandlers } from './core/create-key-bindings.js';
+export { createPortalRegistry } from './core/create-portal-registry.js';
+export type { PortalRegistry } from './core/create-portal-registry.js';
 export { getToolboxConfig, setToolboxConfig } from './core/adapters/toolbox-config-manager.js';
 export { defaultToolboxConfig } from './core/default-toolbox.config.js';
 export type { Signal, ComputedSignal } from './core/types/signal.types';
@@ -21,6 +27,46 @@ export { createDropdown, type DropdownProps, type DropdownResult, type DropdownO
 export { createCard, type CardProps, type CardResult } from './features/card/create-card';
 export { createAccordion, type AccordionProps, type AccordionResult } from './features/accordion/create-accordion';
 export { createIcon, type IconProps, type IconResult, type IconName } from './features/icon/create-icon';
+
+// Atom components (new)
+export { createBadge } from './features/badge/create-badge.js';
+export type { BadgeProps, BadgeResult, BadgeVariant, BadgeSize } from './features/badge/types/badge.types.js';
+export { createSpinner } from './features/spinner/create-spinner.js';
+export type { SpinnerProps, SpinnerResult, SpinnerSize } from './features/spinner/types/spinner.types.js';
+export { createToggle } from './features/toggle/create-toggle.js';
+export type { ToggleProps, ToggleResult, ToggleSize } from './features/toggle/types/toggle.types.js';
+
+// Date Picker
+export {
+  createDatePicker,
+  VbsDatePicker,
+  createDpDrawer,
+  DateFormatsEnum,
+  formatDate,
+  parseDate,
+  createDateObject,
+  MONTHS,
+  WEEK_DAYS,
+  computeDaysGrid,
+  computeMonthsGrid,
+  computeYearsGrid,
+  computeRange,
+  getNextDate,
+  getPreviousDate,
+} from './features/date-picker/index.js';
+export type {
+  DatePickerProps,
+  DatePickerResult,
+  DatePickerGridModeType,
+  DatePickerSelectionModeType,
+  DatePickerDisplayType,
+  IDateObject,
+  IDatePickerCell,
+  IDatePickerRow,
+  DpContext,
+  DpDrawerOptions,
+  DpDrawerResult,
+} from './features/date-picker/index.js';
 
 // SVG components
 export { createSvgRectangle, type SvgRectangleProps, type SvgRectangleResult } from './features/svg-rectangle/create-svg-rectangle';

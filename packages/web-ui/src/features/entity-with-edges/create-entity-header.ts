@@ -1,3 +1,4 @@
+import { computeContrastColor } from '../../core/utils/compute-contrast-color.js';
 import type { Signal } from '../../core/types/signal.types.js';
 import { createEditableLabel } from '../editable-label/create-editable-label.js';
 import { createIcon } from '../icon/create-icon.js';
@@ -18,11 +19,14 @@ export interface EntityHeaderResult {
 export const createEntityHeader = function(props: EntityHeaderProps): EntityHeaderResult {
   const cleanups: Array<() => void> = [];
 
+  const bgColor   = props.color || '#1e293b';
+  const contrast  = computeContrastColor(bgColor);
+
   const header = document.createElement('div');
   header.style.cssText = [
     'display:flex', 'align-items:center', 'gap:4px',
     'padding:6px 8px',
-    `background:${props.color || '#1e293b'}`,
+    `background:${bgColor}`,
     'border-bottom:1px solid #334155',
     'flex-shrink:0',
     'min-height:36px',
@@ -37,10 +41,12 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
     inputClassName: 'text-sm font-semibold text-slate-100',
     onChange: props.onLabelChange,
   });
+  // Override text colour based on background contrast
+  editableLabel.element.style.color = contrast.textColor;
   cleanups.push(editableLabel.cleanup.destroy);
 
   // Settings button
-  const settingsIcon = createIcon({ name: 'settings', size: 14, color: '#94a3b8' });
+  const settingsIcon = createIcon({ name: 'settings', size: 14, color: contrast.mutedColor });
   const settingsBtn = document.createElement('button');
   settingsBtn.type = 'button';
   settingsBtn.style.cssText = 'flex-shrink:0;background:none;border:none;cursor:pointer;padding:2px;display:flex;border-radius:3px;';
