@@ -26,5 +26,9 @@ export type { DpContext } from './dp-context.js';
 export { createDpDrawer }   from './dp-drawer.js';
 export type { DpDrawerOptions, DpDrawerResult } from './dp-drawer.js';
 
+export * from './atp-date-picker/atp-date-picker.js';
+
+// Legacy exports (optional, could be removed if the app doesn't rely on procedural form)
 export { createDatePicker, VbsDatePicker } from './create-date-picker.js';
 export type { DatePickerProps, DatePickerResult } from './create-date-picker.js';
+
