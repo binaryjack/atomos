@@ -153,10 +153,10 @@
     let createStore, createAppStore, createEntity;
     
     try {
-      const reduxModule = await import('./dist/redux-store.js');
+      const reduxModule = await import('/atomos-prime/dist/redux-store.js');
       createStore = reduxModule.createStore;
       
-      const appModule = await import('./dist/core/create-app-store.js');
+      const appModule = await import('/atomos-prime/dist/core/create-app-store.js');
       createAppStore = appModule.createAppStore;
       
       const vbsModule = await import('../vbs-mod/dist/index.js');

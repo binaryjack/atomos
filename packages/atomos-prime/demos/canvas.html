@@ -11,8 +11,11 @@
   <script type="importmap">
   {
     "imports": {
-      "@binaryjack/formular.dev": "./node_modules/@binaryjack/formular.dev/dist/formular-dev.es.js",
-      "@vbs/vbs-mod": "../vbs-mod/dist/index.js"
+      "@binaryjack/formular.dev": "/formular-dev/dist/formular-dev.es.js",
+      "@atomos/structura-core": "/atomos-structura-core/dist/index.js",
+      "@atomos/prime-style": "/atomos-prime-style/dist/index.js",
+      "@atomos/structura-core": "/atomos-structura-core/dist/index.js",
+      "@atomos/prime-style": "/atomos-prime-style/dist/index.js"
     }
   }
   </script>
@@ -23,11 +26,11 @@
     <a href="preview.html" style="color:#94a3b8;text-decoration:none;padding:4px 10px;border-radius:6px;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background=''">Components</a>
     <a href="canvas.html" style="color:#38bdf8;text-decoration:none;font-weight:500;padding:4px 10px;border-radius:6px;background:#0f2744;">Canvas</a>
     <a href="modal.html" style="color:#94a3b8;text-decoration:none;padding:4px 10px;border-radius:6px;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background=''">Modal</a>
-    <a href="formular.html" style="color:#94a3b8;text-decoration:none;padding:4px 10px;border-radius:6px;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background=''">Formular</a>
+    <a href="formular.html" style="color:#94a3b8;text-decoration:none;padding:4px 10px;border-radius:6px;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background=''">Formular</a> <a href="test-stepper.html" style="color:#94a3b8;text-decoration:none;padding:4px 10px;border-radius:6px;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background=''">Stepper</a> <a href="test-schema-canvas.html" style="color:#94a3b8;text-decoration:none;padding:4px 10px;border-radius:6px;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background=''">Schema Canvas</a>
   </nav>
   <div id="canvas-root"></div>
   <script type="module">
-    import { createCanvasPage } from './dist/preview/create-canvas-page.js';
+    import { createCanvasPage } from '/atomos-prime/dist/preview/create-canvas-page.js';
 
     console.log('🚀 Starting original canvas with Redux persistence');
     const page = createCanvasPage();
