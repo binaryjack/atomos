@@ -35,6 +35,18 @@ export { createSpinner } from './features/spinner/create-spinner.js';
 export type { SpinnerProps, SpinnerResult, SpinnerSize } from './features/spinner/types/spinner.types.js';
 export { createToggle } from './features/toggle/create-toggle.js';
 export type { ToggleProps, ToggleResult, ToggleSize } from './features/toggle/types/toggle.types.js';
+export { createProgressBar } from './features/progress-bar/create-progress-bar.js';
+export type { ProgressBarProps, ProgressBarResult } from './features/progress-bar/types/progress-bar.types.js';
+export { createCircularProgress } from './features/circular-progress/create-circular-progress.js';
+export type { CircularProgressProps, CircularProgressResult } from './features/circular-progress/types/circular-progress.types.js';
+
+// Layout / Pages
+export { createSettingsPage } from './features/settings-page/create-settings-page.js';
+export type { SettingsPageProps, SettingsPageResult } from './features/settings-page/types/settings-page.types.js';
+
+// Modular Features
+export { createModularTable } from './features/modular-table/create-modular-table.js';
+export type { ModularTableProps, ModularTableResult, ColumnDef } from './features/modular-table/types/modular-table.types.js';
 
 // Date Picker
 export {

@@ -1,4 +1,5 @@
-const SHADOW = `<style>
+const template = document.createElement('template');
+template.innerHTML = `<style>
   :host {
     display: flex;
     flex-direction: column;
@@ -24,9 +25,11 @@ const SHADOW = `<style>
 <slot name="validation"></slot>`;
 
 export class VbsFieldSet extends HTMLElement {
-  connectedCallback(): void {
-    if (this.shadowRoot) return;
-    this.attachShadow({ mode: 'open' }).innerHTML = SHADOW;
+  constructor() {
+    super();
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: 'open' }).appendChild(template.content.cloneNode(true));
+    }
   }
 }
 

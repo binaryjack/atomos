@@ -30,7 +30,8 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): HTMLEl
     ].join('');
     btn.onmouseover = () => { btn.style.background = '#1e293b'; btn.style.color = '#f8fafc'; };
     btn.onmouseout = () => { btn.style.background = 'transparent'; btn.style.color = '#94a3b8'; };
-    btn.onclick = onClick;
+    btn.onclick = (e) => { e.stopPropagation(); onClick(); };
+    btn.onmousedown = (e) => { e.stopPropagation(); };
     return btn;
   };
 
@@ -151,6 +152,18 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): HTMLEl
     () => fitToScreen()
   );
 
+  // -- Settings Link --
+  const settingsBtn = document.createElement('a');
+  settingsBtn.href = '/test-settings-page.html';
+  settingsBtn.target = '_blank';
+  settingsBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+  settingsBtn.style.cssText = 'color:#94a3b8;cursor:pointer;padding:8px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;text-decoration:none;';
+  settingsBtn.title = 'Settings';
+  settingsBtn.onmouseover = () => { settingsBtn.style.background = '#1e293b'; settingsBtn.style.color = '#f8fafc'; };
+  settingsBtn.onmouseout = () => { settingsBtn.style.background = 'transparent'; settingsBtn.style.color = '#94a3b8'; };
+  settingsBtn.onclick = (e) => e.stopPropagation();
+  settingsBtn.onmousedown = (e) => e.stopPropagation();
+
   // -- Zoom Label --
   const zoomLabel = document.createElement('div');
   zoomLabel.style.cssText = 'color:#f8fafc;font-size:12px;font-family:system-ui,sans-serif;min-width:48px;text-align:center;font-variant-numeric:tabular-nums;cursor:pointer;';
@@ -169,6 +182,8 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): HTMLEl
   toolbar.appendChild(divider());
   toolbar.appendChild(centerBtn);
   toolbar.appendChild(fitBtn);
+  toolbar.appendChild(divider());
+  toolbar.appendChild(settingsBtn);
   toolbar.appendChild(divider());
   toolbar.appendChild(zoomOutBtn);
   toolbar.appendChild(zoomLabel);

@@ -1,7 +1,7 @@
 import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
 import { f } from '@binaryjack/formular.dev'
-import { DATA_TYPES, COMPONENT_TYPES } from '@vbs/vbs-mod'
 import type { DataType, Property } from '@vbs/vbs-mod'
+import { COMPONENT_TYPES, DATA_TYPES } from '@vbs/vbs-mod'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
 import { createFormularManager } from '../../core/create-formular-manager.js'
 import { selectEntityById, selectPropertyByKey } from '../../core/selectors.js'

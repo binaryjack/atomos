@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings Page Integration Test</title>
+  <link href="./src/base/tailwind.css" rel="stylesheet">
+</head>
+<body class="bg-indigo-950 text-slate-200 h-screen w-screen relative overflow-hidden">
+  
+  <div class="h-full w-full flex flex-col items-center justify-center">
+      <h1 class="text-3xl font-bold mb-4">Background Mock App Canvas</h1>
+      <button id="open-settings" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-md shadow-lg transition-all font-semibold">
+         Open Settings Panel
+      </button>
+  </div>
+
+  <div id="settings-root"></div>
+
+  <script type="module" src="./src/test-settings-page.ts"></script>
+</body>
+</html>

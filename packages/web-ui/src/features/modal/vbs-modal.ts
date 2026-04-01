@@ -1,10 +1,11 @@
-﻿import type { ModalResult } from './types/modal-result.types.js';
-import type { ModalOptions } from './types/modal-options.types.js';
+﻿import { animateClose, animateOpen } from './create-modal-animations.js';
 import { modalStack } from './create-modal-stack.js';
-import { animateOpen, animateClose } from './create-modal-animations.js';
+import type { ModalOptions } from './types/modal-options.types.js';
+import type { ModalResult } from './types/modal-result.types.js';
 
 // â”€â”€â”€ Shadow DOM template â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const SHADOW_HTML = `<style>
+const template = document.createElement('template');
+template.innerHTML = `<style>
   :host { display: contents; }
 
   .backdrop {
@@ -109,15 +110,19 @@ export class VbsModal extends HTMLElement {
   #isOpen = false;
   #isAnimating = false;
   #resolve: ((r: ModalResult<unknown>) => void) | null = null;
+  #previouslyFocused: HTMLElement | null = null;
+  #focusTrapHandler: (e: KeyboardEvent) => void;
 
   constructor() {
     super();
     this.#shadow = this.attachShadow({ mode: 'open' });
-    this.#shadow.innerHTML = SHADOW_HTML;
+    this.#shadow.appendChild(template.content.cloneNode(true));
 
     this.#backdrop = this.#shadow.querySelector('.backdrop') as HTMLElement;
     this.#wrapper  = this.#shadow.querySelector('.wrapper')  as HTMLElement;
     this.#dialog   = this.#shadow.querySelector('.dialog')   as HTMLElement;
+
+    this.#focusTrapHandler = this.#trapFocus.bind(this);
 
     // Start hidden
     this.#setVisible(false);
@@ -146,6 +151,20 @@ export class VbsModal extends HTMLElement {
       modalStack.pop();
       this.#resolve?.({ value: undefined, cancelled: true });
       this.#resolve = null;
+    }
+  }
+
+  // â”€â”€â”€ Attributes & Reflection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  
+  get isOpen() {
+    return this.hasAttribute('open');
+  }
+
+  set isOpen(value: boolean) {
+    if (value) {
+      if (!this.hasAttribute('open')) this.setAttribute('open', '');
+    } else {
+      if (this.hasAttribute('open')) this.removeAttribute('open');
     }
   }
 
@@ -207,9 +226,46 @@ export class VbsModal extends HTMLElement {
     this.#wrapper.style.display  = f;
   }
 
+  #trapFocus(e: KeyboardEvent): void {
+    if (e.key !== 'Tab') return;
+
+    // Use querySelectorAll to find focusable elements inside the modal light dom
+    const focusableElements = 'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])';
+    const elements = Array.from(this.querySelectorAll(focusableElements)) as HTMLElement[];
+    
+    if (elements.length === 0) {
+      e.preventDefault();
+      return;
+    }
+
+    const firstElement = elements[0];
+    const lastElement = elements[elements.length - 1];
+
+    if (!firstElement || !lastElement) return;
+
+    // Shift + Tab
+    if (e.shiftKey) {
+      if (document.activeElement === firstElement || document.activeElement === this) {
+        lastElement.focus();
+        e.preventDefault();
+      }
+    } else {
+      // Tab
+      if (document.activeElement === lastElement) {
+        firstElement.focus();
+        e.preventDefault();
+      }
+    }
+  }
+
   async #doOpen(): Promise<void> {
     if (this.#isAnimating) return;
     this.#isAnimating = true;
+
+    // Save initially focused element to restore later
+    if (document.activeElement instanceof HTMLElement) {
+      this.#previouslyFocused = document.activeElement;
+    }
 
     const zIndex = modalStack.push(this);
     this.#backdrop.style.zIndex = String(zIndex - 1);
@@ -218,14 +274,27 @@ export class VbsModal extends HTMLElement {
     this.#setVisible(true);
     this.removeAttribute('aria-hidden');
 
+    this.addEventListener('keydown', this.#focusTrapHandler);
+
     await animateOpen(this.#dialog, this.#backdrop);
     this.#isAnimating = false;
+
+    // Move focus into the modal
+    const focusable = this.querySelector('input, button, [tabindex]:not([tabindex="-1"])') as HTMLElement;
+    if (focusable) {
+      focusable.focus();
+    } else {
+      this.setAttribute('tabindex', '-1');
+      this.focus();
+    }
 
     this.dispatchEvent(new CustomEvent('vbs-modal-opened', { bubbles: false }));
   }
 
   async #doClose(result: ModalResult<unknown>): Promise<void> {
     this.#isAnimating = true;
+    
+    this.removeEventListener('keydown', this.#focusTrapHandler);
 
     await animateClose(this.#dialog, this.#backdrop);
 
@@ -239,6 +308,12 @@ export class VbsModal extends HTMLElement {
     const resolve = this.#resolve;
     this.#resolve = null;
     resolve?.(result);
+    
+    // Restore focus
+    if (this.#previouslyFocused) {
+      this.#previouslyFocused.focus();
+      this.#previouslyFocused = null;
+    }
 
     this.dispatchEvent(
       new CustomEvent('vbs-modal-closed', { bubbles: false, detail: result })

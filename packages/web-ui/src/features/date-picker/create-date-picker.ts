@@ -1,9 +1,9 @@
-import type { Signal }          from '../../core/types/signal.types.js';
-import { createSignal }         from '../../core/create-signal.js';
-import { createDpDrawer }       from './dp-drawer.js';
-import { DateFormatsEnum, formatDate, parseDate } from './date-utils.js';
-import type { DatePickerSelectionModeType }       from './types/date-picker.types.js';
-import type { DpDrawerResult }  from './dp-drawer.js';
+import { createSignal } from '../../core/create-signal.js';
+import type { Signal } from '../../core/types/signal.types.js';
+import { DateFormatsEnum, formatDate } from './date-utils.js';
+import type { DpDrawerResult } from './dp-drawer.js';
+import { createDpDrawer } from './dp-drawer.js';
+import type { DatePickerSelectionModeType } from './types/date-picker.types.js';
 
 export interface DatePickerProps {
   name?:          string;
@@ -213,7 +213,54 @@ export class VbsDatePicker extends HTMLElement {
   #valueSig = createSignal<string>('');
   #disabledSig = createSignal<boolean>(false);
 
+  // --- Property Reflection ---
+  get format(): string {
+    return this.getAttribute(ATTR_FORMAT) ?? DateFormatsEnum.DD_MM_YYYY;
+  }
+  set format(val: string) {
+    this.setAttribute(ATTR_FORMAT, val);
+  }
+
+  get selectionMode(): string {
+    return this.getAttribute(ATTR_MODE) ?? 'single';
+  }
+  set selectionMode(val: string) {
+    this.setAttribute(ATTR_MODE, val);
+  }
+
+  get value(): string {
+    return this.getAttribute(ATTR_VALUE) ?? '';
+  }
+  set value(val: string) {
+    this.setAttribute(ATTR_VALUE, val);
+  }
+
+  get disabled(): boolean {
+    return this.hasAttribute(ATTR_DISABLED);
+  }
+  set disabled(val: boolean) {
+    if (val) this.setAttribute(ATTR_DISABLED, '');
+    else this.removeAttribute(ATTR_DISABLED);
+  }
+
+  get placeholder(): string {
+    return this.getAttribute(ATTR_PLACEHOLDER) ?? '';
+  }
+  set placeholder(val: string) {
+    this.setAttribute(ATTR_PLACEHOLDER, val);
+  }
+
+  get name(): string {
+    return this.getAttribute(ATTR_NAME) ?? '';
+  }
+  set name(val: string) {
+    this.setAttribute(ATTR_NAME, val);
+  }
+  // ---------------------------
+
   connectedCallback(): void {
+    if (this.#result) return; // Prevent multiple initializations
+
     const format = (this.getAttribute(ATTR_FORMAT) ?? DateFormatsEnum.DD_MM_YYYY) as DateFormatsEnum;
     const mode   = (this.getAttribute(ATTR_MODE)   ?? 'single') as DatePickerSelectionModeType;
     const ph     = this.getAttribute(ATTR_PLACEHOLDER) ?? undefined;
@@ -230,7 +277,9 @@ export class VbsDatePicker extends HTMLElement {
       ...(ph   !== undefined && { placeholder: ph }),
       ...(name !== undefined && { name }),
       onChange: (value, date) => {
-        this.setAttribute(ATTR_VALUE, value);
+        if (this.getAttribute(ATTR_VALUE) !== value) {
+          this.setAttribute(ATTR_VALUE, value);
+        }
         this.dispatchEvent(new CustomEvent('change', { detail: { value, date }, bubbles: true }));
       },
     });
@@ -244,7 +293,7 @@ export class VbsDatePicker extends HTMLElement {
   }
 
   attributeChangedCallback(name: string, _old: string | null, next: string | null): void {
-    if (!this.#result) return;
+    if (!this.#result) return; // if not initialized yet, signals will pick it up on connect
     if (name === ATTR_VALUE)    this.#valueSig.set(next ?? '');
     if (name === ATTR_DISABLED) this.#disabledSig.set(next !== null);
   }
