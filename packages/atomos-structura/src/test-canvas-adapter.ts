@@ -51,6 +51,28 @@ kernel.addEntity({
     updatedAt: Date.now()
 });
 
+kernel.addLink({
+    id: 'l1',
+    leftEntityId: 'user-entity',
+    rightEntityId: 'org-entity',
+    leftAnchorId: 'a1',
+    rightAnchorId: 'a2',
+    leftCardinality: '1',
+    rightCardinality: '*',
+    renderType: 'linear'
+});
+
+kernel.addLink({
+    id: 'l2',
+    leftEntityId: 'user-entity',
+    rightEntityId: 'post-entity',
+    leftAnchorId: 'a1',
+    rightAnchorId: 'a2',
+    leftCardinality: '1',
+    rightCardinality: '*',
+    renderType: 'linear'
+});
+
 // Optionally log changes for testing
 kernel.subscribe(() => {
     console.log('Kernel State Snapshot:', kernel.getSnapshot().entities);

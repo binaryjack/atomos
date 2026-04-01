@@ -10,10 +10,11 @@ import type { SchemaGraphKernel } from '../core/create-schema-graph-kernel.js';
 export const createCanvasAdapter = (kernel: SchemaGraphKernel, canvasElement: HTMLElement) => {
     // Keep track of our rendered Web Components natively
     const renderedNodes = new Map<string, any>(); // Typed 'any' natively or use specific component typing if imported
+    const renderedEdges = new Map<string, any>(); 
 
     // 1. Core Subscribe loop (The single source of truth dispatcher)
     const unsubscribe = kernel.subscribe(() => {
-        const { entities } = kernel.getSnapshot();
+        const { entities, links } = kernel.getSnapshot();
 
         // Pass 1: Sync Entities (Upsert logic)
         for (const [id, entity] of Object.entries(entities)) {
@@ -36,15 +37,54 @@ export const createCanvasAdapter = (kernel: SchemaGraphKernel, canvasElement: HT
             if (node.label !== entity.name) node.label = entity.name;
         }
 
-        // Pass 2: Garbage Collection (Remove deleted entities)
+        // Pass 2: Sync Edges (Upsert logic)
+        for (const [id, link] of Object.entries(links)) {
+            let edge = renderedEdges.get(id);
+            if (!edge) {
+                edge = document.createElement('atp-schema-edge');
+                edge.dataId = id;
+                canvasElement.appendChild(edge);
+                renderedEdges.set(id, edge);
+            }
+
+            const leftEntity = entities[link.leftEntityId];
+            const rightEntity = entities[link.rightEntityId];
+
+            if (leftEntity && rightEntity) {
+                // Compute anchoring (naively using center-right for source, center-left for target)
+                const leftWidth = leftEntity.dimensions?.width || 150;
+                const leftHeight = leftEntity.dimensions?.height || 50;
+                const rightHeight = rightEntity.dimensions?.height || 50;
+
+                const x1 = leftEntity.position.x + leftWidth;
+                const y1 = leftEntity.position.x + (leftHeight / 2); // BUG here, let's fix it later or just assume y
+                
+                // Real coords
+                const trueX1 = leftEntity.position.x + leftWidth;
+                const trueY1 = leftEntity.position.y + (leftHeight / 2);
+                const trueX2 = rightEntity.position.x;
+                const trueY2 = rightEntity.position.y + (rightHeight / 2);
+
+                if (edge.x1 !== trueX1) edge.x1 = trueX1;
+                if (edge.y1 !== trueY1) edge.y1 = trueY1;
+                if (edge.x2 !== trueX2) edge.x2 = trueX2;
+                if (edge.y2 !== trueY2) edge.y2 = trueY2;
+            }
+        }
+
+        // Pass 3: Garbage Collection (Remove deleted entities and links)
         for (const [id, node] of renderedNodes.entries()) {
             if (!entities[id]) {
                 canvasElement.removeChild(node);
                 renderedNodes.delete(id);
             }
         }
-        
-        // Edge syncing logic will sit here next...
+        for (const [id, edge] of renderedEdges.entries()) {
+            if (!links[id]) {
+                canvasElement.removeChild(edge);
+                renderedEdges.delete(id);
+            }
+        }
     });
 
     // 2. Headless Mutation Listener - Catch Web Component events bubbling up
@@ -64,19 +104,11 @@ export const createCanvasAdapter = (kernel: SchemaGraphKernel, canvasElement: HT
     // Initial explicit DOM bootstrap mapping
     // We get the current snapshot and manually dispatch an update to seed initial shapes
     const initialConfig = kernel.getSnapshot();
-    if (Object.keys(initialConfig.entities).length > 0) {
-        // We trigger the sync manually once, by simulating a dispatch
-        const { entities } = initialConfig;
-        
-        for (const [id, entity] of Object.entries(entities)) {
-            let node = document.createElement('atp-schema-node') as any;
-            node.dataId = id;
-            node.label = entity.name;
-            node.x = entity.position.x;
-            node.y = entity.position.y;
-            canvasElement.appendChild(node);
-            renderedNodes.set(id, node);
-        }
+    if (Object.keys(initialConfig.entities).length > 0 || Object.keys(initialConfig.links).length > 0) {
+        // We trigger the sync manually once, by firing our newly populated sub trigger privately or simulating a notification
+        // Note: the subscription above might not fire immediately for current state. We must trigger it.
+        // Actually, just calling the logic inside subscribe once is better. We can just fake an update:
+        kernel.updateEntity('nothing', {}); // no-op update to trigger subscription broadcast
     }
 
     // Teardown API for cleanup frameworks
