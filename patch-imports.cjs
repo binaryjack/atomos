@@ -10,7 +10,11 @@ function walk(dir) {
       const startCode = code;
 
       // Find `from './...';` and `import './...';`
-      code = code.replace(/(from|import)\s+([\'\"])([\.\/A-Za-z0-9_-]+)\2/g, (match, type, q, p) => {
+      const matches = code.match(/(from|import)\s+([\'\"])([\.\/A-Za-z0-9_\-]+)\2/g);
+      if (matches && fullPath.endsWith('index.ts')) {
+        console.log("Matches in index.ts:", matches);
+      }
+      code = code.replace(/(from|import)\s+([\'\"])([\.\/A-Za-z0-9_\-]+)\2/g, (match, type, q, p) => {
          if (p.endsWith('.js') || p.endsWith('.ts')) return match;
          if (!p.startsWith('.')) return match;
          return `${type} ${q}${p}.js${q}`;
