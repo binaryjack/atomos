@@ -43,17 +43,17 @@ export class VbsMcpServer {
   
   private async processRequest(request: McpRequest): Promise<McpResponse> {
     switch (request.method) {
-      case "atomos-structura/create-entity':
+      case 'atomos-structura/create-entity':
         return this.createEntity(request);
-      case "atomos-structura/get-entity':
+      case 'atomos-structura/get-entity':
         return this.getEntity(request);
-      case "atomos-structura/update-entity':
+      case 'atomos-structura/update-entity':
         return this.updateEntity(request);
-      case "atomos-structura/delete-entity':
+      case 'atomos-structura/delete-entity':
         return this.deleteEntity(request);
-      case "atomos-structura/create-link':
+      case 'atomos-structura/create-link':
         return this.createLink(request);
-      case "atomos-structura/get-schema':
+      case 'atomos-structura/get-schema':
         return this.getSchema(request);
       default:
         return {

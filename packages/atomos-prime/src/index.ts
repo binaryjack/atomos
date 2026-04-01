@@ -12,6 +12,7 @@ export { defaultToolboxConfig } from './core/default-toolbox.config.js';
 export type { Signal, ComputedSignal } from './core/types/signal.types';
 export type { ToolboxConfiguration, Toolset, ToolboxItem } from './types/toolbox.types.js';
 
+export { getEntityManager, createEntityManager, type EntityManager } from './core/presentation/entity-manager.js';
 // Base components
 export { vbsElement, type VbsElementProps } from './base/vbs-element';
 export { createVbsCanvas, type VbsCanvasProps } from './components/vbs-canvas';

@@ -114,9 +114,9 @@ export const createKernelAdapter = (kernel: SchemaGraphKernel, entityManager: En
                         rightEntityId: targetId,
                         leftAnchorId: event.link.sourceAnchorId,
                         rightAnchorId: event.link.targetAnchorId,
-                        leftCardinality: 'one',
-                        rightCardinality: 'one',
-                        renderType: 'solid'
+                        leftCardinality: '1',
+                        rightCardinality: '1',
+                        renderType: 'linear'
                     });
                 } else {
                     console.warn(`Kernel Rejected Link: ${sourceId} -> ${targetId}`);
@@ -134,7 +134,7 @@ export const createKernelAdapter = (kernel: SchemaGraphKernel, entityManager: En
             case 'EntityPropertiesUpdated':
                 const propEnt = entityManager.getEntity(event.entityId);
                 if (propEnt) {
-                    kernel.updateEntity(event.entityId, { properties: propEnt.properties });
+                    kernel.updateEntity(event.entityId, { properties: [...propEnt.properties] as any });
                 }
                 break;
             case 'EntityNameUpdated':
@@ -157,7 +157,7 @@ export const createKernelAdapter = (kernel: SchemaGraphKernel, entityManager: En
     // And populate Kernel if UI has pre-existing cache
     else if (entityManager.getAllEntities().length > 0) {
        entityManager.getAllEntities().forEach(e => {
-           kernel.addEntity({ ...e, nodeType: e.metadata?.shape || 'default', properties: e.properties || [] } as any)
+           kernel.addEntity({ ...e, nodeType: (e as any).metadata?.shape || 'default', properties: e.properties || [] } as any)
        });
        entityManager.getAllLinks().forEach(l => {
            kernel.addLink({ 

@@ -2,4 +2,3 @@ export { createSchemaBuilder, type SchemaBuilderProps } from './core/schema-buil
 export { createSchemaBuilderState, type SchemaBuilderState } from './core/schema-builder-state.js';
 export * from './core/create-schema-graph-kernel.js';
 export { createPrismaAdapter } from './adapters/create-prisma-adapter.js';
-export { createCanvasAdapter } from './adapters/create-canvas-adapter.js';
