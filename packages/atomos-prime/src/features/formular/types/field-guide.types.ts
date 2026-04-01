@@ -7,7 +7,7 @@ export interface FieldGuideProps {
 }
 
 export interface FieldGuideResult {
-  readonly element: HTMLDivElement;
+  readonly element: HTMLElement;
   readonly refresh: () => void;
   readonly cleanup: { destroy: () => void };
 }

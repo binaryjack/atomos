@@ -15,7 +15,7 @@ template.innerHTML = `<style>
 </style>
 <div id="content"></div>`;
 
-export class VbsValidationResult extends HTMLElement {
+export class AtpValidationResult extends HTMLElement {
   #unobserve: (() => void) | null = null;
   #form: IFormular<IObjectShape> | null = null;
   #fieldName: string | null = null;
@@ -130,7 +130,6 @@ export class VbsValidationResult extends HTMLElement {
     this.#contentPart.innerHTML = '';
 
     if (this.#focused) {
-      // Always show guide text on focus if provided
       if (this.#guideText) {
         this.style.display = 'block';
         this.style.color = '#38bdf8';
@@ -138,7 +137,6 @@ export class VbsValidationResult extends HTMLElement {
         p.textContent = this.#guideText;
         this.#contentPart.appendChild(p);
       } else if (failed.length > 0) {
-        // No explicit guide — show error hints in blue as fallback
         this.style.display = 'block';
         this.style.color = '#38bdf8';
         const contentPart = this.#contentPart;
@@ -169,12 +167,12 @@ export class VbsValidationResult extends HTMLElement {
   }
 }
 
-if (!customElements.get('vbs-validation-result')) {
-  customElements.define('vbs-validation-result', VbsValidationResult);
+if (!customElements.get('atp-validation-result')) {
+  customElements.define('atp-validation-result', AtpValidationResult);
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'vbs-validation-result': VbsValidationResult;
+    'atp-validation-result': AtpValidationResult;
   }
 }

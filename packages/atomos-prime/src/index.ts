@@ -25,7 +25,7 @@ export { createButton, type ButtonProps, type ButtonResult } from './features/bu
 export { createCheckbox, type CheckboxProps, type CheckboxResult } from './features/checkbox/create-checkbox';
 export { createTextarea, type TextareaProps, type TextareaResult } from './features/textarea/create-textarea';
 export { createSkeleton, type SkeletonProps, type SkeletonResult } from './features/skeleton/create-skeleton';
-export { createDropdown, type DropdownProps, type DropdownResult, type DropdownOption } from './features/dropdown/create-dropdown';
+export * from './features/dropdown/index.js';
 export { createCard, type CardProps, type CardResult } from './features/card/create-card';
 export { createAccordion, type AccordionProps, type AccordionResult } from './features/accordion/create-accordion';
 export { createIcon, type IconProps, type IconResult, type IconName } from './features/icon/create-icon';

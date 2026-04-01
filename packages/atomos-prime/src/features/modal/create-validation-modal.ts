@@ -2,8 +2,8 @@ import type { IFormular, IObjectShape, IValidationOptions } from '@binaryjack/fo
 import { createForm, f } from '@binaryjack/formular.dev';
 import type { DataType } from '@atomos/structura-core';
 import { createButton } from '../button/create-button.js';
-import { createFormularCheckbox } from '../formular/atoms/create-formular-checkbox.js';
-import { createFormularInput } from '../formular/atoms/create-formular-input.js';
+import { createFormularCheckbox } from '../formular/index.js';
+import { createFormularInput } from '../formular/index.js';
 import './index.js';
 import type { AtpModal } from './atp-modal/atp-modal.js';
 

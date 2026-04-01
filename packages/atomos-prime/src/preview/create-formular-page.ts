@@ -1,9 +1,9 @@
 import { createForm, f, newEvent, EventsEnum } from '@binaryjack/formular.dev';
 import type { IFormular, IObjectShape } from '@binaryjack/formular.dev';
-import { createFormularInput } from '../features/formular/atoms/create-formular-input.js';
-import { createFormularDropdown } from '../features/formular/atoms/create-formular-dropdown.js';
-import { createFormularCheckbox } from '../features/formular/atoms/create-formular-checkbox.js';
-import { createFormularTextarea } from '../features/formular/atoms/create-formular-textarea.js';
+import { createFormularInput } from '../features/formular/index.js';
+import { createFormularDropdown } from '../features/formular/index.js';
+import { createFormularCheckbox } from '../features/formular/index.js';
+import { createFormularTextarea } from '../features/formular/index.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

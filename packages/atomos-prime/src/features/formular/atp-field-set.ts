@@ -24,7 +24,7 @@ template.innerHTML = `<style>
 <slot name="input"></slot>
 <slot name="validation"></slot>`;
 
-export class VbsFieldSet extends HTMLElement {
+export class AtpFieldSet extends HTMLElement {
   constructor() {
     super();
     if (!this.shadowRoot) {
@@ -33,12 +33,12 @@ export class VbsFieldSet extends HTMLElement {
   }
 }
 
-if (!customElements.get('vbs-field-set')) {
-  customElements.define('vbs-field-set', VbsFieldSet);
+if (!customElements.get('atp-field-set')) {
+  customElements.define('atp-field-set', AtpFieldSet);
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'vbs-field-set': VbsFieldSet;
+    'atp-field-set': AtpFieldSet;
   }
 }

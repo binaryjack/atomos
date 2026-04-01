@@ -8,9 +8,10 @@ export interface PropertyData {
 
 export interface EntityFrameProps {
   readonly title: string | Signal<string>;
-  readonly properties: PropertyData[] | Signal<PropertyData[]>;
-  readonly position: { x: number; y: number } | Signal<{ x: number; y: number }>;
-  readonly collapsed: Signal<boolean>;
+  readonly properties?: PropertyData[] | Signal<PropertyData[]>;
+  readonly subtitle?: string;
+  readonly position?: { x: number; y: number } | Signal<{ x: number; y: number }>;
+  readonly collapsed?: Signal<boolean>;
   readonly width?: number;
   readonly height?: number;
   readonly className?: string;
@@ -18,9 +19,10 @@ export interface EntityFrameProps {
   readonly onDrag?: (delta: { x: number; y: number }) => void;
   readonly onResize?: (dimensions: { width: number; height: number }) => void;
   readonly onToggleCollapse?: (collapsed: boolean) => void;
+  readonly onTitleClick?: () => void;
 }
 
 export interface EntityFrameResult {
-  readonly element: SVGGElement;
+  readonly element: HTMLElement;
   readonly cleanup: { destroy: () => void };
 }

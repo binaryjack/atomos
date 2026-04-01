@@ -1,8 +1,8 @@
 import type { IFormular, IObjectShape } from '@binaryjack/formular.dev';
 import { createForm, EventsEnum, f, newEvent } from '@binaryjack/formular.dev';
 import { createButton } from '../button/create-button.js';
-import { createFormularInput } from '../formular/atoms/create-formular-input.js';
-import { createFormularTextarea } from '../formular/atoms/create-formular-textarea.js';
+import { createFormularInput } from '../formular/index.js';
+import { createFormularTextarea } from '../formular/index.js';
 import '../formular/index.js';
 import './index.js';
 import type { ModalResult } from './types/modal-result.types.js';
