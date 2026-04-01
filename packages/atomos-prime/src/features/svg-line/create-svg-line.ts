@@ -1,4 +1,4 @@
-import type { SvgLineProps, SvgLineResult } from './types/svg-line.types';
+import type { SvgLineProps, SvgLineResult } from './types/svg-line.types.js';
 export type { SvgLineProps, SvgLineResult };
 
 export const createSvgLine = function(props: SvgLineProps): SvgLineResult {

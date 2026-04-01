@@ -1,4 +1,4 @@
-import type { Signal } from '../../../core/types/signal.types';
+import type { Signal } from '../../../core/types/signal.types.js';
 
 export interface ButtonProps {
   readonly variant: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'soft';

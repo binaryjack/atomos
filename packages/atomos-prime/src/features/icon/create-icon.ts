@@ -1,4 +1,4 @@
-import type { IconProps, IconResult, IconName } from './types/icon.types';
+import type { IconProps, IconResult, IconName } from './types/icon.types.js';
 export type { IconProps, IconResult, IconName };
 
 export const createIcon = function(props: IconProps): IconResult {

@@ -1,4 +1,4 @@
-import type { AccordionProps, AccordionResult } from './types/accordion.types';
+import type { AccordionProps, AccordionResult } from './types/accordion.types.js';
 export type { AccordionProps, AccordionResult };
 
 export const createAccordion = function(props: AccordionProps): AccordionResult {

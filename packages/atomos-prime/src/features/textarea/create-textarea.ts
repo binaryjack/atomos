@@ -1,4 +1,4 @@
-import type { TextareaProps, TextareaResult } from './types/textarea.types';
+import type { TextareaProps, TextareaResult } from './types/textarea.types.js';
 export type { TextareaProps, TextareaResult };
 
 export const createTextarea = function(props: TextareaProps): TextareaResult {

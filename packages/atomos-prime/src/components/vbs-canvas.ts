@@ -1,4 +1,4 @@
-import { vbsElement } from '../base/vbs-element';
+import { vbsElement } from '../base/vbs-element.js';
 
 export interface VbsCanvasProps {
   readonly width: number;

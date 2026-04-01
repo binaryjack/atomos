@@ -1,6 +1,6 @@
-﻿import type { EntityFrameProps, EntityFrameResult } from './types/entity-frame.types';
+﻿import type { EntityFrameProps, EntityFrameResult } from './types/entity-frame.types.js';
 export type { EntityFrameProps, EntityFrameResult };
-import { defineAtomosEntityFrame } from './atomos-entity-frame';
+import { defineAtomosEntityFrame } from './atomos-entity-frame.js';
 
 defineAtomosEntityFrame();
 

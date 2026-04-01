@@ -1,4 +1,4 @@
-import type { TypographyProps, TypographyResult } from './types/typography.types';
+import type { TypographyProps, TypographyResult } from './types/typography.types.js';
 export type { TypographyProps, TypographyResult };
 
 export const createTypography = function(props: TypographyProps): TypographyResult {

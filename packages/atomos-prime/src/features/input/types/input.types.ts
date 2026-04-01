@@ -1,4 +1,4 @@
-import type { Signal } from '../../../core/types/signal.types';
+import type { Signal } from '../../../core/types/signal.types.js';
 
 export interface InputProps {
   readonly type: 'text' | 'number' | 'email' | 'password' | 'search' | 'color';

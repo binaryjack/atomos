@@ -1,4 +1,4 @@
-import type { CheckboxProps, CheckboxResult } from './types/checkbox.types';
+import type { CheckboxProps, CheckboxResult } from './types/checkbox.types.js';
 export type { CheckboxProps, CheckboxResult };
 
 export const createCheckbox = function(props: CheckboxProps): CheckboxResult {

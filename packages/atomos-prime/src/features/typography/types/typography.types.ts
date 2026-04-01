@@ -1,4 +1,4 @@
-import type { Signal } from '../../../core/types/signal.types';
+import type { Signal } from '../../../core/types/signal.types.js';
 
 export interface TypographyProps {
   readonly variant: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span';

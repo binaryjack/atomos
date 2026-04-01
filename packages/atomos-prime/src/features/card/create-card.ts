@@ -1,4 +1,4 @@
-import type { CardProps, CardResult } from './types/card.types';
+import type { CardProps, CardResult } from './types/card.types.js';
 export type { CardProps, CardResult };
 
 export const createCard = function(props: CardProps): CardResult {

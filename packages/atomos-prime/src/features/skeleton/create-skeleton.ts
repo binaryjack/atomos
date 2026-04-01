@@ -1,4 +1,4 @@
-import type { SkeletonProps, SkeletonResult } from './types/skeleton.types';
+import type { SkeletonProps, SkeletonResult } from './types/skeleton.types.js';
 export type { SkeletonProps, SkeletonResult };
 
 export const createSkeleton = function(props: SkeletonProps): SkeletonResult {

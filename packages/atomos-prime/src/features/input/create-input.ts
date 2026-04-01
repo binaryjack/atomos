@@ -1,4 +1,4 @@
-import type { InputProps, InputResult } from './types/input.types';
+import type { InputProps, InputResult } from './types/input.types.js';
 export type { InputProps, InputResult };
 
 export const createInput = function(props: InputProps): InputResult {

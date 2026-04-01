@@ -1,4 +1,4 @@
-import type { Signal } from './types/signal.types';
+import type { Signal } from './types/signal.types.js';
 
 export const createSignal = function<T>(initialValue: T): Signal<T> {
   let currentValue = initialValue;

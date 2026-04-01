@@ -1,4 +1,4 @@
-import type { Signal, ComputedSignal } from './types/signal.types';
+import type { Signal, ComputedSignal } from './types/signal.types.js';
 
 export const createComputed = function<T>(
   computation: () => T, 

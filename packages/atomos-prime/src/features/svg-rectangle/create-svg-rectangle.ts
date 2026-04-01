@@ -1,4 +1,4 @@
-import type { SvgRectangleProps, SvgRectangleResult } from './types/svg-rectangle.types';
+import type { SvgRectangleProps, SvgRectangleResult } from './types/svg-rectangle.types.js';
 export type { SvgRectangleProps, SvgRectangleResult };
 
 export const createSvgRectangle = function(props: SvgRectangleProps): SvgRectangleResult {
