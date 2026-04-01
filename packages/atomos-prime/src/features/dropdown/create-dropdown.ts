@@ -1,62 +1,41 @@
-import type { DropdownProps, DropdownResult, DropdownOption } from './types/dropdown.types';
+import type { DropdownProps, DropdownResult, DropdownOption } from './types/dropdown.types.js';
+import { defineAtpDropdown, type AtpDropdown } from './atp-dropdown/atp-dropdown.js';
+
 export type { DropdownProps, DropdownResult, DropdownOption };
 
 export const createDropdown = function(props: DropdownProps): DropdownResult {
+  defineAtpDropdown();
+  const select = document.createElement('atp-dropdown') as AtpDropdown;
   const container = document.createElement('div');
-  const select = document.createElement('select');
   const listeners: Array<{ target: EventTarget; type: string; listener: EventListener }> = [];
   const cleanupFunctions: Array<() => void> = [];
   
   if (props.id) select.id = props.id;
   if (props.name) select.name = props.name;
   
-  // Build CSS classes
+  // Forward base classes natively via custom element property logic
   const baseClasses = 'w-full px-3 py-2 text-gray-700 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white';
-  select.className = baseClasses;
+  select.setAttribute('class', baseClasses);
   container.className = `relative ${props.className || ''}`;
-  
-  // Render options
-  const renderOptions = (options: DropdownOption[]) => {
-    select.innerHTML = '';
-    
-    // Add placeholder if provided
-    if (props.placeholder) {
-      const placeholderOption = document.createElement('option');
-      placeholderOption.value = '';
-      placeholderOption.textContent = typeof props.placeholder === 'string' 
-        ? props.placeholder 
-        : props.placeholder.value;
-      placeholderOption.disabled = true;
-      placeholderOption.selected = true;
-      select.appendChild(placeholderOption);
-    }
-    
-    // Add options
-    options.forEach(option => {
-      const optionElement = document.createElement('option');
-      optionElement.value = option.value;
-      optionElement.textContent = option.label;
-      optionElement.disabled = option.disabled || false;
-      select.appendChild(optionElement);
-    });
-  };
-  
+
   // Handle options (array or signal)
   if (Array.isArray(props.options)) {
-    renderOptions(props.options);
+    select.options = props.options;
   } else {
-    renderOptions(props.options.value);
-    const unsubscribe = props.options.subscribe(renderOptions);
+    select.options = props.options.value;
+    const unsubscribe = props.options.subscribe((newOptions) => {
+      select.options = newOptions;
+    });
     cleanupFunctions.push(unsubscribe);
   }
   
-  // Handle placeholder signal updates
-  if (typeof props.placeholder !== 'string' && props.placeholder) {
+  // Handle placeholder string or signal
+  if (typeof props.placeholder === 'string') {
+    select.placeholder = props.placeholder;
+  } else if (props.placeholder) {
+    select.placeholder = props.placeholder.value;
     const unsubscribe = props.placeholder.subscribe((newPlaceholder) => {
-      const placeholderOption = select.querySelector('option[value=""]') as HTMLOptionElement;
-      if (placeholderOption) {
-        placeholderOption.textContent = newPlaceholder;
-      }
+      select.placeholder = newPlaceholder;
     });
     cleanupFunctions.push(unsubscribe);
   }
@@ -87,16 +66,18 @@ export const createDropdown = function(props: DropdownProps): DropdownResult {
   
   // Change handler
   if (props.onChange) {
-    const changeHandler = () => props.onChange!(select.value);
+    const changeHandler = (e: Event) => {
+      props.onChange!((e.target as AtpDropdown).value);
+    };
     select.addEventListener('change', changeHandler);
-    listeners.push({ target: select, type: 'change', listener: changeHandler });
+    listeners.push({ target: select, type: 'change', listener: changeHandler as EventListener });
   }
   
   container.appendChild(select);
   
   return {
     element: container,
-    select,
+    select: select as unknown as HTMLSelectElement,
     cleanup: {
       destroy: () => {
         listeners.forEach(({ target, type, listener }) => {
