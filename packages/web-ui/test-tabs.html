@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tabs Component Test</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: system-ui, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .demo-container {
+      width: 100%;
+      height: 100%;
+      padding: 40px;
+      box-sizing: border-box;
+    }
+
+    .box {
+      border: 1px solid #334155;
+      border-radius: 8px;
+      overflow: hidden;
+      height: 400px;
+      background: #1e293b;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="demo-container">
+    <h2>Generic Tabs Component</h2>
+    
+    <div class="box">
+      <vbs-tabs active-tab="tab2">
+        <!-- Tabs -->
+        <vbs-tab value="tab1" slot="tab">General Settings</vbs-tab>
+        <vbs-tab value="tab2" slot="tab">Toolbox Editor</vbs-tab>
+        <vbs-tab value="tab3" slot="tab">Decision Matrices</vbs-tab>
+
+        <!-- Panels -->
+        <vbs-tab-panel slot="panel" id="panel1">
+          <div style="padding: 20px;">
+            <h3>General Settings</h3>
+            <p>Colors, exports, sizes...</p>
+          </div>
+        </vbs-tab-panel>
+
+        <vbs-tab-panel slot="panel" id="panel2">
+          <div style="padding: 20px;">
+            <h3>Toolbox Editor</h3>
+            <p>Visual tree editor goes here.</p>
+          </div>
+        </vbs-tab-panel>
+
+        <vbs-tab-panel slot="panel" id="panel3">
+          <div style="padding: 20px;">
+            <h3>Decision Matrices</h3>
+            <p>Matrix builder goes here.</p>
+          </div>
+        </vbs-tab-panel>
+      </vbs-tabs>
+    </div>
+  </div>
+
+  <script type="module" src="./dist/test-tabs.js"></script>
+</body>
+</html>

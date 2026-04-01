@@ -94,4 +94,4 @@ export { createAnchor, type AnchorProps, type AnchorResult } from './features/an
 
 // Preview system
 export { createPreviewPage } from './preview/create-preview-page';
-export { createPreviewSection } from './preview/create-preview-section';
+export { createPreviewSection } from './preview/create-preview-section';export * from './components/tabs/index.js';
