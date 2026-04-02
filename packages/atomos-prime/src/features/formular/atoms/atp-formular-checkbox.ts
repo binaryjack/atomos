@@ -127,7 +127,7 @@ export class AtpFormularCheckbox extends HTMLElement {
     this.#validation.setFocused(false);
   }
 
-  #onChange(e: Event) {
+  #onChange = (e: Event) => {
     if (!this.#form || !this.fieldName) return;
     const target = e.target as HTMLInputElement;
     this.#form.updateField(this.fieldName, target.checked as InputDataTypes);

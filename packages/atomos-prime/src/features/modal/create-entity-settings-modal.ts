@@ -172,11 +172,10 @@ export const createEntitySettingsModal = function(entityId: string): AtpModal {
       contrastGradeEl.textContent = icon;
     };
 
-    const colorInputEl = colorField.element.querySelector<HTMLInputElement>('input');
-    updateContrastPreview(colorInputEl?.value ?? liveEntity.color ?? 'var(--vbs-bg-panel, #111111)');
-    const onColorInput = (): void => updateContrastPreview(colorInputEl?.value ?? 'var(--vbs-bg-panel, #111111)');
-    colorInputEl?.addEventListener('input', onColorInput);
-    fieldCleanups.push(() => colorInputEl?.removeEventListener('input', onColorInput));
+    updateContrastPreview(String((currentForm.getField('color')?.input as any)?.value ?? liveEntity.color ?? 'var(--vbs-bg-panel, #111111)'));
+    const onColorInput = (): void => updateContrastPreview(String((currentForm!.getField('color')?.input as any)?.value ?? 'var(--vbs-bg-panel, #111111)'));
+    colorField.element.addEventListener('input', onColorInput);
+    fieldCleanups.push(() => colorField.element.removeEventListener('input', onColorInput));
     // ──────────────────────────────────────────────────────────────────────
 
     const localProperties: any[] = structuredClone(liveEntity.properties as any) || [];
@@ -280,15 +279,10 @@ export const createEntitySettingsModal = function(entityId: string): AtpModal {
           console.error('Error getting form data:', err);
         }
 
-        const manualName = (currentForm.getField('name')?.input as any)?.value;
-        const manualDesc = (currentForm.getField('description')?.input as any)?.value;
-        const manualShape = (currentForm.getField('shape')?.input as any)?.value;
-        const manualColor = (currentForm.getField('color')?.input as any)?.value;
-
-        const finalName = manualName ?? data.name ?? liveEntity.name;
-        const description = manualDesc ?? data.description ?? liveEntity.description;
-        const shape = manualShape ?? data.shape ?? liveEntity.shape;
-        const color = manualColor ?? data.color ?? liveEntity.color;
+        const finalName   = String(data.name        ?? liveEntity.name        ?? '');
+        const description  = String(data.description ?? liveEntity.description ?? '');
+        const shape        = String(data.shape       ?? liveEntity.shape       ?? 'box');
+        const color        = String(data.color       ?? liveEntity.color       ?? '');
 
         adapter.updateEntityMetadata(entityId, { name: finalName, description, shape, color });
         

@@ -149,7 +149,7 @@ export class AtpFormularDropdown extends HTMLElement {
     }
   }
 
-  #onChange(e: Event) {
+  #onChange = (e: Event) => {
     if (!this.#form || !this.fieldName) return;
     const target = e.target as HTMLSelectElement;
     this.#form.updateField(this.fieldName, target.value as InputDataTypes);

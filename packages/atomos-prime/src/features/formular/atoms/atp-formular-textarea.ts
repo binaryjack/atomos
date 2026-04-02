@@ -124,7 +124,7 @@ export class AtpFormularTextarea extends HTMLElement {
     }
   }
 
-  #onInput(e: Event) {
+  #onInput = (e: Event) => {
     if (!this.#form || !this.fieldName) return;
     const target = e.target as HTMLTextAreaElement;
     this.#form.updateField(this.fieldName, target.value as InputDataTypes);

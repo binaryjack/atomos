@@ -1,8 +1,11 @@
 import type { DAGExport } from '../../core/application/dag-service.js';
 import type { DAGObserver } from '../../core/adapters/dag-observer.js';
+import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js';
 import type { CanvasViewport } from '../../core/create-canvas-viewport.js';
 import type { DomainEntity } from '../../core/domain/entity-aggregate.js';
 import type { InteractiveBehaviorManager } from '../../core/types/interactive-behavior-manager.types.js';
+import { DATA_TYPES } from '@atomos/structura-core';
+import { createPropertySettingsModal } from '../modal/create-property-settings-modal.js';
 
 export interface SchemaPanelProps {
   readonly dagObserver: DAGObserver;
@@ -62,6 +65,8 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
   let isCollapsed    = false;
   let searchQuery    = '';
   let currentDag: DAGExport | null = null;
+  let editingEntityId = '';
+  let editingPropKey  = '';
 
   // ── Root wrapper ─────────────────────────────────────────────────────────
   const root = document.createElement('div');
@@ -189,6 +194,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
   // ── Render ────────────────────────────────────────────────────────────────
   const renderTree = (): void => {
     if (!currentDag) return;
+    if (editingEntityId || editingPropKey) return;
     treeview.innerHTML = '';
 
     const q = searchQuery.toLowerCase().trim();
@@ -305,11 +311,52 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
     // Entity name
     const nameEl = document.createElement('span');
     nameEl.textContent = entity.name;
+    nameEl.title = 'Double-click to rename';
     nameEl.style.cssText = css(
       'flex:1', 'font-size:12px', 'font-weight:500',
       'overflow:hidden', 'text-overflow:ellipsis', 'white-space:nowrap',
+      'cursor:text',
       isSel ? 'color:#93c5fd' : 'color:var(--vbs-text-primary, #f4f4f5)',
     );
+
+    nameEl.addEventListener('dblclick', (e: MouseEvent) => {
+      e.stopPropagation();
+      editingEntityId = entity.id;
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = entity.name;
+      input.style.cssText = css(
+        'flex:1', 'min-width:0',
+        'background:var(--vbs-bg-input, #09090b)',
+        'border:1px solid var(--vbs-primary, #3b82f6)',
+        'border-radius:var(--vbs-radius, 2px)',
+        'color:var(--vbs-text-primary, #f4f4f5)',
+        'font-size:12px', 'font-weight:500',
+        'padding:0 4px', 'outline:none',
+      );
+
+      entityRow.replaceChild(input, nameEl);
+      input.focus();
+      input.select();
+
+      const commit = (): void => {
+        const newName = input.value.trim();
+        editingEntityId = '';
+        if (newName && newName !== entity.name) {
+          getCanvasAdapter().updateEntityMetadata(entity.id, { name: newName });
+        } else {
+          renderTree();
+        }
+      };
+
+      input.addEventListener('keydown', (ke: KeyboardEvent) => {
+        if (ke.key === 'Enter')  { ke.preventDefault(); commit(); }
+        if (ke.key === 'Escape') { editingEntityId = ''; renderTree(); }
+      });
+      input.addEventListener('blur', commit);
+      input.addEventListener('click', (ce: MouseEvent) => ce.stopPropagation());
+    });
 
     entityRow.appendChild(chevron);
     entityRow.appendChild(shapeBadge);
@@ -379,23 +426,121 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
 
         const propName = document.createElement('span');
         propName.textContent = prop.label ?? prop.key;
-        propName.style.cssText = 'color:var(--vbs-text-secondary, #a1a1aa);flex-shrink:0;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+        propName.title = 'Double-click to edit';
+        propName.style.cssText = 'color:var(--vbs-text-secondary, #a1a1aa);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:text;';
 
         const propType = document.createElement('span');
         propType.textContent = prop.dataType ?? '?';
         propType.style.cssText = 'color:var(--vbs-primary, #3b82f6);flex-shrink:0;';
 
+        // ── Gear button ──────────────────────────────────────────────────
+        const gearBtn = document.createElement('button');
+        gearBtn.type = 'button';
+        gearBtn.title = 'Property settings';
+        gearBtn.textContent = '⚙';
+        gearBtn.style.cssText = css(
+          'flex-shrink:0', 'background:none', 'border:none', 'cursor:pointer',
+          'color:#475569', 'font-size:10px', 'padding:0 2px',
+          'line-height:1', 'border-radius:2px',
+          'opacity:0', 'transition:opacity 0.1s',
+        );
+        propRow.onmouseenter = () => {
+          propRow.style.background = 'var(--vbs-bg-input, #09090b)';
+          propRow.style.color = 'var(--vbs-text-secondary, #a1a1aa)';
+          gearBtn.style.opacity = '1';
+        };
+        propRow.onmouseleave = () => {
+          propRow.style.background = '';
+          propRow.style.color = '#475569';
+          gearBtn.style.opacity = '0';
+        };
+        gearBtn.addEventListener('click', (e: MouseEvent) => {
+          e.stopPropagation();
+          const modal = createPropertySettingsModal({ entityId: entity.id, propertyKey: prop.key });
+          modal.open().catch(console.error);
+        });
+
         propRow.appendChild(connector);
         propRow.appendChild(propName);
         propRow.appendChild(propType);
+        propRow.appendChild(gearBtn);
 
-        const val = prop.value;
-        if (val !== undefined && val !== '' && val !== null) {
-          const propValue = document.createElement('span');
-          propValue.textContent = `= ${String(val)}`;
-          propValue.style.cssText = 'color:#f59e0b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
-          propRow.appendChild(propValue);
-        }
+        // ── Double-click inline edit ──────────────────────────────────────
+        const startPropEdit = (): void => {
+          editingPropKey = prop.key;
+
+          const labelInput = document.createElement('input');
+          labelInput.type = 'text';
+          labelInput.value = prop.label ?? prop.key;
+          labelInput.style.cssText = css(
+            'flex:1', 'min-width:0',
+            'background:var(--vbs-bg-input, #09090b)',
+            'border:1px solid var(--vbs-primary, #3b82f6)',
+            'border-radius:var(--vbs-radius, 2px)',
+            'color:var(--vbs-text-secondary, #a1a1aa)',
+            'font-size:10px', 'font-family:monospace',
+            'padding:0 3px', 'outline:none',
+          );
+
+          const typeSelect = document.createElement('select');
+          DATA_TYPES.forEach(dt => {
+            const opt = document.createElement('option');
+            opt.value = dt;
+            opt.textContent = dt;
+            if (dt === (prop.dataType ?? 'string')) opt.selected = true;
+            typeSelect.appendChild(opt);
+          });
+          typeSelect.style.cssText = css(
+            'flex-shrink:0',
+            'background:var(--vbs-bg-input, #09090b)',
+            'border:1px solid var(--vbs-border, #27272a)',
+            'border-radius:var(--vbs-radius, 2px)',
+            'color:var(--vbs-primary, #3b82f6)',
+            'font-size:10px', 'font-family:monospace',
+            'padding:0 2px', 'outline:none',
+          );
+
+          propRow.replaceChild(labelInput, propName);
+          propRow.replaceChild(typeSelect, propType);
+          labelInput.focus();
+          labelInput.select();
+
+          const commit = (): void => {
+            const newLabel = labelInput.value.trim() || (prop.label ?? prop.key);
+            const newType  = typeSelect.value;
+            editingPropKey = '';
+            const liveEntity = getCanvasAdapter().getEntity(entity.id);
+            if (!liveEntity) { renderTree(); return; }
+            const changed = newLabel !== (prop.label ?? prop.key) || newType !== prop.dataType;
+            if (changed) {
+              const newProps = (liveEntity.properties as any[]).map(p =>
+                p.key === prop.key ? { ...p, label: newLabel, dataType: newType } : p
+              );
+              getCanvasAdapter().updateEntityProperties(entity.id, newProps);
+            } else {
+              renderTree();
+            }
+          };
+
+          const onKey = (ke: KeyboardEvent): void => {
+            if (ke.key === 'Enter')  { ke.preventDefault(); commit(); }
+            if (ke.key === 'Escape') { editingPropKey = ''; renderTree(); }
+          };
+          const onFocusOut = (fe: FocusEvent): void => {
+            if (!propRow.contains(fe.relatedTarget as Node | null)) commit();
+          };
+
+          labelInput.addEventListener('keydown', onKey);
+          typeSelect.addEventListener('keydown', onKey);
+          propRow.addEventListener('focusout', onFocusOut);
+          labelInput.addEventListener('click', (ce: MouseEvent) => ce.stopPropagation());
+          typeSelect.addEventListener('click', (ce: MouseEvent) => ce.stopPropagation());
+        };
+
+        propRow.addEventListener('dblclick', (e: MouseEvent) => {
+          e.stopPropagation();
+          startPropEdit();
+        });
 
         propsList.appendChild(propRow);
       });

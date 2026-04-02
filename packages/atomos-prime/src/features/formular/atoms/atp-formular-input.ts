@@ -128,7 +128,7 @@ export class AtpFormularInput extends HTMLElement {
     }
   }
 
-  #onInput(e: Event) {
+  #onInput = (e: Event) => {
     if (!this.#form || !this.fieldName) return;
     const target = e.target as HTMLInputElement;
     let val: string | number = target.value;
