@@ -49,4 +49,36 @@ export const atpModalStyle = `
   .body::-webkit-scrollbar { width: 6px; }
   .body::-webkit-scrollbar-track { background: transparent; }
   .body::-webkit-scrollbar-thumb { background: var(--vbs-border, #27272a); border-radius: var(--vbs-radius, 2px); }
+
+  .dialog.spotlight-border {
+    position: relative;
+    border: 1px solid transparent;
+    background: linear-gradient(var(--vbs-bg-panel, #111111), var(--vbs-bg-panel, #111111)) padding-box,
+                var(--vbs-border, #27272a) border-box;
+    z-index: 1;
+  }
+  .dialog.spotlight-border::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(
+      150px circle at var(--mouse-x, 0%) var(--mouse-y, 0%),
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(59, 130, 246, 1) 10%,
+      rgba(59, 130, 246, 0.2) 40%,
+      transparent 60%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+    pointer-events: none;
+  }
+  .dialog.spotlight-border:hover::before {
+    opacity: 1;
+  }
 `;

@@ -8,7 +8,8 @@ module.exports = {
   content: [
     './src/**/*.{js,ts,jsx,tsx}',
     '../web-ui/src/**/*.{js,ts,jsx,tsx}',
-    '../web-ui/**/*.html'
+    '../web-ui/**/*.html',
+    '../atomos-prime/src/**/*.{js,ts,jsx,tsx}'
   ],
   theme: {
     extend: {

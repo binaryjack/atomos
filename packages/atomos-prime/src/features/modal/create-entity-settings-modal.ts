@@ -334,3 +334,4 @@ export const createEntitySettingsModal = function(entityId: string): AtpModal {
   document.body.appendChild(modal);
   return modal;
 };
+

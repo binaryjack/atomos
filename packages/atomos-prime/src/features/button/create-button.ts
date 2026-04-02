@@ -15,27 +15,27 @@ export const createButton = function(props: ButtonProps): ButtonResult {
   const shape = props.shape || 'rounded';
   const isIconOnly = shape === 'icon-only';
 
-  const baseClasses = 'inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseClasses = 'inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--vbs-primary,#3b82f6)] disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variantClasses = {
-    primary: 'bg-purple-600 text-white hover:bg-purple-700 focus:ring-purple-500 border border-transparent',
-    secondary: 'bg-slate-700 text-white hover:bg-slate-600 focus:ring-slate-500 border border-transparent',
-    outline: 'border-2 border-slate-600 text-slate-200 hover:bg-slate-800 focus:ring-slate-500',
-    ghost: 'text-slate-300 hover:bg-slate-800 focus:ring-slate-500 bg-transparent',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 border border-transparent',
-    soft: 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 focus:ring-purple-500 border border-transparent'
+    primary: 'bg-[var(--vbs-primary,#3b82f6)] text-white hover:bg-[var(--vbs-primary-hover,#2563eb)] border border-transparent shadow-[0_0_8px_rgba(59,130,246,0.3)]',
+    secondary: 'bg-[var(--vbs-bg-panel,#111111)] border border-[var(--vbs-border,#27272a)] text-[var(--vbs-text-primary,#f4f4f5)] hover:border-[var(--vbs-border-hover,#3f3f46)] hover:bg-[#263348]',
+    outline: 'border border-[var(--vbs-border,#27272a)] text-[var(--vbs-text-primary,#f4f4f5)] hover:border-[var(--vbs-border-hover,#3f3f46)] hover:bg-[#263348]',
+    ghost: 'bg-transparent text-[var(--vbs-text-secondary,#a1a1aa)] hover:bg-white/5 border border-transparent hover:text-[var(--vbs-text-primary,#f4f4f5)]',
+    danger: 'bg-[var(--vbs-danger,#ef4444)] text-white hover:bg-red-600 border border-transparent',
+    soft: 'bg-[var(--vbs-primary,#3b82f6)]/20 text-[var(--vbs-primary,#3b82f6)] hover:bg-[var(--vbs-primary,#3b82f6)]/30 border border-transparent'
   };
 
   const sizeClasses = {
-    sm: isIconOnly ? 'p-1.5' : 'px-3 py-1.5 text-sm',
-    md: isIconOnly ? 'p-2' : 'px-4 py-2 text-base',
-    lg: isIconOnly ? 'p-3' : 'px-6 py-3 text-lg'
+    sm: isIconOnly ? 'p-1' : 'px-2 min-h-[24px] text-[11px]',
+    md: isIconOnly ? 'p-1.5' : 'px-3 min-h-[var(--vbs-control-height,28px)] text-[13px]',
+    lg: isIconOnly ? 'p-2' : 'px-4 min-h-[36px] text-sm'
   };
 
   const shapeClasses = {
-    'rounded': 'rounded-md',
+    'rounded': 'rounded-[var(--vbs-radius,2px)]',
     'pill': 'rounded-full',
-    'icon-only': 'rounded-full aspect-square'
+    'icon-only': 'rounded-[var(--vbs-radius,2px)] aspect-square'
   };
 
   element.className = `${baseClasses} ${variantClasses[props.variant]} ${sizeClasses[props.size]} ${shapeClasses[shape]} ${props.className || ''}`;

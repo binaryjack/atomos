@@ -7,24 +7,29 @@ export const createCard = function(props: CardProps): CardResult {
   const cleanupFunctions: Array<() => void> = [];
   
   // Build CSS classes
-  const baseClasses = 'bg-white rounded-lg border border-gray-200';
+  const baseClasses = 'bg-[var(--vbs-bg-panel,#111111)] text-[var(--vbs-text-primary,#f4f4f5)] rounded-[var(--vbs-radius,2px)] border border-[var(--vbs-border,#27272a)] spotlight-border';
   const shadowClasses = {
-    sm: 'shadow-sm',
-    md: 'shadow-md',
-    lg: 'shadow-lg',
-    xl: 'shadow-xl',
-    '2xl': 'shadow-2xl'
+    sm: 'shadow-[0_4px_12px_rgba(0,0,0,0.5),_0_0_0_1px_rgba(255,255,255,0.04)]',
+    md: 'shadow-[0_8px_24px_rgba(0,0,0,0.6),_0_0_0_1px_rgba(255,255,255,0.04)]',
+    lg: 'shadow-[0_16px_40px_rgba(0,0,0,0.65),_0_0_0_1px_rgba(255,255,255,0.04)]',
+    xl: 'shadow-[0_25px_60px_rgba(0,0,0,0.65),_0_0_0_1px_rgba(255,255,255,0.04)]',
+    '2xl': 'shadow-[0_40px_80px_rgba(0,0,0,0.7),_0_0_0_1px_rgba(255,255,255,0.04)]'
   };
   const paddingClasses = {
     sm: 'p-3',
     md: 'p-4',
     lg: 'p-6'
   };
-  
+
   const shadow = props.shadow || 'md';
   const padding = props.padding || 'md';
   element.className = `${baseClasses} ${shadowClasses[shadow]} ${paddingClasses[padding]} ${props.className || ''}`;
-  
+
+  element.addEventListener('mousemove', (e: MouseEvent) => {
+    const rect = element.getBoundingClientRect();
+    element.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+    element.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+  });
   // Header section (if title or subtitle provided)
   let header: HTMLDivElement | undefined;
   if (props.title || props.subtitle) {

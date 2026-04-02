@@ -129,9 +129,9 @@ export const createEntityPropertyRow = function(
   const row = document.createElement('div');
   row.style.cssText = [
     'display:flex', 'align-items:center', 'gap:4px',
-    'padding:0 8px',
+    'padding:4px 8px',
     'box-sizing:border-box',
-    'height:var(--vbs-control-height, 28px)',
+    'min-height:36px',
     'border-bottom:1px solid var(--vbs-border, #27272a)',
   ].join(';');
 
@@ -143,8 +143,8 @@ export const createEntityPropertyRow = function(
     inputClassName: 'text-xs text-slate-300',
     onChange: props.onLabelChange,
   });
-  editableLabel.element.style.flex = '0 0 auto';
-  editableLabel.element.style.maxWidth = '64px';
+  editableLabel.element.style.flex = '0 0 70px';
+  editableLabel.element.style.maxWidth = '100px';
   editableLabel.element.style.overflow = 'hidden';
   cleanups.push(editableLabel.cleanup.destroy);
 
@@ -171,14 +171,19 @@ export const createEntityPropertyRow = function(
     onChange: (v) => props.onComponentTypeChange(v as ComponentType),
   });
   ctDropdown.select.style.cssText = [
-    'background:var(--vbs-bg-input, #09090b)', 'color:var(--vbs-primary, #3b82f6)', 'border:1px solid var(--vbs-border, #27272a)',
-    'border-radius:var(--vbs-radius, 2px)', 'font-size:12px', 'padding:0 4px',
-    'width:44px', 'height:var(--vbs-control-height, 28px)', 'cursor:pointer', 'box-sizing:border-box',
-    'outline:none', 'transition:border-color 0.15s'
+    '--dropdown-bg-color:var(--vbs-bg-input, #09090b)',
+    '--dropdown-text-color:var(--vbs-primary, #3b82f6)',
+    '--dropdown-border-color:var(--vbs-border, #27272a)',
+    '--dropdown-focus-border-color:var(--vbs-primary, #3b82f6)',
+    '--dropdown-border-radius:var(--vbs-radius, 2px)',
+    '--dropdown-font-size:12px',
+    '--dropdown-padding:0 20px 0 6px',
+    'width:60px',
+    'height:var(--vbs-control-height, 28px)',
+    'box-sizing:border-box',
+    'outline:none'
   ].join(';');
-  ctDropdown.select.addEventListener('focus', () => ctDropdown.select.style.borderColor = 'var(--vbs-primary, #3b82f6)');
-  ctDropdown.select.addEventListener('blur', () => ctDropdown.select.style.borderColor = 'var(--vbs-border, #27272a)');
-  ctDropdown.element.style.cssText = 'flex-shrink:0;display:flex;align-items:center;';
+  ctDropdown.element.style.cssText = 'flex-shrink:0;height:var(--vbs-control-height, 28px);display:flex;align-items:center;';
   cleanups.push(ctDropdown.cleanup.destroy);
 
   // DataType dropdown
@@ -189,14 +194,19 @@ export const createEntityPropertyRow = function(
     onChange: (v) => props.onDataTypeChange(v as DataType),
   });
   dropdown.select.style.cssText = [
-    'background:var(--vbs-bg-input, #09090b)', 'color:var(--vbs-text-secondary, #a1a1aa)', 'border:1px solid var(--vbs-border, #27272a)',
-    'border-radius:var(--vbs-radius, 2px)', 'font-size:12px', 'padding:0 4px',
-    'max-width:72px', 'height:var(--vbs-control-height, 28px)', 'cursor:pointer', 'box-sizing:border-box',
-    'outline:none', 'transition:border-color 0.15s'
+    '--dropdown-bg-color:var(--vbs-bg-input, #09090b)',
+    '--dropdown-text-color:var(--vbs-text-secondary, #a1a1aa)',
+    '--dropdown-border-color:var(--vbs-border, #27272a)',
+    '--dropdown-focus-border-color:var(--vbs-primary, #3b82f6)',
+    '--dropdown-border-radius:var(--vbs-radius, 2px)',
+    '--dropdown-font-size:12px',
+    '--dropdown-padding:0 20px 0 6px',
+    'width:80px',
+    'height:var(--vbs-control-height, 28px)',
+    'box-sizing:border-box',
+    'outline:none'
   ].join(';');
-  dropdown.select.addEventListener('focus', () => dropdown.select.style.borderColor = 'var(--vbs-primary, #3b82f6)');
-  dropdown.select.addEventListener('blur', () => dropdown.select.style.borderColor = 'var(--vbs-border, #27272a)');
-  dropdown.element.style.cssText = 'flex-shrink:0;display:flex;align-items:center;';
+  dropdown.element.style.cssText = 'flex-shrink:0;height:var(--vbs-control-height, 28px);display:flex;align-items:center;';
   cleanups.push(dropdown.cleanup.destroy);
 
   // Settings button
