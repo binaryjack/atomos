@@ -12,7 +12,7 @@ export const createCanvasPage = function() {
 
   // Root — fills full viewport, top offset for the HTML nav bar (40px)
   const root = document.createElement('div');
-  root.style.cssText = 'position:fixed;top:40px;left:0;right:0;bottom:0;overflow:hidden;background:#0f172a;';
+  root.style.cssText = 'position:fixed;top:40px;left:0;right:0;bottom:0;overflow:hidden;background:var(--vbs-bg-input, #09090b);';
 
   // Canvas container — full area below nav
   const canvasWrap = document.createElement('div');
@@ -35,7 +35,7 @@ export const createCanvasPage = function() {
   const smallPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   smallPath.setAttribute('d', 'M 20 0 L 0 0 0 20');
   smallPath.setAttribute('fill', 'none');
-  smallPath.setAttribute('stroke', '#1e293b');
+  smallPath.setAttribute('stroke', 'var(--vbs-bg-panel, #111111)');
   smallPath.setAttribute('stroke-width', '0.5');
   smallGrid.appendChild(smallPath);
 
@@ -93,7 +93,7 @@ export const createCanvasPage = function() {
     'position:absolute;top:50%;left:16px;transform:translateY(-50%);',
     'display:flex;flex-direction:column;gap:8px;z-index:20;',
     'background:rgba(15,23,42,0.95);backdrop-filter:blur(8px);',
-    'border:1px solid #334155;border-radius:12px;padding:8px;box-shadow:0 10px 15px -3px rgba(0,0,0,0.3);'
+    'border:1px solid var(--vbs-border, #27272a);border-radius:12px;padding:8px;box-shadow:0 10px 15px -3px rgba(0,0,0,0.3);'
   ].join('');
 
   const toolboxConfig = getToolboxConfig();
@@ -113,11 +113,11 @@ export const createCanvasPage = function() {
       btn.style.cssText = [
         'display:flex;align-items:center;justify-content:center;',
         'width:40px;height:40px;border:none;background:transparent;',
-        'color:#94a3b8;border-radius:8px;cursor:grab;transition:all 0.2s;'
+        'color:var(--vbs-text-secondary, #a1a1aa);border-radius: var(--vbs-radius, 2px);cursor:grab;transition:all 0.2s;'
       ].join('');
       
-      btn.onmouseover = () => { btn.style.background = '#1e293b'; btn.style.color = '#f8fafc'; };
-      btn.onmouseout = () => { btn.style.background = 'transparent'; btn.style.color = '#94a3b8'; };
+      btn.onmouseover = () => { btn.style.background = 'var(--vbs-bg-panel, #111111)'; btn.style.color = '#f8fafc'; };
+      btn.onmouseout = () => { btn.style.background = 'transparent'; btn.style.color = 'var(--vbs-text-secondary, #a1a1aa)'; };
       
       btn.onclick = () => {
         const v = viewport.state.value;
@@ -150,17 +150,17 @@ export const createCanvasPage = function() {
       groupBtn.style.cssText = [
         'position:relative;display:flex;align-items:center;justify-content:center;',
         'width:40px;height:40px;border:none;background:transparent;',
-        'color:#94a3b8;border-radius:8px;cursor:pointer;transition:all 0.2s;'
+        'color:var(--vbs-text-secondary, #a1a1aa);border-radius: var(--vbs-radius, 2px);cursor:pointer;transition:all 0.2s;'
       ].join('');
       
-      groupBtn.onmouseover = () => { groupBtn.style.background = '#1e293b'; groupBtn.style.color = '#f8fafc'; };
-      groupBtn.onmouseout = () => { groupBtn.style.background = 'transparent'; groupBtn.style.color = '#94a3b8'; };
+      groupBtn.onmouseover = () => { groupBtn.style.background = 'var(--vbs-bg-panel, #111111)'; groupBtn.style.color = '#f8fafc'; };
+      groupBtn.onmouseout = () => { groupBtn.style.background = 'transparent'; groupBtn.style.color = 'var(--vbs-text-secondary, #a1a1aa)'; };
 
       const flyout = document.createElement('div');
       flyout.style.cssText = [
         'display:none;position:absolute;left:100%;top:0;margin-left:8px;',
         'background:rgba(15,23,42,0.95);backdrop-filter:blur(8px);',
-        'border:1px solid #334155;border-radius:12px;padding:8px;box-shadow:0 10px 15px -3px rgba(0,0,0,0.3);',
+        'border:1px solid var(--vbs-border, #27272a);border-radius:12px;padding:8px;box-shadow:0 10px 15px -3px rgba(0,0,0,0.3);',
         'flex-direction:row;gap:8px;z-index:30;'
       ].join('');
 
@@ -171,11 +171,11 @@ export const createCanvasPage = function() {
         btn.style.cssText = [
           'display:flex;align-items:center;justify-content:center;',
           'width:40px;height:40px;border:none;background:transparent;',
-          'color:#94a3b8;border-radius:8px;cursor:grab;transition:all 0.2s;'
+          'color:var(--vbs-text-secondary, #a1a1aa);border-radius: var(--vbs-radius, 2px);cursor:grab;transition:all 0.2s;'
         ].join('');
         
-        btn.onmouseover = () => { btn.style.background = '#334155'; btn.style.color = '#f8fafc'; };
-        btn.onmouseout = () => { btn.style.background = 'transparent'; btn.style.color = '#94a3b8'; };
+        btn.onmouseover = () => { btn.style.background = 'var(--vbs-border, #27272a)'; btn.style.color = '#f8fafc'; };
+        btn.onmouseout = () => { btn.style.background = 'transparent'; btn.style.color = 'var(--vbs-text-secondary, #a1a1aa)'; };
         
         btn.onclick = (e) => {
           e.stopPropagation();

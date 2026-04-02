@@ -50,12 +50,12 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
     'display:flex', 'flex-direction:column',
     'width:100%', 'height:100%',
     'overflow:hidden',
-    'border-radius:6px',
-    `background:${props.color || '#0f172a'}`,
-    'border:1.5px solid #334155',
+    'border-radius: var(--vbs-radius, 2px)',
+    `background:${props.color || 'var(--vbs-bg-input, #09090b)'}`,
+    'border:1.5px solid var(--vbs-border, #27272a)',
     'box-sizing:border-box',
     'font-family:system-ui,sans-serif',
-    'color:#e2e8f0',
+    'color:var(--vbs-text-primary, #f4f4f5)',
   ].join(';');
 
   fo.appendChild(body);
@@ -79,7 +79,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
 
   // ─── scrollable body ──────────────────────────────────────────────────────
   const scrollBody = document.createElement('div');
-  scrollBody.style.cssText = 'flex:1;overflow-y:auto;overflow-x:hidden;background:#0f172a;';
+  scrollBody.style.cssText = 'flex:1;overflow-y:auto;overflow-x:hidden;background:var(--vbs-bg-input, #09090b);';
   body.appendChild(scrollBody);
 
 // Track existing rows by property key

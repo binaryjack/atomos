@@ -48,7 +48,7 @@ export const createEntityAggregate = function(
     name,
     ...(options?.description ? { description: options.description } : {}),
     shape: options?.shape ?? 'box',
-    color: options?.color ?? '#1e293b',
+    color: options?.color ?? 'var(--vbs-bg-panel, #111111)',
     properties: [],
     position,
     dimensions, 

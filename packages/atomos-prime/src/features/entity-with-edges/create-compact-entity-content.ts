@@ -18,7 +18,7 @@ export const createCompactEntityContent = (props: {
   onDelete?: () => void;
 }): CompactEntityContentResult => {
   const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  const contrast = computeContrastColor(props.color ?? '#1e293b');
+  const contrast = computeContrastColor(props.color ?? 'var(--vbs-bg-panel, #111111)');
   
   // Create wrapper that will receive the rendered shape
   const shapeWrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');

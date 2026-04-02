@@ -6,8 +6,8 @@ export interface EntityBodyResult {
 export const createEntityBody = function(title: string): EntityBodyResult {
   const body = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
   body.setAttribute('rx', '6');
-  body.setAttribute('fill', '#1e293b');
-  body.setAttribute('stroke', '#334155');
+  body.setAttribute('fill', 'var(--vbs-bg-panel, #111111)');
+  body.setAttribute('stroke', 'var(--vbs-border, #27272a)');
   body.setAttribute('stroke-width', '1.5');
   body.style.cursor = 'move';
 

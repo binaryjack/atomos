@@ -9,7 +9,7 @@ template.innerHTML = `<style>
   ::slotted([slot="label"]) {
     font-size: 13px;
     font-weight: 500;
-    color: #cbd5e1;
+    color: var(--vbs-text-secondary, #a1a1aa); /* Updated to Obsidian */
     font-family: system-ui, sans-serif;
   }
   ::slotted([slot="input"]) {

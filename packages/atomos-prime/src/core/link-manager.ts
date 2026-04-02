@@ -113,7 +113,7 @@ export const createLinkManager = function(): LinkManager {
 
     const setValidity = (isValid: boolean) => {
       if (isValid) {
-        path.setAttribute('stroke', props.strokeColor ?? '#cbd5e1'); // default bright color
+        path.setAttribute('stroke', props.strokeColor ?? 'var(--vbs-text-primary, #f4f4f5)'); // default bright color
       } else {
         path.setAttribute('stroke', '#ef4444'); // red-500
       }

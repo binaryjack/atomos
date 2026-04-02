@@ -15,12 +15,12 @@ const section = function(title: string): HTMLElement {
   h2.style.cssText = [
     'font-size:16px',
     'font-weight:600',
-    'color:#94a3b8',
+    'color:var(--vbs-text-secondary, #a1a1aa)',
     'text-transform:uppercase',
     'letter-spacing:0.08em',
     'margin:0 0 20px',
     'padding-bottom:10px',
-    'border-bottom:1px solid #1e293b',
+    'border-bottom:1px solid var(--vbs-bg-panel, #111111)',
   ].join(';');
   el.appendChild(h2);
   return el;
@@ -31,7 +31,7 @@ const btn = function(label: string, variant: 'primary' | 'ghost' = 'primary'): H
   b.textContent = label;
   b.style.cssText = [
     'padding:8px 18px',
-    'border-radius:6px',
+    'border-radius: var(--vbs-radius, 2px)',
     'font-size:14px',
     'font-weight:500',
     'cursor:pointer',
@@ -39,7 +39,7 @@ const btn = function(label: string, variant: 'primary' | 'ghost' = 'primary'): H
     'transition:opacity 0.15s',
     variant === 'primary'
       ? 'background:#3b82f6;color:#fff;border-color:#3b82f6;'
-      : 'background:transparent;color:#94a3b8;border-color:#334155;',
+      : 'background:transparent;color:var(--vbs-text-secondary, #a1a1aa);border-color:var(--vbs-border, #27272a);',
   ].join(';');
   b.addEventListener('mouseenter', () => { b.style.opacity = '0.8'; });
   b.addEventListener('mouseleave', () => { b.style.opacity = '1'; });
@@ -49,13 +49,13 @@ const btn = function(label: string, variant: 'primary' | 'ghost' = 'primary'): H
 const codeBlock = function(text: string): HTMLElement {
   const pre = document.createElement('pre');
   pre.style.cssText = [
-    'background:#1e293b',
-    'border:1px solid #334155',
-    'border-radius:8px',
+    'background:var(--vbs-bg-panel, #111111)',
+    'border:1px solid var(--vbs-border, #27272a)',
+    'border-radius: var(--vbs-radius, 2px)',
     'padding:16px 20px',
     'font-size:13px',
     'font-family:JetBrains Mono,Monaco,monospace',
-    'color:#e2e8f0',
+    'color:var(--vbs-text-primary, #f4f4f5)',
     'overflow-x:auto',
     'line-height:1.7',
     'margin:0',
@@ -88,9 +88,9 @@ const buildContactForm = async function(parent: HTMLElement): Promise<() => void
 
   const formEl = document.createElement('div');
   formEl.style.cssText = [
-    'background:#0f172a',
-    'border:1px solid #1e293b',
-    'border-radius:10px',
+    'background:var(--vbs-bg-input, #09090b)',
+    'border:1px solid var(--vbs-bg-panel, #111111)',
+    'border-radius: var(--vbs-radius, 2px)',
     'padding:24px',
     'display:flex',
     'flex-direction:column',
@@ -152,7 +152,7 @@ const buildContactForm = async function(parent: HTMLElement): Promise<() => void
     if (hasErrors) {
       resultBox.style.display = 'block';
       resultBox.textContent = '✗ Fix validation errors above.';
-      resultBox.style.color = '#f87171';
+      resultBox.style.color = 'var(--vbs-danger, #ef4444)';
     } else {
       const data = {
         name:      String(form.getField('name')?.input?.value ?? ''),
@@ -178,8 +178,8 @@ const buildContactForm = async function(parent: HTMLElement): Promise<() => void
   const resultBox = document.createElement('pre');
   resultBox.style.cssText = [
     'display:none',
-    'background:#1e293b',
-    'border-radius:6px',
+    'background:var(--vbs-bg-panel, #111111)',
+    'border-radius: var(--vbs-radius, 2px)',
     'padding:12px',
     'font-size:12px',
     'font-family:monospace',
@@ -240,14 +240,14 @@ form.observe(fieldName, cb); // low-level change subscription → () => void`
 const apiCard = function(name: string, desc: string): HTMLDivElement {
   const card = document.createElement('div');
   card.style.cssText = [
-    'background:#0f172a',
-    'border:1px solid #1e293b',
-    'border-radius:8px',
+    'background:var(--vbs-bg-input, #09090b)',
+    'border:1px solid var(--vbs-bg-panel, #111111)',
+    'border-radius: var(--vbs-radius, 2px)',
     'padding:16px',
   ].join(';');
   card.innerHTML = `
     <div style="font-size:13px;font-weight:600;color:#a5b4fc;font-family:monospace;margin-bottom:6px;">${name}</div>
-    <div style="font-size:13px;color:#94a3b8;line-height:1.5;">${desc}</div>
+    <div style="font-size:13px;color:var(--vbs-text-secondary, #a1a1aa);line-height:1.5;">${desc}</div>
   `;
   return card;
 };
@@ -274,7 +274,7 @@ export const createFormularPage = function(): { element: HTMLDivElement; cleanup
   const root = document.createElement('div');
   root.style.cssText = [
     'min-height:100vh',
-    'background:#0f172a',
+    'background:var(--vbs-bg-input, #09090b)',
     'color:#f1f5f9',
     'font-family:system-ui,sans-serif',
     'padding-top:40px',
@@ -288,8 +288,8 @@ export const createFormularPage = function(): { element: HTMLDivElement; cleanup
   heading.style.cssText = 'margin-bottom:40px;';
   heading.innerHTML = `
     <h1 style="font-size:28px;font-weight:700;color:#f1f5f9;margin:0 0 8px;">Formular</h1>
-    <p style="margin:0;color:#94a3b8;font-size:15px;line-height:1.6;">
-      <a href="https://formular.dev" target="_blank" style="color:#38bdf8;text-decoration:none;">@binaryjack/formular.dev</a>
+    <p style="margin:0;color:var(--vbs-text-secondary, #a1a1aa);font-size:15px;line-height:1.6;">
+      <a href="https://formular.dev" target="_blank" style="color:var(--vbs-primary, #3b82f6);text-decoration:none;">@binaryjack/formular.dev</a>
       integration — schema-driven forms with live validation, field guides, and error display.
       No framework. No virtual DOM.
     </p>

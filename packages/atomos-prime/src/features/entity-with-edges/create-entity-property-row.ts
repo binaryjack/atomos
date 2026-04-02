@@ -33,10 +33,11 @@ const buildValueInput = function(
   let valueSub: (() => void) | null = null;
 
   const sharedStyle = [
-    'background:#0f172a', 'color:#e2e8f0',
-    'border:1px solid #334155', 'border-radius:3px',
-    'font-size:11px', 'padding:0 4px',
-    'height:22px', 'width:100%', 'box-sizing:border-box', 'min-width:0', 'outline:none',
+    'background:var(--vbs-bg-input, #09090b)', 'color:var(--vbs-text-primary, #f4f4f5)',
+    'border:1px solid var(--vbs-border, #27272a)', 'border-radius:var(--vbs-radius, 2px)',
+    'font-size:12px', 'padding:0 6px',
+    'height:var(--vbs-control-height, 28px)', 'width:100%', 'box-sizing:border-box', 'min-width:0', 'outline:none',
+    'transition:border-color 0.15s ease'
   ].join(';');
 
   const rebuild = (): void => {
@@ -54,16 +55,39 @@ const buildValueInput = function(
       cb.type = 'checkbox';
       cb.className = 'no-drag';
       cb.checked = Boolean(value.value);
-      cb.style.cssText = 'cursor:pointer;flex-shrink:0;accent-color:#6366f1;width:14px;height:14px;align-self:center;';
-      cb.addEventListener('change', () => onValueChange(cb.checked));
-      valueSub = value.subscribe(() => { cb.checked = Boolean(value.value); });
+      cb.style.cssText = 'cursor:pointer;flex-shrink:0;width:14px;height:14px;align-self:center;appearance:none;background:var(--vbs-bg-input, #09090b);border:1px solid var(--vbs-border, #27272a);border-radius:var(--vbs-radius, 2px);transition:background-color 0.15s, border-color 0.15s;';
+      cb.addEventListener('change', () => {
+        onValueChange(cb.checked);
+        if(cb.checked) {
+          cb.style.background = 'var(--vbs-primary, #3b82f6)';
+          cb.style.borderColor = 'var(--vbs-primary, #3b82f6)';
+        } else {
+          cb.style.background = 'var(--vbs-bg-input, #09090b)';
+          cb.style.borderColor = 'var(--vbs-border, #27272a)';
+        }
+      });
+      // Initial style application
+      if(cb.checked) {
+        cb.style.background = 'var(--vbs-primary, #3b82f6)';
+        cb.style.borderColor = 'var(--vbs-primary, #3b82f6)';
+      }
+      valueSub = value.subscribe(() => { 
+        cb.checked = Boolean(value.value); 
+        if(cb.checked) {
+          cb.style.background = 'var(--vbs-primary, #3b82f6)';
+          cb.style.borderColor = 'var(--vbs-primary, #3b82f6)';
+        } else {
+          cb.style.background = 'var(--vbs-bg-input, #09090b)';
+          cb.style.borderColor = 'var(--vbs-border, #27272a)';
+        }
+      });
       currentInput = cb;
     } else if (ct === 'textarea') {
       const ta = document.createElement('textarea');
       ta.className = 'no-drag';
       ta.value = String(value.value ?? '');
       ta.rows = 1;
-      ta.style.cssText = sharedStyle + ';resize:none;height:22px;overflow:hidden;padding:2px 4px;';
+      ta.style.cssText = sharedStyle + ';resize:none;height:auto;overflow:hidden;padding:2px 4px;';
       ta.addEventListener('change', () => onValueChange(ta.value));
       valueSub = value.subscribe(() => { ta.value = String(value.value ?? ''); });
       currentInput = ta;
@@ -107,8 +131,8 @@ export const createEntityPropertyRow = function(
     'display:flex', 'align-items:center', 'gap:4px',
     'padding:0 8px',
     'box-sizing:border-box',
-    'height:28px',
-    'border-bottom:1px solid #1e293b',
+    'height:var(--vbs-control-height, 28px)',
+    'border-bottom:1px solid var(--vbs-border, #27272a)',
   ].join(';');
 
   // Editable label (compact — value input takes remaining space)
@@ -147,10 +171,13 @@ export const createEntityPropertyRow = function(
     onChange: (v) => props.onComponentTypeChange(v as ComponentType),
   });
   ctDropdown.select.style.cssText = [
-    'background:#0f172a', 'color:#818cf8', 'border:1px solid #312e81',
-    'border-radius:3px', 'font-size:11px', 'padding:0 2px',
-    'width:44px', 'height:22px', 'cursor:pointer', 'box-sizing:border-box',
+    'background:var(--vbs-bg-input, #09090b)', 'color:var(--vbs-primary, #3b82f6)', 'border:1px solid var(--vbs-border, #27272a)',
+    'border-radius:var(--vbs-radius, 2px)', 'font-size:12px', 'padding:0 4px',
+    'width:44px', 'height:var(--vbs-control-height, 28px)', 'cursor:pointer', 'box-sizing:border-box',
+    'outline:none', 'transition:border-color 0.15s'
   ].join(';');
+  ctDropdown.select.addEventListener('focus', () => ctDropdown.select.style.borderColor = 'var(--vbs-primary, #3b82f6)');
+  ctDropdown.select.addEventListener('blur', () => ctDropdown.select.style.borderColor = 'var(--vbs-border, #27272a)');
   ctDropdown.element.style.cssText = 'flex-shrink:0;display:flex;align-items:center;';
   cleanups.push(ctDropdown.cleanup.destroy);
 
@@ -162,10 +189,13 @@ export const createEntityPropertyRow = function(
     onChange: (v) => props.onDataTypeChange(v as DataType),
   });
   dropdown.select.style.cssText = [
-    'background:#0f172a', 'color:#94a3b8', 'border:1px solid #334155',
-    'border-radius:3px', 'font-size:11px', 'padding:0 2px',
-    'max-width:72px', 'height:22px', 'cursor:pointer', 'box-sizing:border-box',
+    'background:var(--vbs-bg-input, #09090b)', 'color:var(--vbs-text-secondary, #a1a1aa)', 'border:1px solid var(--vbs-border, #27272a)',
+    'border-radius:var(--vbs-radius, 2px)', 'font-size:12px', 'padding:0 4px',
+    'max-width:72px', 'height:var(--vbs-control-height, 28px)', 'cursor:pointer', 'box-sizing:border-box',
+    'outline:none', 'transition:border-color 0.15s'
   ].join(';');
+  dropdown.select.addEventListener('focus', () => dropdown.select.style.borderColor = 'var(--vbs-primary, #3b82f6)');
+  dropdown.select.addEventListener('blur', () => dropdown.select.style.borderColor = 'var(--vbs-border, #27272a)');
   dropdown.element.style.cssText = 'flex-shrink:0;display:flex;align-items:center;';
   cleanups.push(dropdown.cleanup.destroy);
 
@@ -183,7 +213,7 @@ export const createEntityPropertyRow = function(
   });
 
   // Delete button
-  const deleteIcon = createIcon({ name: 'delete', size: 12, color: '#f87171' });
+  const deleteIcon = createIcon({ name: 'delete', size: 12, color: 'var(--vbs-danger, #ef4444)' });
   const deleteBtn = document.createElement('button');
   deleteBtn.type = 'button';
   deleteBtn.style.cssText = 'flex-shrink:0;align-self:center;background:none;border:none;cursor:pointer;padding:1px;display:flex;align-items:center;border-radius:2px;';

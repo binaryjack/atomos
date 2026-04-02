@@ -23,7 +23,7 @@ schemaEdgeTemplate.innerHTML = `
 
   path {
     fill: none;
-    stroke: var(--atp-edge-stroke, #94a3b8);
+    stroke: var(--atp-edge-stroke, var(--vbs-text-secondary, #a1a1aa));
     stroke-width: var(--atp-edge-width, 2px);
     pointer-events: stroke; /* allow clicking strictly on the stroke itself */
     cursor: pointer;

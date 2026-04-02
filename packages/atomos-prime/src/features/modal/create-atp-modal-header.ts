@@ -10,7 +10,7 @@ export const createAtpModalHeader = () => {
         justify-content: space-between;
         gap: 8px;
         padding: 16px 20px;
-        border-bottom: 1px solid #334155;
+        border-bottom: 1px solid var(--vbs-border, #27272a);
         flex-shrink: 0;
         min-height: 52px;
       }
@@ -31,15 +31,15 @@ export const createAtpModalHeader = () => {
         border: none;
         cursor: pointer;
         padding: 4px;
-        color: #94a3b8;
+        color: var(--vbs-text-secondary, #a1a1aa);
         display: flex;
         align-items: center;
-        border-radius: 4px;
+        border-radius: var(--vbs-radius, 2px);
         transition: color 150ms, background 150ms;
       }
       .close-btn:hover {
         color: #f1f5f9;
-        background: #334155;
+        background: var(--vbs-border, #27272a);
       }
     </style>
     <span class="title"><slot></slot></span>

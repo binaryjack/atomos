@@ -12,7 +12,7 @@ export interface EntityFooterResult {
 }
 
 export const createEntityFooter = function(props: EntityFooterProps): EntityFooterResult {
-  const bgColor  = props.color || '#1e293b';
+  const bgColor  = props.color || 'var(--vbs-bg-panel, #111111)';
   const contrast = computeContrastColor(bgColor);
 
   const footer = document.createElement('div');
@@ -20,7 +20,7 @@ export const createEntityFooter = function(props: EntityFooterProps): EntityFoot
     'display:flex', 'align-items:center', 'gap:4px',
     'padding:4px 8px',
     `background:${bgColor}`,
-    'border-top:1px solid #334155',
+    'border-top:1px solid var(--vbs-border, #27272a)',
     'flex-shrink:0',
     'min-height:30px',
   ].join(';');
@@ -33,7 +33,7 @@ export const createEntityFooter = function(props: EntityFooterProps): EntityFoot
     'display:flex', 'align-items:center', 'gap:4px',
     'background:none', 'border:none', 'cursor:pointer',
     `color:${contrast.textColor}`, 'font-size:11px', 'padding:2px 4px',
-    'border-radius:3px',
+    'border-radius: var(--vbs-radius, 2px)',
   ].join(';');
   addBtn.title = 'Add property';
 

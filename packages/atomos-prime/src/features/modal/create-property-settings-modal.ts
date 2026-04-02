@@ -144,15 +144,15 @@ export const createPropertySettingsModal = function(
 
     const valueLabel = document.createElement('label');
     valueLabel.textContent = 'Value';
-    valueLabel.style.cssText = 'font-size:12px;font-weight:600;color:#94a3b8;';
+    valueLabel.style.cssText = 'font-size:12px;font-weight:600;color:var(--vbs-text-secondary, #a1a1aa);';
 
     const valueInputWrap = document.createElement('div');
     valueInputWrap.style.cssText = 'display:flex;align-items:center;';
 
     const sharedInputStyle = [
       'width:100%', 'box-sizing:border-box',
-      'background:#0f172a', 'color:#e2e8f0',
-      'border:1px solid #334155', 'border-radius:6px',
+      'background:var(--vbs-bg-input, #09090b)', 'color:var(--vbs-text-primary, #f4f4f5)',
+      'border:1px solid var(--vbs-border, #27272a)', 'border-radius: var(--vbs-radius, 2px)',
       'font-size:13px', 'padding:7px 10px', 'outline:none',
     ].join(';');
 
@@ -169,7 +169,7 @@ export const createPropertySettingsModal = function(
         const cb = document.createElement('input');
         cb.type = 'checkbox';
         cb.checked = Boolean(currentValue);
-        cb.style.cssText = 'width:18px;height:18px;cursor:pointer;accent-color:#6366f1;';
+        cb.style.cssText = 'width:18px;height:18px;cursor:pointer;accent-color:var(--vbs-primary, #3b82f6);';
         cb.addEventListener('change', () => { currentValue = cb.checked; });
         activeValueInput = cb;
       } else if (ct === 'textarea') {

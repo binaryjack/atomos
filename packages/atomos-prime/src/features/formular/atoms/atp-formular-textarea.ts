@@ -35,16 +35,27 @@ export class AtpFormularTextarea extends HTMLElement {
     this.#textarea.style.cssText = [
       'width:100%',
       'box-sizing:border-box',
-      'padding:8px 12px',
-      'background:#1e293b',
-      'border:1px solid #334155',
-      'border-radius:6px',
-      'color:#f1f5f9',
-      'font-size:14px',
+      'padding:8px',
+      'background:var(--vbs-bg-input, #09090b)',
+      'border:1px solid var(--vbs-border, #27272a)',
+      'border-radius:var(--vbs-radius, 2px)',
+      'color:var(--vbs-text-primary, #f4f4f5)',
+      'font-size:13px',
       'outline:none',
       'font-family: inherit',
-      'resize: vertical'
+      'resize: vertical',
+      'transition:all 0.15s ease'
     ].join(';');
+
+    this.#textarea.addEventListener('focus', () => {
+      this.#textarea.style.borderColor = 'var(--vbs-primary, #3b82f6)';
+      this.#textarea.style.boxShadow = '0 0 0 1px rgba(59, 130, 246, 0.4)';
+    });
+
+    this.#textarea.addEventListener('blur', () => {
+      this.#textarea.style.borderColor = 'var(--vbs-border, #27272a)';
+      this.#textarea.style.boxShadow = 'none';
+    });
 
     
     

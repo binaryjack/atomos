@@ -124,7 +124,7 @@ export const createVisualEditorTree = function(props: VisualEditorTreeProps): Vi
           id: `new-item-${Date.now()}`,
           name: 'New Tool',
           shape: 'box',
-          baseColor: '#6366f1',
+          baseColor: 'var(--vbs-primary, #3b82f6)',
           icon: 'box'
         };
         activeConfig.toolsets[tsIndex].tools.push(newItem);

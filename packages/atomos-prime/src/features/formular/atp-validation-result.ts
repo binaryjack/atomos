@@ -132,13 +132,13 @@ export class AtpValidationResult extends HTMLElement {
     if (this.#focused) {
       if (this.#guideText) {
         this.style.display = 'block';
-        this.style.color = '#38bdf8';
+        this.style.color = 'var(--vbs-primary, #3b82f6)';
         const p = document.createElement('p');
         p.textContent = this.#guideText;
         this.#contentPart.appendChild(p);
       } else if (failed.length > 0) {
         this.style.display = 'block';
-        this.style.color = '#38bdf8';
+        this.style.color = 'var(--vbs-primary, #3b82f6)';
         const contentPart = this.#contentPart;
         failed.forEach(r => {
           const p = document.createElement('p');
@@ -157,7 +157,7 @@ export class AtpValidationResult extends HTMLElement {
     }
 
     this.style.display = 'block';
-    this.style.color = '#f87171';
+    this.style.color = 'var(--vbs-danger, #ef4444)';
     const contentPart = this.#contentPart;
     failed.forEach(r => {
       const p = document.createElement('p');

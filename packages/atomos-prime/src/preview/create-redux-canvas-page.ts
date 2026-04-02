@@ -14,7 +14,7 @@ export const createReduxCanvasPage = function() {
 
   // Root — fills full viewport, top offset for the HTML nav bar (40px)
   const root = document.createElement('div');
-  root.style.cssText = 'position:fixed;top:40px;left:0;right:0;bottom:0;overflow:hidden;background:#0f172a;';
+  root.style.cssText = 'position:fixed;top:40px;left:0;right:0;bottom:0;overflow:hidden;background:var(--vbs-bg-input, #09090b);';
 
   // Canvas container — full area below nav
   const canvasWrap = document.createElement('div');
@@ -37,7 +37,7 @@ export const createReduxCanvasPage = function() {
   const smallPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   smallPath.setAttribute('d', 'M 20 0 L 0 0 0 20');
   smallPath.setAttribute('fill', 'none');
-  smallPath.setAttribute('stroke', '#1e293b');
+  smallPath.setAttribute('stroke', 'var(--vbs-bg-panel, #111111)');
   smallPath.setAttribute('stroke-width', '0.5');
   smallGrid.appendChild(smallPath);
 
@@ -164,8 +164,8 @@ export const createReduxCanvasPage = function() {
   zoomLabel.style.cssText = [
     'position:absolute;bottom:16px;right:16px;',
     'background:rgba(15,23,42,0.85);backdrop-filter:blur(6px);',
-    'border:1px solid #1e293b;border-radius:6px;',
-    'padding:4px 10px;color:#94a3b8;font-size:11px;font-family:system-ui,sans-serif;',
+    'border:1px solid var(--vbs-bg-panel, #111111);border-radius: var(--vbs-radius, 2px);',
+    'padding:4px 10px;color:var(--vbs-text-secondary, #a1a1aa);font-size:11px;font-family:system-ui,sans-serif;',
     'pointer-events:none;z-index:10;',
   ].join('');
   zoomLabel.textContent = '100%';
@@ -179,8 +179,8 @@ export const createReduxCanvasPage = function() {
   statusLabel.style.cssText = [
     'position:absolute;bottom:16px;left:16px;',
     'background:rgba(15,23,42,0.85);backdrop-filter:blur(6px);',
-    'border:1px solid #1e293b;border-radius:6px;',
-    'padding:8px 12px;color:#94a3b8;font-size:11px;font-family:system-ui,sans-serif;',
+    'border:1px solid var(--vbs-bg-panel, #111111);border-radius: var(--vbs-radius, 2px);',
+    'padding:8px 12px;color:var(--vbs-text-secondary, #a1a1aa);font-size:11px;font-family:system-ui,sans-serif;',
     'pointer-events:none;z-index:10;line-height:1.4;',
   ].join('');
   

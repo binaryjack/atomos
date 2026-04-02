@@ -20,7 +20,7 @@ export const createAnchor = function(props: AnchorProps): AnchorResult {
   // State-based styling
   const getStateColor = (state: AnchorState) => {
     switch (state) {
-      case 'idle': return '#94a3b8'; // Lighter gray for idle so it sits nicely
+      case 'idle': return 'var(--vbs-text-secondary, #a1a1aa)'; // Lighter gray for idle so it sits nicely
       case 'hover': return '#4b5563';
       case 'dragging': return '#3b82f6';
       case 'connecting': return '#f59e0b';

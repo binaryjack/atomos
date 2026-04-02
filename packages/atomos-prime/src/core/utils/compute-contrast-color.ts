@@ -59,7 +59,7 @@ export interface ContrastResult {
 }
 
 const WHITE_L = relativeLuminance(248, 250, 252); // #f8fafc
-const DARK_L  = relativeLuminance(15,  23,  42);  // #0f172a
+const DARK_L  = relativeLuminance(15,  23,  42);  // var(--vbs-bg-input, #09090b)
 
 /**
  * Given a background hex colour, compute the best-contrast foreground
@@ -70,7 +70,7 @@ export const computeContrastColor = function(bgHex: string): ContrastResult {
   if (!parsed) {
     // fallback for unknown/non-hex colours
     return {
-      textColor: '#f8fafc', mutedColor: '#94a3b8',
+      textColor: '#f8fafc', mutedColor: 'var(--vbs-text-secondary, #a1a1aa)',
       ratioOnWhite: 1, ratioOnDark: 1, ratio: 1,
       passAA: false, passAAA: false, grade: 'Fail',
     };
@@ -82,8 +82,8 @@ export const computeContrastColor = function(bgHex: string): ContrastResult {
   const ratioDark   = contrastRatio(DARK_L,  bgL);
   const useWhite    = ratioWhite >= ratioDark;
   const ratio       = useWhite ? ratioWhite : ratioDark;
-  const textColor   = useWhite ? '#f8fafc' : '#0f172a';
-  const mutedColor  = useWhite ? '#94a3b8' : '#475569';
+  const textColor   = useWhite ? '#f8fafc' : 'var(--vbs-bg-input, #09090b)';
+  const mutedColor  = useWhite ? 'var(--vbs-text-secondary, #a1a1aa)' : '#475569';
 
   const grade: ContrastResult['grade'] =
     ratio >= 7   ? 'AAA'      :

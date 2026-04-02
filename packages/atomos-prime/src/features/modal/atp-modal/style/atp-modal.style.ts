@@ -21,9 +21,9 @@ export const atpModalStyle = `
   }
 
   .dialog {
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 10px;
+    background: var(--vbs-bg-panel, #111111);
+    border: 1px solid var(--vbs-border, #27272a);
+    border-radius: var(--vbs-radius, 2px);
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04);
     display: flex;
     flex-direction: column;
@@ -39,14 +39,14 @@ export const atpModalStyle = `
     flex: 1;
     overflow-y: auto;
     padding: 20px;
-    color: #cbd5e1;
+    color: var(--vbs-text-primary, #f4f4f5);
     font-family: system-ui, sans-serif;
     font-size: 14px;
     line-height: 1.6;
     scrollbar-width: thin;
-    scrollbar-color: #334155 transparent;
+    scrollbar-color: var(--vbs-border, #27272a) transparent;
   }
   .body::-webkit-scrollbar { width: 6px; }
   .body::-webkit-scrollbar-track { background: transparent; }
-  .body::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  .body::-webkit-scrollbar-thumb { background: var(--vbs-border, #27272a); border-radius: var(--vbs-radius, 2px); }
 `;

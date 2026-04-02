@@ -24,7 +24,7 @@ export const createSVGShape = (shape: EntityShape, width: number, height: number
       const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
       rect.setAttribute('width', width.toString());
       rect.setAttribute('height', height.toString());
-      rect.style.fill = color || '#1e293b';
+      rect.style.fill = color || 'var(--vbs-bg-panel, #111111)';
       rect.style.stroke = '#3b82f6';
       rect.style.strokeWidth = '2px';
       return rect;

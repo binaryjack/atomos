@@ -36,10 +36,10 @@ export const openLinkSettingsModal = function(linkId: string): void {
   header.setAttribute('slot', 'header');
 
   const body = document.createElement('div');
-  body.style.cssText = 'color:#e2e8f0;font-size:14px;display:flex;flex-direction:column;gap:16px;';
+  body.style.cssText = 'color:var(--vbs-text-primary, #f4f4f5);font-size:14px;display:flex;flex-direction:column;gap:16px;';
 
   const titleDiv = document.createElement('div');
-  titleDiv.style.cssText = 'font-weight:bold;text-align:center;padding-bottom:12px;border-bottom:1px solid #334155;font-size:16px;';
+  titleDiv.style.cssText = 'font-weight:bold;text-align:center;padding-bottom:12px;border-bottom:1px solid var(--vbs-border, #27272a);font-size:16px;';
   
   const updateTitle = () => {
     const leftCard = sourceCardDropdown.getSelectElement().value || '1';
@@ -52,10 +52,10 @@ export const openLinkSettingsModal = function(linkId: string): void {
     container.style.cssText = 'display:flex;flex-direction:column;gap:4px;flex:1;';
     const labelEl = document.createElement('label');
     labelEl.textContent = label;
-    labelEl.style.cssText = 'font-size:12px;color:#94a3b8;';
+    labelEl.style.cssText = 'font-size:12px;color:var(--vbs-text-secondary, #a1a1aa);';
     
     const select = document.createElement('select');
-    select.style.cssText = 'background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:8px;font-size:13px;';
+    select.style.cssText = 'background:var(--vbs-bg-panel, #111111);color:var(--vbs-text-primary, #f4f4f5);border:1px solid var(--vbs-border, #27272a);border-radius: var(--vbs-radius, 2px);padding:8px;font-size:13px;';
     
     // Add empty option for properties
     if (label.includes('Property')) {

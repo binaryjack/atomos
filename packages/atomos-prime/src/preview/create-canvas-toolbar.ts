@@ -15,7 +15,7 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): HTMLEl
     'position:absolute;bottom:24px;left:50%;transform:translateX(-50%);',
     'display:flex;align-items:center;gap:8px;z-index:30;',
     'background:rgba(15,23,42,0.95);backdrop-filter:blur(8px);',
-    'border:1px solid #334155;border-radius:12px;padding:6px;box-shadow:0 10px 15px -3px rgba(0,0,0,0.3);'
+    'border:1px solid var(--vbs-border, #27272a);border-radius:12px;padding:6px;box-shadow:0 10px 15px -3px rgba(0,0,0,0.3);'
   ].join('');
 
   // Small internal helper for SVG icons
@@ -26,10 +26,10 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): HTMLEl
     btn.style.cssText = [
       'display:flex;align-items:center;justify-content:center;',
       'width:36px;height:36px;border:none;background:transparent;',
-      'color:#94a3b8;border-radius:8px;cursor:pointer;transition:all 0.2s;'
+      'color:var(--vbs-text-secondary, #a1a1aa);border-radius: var(--vbs-radius, 2px);cursor:pointer;transition:all 0.2s;'
     ].join('');
-    btn.onmouseover = () => { btn.style.background = '#1e293b'; btn.style.color = '#f8fafc'; };
-    btn.onmouseout = () => { btn.style.background = 'transparent'; btn.style.color = '#94a3b8'; };
+    btn.onmouseover = () => { btn.style.background = 'var(--vbs-bg-panel, #111111)'; btn.style.color = '#f8fafc'; };
+    btn.onmouseout = () => { btn.style.background = 'transparent'; btn.style.color = 'var(--vbs-text-secondary, #a1a1aa)'; };
     btn.onclick = (e) => { e.stopPropagation(); onClick(); };
     btn.onmousedown = (e) => { e.stopPropagation(); };
     return btn;
@@ -37,7 +37,7 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): HTMLEl
 
   const divider = () => {
     const div = document.createElement('div');
-    div.style.cssText = 'width:1px;height:24px;background:#334155;margin:0 4px;';
+    div.style.cssText = 'width:1px;height:24px;background:var(--vbs-border, #27272a);margin:0 4px;';
     return div;
   };
 
@@ -157,10 +157,10 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): HTMLEl
   settingsBtn.href = '/test-settings-page.html';
   settingsBtn.target = '_blank';
   settingsBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
-  settingsBtn.style.cssText = 'color:#94a3b8;cursor:pointer;padding:8px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;text-decoration:none;';
+  settingsBtn.style.cssText = 'color:var(--vbs-text-secondary, #a1a1aa);cursor:pointer;padding:8px;border-radius: var(--vbs-radius, 2px);display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;text-decoration:none;';
   settingsBtn.title = 'Settings';
-  settingsBtn.onmouseover = () => { settingsBtn.style.background = '#1e293b'; settingsBtn.style.color = '#f8fafc'; };
-  settingsBtn.onmouseout = () => { settingsBtn.style.background = 'transparent'; settingsBtn.style.color = '#94a3b8'; };
+  settingsBtn.onmouseover = () => { settingsBtn.style.background = 'var(--vbs-bg-panel, #111111)'; settingsBtn.style.color = '#f8fafc'; };
+  settingsBtn.onmouseout = () => { settingsBtn.style.background = 'transparent'; settingsBtn.style.color = 'var(--vbs-text-secondary, #a1a1aa)'; };
   settingsBtn.onclick = (e) => e.stopPropagation();
   settingsBtn.onmousedown = (e) => e.stopPropagation();
 

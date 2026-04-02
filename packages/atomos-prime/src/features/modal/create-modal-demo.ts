@@ -42,7 +42,7 @@ const buildAlertModal = (): AtpModal => {
 
   const body = document.createElement('p');
   body.textContent = 'This is an agnostic alert modal. Click outside, press ESC, or click OK to close.';
-  body.style.cssText = 'margin:0;color:#cbd5e1;';
+  body.style.cssText = 'margin:0;color:var(--vbs-text-primary, #f4f4f5);';
 
   const footer = document.createElement('atp-modal-footer');
   footer.setAttribute('slot', 'footer');
@@ -67,7 +67,7 @@ const buildConfirmModal = (): AtpModal => {
   const body = document.createElement('div');
   body.innerHTML = `
     <p style="margin:0 0 12px;color:#f1f5f9;font-weight:500;">Delete this entity?</p>
-    <p style="margin:0;color:#94a3b8;font-size:13px;">This action cannot be undone. All associated links will also be removed.</p>
+    <p style="margin:0;color:var(--vbs-text-secondary, #a1a1aa);font-size:13px;">This action cannot be undone. All associated links will also be removed.</p>
   `;
 
   const footer = document.createElement('atp-modal-footer');
@@ -181,7 +181,7 @@ const buildStackedModal = (): AtpModal => {
 
   const body = document.createElement('p');
   body.textContent = 'I am a second modal stacked on top. Press ESC or click outside — only I close.';
-  body.style.cssText = 'margin:0;color:#cbd5e1;';
+  body.style.cssText = 'margin:0;color:var(--vbs-text-primary, #f4f4f5);';
 
   const footer = document.createElement('atp-modal-footer');
   footer.setAttribute('slot', 'footer');
@@ -206,7 +206,7 @@ const buildStackingModal = (innerModal: AtpModal): AtpModal => {
 
   const info = document.createElement('p');
   info.textContent = 'I am the outer modal. Click the button below to open a second modal on top of me.';
-  info.style.cssText = 'margin:0;color:#cbd5e1;';
+  info.style.cssText = 'margin:0;color:var(--vbs-text-primary, #f4f4f5);';
 
   const openInnerBtn = btn('Open inner modal', 'secondary', async () => {
     const result = await innerModal.open<string>();
@@ -216,7 +216,7 @@ const buildStackingModal = (innerModal: AtpModal): AtpModal => {
 
   const resultMsg = document.createElement('p');
   resultMsg.id = 'stacked-result';
-  resultMsg.style.cssText = 'margin:0;font-size:12px;color:#94a3b8;min-height:18px;';
+  resultMsg.style.cssText = 'margin:0;font-size:12px;color:var(--vbs-text-secondary, #a1a1aa);min-height:18px;';
 
   body.appendChild(info);
   body.appendChild(openInnerBtn);
@@ -248,7 +248,7 @@ export const createModalDemo = function(): ModalDemoResult {
   const outerModal   = buildStackingModal(innerModal);
 
   const resultLog = document.createElement('p');
-  resultLog.style.cssText = 'margin:12px 0 0;font-size:12px;color:#94a3b8;min-height:18px;font-family:system-ui,sans-serif;';
+  resultLog.style.cssText = 'margin:12px 0 0;font-size:12px;color:var(--vbs-text-secondary, #a1a1aa);min-height:18px;font-family:system-ui,sans-serif;';
 
   const logResult = (label: string, r: ModalResult<unknown>): void => {
     resultLog.textContent = `${label} → ${JSON.stringify(r)}`;

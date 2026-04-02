@@ -18,16 +18,39 @@ template.innerHTML = `
       display: flex;
       align-items: center;
       gap: 6px;
+      height: var(--vbs-control-height, 28px);
     }
     input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      accent-color: #3b82f6;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--vbs-bg-input, #09090b);
+      border: 1px solid var(--vbs-border, #27272a);
+      border-radius: var(--vbs-radius, 2px);
       cursor: pointer;
+      position: relative;
+      transition: all 0.15s ease;
+      outline: none;
+    }
+    input[type="checkbox"]:focus-visible {
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
+    }
+    input[type="checkbox"]:checked {
+      background: var(--vbs-primary, #3b82f6);
+      border-color: var(--vbs-primary, #3b82f6);
+    }
+    input[type="checkbox"]:checked::after {
+      content: "";
+      position: absolute;
+      left: 3px; top: 1px;
+      width: 4px; height: 8px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
     }
     .check-label {
-      font-size: 14px;
-      color: #e2e8f0;
+      font-size: 13px;
+      color: var(--vbs-text-primary, #f4f4f5);
     }
   </style>
 `;

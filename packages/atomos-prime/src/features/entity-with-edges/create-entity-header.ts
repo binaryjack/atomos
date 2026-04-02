@@ -19,7 +19,7 @@ export interface EntityHeaderResult {
 export const createEntityHeader = function(props: EntityHeaderProps): EntityHeaderResult {
   const cleanups: Array<() => void> = [];
 
-  const bgColor   = props.color || '#1e293b';
+  const bgColor   = props.color || 'var(--vbs-bg-panel, #111111)';
   const contrast  = computeContrastColor(bgColor);
 
   const header = document.createElement('div');
@@ -27,7 +27,7 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
     'display:flex', 'align-items:center', 'gap:4px',
     'padding:6px 8px',
     `background:${bgColor}`,
-    'border-bottom:1px solid #334155',
+    'border-bottom:1px solid var(--vbs-border, #27272a)',
     'flex-shrink:0',
     'min-height:36px',
     'cursor:grab',
@@ -49,7 +49,7 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
   const settingsIcon = createIcon({ name: 'settings', size: 14, color: contrast.mutedColor });
   const settingsBtn = document.createElement('button');
   settingsBtn.type = 'button';
-  settingsBtn.style.cssText = 'flex-shrink:0;background:none;border:none;cursor:pointer;padding:2px;display:flex;border-radius:3px;';
+  settingsBtn.style.cssText = 'flex-shrink:0;background:none;border:none;cursor:pointer;padding:2px;display:flex;border-radius: var(--vbs-radius, 2px);';
   settingsBtn.title = 'Entity settings';
   settingsBtn.appendChild(settingsIcon.element);
   settingsBtn.addEventListener('click', props.onSettingsClick);
@@ -62,10 +62,10 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
   });
 
   // Delete button
-  const deleteIcon = createIcon({ name: 'delete', size: 14, color: '#f87171' });
+  const deleteIcon = createIcon({ name: 'delete', size: 14, color: 'var(--vbs-danger, #ef4444)' });
   const deleteBtn = document.createElement('button');
   deleteBtn.type = 'button';
-  deleteBtn.style.cssText = 'flex-shrink:0;background:none;border:none;cursor:pointer;padding:2px;display:flex;border-radius:3px;';
+  deleteBtn.style.cssText = 'flex-shrink:0;background:none;border:none;cursor:pointer;padding:2px;display:flex;border-radius: var(--vbs-radius, 2px);';
   deleteBtn.title = 'Delete entity';
   deleteBtn.appendChild(deleteIcon.element);
   deleteBtn.addEventListener('click', props.onDeleteClick);

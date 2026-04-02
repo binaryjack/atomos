@@ -91,7 +91,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
     'flex:1', 'min-width:0',
     'display:flex', 'flex-direction:column',
     'background:#0a0f1a',
-    'border-left:1px solid #1e293b',
+    'border-left:1px solid var(--vbs-bg-panel, #111111)',
     'overflow:hidden',
   );
 
@@ -100,8 +100,8 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
   headerExpanded.style.cssText = css(
     'display:flex', 'align-items:center', 'gap:6px',
     'padding:0 8px', 'height:36px', 'flex-shrink:0',
-    'background:#0f172a',
-    'border-bottom:1px solid #1e293b',
+    'background:var(--vbs-bg-input, #09090b)',
+    'border-bottom:1px solid var(--vbs-bg-panel, #111111)',
   );
 
   const collapseBtn = document.createElement('button');
@@ -111,10 +111,10 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
   collapseBtn.style.cssText = css(
     'flex-shrink:0', 'background:none', 'border:none',
     'cursor:pointer', 'color:#475569', 'font-size:10px',
-    'padding:2px 4px', 'border-radius:3px',
+    'padding:2px 4px', 'border-radius: var(--vbs-radius, 2px)',
     'transition:color 0.1s',
   );
-  collapseBtn.onmouseenter = () => { collapseBtn.style.color = '#e2e8f0'; };
+  collapseBtn.onmouseenter = () => { collapseBtn.style.color = 'var(--vbs-text-primary, #f4f4f5)'; };
   collapseBtn.onmouseleave = () => { collapseBtn.style.color = '#475569'; };
 
   const titleEl = document.createElement('span');
@@ -130,8 +130,8 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
   searchInput.spellcheck = false;
   searchInput.style.cssText = css(
     'flex:1', 'min-width:0',
-    'background:#1e293b', 'color:#e2e8f0',
-    'border:1px solid #334155', 'border-radius:4px',
+    'background:var(--vbs-bg-panel, #111111)', 'color:var(--vbs-text-primary, #f4f4f5)',
+    'border:1px solid var(--vbs-border, #27272a)', 'border-radius: var(--vbs-radius, 2px)',
     'font-size:11px', 'padding:3px 6px', 'outline:none',
   );
 
@@ -157,7 +157,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
     'color:#475569', 'font-size:10px', 'padding:2px',
     'transition:color 0.1s',
   );
-  expandBtn.onmouseenter = () => { expandBtn.style.color = '#e2e8f0'; };
+  expandBtn.onmouseenter = () => { expandBtn.style.color = 'var(--vbs-text-primary, #f4f4f5)'; };
   expandBtn.onmouseleave = () => { expandBtn.style.color = '#475569'; };
 
   const vertLabel = document.createElement('span');
@@ -165,7 +165,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
   vertLabel.style.cssText = css(
     'writing-mode:vertical-rl', 'text-orientation:mixed',
     'font-size:10px', 'font-weight:600',
-    'color:#334155', 'letter-spacing:0.08em', 'text-transform:uppercase',
+    'color:var(--vbs-border, #27272a)', 'letter-spacing:0.08em', 'text-transform:uppercase',
     'margin-top:6px',
   );
 
@@ -206,7 +206,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
       const empty = document.createElement('div');
       empty.style.cssText = css(
         'padding:24px 12px', 'text-align:center',
-        'color:#334155', 'font-size:11px', 'white-space:pre-line',
+        'color:var(--vbs-border, #27272a)', 'font-size:11px', 'white-space:pre-line',
       );
       empty.textContent = q
         ? 'No matches'
@@ -222,9 +222,9 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
       const sep = document.createElement('div');
       sep.style.cssText = css(
         'margin:8px 8px 2px', 'padding:4px 0',
-        'font-size:10px', 'font-weight:600', 'color:#334155',
+        'font-size:10px', 'font-weight:600', 'color:var(--vbs-border, #27272a)',
         'text-transform:uppercase', 'letter-spacing:0.05em',
-        'border-top:1px solid #1e293b',
+        'border-top:1px solid var(--vbs-bg-panel, #111111)',
       );
       sep.textContent = `Links (${edges.length})`;
       treeview.appendChild(sep);
@@ -240,9 +240,9 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
         linkRow.style.cssText = css(
           'display:flex', 'align-items:center', 'gap:3px',
           'padding:2px 10px', 'font-size:10px', 'font-family:monospace',
-          'color:#475569', 'border-radius:3px', 'margin:1px 4px',
+          'color:#475569', 'border-radius: var(--vbs-radius, 2px)', 'margin:1px 4px',
         );
-        linkRow.onmouseenter = () => { linkRow.style.background = '#0f172a'; };
+        linkRow.onmouseenter = () => { linkRow.style.background = 'var(--vbs-bg-input, #09090b)'; };
         linkRow.onmouseleave = () => { linkRow.style.background = ''; };
 
         const mkSpan = (text: string, color: string): HTMLSpanElement => {
@@ -252,9 +252,9 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
           return s;
         };
 
-        linkRow.appendChild(mkSpan(srcName,           '#94a3b8'));
-        linkRow.appendChild(mkSpan(` ──(${card})──▶ `, '#1e293b'));
-        linkRow.appendChild(mkSpan(dstName,           '#94a3b8'));
+        linkRow.appendChild(mkSpan(srcName,           'var(--vbs-text-secondary, #a1a1aa)'));
+        linkRow.appendChild(mkSpan(` ──(${card})──▶ `, 'var(--vbs-bg-panel, #111111)'));
+        linkRow.appendChild(mkSpan(dstName,           'var(--vbs-text-secondary, #a1a1aa)'));
         treeview.appendChild(linkRow);
       });
     }
@@ -272,13 +272,13 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
       'display:flex', 'align-items:center', 'gap:5px',
       'padding:4px 10px 4px 8px',
       'cursor:pointer', 'user-select:none',
-      'border-radius:4px', 'margin:1px 4px',
+      'border-radius: var(--vbs-radius, 2px)', 'margin:1px 4px',
       `background:${isSel ? '#172554' : ''}`,
       isSel ? 'border-left:2px solid #3b82f6;padding-left:6px' : '',
     );
 
     entityRow.onmouseenter = () => {
-      if (!isSel) entityRow.style.background = '#1e293b';
+      if (!isSel) entityRow.style.background = 'var(--vbs-bg-panel, #111111)';
     };
     entityRow.onmouseleave = () => {
       entityRow.style.background = isSel ? '#172554' : '';
@@ -298,8 +298,8 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
     shapeBadge.textContent = entity.shape ?? 'box';
     shapeBadge.style.cssText = css(
       'flex-shrink:0', 'font-size:9px', 'font-family:monospace',
-      'padding:0 3px', 'border-radius:3px',
-      'background:#1e293b', 'color:#818cf8', 'border:1px solid #312e81',
+      'padding:0 3px', 'border-radius: var(--vbs-radius, 2px)',
+      'background:var(--vbs-bg-panel, #111111)', 'color:#818cf8', 'border:1px solid #312e81',
     );
 
     // Entity name
@@ -308,7 +308,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
     nameEl.style.cssText = css(
       'flex:1', 'font-size:12px', 'font-weight:500',
       'overflow:hidden', 'text-overflow:ellipsis', 'white-space:nowrap',
-      isSel ? 'color:#93c5fd' : 'color:#e2e8f0',
+      isSel ? 'color:#93c5fd' : 'color:var(--vbs-text-primary, #f4f4f5)',
     );
 
     entityRow.appendChild(chevron);
@@ -320,8 +320,8 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
       countBadge.textContent = String(entity.properties.length);
       countBadge.style.cssText = css(
         'flex-shrink:0', 'font-size:9px',
-        'background:#1e293b', 'color:#64748b',
-        'padding:0 4px', 'border-radius:8px', 'border:1px solid #334155',
+        'background:var(--vbs-bg-panel, #111111)', 'color:#64748b',
+        'padding:0 4px', 'border-radius: var(--vbs-radius, 2px)', 'border:1px solid var(--vbs-border, #27272a)',
       );
       entityRow.appendChild(countBadge);
     }
@@ -368,22 +368,22 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
           'display:flex', 'align-items:center', 'gap:5px',
           'padding:2px 8px 2px 0',
           'font-size:10px', 'font-family:monospace',
-          'color:#475569', 'border-radius:3px',
+          'color:#475569', 'border-radius: var(--vbs-radius, 2px)',
         );
-        propRow.onmouseenter = () => { propRow.style.background = '#0f172a'; propRow.style.color = '#94a3b8'; };
+        propRow.onmouseenter = () => { propRow.style.background = 'var(--vbs-bg-input, #09090b)'; propRow.style.color = 'var(--vbs-text-secondary, #a1a1aa)'; };
         propRow.onmouseleave = () => { propRow.style.background = ''; propRow.style.color = '#475569'; };
 
         const connector = document.createElement('span');
         connector.textContent = isLast ? '└' : '├';
-        connector.style.cssText = 'flex-shrink:0;color:#1e293b;margin-right:2px;';
+        connector.style.cssText = 'flex-shrink:0;color:var(--vbs-bg-panel, #111111);margin-right:2px;';
 
         const propName = document.createElement('span');
         propName.textContent = prop.label ?? prop.key;
-        propName.style.cssText = 'color:#94a3b8;flex-shrink:0;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+        propName.style.cssText = 'color:var(--vbs-text-secondary, #a1a1aa);flex-shrink:0;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
 
         const propType = document.createElement('span');
         propType.textContent = prop.dataType ?? '?';
-        propType.style.cssText = 'color:#6366f1;flex-shrink:0;';
+        propType.style.cssText = 'color:var(--vbs-primary, #3b82f6);flex-shrink:0;';
 
         propRow.appendChild(connector);
         propRow.appendChild(propName);

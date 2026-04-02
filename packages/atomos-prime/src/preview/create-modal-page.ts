@@ -6,7 +6,7 @@ export const createModalPage = function() {
   const root = document.createElement('div');
   root.style.cssText = [
     'min-height:100vh',
-    'background:#0f172a',
+    'background:var(--vbs-bg-input, #09090b)',
     'color:#f1f5f9',
     'font-family:system-ui,sans-serif',
     'padding-top:40px',
@@ -20,10 +20,10 @@ export const createModalPage = function() {
   heading.style.cssText = 'margin-bottom:40px;';
   heading.innerHTML = `
     <h1 style="font-size:28px;font-weight:700;color:#f1f5f9;margin:0 0 8px;">Modal</h1>
-    <p style="margin:0;color:#94a3b8;font-size:15px;line-height:1.6;">
+    <p style="margin:0;color:var(--vbs-text-secondary, #a1a1aa);font-size:15px;line-height:1.6;">
       Agnostic &lt;atp-modal&gt; web component — Shadow DOM, stacking, animations,
-      Promise-based <code style="background:#1e293b;padding:1px 5px;border-radius:3px;font-size:13px;">open()</code>
-      + <code style="background:#1e293b;padding:1px 5px;border-radius:3px;font-size:13px;">atp-modal-closed</code> event.
+      Promise-based <code style="background:var(--vbs-bg-panel, #111111);padding:1px 5px;border-radius: var(--vbs-radius, 2px);font-size:13px;">open()</code>
+      + <code style="background:var(--vbs-bg-panel, #111111);padding:1px 5px;border-radius: var(--vbs-radius, 2px);font-size:13px;">atp-modal-closed</code> event.
     </p>
   `;
   inner.appendChild(heading);
@@ -40,13 +40,13 @@ export const createModalPage = function() {
   const usageSection = section('Usage');
   const code = document.createElement('pre');
   code.style.cssText = [
-    'background:#1e293b',
-    'border:1px solid #334155',
-    'border-radius:8px',
+    'background:var(--vbs-bg-panel, #111111)',
+    'border:1px solid var(--vbs-border, #27272a)',
+    'border-radius: var(--vbs-radius, 2px)',
     'padding:20px',
     'font-size:13px',
     'font-family:JetBrains Mono,Monaco,monospace',
-    'color:#e2e8f0',
+    'color:var(--vbs-text-primary, #f4f4f5)',
     'overflow-x:auto',
     'line-height:1.7',
     'margin:0',
@@ -88,7 +88,7 @@ const result = await modal.open<{ saved: boolean }>();
   // ── Live demo section ────────────────────────────────────────────────────────
   const liveSection = section('Live demos');
   const liveDesc = document.createElement('p');
-  liveDesc.style.cssText = 'color:#94a3b8;font-size:14px;margin:0 0 20px;';
+  liveDesc.style.cssText = 'color:var(--vbs-text-secondary, #a1a1aa);font-size:14px;margin:0 0 20px;';
   liveDesc.textContent = 'The result of each open() call is logged below the buttons.';
   liveSection.appendChild(liveDesc);
 
@@ -104,14 +104,14 @@ const result = await modal.open<{ saved: boolean }>();
   demos.forEach(d => {
     const card = document.createElement('div');
     card.style.cssText = [
-      'background:#1e293b',
-      'border:1px solid #334155',
-      'border-radius:8px',
+      'background:var(--vbs-bg-panel, #111111)',
+      'border:1px solid var(--vbs-border, #27272a)',
+      'border-radius: var(--vbs-radius, 2px)',
       'padding:16px',
     ].join(';');
     card.innerHTML = `
       <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:4px;">${d.label}</div>
-      <div style="font-size:12px;color:#94a3b8;line-height:1.5;">${d.desc}</div>
+      <div style="font-size:12px;color:var(--vbs-text-secondary, #a1a1aa);line-height:1.5;">${d.desc}</div>
     `;
     variantsGrid.appendChild(card);
   });
@@ -145,7 +145,7 @@ const section = (title: string): HTMLElement => {
     'color:#f1f5f9',
     'margin:0 0 16px',
     'padding-bottom:8px',
-    'border-bottom:1px solid #1e293b',
+    'border-bottom:1px solid var(--vbs-bg-panel, #111111)',
   ].join(';');
   el.appendChild(h);
   return el;
@@ -154,14 +154,14 @@ const section = (title: string): HTMLElement => {
 const apiCard = (label: string, desc: string): HTMLElement => {
   const el = document.createElement('div');
   el.style.cssText = [
-    'background:#1e293b',
-    'border:1px solid #334155',
-    'border-radius:8px',
+    'background:var(--vbs-bg-panel, #111111)',
+    'border:1px solid var(--vbs-border, #27272a)',
+    'border-radius: var(--vbs-radius, 2px)',
     'padding:14px 16px',
   ].join(';');
   el.innerHTML = `
-    <code style="display:block;font-size:12px;font-weight:600;color:#38bdf8;font-family:JetBrains Mono,Monaco,monospace;margin-bottom:6px;">${label}</code>
-    <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.5;">${desc}</p>
+    <code style="display:block;font-size:12px;font-weight:600;color:var(--vbs-primary, #3b82f6);font-family:JetBrains Mono,Monaco,monospace;margin-bottom:6px;">${label}</code>
+    <p style="margin:0;font-size:12px;color:var(--vbs-text-secondary, #a1a1aa);line-height:1.5;">${desc}</p>
   `;
   return el;
 };

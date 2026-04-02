@@ -75,11 +75,11 @@ const createLinkLabelFO = (
     'height:100%',
     'box-sizing:border-box',
     'background:rgba(15,23,42,0.88)',
-    'border:1px solid #334155',
-    'border-radius:13px',
+    'border:1px solid var(--vbs-border, #27272a)',
+    'border-radius: var(--vbs-radius, 2px)',
     'font-family:system-ui,sans-serif',
     'font-size:11px',
-    'color:#94a3b8',
+    'color:var(--vbs-text-secondary, #a1a1aa)',
     'white-space:nowrap',
     'cursor:default',
     'user-select:none',
@@ -108,7 +108,7 @@ const createLinkLabelFO = (
       'align-items:center',
       'font-size:11px',
       'line-height:1',
-      'border-radius:3px',
+      'border-radius: var(--vbs-radius, 2px)',
     ].join(';');
     btn.addEventListener('mousedown', (e) => e.stopPropagation());
     btn.addEventListener('click', (e) => { e.stopPropagation(); cb(); });
@@ -116,7 +116,7 @@ const createLinkLabelFO = (
   };
 
   const gearBtn   = mkBtn('Link settings', '⚙', '#64748b', onSettings);
-  const deleteBtn = mkBtn('Delete link',   '✕', '#f87171', onDelete);
+  const deleteBtn = mkBtn('Delete link',   '✕', 'var(--vbs-danger, #ef4444)', onDelete);
 
   actions.appendChild(gearBtn);
   actions.appendChild(deleteBtn);
@@ -126,13 +126,13 @@ const createLinkLabelFO = (
 
   fo.addEventListener('mouseenter', () => {
     actions.style.display = 'flex';
-    body.style.borderColor = '#6366f1';
-    body.style.color = '#cbd5e1';
+    body.style.borderColor = 'var(--vbs-primary, #3b82f6)';
+    body.style.color = 'var(--vbs-text-primary, #f4f4f5)';
   });
   fo.addEventListener('mouseleave', () => {
     actions.style.display = 'none';
-    body.style.borderColor = '#334155';
-    body.style.color = '#94a3b8';
+    body.style.borderColor = 'var(--vbs-border, #27272a)';
+    body.style.color = 'var(--vbs-text-secondary, #a1a1aa)';
   });
 
   return fo;

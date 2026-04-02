@@ -4,7 +4,7 @@ template.innerHTML = `
   :host {
     display: inline-block;
     padding: 12px 16px;
-    color: var(--tab-text-color, #94a3b8);
+    color: var(--tab-text-color, #a1a1aa);
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
@@ -17,13 +17,13 @@ template.innerHTML = `
   }
 
   :host(:hover) {
-    color: var(--tab-active-text-color, #f8fafc);
+    color: var(--tab-active-text-color, #f4f4f5);
     background-color: rgba(255,255,255,0.02);
   }
 
   :host([selected]) {
-    color: var(--tab-active-text-color, #f8fafc);
-    border-bottom-color: var(--tab-active-color, #a855f7);
+    color: var(--tab-active-text-color, #f4f4f5);
+    border-bottom-color: var(--tab-active-color, #3b82f6);
   }
 
   :host(:focus-visible) {
@@ -34,8 +34,8 @@ template.innerHTML = `
     content: '';
     position: absolute;
     inset: 4px;
-    border: 2px solid var(--tab-active-color, #a855f7);
-    border-radius: 4px;
+    border: 2px solid var(--tab-active-color, #3b82f6);
+    border-radius: var(--vbs-radius, 2px);
     pointer-events: none;
   }
 </style>

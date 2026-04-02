@@ -38,7 +38,7 @@ export const atpStepperStyle = `
 
 .btn {
     padding: 0.5rem 1rem;
-    border-radius: 4px;
+    border-radius: var(--vbs-radius, 2px);
     cursor: pointer;
     font-weight: 500;
     border: 1px solid transparent;

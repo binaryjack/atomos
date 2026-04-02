@@ -74,7 +74,7 @@ export const createEntitySettingsModal = function(entityId: string): AtpModal {
       name: preservedData?.name ?? liveEntity.name,
       description: preservedData?.description ?? liveEntity.description ?? '',
       shape: preservedData?.shape ?? liveEntity.shape ?? 'box',
-      color: preservedData?.color ?? liveEntity.color ?? '#1e293b'
+      color: preservedData?.color ?? liveEntity.color ?? 'var(--vbs-bg-panel, #111111)'
     };
 
     const form = await formManager.createFormForModal(modal, {
@@ -128,15 +128,15 @@ export const createEntitySettingsModal = function(entityId: string): AtpModal {
     const contrastBar = document.createElement('div');
     contrastBar.style.cssText = [
       'display:flex', 'align-items:center', 'gap:8px',
-      'padding:8px 10px', 'border-radius:6px',
-      'border:1px solid #1e293b',
+      'padding:8px 10px', 'border-radius: var(--vbs-radius, 2px)',
+      'border:1px solid var(--vbs-bg-panel, #111111)',
       'transition:background 0.15s',
     ].join(';');
 
     const contrastSwatch = document.createElement('div');
     contrastSwatch.style.cssText = [
-      'width:32px', 'height:32px', 'border-radius:4px',
-      'border:1px solid #334155', 'flex-shrink:0',
+      'width:32px', 'height:32px', 'border-radius: var(--vbs-radius, 2px)',
+      'border:1px solid var(--vbs-border, #27272a)', 'flex-shrink:0',
       'display:flex', 'align-items:center', 'justify-content:center',
       'font-size:11px', 'font-weight:700', 'font-family:monospace',
     ].join(';');
@@ -157,9 +157,9 @@ export const createEntitySettingsModal = function(entityId: string): AtpModal {
     body.appendChild(contrastBar);
 
     const updateContrastPreview = (hex: string): void => {
-      const c = computeContrastColor(hex || '#1e293b');
-      contrastBar.style.background   = hex || '#1e293b';
-      contrastSwatch.style.background = hex || '#1e293b';
+      const c = computeContrastColor(hex || 'var(--vbs-bg-panel, #111111)');
+      contrastBar.style.background   = hex || 'var(--vbs-bg-panel, #111111)';
+      contrastSwatch.style.background = hex || 'var(--vbs-bg-panel, #111111)';
       contrastSwatch.style.color      = c.textColor;
       contrastSwatch.textContent      = 'Aa';
       contrastRatioEl.style.color     = c.textColor;
@@ -173,8 +173,8 @@ export const createEntitySettingsModal = function(entityId: string): AtpModal {
     };
 
     const colorInputEl = colorField.element.querySelector<HTMLInputElement>('input');
-    updateContrastPreview(colorInputEl?.value ?? liveEntity.color ?? '#1e293b');
-    const onColorInput = (): void => updateContrastPreview(colorInputEl?.value ?? '#1e293b');
+    updateContrastPreview(colorInputEl?.value ?? liveEntity.color ?? 'var(--vbs-bg-panel, #111111)');
+    const onColorInput = (): void => updateContrastPreview(colorInputEl?.value ?? 'var(--vbs-bg-panel, #111111)');
     colorInputEl?.addEventListener('input', onColorInput);
     fieldCleanups.push(() => colorInputEl?.removeEventListener('input', onColorInput));
     // ──────────────────────────────────────────────────────────────────────
@@ -185,22 +185,22 @@ export const createEntitySettingsModal = function(entityId: string): AtpModal {
     propertiesContainer.style.cssText = 'display:flex; flex-direction:column; gap:4px;';
     
     const propHeader = document.createElement('div');
-    propHeader.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-top: 10px; border-top: 1px solid #334155; padding-top: 10px;';
+    propHeader.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-top: 10px; border-top: 1px solid var(--vbs-border, #27272a); padding-top: 10px;';
     
     const propTitle = document.createElement('h3');
     propTitle.textContent = 'Properties';
-    propTitle.style.cssText = 'margin:0; font-size:14px; color:#e2e8f0; font-weight:600;';
+    propTitle.style.cssText = 'margin:0; font-size:14px; color:var(--vbs-text-primary, #f4f4f5); font-weight:600;';
     
     const addPropBtn = document.createElement('button');
     addPropBtn.type = 'button';
     addPropBtn.textContent = '+ Add Property';
-    addPropBtn.style.cssText = 'background:#2563eb; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:600;';
+    addPropBtn.style.cssText = 'background:#2563eb; color:white; border:none; padding:4px 8px; border-radius: var(--vbs-radius, 2px); font-size:12px; cursor:pointer; font-weight:600;';
     
     propHeader.appendChild(propTitle);
     propHeader.appendChild(addPropBtn);
 
     const scrollBody = document.createElement('div');
-    scrollBody.style.cssText = 'max-height: 200px; overflow-y: auto; overflow-x: hidden; border: 1px solid #334155; border-radius: 4px; padding: 4px; display: flex; flex-direction: column; background: #0f172a;';
+    scrollBody.style.cssText = 'max-height: 200px; overflow-y: auto; overflow-x: hidden; border: 1px solid var(--vbs-border, #27272a); border-radius: var(--vbs-radius, 2px); padding: 4px; display: flex; flex-direction: column; background: var(--vbs-bg-input, #09090b);';
     
     propertiesContainer.appendChild(propHeader);
     propertiesContainer.appendChild(scrollBody);

@@ -114,7 +114,7 @@ export class AtpFieldGuide extends HTMLElement {
 
     if (focused && errors.length > 0 && guides.length > 0) {
       this.style.display = 'block';
-      this.style.color = '#38bdf8';
+      this.style.color = 'var(--vbs-primary, #3b82f6)';
       guides.forEach(g => {
         const p = document.createElement('p');
         p.textContent = g.message ?? g.code;
@@ -125,7 +125,7 @@ export class AtpFieldGuide extends HTMLElement {
 
     if (errors.length > 0) {
       this.style.display = 'block';
-      this.style.color = '#f87171';
+      this.style.color = 'var(--vbs-danger, #ef4444)';
       errors.forEach(e => {
         const p = document.createElement('p');
         p.textContent = e.message ?? e.code;

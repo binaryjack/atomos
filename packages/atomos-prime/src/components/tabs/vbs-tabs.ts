@@ -7,11 +7,11 @@ template.innerHTML = `
     width: 100%;
     height: 100%;
     font-family: inherit;
-    --tab-border-color: #334155;
-    --tab-active-color: #a855f7;
-    --tab-bg-color: #0f172a;
-    --tab-text-color: #94a3b8;
-    --tab-active-text-color: #f8fafc;
+    --tab-border-color: var(--vbs-border, #27272a);
+    --tab-active-color: var(--vbs-primary, #3b82f6);
+    --tab-bg-color: var(--vbs-bg-panel, #111111);
+    --tab-text-color: var(--vbs-text-secondary, #a1a1aa);
+    --tab-active-text-color: var(--vbs-text-primary, #f4f4f5);
   }
 
   .tab-list {

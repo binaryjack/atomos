@@ -10,7 +10,7 @@ export const createAtpModalFooter = () => {
         justify-content: flex-end;
         gap: 8px;
         padding: 12px 20px;
-        border-top: 1px solid #334155;
+        border-top: 1px solid var(--vbs-border, #27272a);
         flex-shrink: 0;
       }
     </style>

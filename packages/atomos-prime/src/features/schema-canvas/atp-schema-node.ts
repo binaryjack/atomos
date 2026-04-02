@@ -10,7 +10,7 @@ schemaNodeTemplate.innerHTML = `
     box-sizing: border-box;
     min-width: 150px;
     background: var(--atp-node-bg, #ffffff);
-    border: 1px solid var(--atp-node-border, #e2e8f0);
+    border: 1px solid var(--atp-node-border, var(--vbs-text-primary, #f4f4f5));
     border-radius: var(--atp-node-radius, 6px);
     box-shadow: var(--atp-node-shadow, 0 1px 3px rgba(0,0,0,0.1));
     cursor: grab;
@@ -33,7 +33,7 @@ schemaNodeTemplate.innerHTML = `
     background: var(--atp-node-header-bg, #edf2f7);
     color: var(--atp-node-header-fg, #2d3748);
     font-weight: 500;
-    border-bottom: 1px solid var(--atp-node-border, #e2e8f0);
+    border-bottom: 1px solid var(--atp-node-border, var(--vbs-text-primary, #f4f4f5));
     border-top-left-radius: inherit;
     border-top-right-radius: inherit;
   }
