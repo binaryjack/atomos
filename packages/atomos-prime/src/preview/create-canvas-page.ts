@@ -1,9 +1,10 @@
 import { createDAGObserver } from '../core/adapters/dag-observer.js';
-import { getToolboxConfig } from '../core/adapters/toolbox-config-manager.js';
+import { getToolboxConfig, setToolboxConfig } from '../core/adapters/toolbox-config-manager.js';
 import { createCanvasViewport } from '../core/create-canvas-viewport.js';
 import { createWorkspaceManager } from '../core/create-workspace-manager.js';
 import { getEntityManager } from '../core/presentation/entity-manager.js';
 import { createInteractiveEntityDemo } from '../features/entity-with-edges/create-interactive-entity-demo.js';
+import { createSettingsPage } from '../features/settings-page/create-settings-page.js';
 import { createSchemaPanel } from '../features/schema-panel/index.js';
 import { createCanvasToolbar } from './create-canvas-toolbar.js';
 
@@ -256,7 +257,22 @@ export const createCanvasPage = function() {
   // Mount Floating Toolbar
   const toolbar = createCanvasToolbar({
     viewport,
-    entityManager: getEntityManager()
+    entityManager: getEntityManager(),
+    onSettings: () => {
+      const settingsPage = createSettingsPage({
+        initialSettings: { toolbox: getToolboxConfig(), matrices: { criteria: [], options: [] } },
+        onClose: () => {
+          settingsPage.element.remove();
+          settingsPage.cleanup.destroy();
+        },
+        onSave: (settings) => {
+          setToolboxConfig(settings.toolbox);
+          settingsPage.element.remove();
+          settingsPage.cleanup.destroy();
+        },
+      });
+      root.appendChild(settingsPage.element);
+    },
   });
   canvasWrap.appendChild(toolbar);
 
