@@ -25,16 +25,4 @@ Our main goal right now is twofold:
    - Fix the property row heights (`min-height: 28px` / spacing) in `create-entity-property-row.ts`.
 
 Let's start by fixing the click interception issue on the entity frame so entities can be deleted again, then rapidly re-integrate the modal and button UI classes!
-```text
-Please review `CANVAS_SETTINGS_PLAN.md` and `SESSION_HANDOFF.md` to get up to speed. 
-
-We recently built a W3C-compliant generic generic Web Component for tabs (`<vbs-tabs>`). 
-Right now, the `create-settings-page.ts` file is still using a custom vanilla DOM left-hand sidebar for navigation. 
-
-Your task is to refactor `packages/web-ui/src/features/settings-page/create-settings-page.ts` to use our new `<vbs-tabs>` component instead of the custom sidebar. It needs to implement the three tabs defined in our plan:
-1. General Settings
-2. Toolbox Editor
-3. Decision Matrices
-
-Make sure to preserve the internal content generation for "Toolbox Editor" (Formular tree) and "Decision Matrices" (Modular table), but wrap them inside the `<vbs-tab-panel>` elements.
 ```
