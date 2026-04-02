@@ -13,9 +13,6 @@ export const createDropdown = function(props: DropdownProps): DropdownResult {
   if (props.id) select.id = props.id;
   if (props.name) select.name = props.name;
   
-  // Forward base classes natively via custom element property logic
-  const baseClasses = 'w-full px-3 py-2 text-gray-700 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white';
-  select.setAttribute('class', baseClasses);
   container.className = `relative ${props.className || ''}`;
 
   // Handle options (array or signal)

@@ -74,7 +74,7 @@ export const createEntitySettingsModal = function(entityId: string): AtpModal {
       name: preservedData?.name ?? liveEntity.name,
       description: preservedData?.description ?? liveEntity.description ?? '',
       shape: preservedData?.shape ?? liveEntity.shape ?? 'box',
-      color: preservedData?.color ?? liveEntity.color ?? 'var(--vbs-bg-panel, #111111)'
+      color: preservedData?.color ?? liveEntity.color ?? '#1c3557'
     };
 
     const form = await formManager.createFormForModal(modal, {

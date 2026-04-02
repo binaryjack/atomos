@@ -45,13 +45,6 @@ export class AtpDropdown extends HTMLElement {
             this.renderOptions();
         } else if (name === 'disabled') {
             this.dom.select.disabled = newValue !== null;
-        } else if (name === 'class') {
-            // Forward classes to the select for backwards compatibility styling
-            // like tailwind classes applied via props.className
-            if (newValue) {
-                const nativeClasses = newValue.split(' ').filter(c => c !== 'dropdown-wrapper');
-                nativeClasses.forEach(c => this.dom.select.classList.add(c));
-            }
         }
     }
 
