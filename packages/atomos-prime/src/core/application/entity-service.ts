@@ -326,9 +326,9 @@ export const createEntityApplicationService = function(
       }
       
       case 'RemoveEntity': {
-          const entity = repository.getById(command.entityId);
-          if (!entity) break;
-          
+        const entity = repository.getById(command.entityId);
+        if (!entity) break;
+        repository.remove(command.entityId);
         eventBus.publish({
           type: 'EntityRemoved',
           entityId: command.entityId
@@ -386,9 +386,9 @@ export const createEntityApplicationService = function(
       }
       
       case 'RemoveLink': {
-          const link = linkRepository.getById(command.linkId);
-          if (!link) break;
-
+        const link = linkRepository.getById(command.linkId);
+        if (!link) break;
+        linkRepository.remove(command.linkId);
         eventBus.publish({
           type: 'LinkRemoved',
           linkId: command.linkId
@@ -396,9 +396,10 @@ export const createEntityApplicationService = function(
         break;
       }
       
-      default:
-        // @ts-ignore - Exhaustive check
-        throw new Error(`Unknown command type: ${command.type}`);
+      default: {
+        const _exhaustive: never = command;
+        throw new Error(`Unknown command type: ${(_exhaustive as { type: string }).type}`);
+      }
     }
   };
   
@@ -416,9 +417,10 @@ export const createEntityApplicationService = function(
       case 'GetAllLinks':
         return linkRepository.getAll();
         
-      default:
-        // @ts-ignore - Exhaustive check  
-        throw new Error(`Unknown query type: ${(query as any).type}`);
+      default: {
+        const _exhaustive: never = query;
+        throw new Error(`Unknown query type: ${(_exhaustive as { type: string }).type}`);
+      }
     }
   };
   

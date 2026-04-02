@@ -8,7 +8,7 @@ schemaCanvasTemplate.innerHTML = `
     height: 100%;
     background-color: var(--atp-canvas-bg, #f8f9fa);
     overflow: hidden;
-    box-sizing: border-value; /* wait, border-box */
+    box-sizing: border-box;
   }
   .stage {
     position: absolute;
