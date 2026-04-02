@@ -326,7 +326,9 @@ export const createEntityApplicationService = function(
       }
       
       case 'RemoveEntity': {
-        repository.remove(command.entityId);
+          const entity = repository.getById(command.entityId);
+          if (!entity) break;
+          
         eventBus.publish({
           type: 'EntityRemoved',
           entityId: command.entityId
@@ -384,7 +386,9 @@ export const createEntityApplicationService = function(
       }
       
       case 'RemoveLink': {
-        linkRepository.remove(command.linkId);
+          const link = linkRepository.getById(command.linkId);
+          if (!link) break;
+
         eventBus.publish({
           type: 'LinkRemoved',
           linkId: command.linkId

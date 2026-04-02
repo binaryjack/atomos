@@ -56,6 +56,7 @@ export const createWorkspaceManager = function(
 
     registerEntity:    registry.registerEntity,
     unregisterEntity:  (entityId: string) => {
+      if (!registry.workspaceState.value.entities.has(entityId)) return;
       linkFinalizer.removeLinksForEntity(entityId);
       registry.unregisterEntity(entityId);
       // Notify deletion callback for Redux store cleanup
