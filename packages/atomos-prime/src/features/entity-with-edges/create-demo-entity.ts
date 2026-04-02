@@ -54,8 +54,14 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
           document.body.appendChild(modal);
           modal.open().catch(err => console.error(err));
         },
+        // Only grow height — never shrink below the user's manually-resized value.
+        // Without this guard, recalcHeight() fires on every render and overwrites
+        // the persisted height with the content minimum (e.g. 126), discarding the
+        // user's resize on every page load.
         onHeightChange: (h) => {
-          props.dimensions.set({ width: props.dimensions.value.width, height: h });
+          if (h > props.dimensions.value.height) {
+            props.dimensions.set({ width: props.dimensions.value.width, height: h });
+          }
         },
       });
       contentElement = content.foreignObject;
