@@ -1,4 +1,4 @@
-import type { Signal } from '../../../core/types/signal.types.js';
+import type { Signal } from '../../../core/types/signal.types.js'
 
 export interface AccordionProps {
   title: string | Signal<string> | HTMLElement;

@@ -1,5 +1,5 @@
-import type { AccordionProps, AccordionResult } from './types/accordion.types.js';
-export type { AccordionProps, AccordionResult };
+import type { AccordionProps, AccordionResult } from './types/accordion.types.js'
+export type { AccordionProps, AccordionResult }
 
 export const createAccordion = function(props: AccordionProps): AccordionResult {
   const element = document.createElement('div');
