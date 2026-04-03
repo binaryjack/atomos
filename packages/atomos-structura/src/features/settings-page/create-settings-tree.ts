@@ -234,7 +234,7 @@ export const createVisualEditorTree = function(props: VisualEditorTreeProps): Vi
     let currentData = { ...initialData };
     const form = createForm(schema);
 
-    Object.keys(schema.properties).forEach((key) => {
+    Object.keys(schema.shape || schema.properties || {}).forEach((key) => {
       const val = currentData[key] || '';
       const wrp = document.createElement('div');
       wrp.className = 'mb-3 flex flex-col gap-1 w-full';
