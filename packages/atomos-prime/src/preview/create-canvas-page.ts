@@ -1,12 +1,12 @@
-import { createDAGObserver } from '../core/adapters/dag-observer.js';
-import { getToolboxConfig, setToolboxConfig, getCustomShapes, setCustomShapes } from '../core/adapters/toolbox-config-manager.js';
-import { createCanvasViewport } from '../core/create-canvas-viewport.js';
-import { createWorkspaceManager } from '../core/create-workspace-manager.js';
-import { getEntityManager } from '../core/presentation/entity-manager.js';
-import { createInteractiveEntityDemo } from '../features/entity-with-edges/create-interactive-entity-demo.js';
-import { createSettingsPage } from '../features/settings-page/create-settings-page.js';
-import { createSchemaPanel } from '../features/schema-panel/index.js';
-import { createCanvasToolbar } from './create-canvas-toolbar.js';
+import { createDAGObserver } from '../core/adapters/dag-observer.js'
+import { getCustomShapes, getToolboxConfig, setCustomShapes, setToolboxConfig } from '../core/adapters/toolbox-config-manager.js'
+import { createCanvasViewport } from '../core/create-canvas-viewport.js'
+import { createWorkspaceManager } from '../core/create-workspace-manager.js'
+import { getEntityManager } from '../core/presentation/entity-manager.js'
+import { createInteractiveEntityDemo } from '../features/entity-with-edges/create-interactive-entity-demo.js'
+import { createSchemaPanel } from '../features/schema-panel/index.js'
+import { createSettingsPage } from '../features/settings-page/create-settings-page.js'
+import { createCanvasToolbar } from './create-canvas-toolbar.js'
 
 export const createCanvasPage = function() {
   const cleanups: Array<() => void> = [];

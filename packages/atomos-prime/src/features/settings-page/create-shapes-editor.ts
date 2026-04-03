@@ -1,5 +1,5 @@
-import { createButton } from '../button/create-button.js';
-import type { CustomShape } from './types/settings-page.types.js';
+import { createButton } from '../button/create-button.js'
+import type { CustomShape } from './types/settings-page.types.js'
 
 export interface ShapesEditorProps {
   readonly shapes: CustomShape[];

@@ -1,11 +1,11 @@
-import type { DAGExport } from '../../core/application/dag-service.js';
-import type { DAGObserver } from '../../core/adapters/dag-observer.js';
-import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js';
-import type { CanvasViewport } from '../../core/create-canvas-viewport.js';
-import type { DomainEntity } from '../../core/domain/entity-aggregate.js';
-import type { InteractiveBehaviorManager } from '../../core/types/interactive-behavior-manager.types.js';
-import { DATA_TYPES } from '@atomos/structura-core';
-import { createPropertySettingsModal } from '../modal/create-property-settings-modal.js';
+import { DATA_TYPES } from '@atomos/structura-core'
+import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
+import type { DAGObserver } from '../../core/adapters/dag-observer.js'
+import type { DAGExport } from '../../core/application/dag-service.js'
+import type { CanvasViewport } from '../../core/create-canvas-viewport.js'
+import type { DomainEntity } from '../../core/domain/entity-aggregate.js'
+import type { InteractiveBehaviorManager } from '../../core/types/interactive-behavior-manager.types.js'
+import { createPropertySettingsModal } from '../modal/create-property-settings-modal.js'
 
 export interface SchemaPanelProps {
   readonly dagObserver: DAGObserver;

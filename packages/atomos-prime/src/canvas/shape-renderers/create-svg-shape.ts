@@ -1,11 +1,11 @@
-import type { EntityShape } from '@atomos/structura-core';
-import { getCustomShapes } from '../../core/adapters/toolbox-config-manager.js';
-import { createChevron } from './create-chevron.js';
-import { createCircle } from './create-circle.js';
-import { createDiamond } from './create-diamond.js';
-import { createOval } from './create-oval.js';
-import { createParallelogram } from './create-parallelogram.js';
-import { createTrapeze } from './create-trapeze.js';
+import type { EntityShape } from '@atomos/structura-core'
+import { getCustomShapes } from '../../core/adapters/toolbox-config-manager.js'
+import { createChevron } from './create-chevron.js'
+import { createCircle } from './create-circle.js'
+import { createDiamond } from './create-diamond.js'
+import { createOval } from './create-oval.js'
+import { createParallelogram } from './create-parallelogram.js'
+import { createTrapeze } from './create-trapeze.js'
 
 export const createSVGShape = (shape: EntityShape, width: number, height: number, color?: string | undefined): SVGElement => {
   const customShapes = getCustomShapes();

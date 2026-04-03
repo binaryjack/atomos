@@ -1,6 +1,6 @@
-import type { ToolboxConfiguration } from '../../types/toolbox.types.js';
-import type { CustomShape } from '../../features/settings-page/types/settings-page.types.js';
-import { defaultToolboxConfig } from '../default-toolbox.config.js';
+import type { CustomShape } from '../../features/settings-page/types/settings-page.types.js'
+import type { ToolboxConfiguration } from '../../types/toolbox.types.js'
+import { defaultToolboxConfig } from '../default-toolbox.config.js'
 
 const STORAGE_KEY_CONFIG = 'atomos_toolbox_config';
 const STORAGE_KEY_SHAPES = 'atomos_custom_shapes';

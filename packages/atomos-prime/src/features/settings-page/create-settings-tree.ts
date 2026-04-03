@@ -1,9 +1,8 @@
-import { createForm, f } from '@binaryjack/formular.dev'
 import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
+import { createForm, f } from '@binaryjack/formular.dev'
 import type { ToolboxConfiguration, ToolboxItem, Toolset } from '../../types/toolbox.types.js'
 import { createButton } from '../button/create-button.js'
-import { createFormularInput, createFormularDropdown } from '../formular/index.js'
-import { createFormularTextarea } from '../formular/index.js'
+import { createFormularDropdown, createFormularInput, createFormularTextarea } from '../formular/index.js'
 
 import type { CustomShape } from './types/settings-page.types.js'
 

@@ -1,5 +1,5 @@
-import type { ToolboxConfiguration } from '../../../types/toolbox.types.js';
-import type { DecisionMatrixCriterion, DecisionMatrixOption } from '../../decision-matrix/index.js';
+import type { ToolboxConfiguration } from '../../../types/toolbox.types.js'
+import type { DecisionMatrixCriterion, DecisionMatrixOption } from '../../decision-matrix/index.js'
 
 export interface CustomShape {
   id: string;
