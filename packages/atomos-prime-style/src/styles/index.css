@@ -63,12 +63,19 @@
   }
   
   .vbs-grid {
-    background-image: 
-      linear-gradient(to right, #e2e8f0 1px, transparent 1px),
-      linear-gradient(to bottom, #e2e8f0 1px, transparent 1px);
-    background-size: var(--vbs-grid-size) var(--vbs-grid-size);
+    background-color: var(--vbs-canvas-bg, transparent);
+    background-image:
+      linear-gradient(to right, var(--vbs-grid-primary-color, #334155) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--vbs-grid-primary-color, #334155) 1px, transparent 1px),
+      linear-gradient(to right, var(--vbs-grid-secondary-color, #1e293b) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--vbs-grid-secondary-color, #1e293b) 1px, transparent 1px);
+    background-size:
+      calc(var(--vbs-grid-size, 20px) * 5) calc(var(--vbs-grid-size, 20px) * 5),
+      calc(var(--vbs-grid-size, 20px) * 5) calc(var(--vbs-grid-size, 20px) * 5),
+      var(--vbs-grid-size, 20px) var(--vbs-grid-size, 20px),
+      var(--vbs-grid-size, 20px) var(--vbs-grid-size, 20px);
   }
-  
+
   .vbs-canvas {
     @apply w-full h-full overflow-hidden relative;
     @apply select-none cursor-default;

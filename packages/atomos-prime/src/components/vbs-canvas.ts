@@ -5,6 +5,8 @@ export interface VbsCanvasProps {
   readonly height: number;
   readonly showGrid?: boolean;
   readonly gridSize?: number;
+  readonly gridPrimaryColor?: string;
+  readonly gridSecondaryColor?: string;
   readonly onCanvasClick?: (event: MouseEvent) => void;
   readonly onCanvasDrag?: (event: DragEvent) => void;
 }
@@ -13,17 +15,18 @@ export const createVbsCanvas = function(props: VbsCanvasProps) {
   const canvas = vbsElement('div', {
     className: `vbs-canvas ${props.showGrid ? 'vbs-grid' : ''}`
   });
-  
+
   canvas.style.width = `${props.width}px`;
   canvas.style.height = `${props.height}px`;
-  
+
   if (props.gridSize) {
     canvas.style.setProperty('--vbs-grid-size', `${props.gridSize}px`);
   }
-  
-  // Add event listeners
-  if (props.onCanvasClick) {
-    canvas.addEventListener('click', props.onCanvasClick);
+  if (props.gridPrimaryColor) {
+    canvas.style.setProperty('--vbs-grid-primary-color', props.gridPrimaryColor);
+  }
+  if (props.gridSecondaryColor) {
+    canvas.style.setProperty('--vbs-grid-secondary-color', props.gridSecondaryColor);
   }
   
   if (props.onCanvasDrag) {

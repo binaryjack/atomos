@@ -94,6 +94,7 @@ export const openLinkSettingsModal = function(linkId: string): void {
   const sourceCardDropdown = createDropdown('Left Cardinality', cardinalityOptions, link.sourceCardinality || '1');
   const targetCardDropdown = createDropdown('Right Cardinality', cardinalityOptions, link.targetCardinality || 'n');
   const sourcePropDropdown = createDropdown('Left Property', sourceProperties, link.sourceProperty || '');
+  const renderTypeDropdown = createDropdown('Line Style', [{value:'orthogonal',label:'Orthogonal'}, {value:'linear',label:'Linear'}, {value:'bezier',label:'Bezier'}], link.renderType || '');
   const targetPropDropdown = createDropdown('Right Property', targetProperties, link.targetProperty || '');
 
   sourceCardDropdown.getSelectElement().addEventListener('change', updateTitle);
@@ -114,6 +115,10 @@ export const openLinkSettingsModal = function(linkId: string): void {
   body.appendChild(titleDiv);
   body.appendChild(topRow);
   body.appendChild(bottomRow);
+  const bottomRow2 = document.createElement('div');
+  bottomRow2.style.cssText = 'display:flex;gap:12px;';
+  bottomRow2.appendChild(renderTypeDropdown.container);
+  body.appendChild(bottomRow2);
 
   const footer = document.createElement('atp-modal-footer');
   footer.setAttribute('slot', 'footer');
@@ -134,7 +139,8 @@ export const openLinkSettingsModal = function(linkId: string): void {
         sourceCardinality: sourceCardDropdown.getSelectElement().value,
         targetCardinality: targetCardDropdown.getSelectElement().value,
         sourceProperty: sourcePropDropdown.getSelectElement().value || undefined, 
-        targetProperty: targetPropDropdown.getSelectElement().value || undefined  
+        targetProperty: targetPropDropdown.getSelectElement().value || undefined,
+        renderType: renderTypeDropdown.getSelectElement().value as any  
       });
       modal!.close();
     }

@@ -242,9 +242,30 @@ export const createVisualEditorTree = function(props: VisualEditorTreeProps): Vi
       wrp.appendChild(lbl);
 
       if (key === 'icon') {
-        const select = document.createElement('select');
-        select.className = 'bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 outline-none w-full';
+        const previewWrap = document.createElement('div');
+        previewWrap.className = 'flex gap-2 items-center';
+
+        const svgPreview = document.createElement('div');
+        svgPreview.className = 'w-8 h-8 flex-shrink-0 flex items-center justify-center text-slate-300 border border-slate-700 rounded bg-slate-950 p-1';
         
+        const updatePreview = (svgContent: string) => {
+          if (!svgContent) {
+            svgPreview.innerHTML = `<span class="text-xs text-slate-600">??</span>`;
+            return;
+          }
+          svgPreview.innerHTML = `
+            <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              ${svgContent}
+            </svg>
+          `;
+        };
+        
+        updatePreview(val); // initial load
+
+
+        const select = document.createElement('select');
+        select.className = 'bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 outline-none w-full flex-1 min-w-0';
+
         let found = false;
         Object.entries(ICON_LIBRARY).forEach(([name, svgPath]) => {
           const opt = document.createElement('option');
@@ -275,10 +296,14 @@ export const createVisualEditorTree = function(props: VisualEditorTreeProps): Vi
         }
 
         select.addEventListener('change', (e) => {
-          currentData[key] = (e.target as HTMLSelectElement).value;
+          const newVal = (e.target as HTMLSelectElement).value;
+          currentData[key] = newVal;
+          updatePreview(newVal);
         });
-        wrp.appendChild(select);
         
+        previewWrap.appendChild(svgPreview);
+        previewWrap.appendChild(select);
+        wrp.appendChild(previewWrap);
       } else if (key === 'shape') {
         const select = document.createElement('select');
         select.className = 'bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 outline-none w-full';

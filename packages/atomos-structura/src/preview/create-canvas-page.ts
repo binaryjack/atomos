@@ -1,5 +1,5 @@
 import { createDAGObserver } from '../core/adapters/dag-observer.js'
-import { getCustomShapes, getToolboxConfig, setCustomShapes, setToolboxConfig } from '../core/adapters/toolbox-config-manager.js'
+import { getCustomShapes, getToolboxConfig, setCustomShapes, setToolboxConfig, getGeneralSettings, setGeneralSettings } from '../core/adapters/toolbox-config-manager.js'
 import { createCanvasViewport } from '../core/create-canvas-viewport.js'
 import { createWorkspaceManager } from '../core/create-workspace-manager.js'
 import { getEntityManager } from '../core/presentation/entity-manager.js'
@@ -35,9 +35,10 @@ export const createCanvasPage = function() {
   smallGrid.setAttribute('height', '20');
   smallGrid.setAttribute('patternUnits', 'userSpaceOnUse');
   const smallPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  smallPath.setAttribute('id', 'grid-small-path');
   smallPath.setAttribute('d', 'M 20 0 L 0 0 0 20');
   smallPath.setAttribute('fill', 'none');
-  smallPath.setAttribute('stroke', 'var(--vbs-bg-panel, #111111)');
+  smallPath.setAttribute('stroke', 'var(--vbs-grid-secondary-color, #111111)');
   smallPath.setAttribute('stroke-width', '0.5');
   smallGrid.appendChild(smallPath);
 
@@ -47,13 +48,15 @@ export const createCanvasPage = function() {
   largeGrid.setAttribute('height', '100');
   largeGrid.setAttribute('patternUnits', 'userSpaceOnUse');
   const largeRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  largeRect.setAttribute('id', 'grid-large-rect');
   largeRect.setAttribute('width', '100');
   largeRect.setAttribute('height', '100');
   largeRect.setAttribute('fill', 'url(#canvas-grid-small)');
   const largePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  largePath.setAttribute('id', 'grid-large-path');
   largePath.setAttribute('d', 'M 100 0 L 0 0 0 100');
   largePath.setAttribute('fill', 'none');
-  largePath.setAttribute('stroke', '#263348');
+  largePath.setAttribute('stroke', 'var(--vbs-grid-primary-color, #263348)');
   largePath.setAttribute('stroke-width', '1');
   largeGrid.appendChild(largeRect);
   largeGrid.appendChild(largePath);
@@ -269,17 +272,57 @@ export const createCanvasPage = function() {
 
   let currentSettingsPage: { element: HTMLElement; cleanup: { destroy: () => void } } | null = null;
   const store = getGlobalReduxStore();
+
+  const applyGridSettings = () => {
+    const general = getGeneralSettings();
+    if (general) {
+      if (general.gridPrimaryColor) {
+        root.style.setProperty('--vbs-grid-primary-color', general.gridPrimaryColor);
+        // Also update the static svg grid paths if they rely on it
+        const largePath = document.getElementById('grid-large-path');
+        if (largePath) largePath.setAttribute('stroke', general.gridPrimaryColor);
+      }
+      if (general.gridSecondaryColor) {
+        root.style.setProperty('--vbs-grid-secondary-color', general.gridSecondaryColor);
+        const smallPath = document.getElementById('grid-small-path');
+        if (smallPath) smallPath.setAttribute('stroke', general.gridSecondaryColor);
+      }
+      if (general.gridSize) {
+        const largeGrid = document.getElementById('canvas-grid-large');
+        const smallGrid = document.getElementById('canvas-grid-small');
+        const largeRect = document.getElementById('grid-large-rect');
+        const smallPath = document.getElementById('grid-small-path');
+        const largePath = document.getElementById('grid-large-path');
+        
+        if (largeGrid && smallGrid && largeRect && smallPath && largePath) {
+          smallGrid.setAttribute('width', general.gridSize.toString());
+          smallGrid.setAttribute('height', general.gridSize.toString());
+          smallPath.setAttribute('d', `M ${general.gridSize} 0 L 0 0 0 ${general.gridSize}`);
+          
+          const largeSize = general.gridSize * 5;
+          largeGrid.setAttribute('width', largeSize.toString());
+          largeGrid.setAttribute('height', largeSize.toString());
+          largeRect.setAttribute('width', largeSize.toString());
+          largeRect.setAttribute('height', largeSize.toString());
+          largePath.setAttribute('d', `M ${largeSize} 0 L 0 0 0 ${largeSize}`);
+        }
+      }
+    }
+  };
+
   const unsubSettings = store.subscribe(() => {
     const st = store.get_state();
     if (st.is_settings_open && !currentSettingsPage) {
       currentSettingsPage = createSettingsPage({
-        initialSettings: { toolbox: getToolboxConfig(), shapes: getCustomShapes() },
+        initialSettings: { toolbox: getToolboxConfig(), shapes: getCustomShapes(), general: getGeneralSettings() || {} },
         onClose: () => {
           store.dispatch({ type: 'settings-toggled', is_open: false });
         },
         onSave: (settings) => {
           setToolboxConfig(settings.toolbox);
           setCustomShapes(settings.shapes);
+          setGeneralSettings(settings.general);
+          applyGridSettings();
           store.dispatch({ type: 'settings-toggled', is_open: false });
         },
       });
@@ -290,6 +333,9 @@ export const createCanvasPage = function() {
       currentSettingsPage = null;
     }
   });
+
+  // apply settings at startup
+  applyGridSettings();
 
   // initial check
   const initSt = store.get_state();

@@ -2,6 +2,7 @@ import { createButton } from '@atomos/prime'
 import { defaultToolboxConfig } from '../../core/default-toolbox.config.js'
 import { createVisualEditorTree } from './create-settings-tree.js'
 import { createShapesEditor } from './create-shapes-editor.js'
+import { ICON_LIBRARY } from './icon-library.js'
 import type { AppSettings, SettingsPageProps, SettingsPageResult } from './types/settings-page.types.js'
 
 export const createSettingsPage = function(props: SettingsPageProps): SettingsPageResult {
@@ -13,7 +14,9 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
     general: props.initialSettings?.general || {
       gridSize: 20,
       enableSnapping: true,
-      defaultLinkStyle: 'orthogonal'
+      defaultLinkStyle: 'orthogonal',
+      gridPrimaryColor: '#334155',
+      gridSecondaryColor: '#1e293b'
     },
     shapes: props.initialSettings?.shapes || []
   };
@@ -78,7 +81,8 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   const navItems = [
     { id: 'general', label: 'General Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
     { id: 'toolbox', label: 'Toolbox Configuration', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
-    { id: 'shapes', label: 'Shapes Repository', icon: 'M4 5a2 2 0 012-2h4a2 2 0 012 2v2H6V5zm0 6h16v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8zm2-2a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2H6z' }
+    { id: 'shapes', label: 'Shapes Repository', icon: 'M4 5a2 2 0 012-2h4a2 2 0 012 2v2H6V5zm0 6h16v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8zm2-2a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2H6z' },
+    { id: 'icons', label: 'Icon Library', icon: 'M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm4 3a2 2 0 11-4 0 2 2 0 014 0zm0 6a2 2 0 11-4 0 2 2 0 014 0zm6-6a2 2 0 11-4 0 2 2 0 014 0zm0 6a2 2 0 11-4 0 2 2 0 014 0z' }
   ];
 
   navItems.forEach(item => {
@@ -178,6 +182,55 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   linkStyleRow.appendChild(linkStyleSelect);
   genForm.appendChild(linkStyleRow);
 
+  // Grid Colors
+  const gridPrimaryColorRow = document.createElement('div');
+  gridPrimaryColorRow.className = 'flex flex-col gap-2';
+  gridPrimaryColorRow.innerHTML = `<label class="text-sm font-medium text-slate-300">Grid Primary Color</label>`;
+  
+  const gridPrimaryColorWrap = document.createElement('div');
+  gridPrimaryColorWrap.className = 'flex gap-2 w-full max-w-xs';
+  const gridPrimaryPreview = document.createElement('div');
+  gridPrimaryPreview.className = 'w-10 h-10 rounded border border-slate-700 flex-shrink-0';
+  gridPrimaryPreview.style.background = currentSettings.general?.gridPrimaryColor || '#334155';
+  const gridPrimaryInput = document.createElement('input');
+  gridPrimaryInput.className = 'bg-slate-950 border border-slate-700 rounded-md px-3 py-2 text-slate-200 focus:outline-none focus:border-purple-500 w-full';
+  gridPrimaryInput.value = currentSettings.general?.gridPrimaryColor || '#334155';
+  gridPrimaryInput.addEventListener('input', (e) => {
+    if (!currentSettings.general) currentSettings.general = {};
+    const val = (e.target as HTMLInputElement).value;
+    currentSettings.general.gridPrimaryColor = val;
+    gridPrimaryPreview.style.background = val;
+    markDirty();
+  });
+  gridPrimaryColorWrap.appendChild(gridPrimaryPreview);
+  gridPrimaryColorWrap.appendChild(gridPrimaryInput);
+  gridPrimaryColorRow.appendChild(gridPrimaryColorWrap);
+  genForm.appendChild(gridPrimaryColorRow);
+
+  const gridSecondaryColorRow = document.createElement('div');
+  gridSecondaryColorRow.className = 'flex flex-col gap-2';
+  gridSecondaryColorRow.innerHTML = `<label class="text-sm font-medium text-slate-300">Grid Secondary Color</label>`;
+  
+  const gridSecondaryColorWrap = document.createElement('div');
+  gridSecondaryColorWrap.className = 'flex gap-2 w-full max-w-xs';
+  const gridSecondaryPreview = document.createElement('div');
+  gridSecondaryPreview.className = 'w-10 h-10 rounded border border-slate-700 flex-shrink-0';
+  gridSecondaryPreview.style.background = currentSettings.general?.gridSecondaryColor || '#1e293b';
+  const gridSecondaryInput = document.createElement('input');
+  gridSecondaryInput.className = 'bg-slate-950 border border-slate-700 rounded-md px-3 py-2 text-slate-200 focus:outline-none focus:border-purple-500 w-full';
+  gridSecondaryInput.value = currentSettings.general?.gridSecondaryColor || '#1e293b';
+  gridSecondaryInput.addEventListener('input', (e) => {
+    if (!currentSettings.general) currentSettings.general = {};
+    const val = (e.target as HTMLInputElement).value;
+    currentSettings.general.gridSecondaryColor = val;
+    gridSecondaryPreview.style.background = val;
+    markDirty();
+  });
+  gridSecondaryColorWrap.appendChild(gridSecondaryPreview);
+  gridSecondaryColorWrap.appendChild(gridSecondaryInput);
+  gridSecondaryColorRow.appendChild(gridSecondaryColorWrap);
+  genForm.appendChild(gridSecondaryColorRow);
+
   genPane.appendChild(genForm);
   generalSettingsPanel.appendChild(genPane);
   vbsTabs.appendChild(generalSettingsPanel);
@@ -259,6 +312,51 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   shapesPane.appendChild(shapesEditorElement);
   shapesPanel.appendChild(shapesPane);
   vbsTabs.appendChild(shapesPanel);
+
+  // -- Pane 3: Icon Library --
+  const iconsPanel = document.createElement('vbs-tab-panel');
+  iconsPanel.setAttribute('slot', 'panel');
+  const iconsPane = document.createElement('div');
+  iconsPane.className = 'flex flex-col flex-1 p-6 w-full h-full overflow-y-auto gap-6';
+
+  const iconsHeader = document.createElement('div');
+  const iconsTitle = document.createElement('h3');
+  iconsTitle.className = 'text-lg font-medium text-slate-200';
+  iconsTitle.textContent = 'Icon Library Preview';
+  const iconsDesc = document.createElement('p');
+  iconsDesc.className = 'text-slate-400 text-sm mt-1';
+  iconsDesc.textContent = 'Available base icons which can be assigned to tools within the toolbox editor.';
+  iconsHeader.appendChild(iconsTitle);
+  iconsHeader.appendChild(iconsDesc);
+  iconsPane.appendChild(iconsHeader);
+
+  const gridContainer = document.createElement('div');
+  gridContainer.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4';
+
+  Object.entries(ICON_LIBRARY).forEach(([iconName, iconPaths]) => {
+    const card = document.createElement('div');
+    card.className = 'flex flex-col items-center p-4 bg-slate-950 border border-slate-800 rounded-lg hover:border-purple-500 transition-colors group';
+
+    const svgWrapper = document.createElement('div');
+    svgWrapper.className = 'w-12 h-12 mb-3 text-slate-400 group-hover:text-purple-400 transition-colors flex items-center justify-center';
+    svgWrapper.innerHTML = `
+      <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        ${iconPaths}
+      </svg>
+    `;
+
+    const label = document.createElement('span');
+    label.className = 'text-xs text-slate-400 font-mono text-center break-all';
+    label.textContent = iconName;
+
+    card.appendChild(svgWrapper);
+    card.appendChild(label);
+    gridContainer.appendChild(card);
+  });
+
+  iconsPane.appendChild(gridContainer);
+  iconsPanel.appendChild(iconsPane);
+  vbsTabs.appendChild(iconsPanel);
 
   // Dirty state tracker
   const markDirty = () => {

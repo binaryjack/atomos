@@ -1,7 +1,8 @@
 import type { EdgePosition } from '../features/edge/types/edge.types.js';
-import { bezierPath } from './bezier.js';
+import { bezierPath, linearPath, orthogonalPath } from './bezier.js';
 import { createSignal } from '@atomos/prime';
 import type { Signal } from '@atomos/prime';
+import type { RenderType } from '@atomos/structura-core';
 
 export interface LinkProps {
   readonly id: string;
@@ -15,13 +16,14 @@ export interface LinkProps {
   readonly strokeColor?: string;
   readonly strokeWidth?: number;
   readonly animated?: boolean;
+  readonly renderType?: RenderType;
 }
 
 export interface LinkResult {
   readonly element: SVGPathElement;
   readonly sourceAnchorId: string;
   readonly targetAnchorId?: string;
-  readonly updatePath: (sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition) => void;
+  readonly updatePath: (sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType) => void;
   readonly setTemporary: (temporary: boolean) => void;  readonly setValidity: (isValid: boolean) => void;  readonly cleanup: {
     readonly destroy: () => void;
   };
@@ -30,7 +32,7 @@ export interface LinkResult {
 export interface LinkManager {
   readonly links: Signal<Map<string, LinkResult>>;
   readonly createLink: (props: LinkProps) => LinkResult;
-  readonly updateLinkPath: (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition) => void;
+  readonly updateLinkPath: (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType) => void;
   readonly removeLink: (linkId: string) => void;
   readonly getLink: (linkId: string) => LinkResult | undefined;
   readonly cleanup: {
@@ -76,11 +78,23 @@ export const createLinkManager = function(): LinkManager {
       sourcePos: { x: number; y: number },
       targetPos: { x: number; y: number },
       srcEdge?: EdgePosition,
-      dstEdge?: EdgePosition
+      dstEdge?: EdgePosition,
+      renderType?: RenderType
     ) => {
       const src = srcEdge ?? props.sourceEdge ?? 'right';
       const dst = dstEdge ?? props.targetEdge;
-      path.setAttribute('d', bezierPath(sourcePos, src, targetPos, dst));
+      const type = renderType ?? props.renderType ?? 'bezier';
+      
+      let d = '';
+      if (type === 'linear') {
+        d = linearPath(sourcePos, targetPos);
+      } else if (type === 'orthogonal') {
+        d = orthogonalPath(sourcePos, src, targetPos, dst);
+      } else {
+        d = bezierPath(sourcePos, src, targetPos, dst);
+      }
+      
+      path.setAttribute('d', d);
     };
 
     const setTemporary = (temporary: boolean) => {
@@ -143,9 +157,9 @@ export const createLinkManager = function(): LinkManager {
   };
 
   // Update existing link path
-  const updateLinkPath = (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition) => {
+  const updateLinkPath = (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType) => {
     const link = links.value.get(linkId);
-    if (link) link.updatePath(sourcePos, targetPos, srcEdge, dstEdge);
+    if (link) link.updatePath(sourcePos, targetPos, srcEdge, dstEdge, renderType);
   };
 
   // Remove link

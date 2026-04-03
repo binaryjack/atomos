@@ -8,7 +8,13 @@ export const createSvgLine = function(props: SvgLineProps): SvgLineResult {
         return `M ${props.x1} ${props.y1} L ${props.x2} ${props.y2}`;
       
       case 'orthogonal': {
-        const midX = (props.x1 + props.x2) / 2;
+        const dx = props.x2 - props.x1;
+        // Collision detection heuristic:
+        // Avoid origin entity up to half the length if moving forward,
+        // or go 90% from the origin (10% from target/nearest entity) if moving backward
+        // to avoid cutting directly through the origin bounds.
+        const midX = dx >= 0 ? props.x1 + dx * 0.5 : props.x1 + dx * 0.9;
+        
         return `M ${props.x1} ${props.y1} L ${midX} ${props.y1} L ${midX} ${props.y2} L ${props.x2} ${props.y2}`;
       }
       

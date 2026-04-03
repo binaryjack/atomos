@@ -54,6 +54,35 @@ export const bezierPath = (
 };
 
 /**
+ * Returns a simple SVG linear path string connecting two points.
+ */
+export const linearPath = (
+  src: { x: number; y: number },
+  dst: { x: number; y: number }
+): string => {
+  return `M ${src.x} ${src.y} L ${dst.x} ${dst.y}`;
+};
+
+/**
+ * Returns an SVG orthogonal path string (composed of horizontal and vertical line segments).
+ */
+export const orthogonalPath = (
+  src: { x: number; y: number },
+  srcEdge: EdgePosition,
+  dst: { x: number; y: number },
+  dstEdge?: EdgePosition
+): string => {
+  const dx = dst.x - src.x;
+  
+  // Use the same collision detection heuristic as createSvgLine:
+  // Avoid origin entity up to half the length if moving forward,
+  // or go 90% from the origin (10% from target/nearest entity) if moving backward.
+  const midX = dx >= 0 ? src.x + dx * 0.5 : src.x + dx * 0.9;
+  
+  return `M ${src.x} ${src.y} L ${midX} ${src.y} L ${midX} ${dst.y} L ${dst.x} ${dst.y}`;
+};
+
+/**
  * Returns the point at t=0.5 on the cubic bezier that bezierPath would draw.
  * Useful for positioning labels at the visual centre of a link.
  */
@@ -81,4 +110,33 @@ export const bezierMidpoint = (
     x: mt * mt * mt * src.x + 3 * mt * mt * t * cp1.x + 3 * mt * t * t * cp2.x + t * t * t * dst.x,
     y: mt * mt * mt * src.y + 3 * mt * mt * t * cp1.y + 3 * mt * t * t * cp2.y + t * t * t * dst.y,
   };
+};
+export const linearMidpoint = (
+  src: { x: number; y: number },
+  dst: { x: number; y: number }
+): { x: number; y: number } => {
+  return { x: (src.x + dst.x) / 2, y: (src.y + dst.y) / 2 };
+};
+
+export const orthogonalMidpoint = (
+  src: { x: number; y: number },
+  srcEdge: EdgePosition,
+  dst: { x: number; y: number },
+  dstEdge?: EdgePosition
+): { x: number; y: number } => {
+  const dx = dst.x - src.x;
+  const midX = dx >= 0 ? src.x + dx * 0.5 : src.x + dx * 0.9;
+  return { x: midX, y: (src.y + dst.y) / 2 };
+};
+
+export const getMidpoint = (
+  renderType: string | undefined,
+  src: { x: number; y: number },
+  srcEdge: EdgePosition,
+  dst: { x: number; y: number },
+  dstEdge?: EdgePosition
+): { x: number; y: number } => {
+  if (renderType === 'linear') return linearMidpoint(src, dst);
+  if (renderType === 'orthogonal') return orthogonalMidpoint(src, srcEdge, dst, dstEdge);
+  return bezierMidpoint(src, srcEdge, dst, dstEdge);
 };

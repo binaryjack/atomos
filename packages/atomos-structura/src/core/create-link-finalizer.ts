@@ -2,7 +2,7 @@ import type { Signal } from '@atomos/prime'
 import type { EdgePosition } from '../features/edge/types/edge-position.types.js'
 import { openLinkSettingsModal } from '../features/modal/create-link-settings-modal.js'
 import { getCanvasAdapter } from './adapters/canvas-adapter.js'
-import { bezierMidpoint } from './bezier.js'
+import { bezierMidpoint, getMidpoint } from './bezier.js'
 import { registry } from './create-signal-registry.js'
 import { validateTopologicalConnection } from './domain/validate-topological-connection.js'
 import { GLOBAL_KEY } from './registry-keys.js'
@@ -277,6 +277,7 @@ export const createLinkFinalizer = function(
     }
 
     const linkId = optionalLinkId || `link-${srcAnchorId}-${dstAnchorId}-${Date.now()}`;
+    const initialRenderType: any = adapter.getLink(linkId)?.renderType || 'bezier';
 
     const permanentLink = linkManager.createLink({
       id: linkId,
@@ -287,7 +288,8 @@ export const createLinkFinalizer = function(
       sourceEdge: srcEdge,
       targetEdge: dstEdge,
       strokeColor: '#3b82f6',
-      strokeWidth: 2
+      strokeWidth: 2,
+      renderType: initialRenderType
     });
 
     contentRoot.appendChild(permanentLink.element);
@@ -298,7 +300,7 @@ export const createLinkFinalizer = function(
     const getCurDst = () => computeAnchorWorldPos(workspaceState, dstEntityId, dstEdge);
 
     const fo = createLinkLabelFO(
-      bezierMidpoint(srcPos, srcEdge, dstAnchorPos, dstEdge),
+      getMidpoint(initialRenderType, srcPos, srcEdge, dstAnchorPos, dstEdge),
       () => { openLinkSettingsModal(linkId); },
       () => removeLinkById(linkId)
     );
@@ -317,8 +319,14 @@ export const createLinkFinalizer = function(
       const recompute = () => {
         const s = getCurSrc();
         const d = getCurDst();
-        permanentLink.updatePath(s, d, srcEdge, dstEdge);
-        moveLinkLabelFO(fo, bezierMidpoint(s, srcEdge, d, dstEdge));
+        const currentLink = adapter.getLink(linkId);
+        const currentRenderType: any = currentLink?.renderType || 'bezier';
+        permanentLink.updatePath(s, d, srcEdge, dstEdge, currentRenderType);
+        
+        const valid = currentLink?.isValid ?? true;
+        permanentLink.setValidity(valid);
+        
+        moveLinkLabelFO(fo, getMidpoint(currentRenderType, s, srcEdge, d, dstEdge));
       };
       linkSubscriptions.set(linkId, [
         srcEntity.position.subscribe(recompute),
@@ -326,6 +334,15 @@ export const createLinkFinalizer = function(
         dstEntity.position.subscribe(recompute),
         dstEntity.dimensions.subscribe(recompute),
       ]);
+      
+      // Hook into adapter to update if renderType changes
+      linkSubscriptions.get(linkId)?.push(
+        adapter.onEntityChanged((e) => {
+          if (e.type === 'LinkPropertiesUpdated' && e.linkId === linkId) {
+            recompute();
+          }
+        })
+      );
     }
 
     workspaceState.value.entities.get(srcEntityId)

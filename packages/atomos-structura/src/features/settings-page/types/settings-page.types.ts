@@ -12,6 +12,8 @@ export interface AppSettings {
     gridSize?: number;
     enableSnapping?: boolean;
     defaultLinkStyle?: string;
+    gridPrimaryColor?: string;
+    gridSecondaryColor?: string;
   };
   shapes: CustomShape[];
 }

@@ -123,6 +123,7 @@ export interface DomainLink {
   readonly targetCardinality?: string | undefined;
   readonly sourceProperty?: string | undefined;
   readonly targetProperty?: string | undefined;
+  readonly renderType?: string | undefined;
   readonly createdAt: number;
   readonly updatedAt: number;
 }
@@ -169,6 +170,7 @@ export const updateLinkProperties = function(
     readonly targetCardinality?: string | undefined;
     readonly sourceProperty?: string | undefined;
     readonly targetProperty?: string | undefined;
+    readonly renderType?: string | undefined;
   }
 ): DomainLink {
   return {
@@ -177,6 +179,7 @@ export const updateLinkProperties = function(
     targetCardinality: updates.targetCardinality ?? link.targetCardinality,
     sourceProperty: updates.sourceProperty !== undefined ? updates.sourceProperty : link.sourceProperty,
     targetProperty: updates.targetProperty !== undefined ? updates.targetProperty : link.targetProperty,
+    renderType: updates.renderType !== undefined ? updates.renderType : (link as any).renderType,
     updatedAt: Date.now()
   };
 };
