@@ -10,7 +10,7 @@ import { createEntityPropertyRow } from '../entity-with-edges/create-entity-prop
 import { createFormularDropdown } from '@atomos/prime'
 import { createFormularInput } from '@atomos/prime'
 import { createFormularTextarea } from '@atomos/prime'
-import './index.js'
+
 import type { ModalOptions } from './types/modal-options.types.js'
 import type { ModalResult } from './types/modal-result.types.js'
 import type { AtpModal } from '@atomos/prime'

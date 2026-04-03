@@ -1,4 +1,4 @@
-import type { CanvasState, Store } from '../types/store.types.js';
+import type { CanvasState, Store } from '../types/store.types.js'
 
 export const createPersistence = function(store: Store) {
   const STORAGE_KEY = 'vbs-canvas-state';

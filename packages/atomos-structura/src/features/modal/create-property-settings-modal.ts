@@ -10,7 +10,7 @@ import { createFormularDropdown } from '@atomos/prime'
 import { createFormularInput } from '@atomos/prime'
 import { createValidationBadge } from './create-validation-badge.js'
 import { createValidationModal } from './create-validation-modal.js'
-import './index.js'
+
 import type { ModalOptions } from './types/modal-options.types.js'
 import type { ModalResult } from './types/modal-result.types.js'
 import type { AtpModal } from '@atomos/prime'

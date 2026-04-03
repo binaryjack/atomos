@@ -33,9 +33,10 @@
   </nav>
   <div id="canvas-root"></div>
   <script type="module">
-    import { createCanvasPage } from '/atomos-prime/dist/preview/create-canvas-page.js';
-    import { getEntityManager } from '/atomos-prime/dist/index.js';
-    import { createSchemaGraphKernel, createKernelAdapter } from '/atomos-structura/dist/index.js';
+    import { createCanvasPage } from '/atomos-structura/dist/preview/create-canvas-page.js';
+    import { getEntityManager } from '/atomos-structura/dist/core/presentation/entity-manager.js';
+    import { createSchemaGraphKernel } from '/atomos-structura/dist/core/create-schema-graph-kernel.js';
+    import { createKernelAdapter } from '/atomos-structura/dist/adapters/create-kernel-adapter.js';
 
     console.log('🚀 Starting canvas with Kernel bridge');
     const page = createCanvasPage();

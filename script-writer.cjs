@@ -1,4 +1,6 @@
-import type { AccordionProps, AccordionResult } from './types/accordion.types.js';
+const fs = require('fs');
+
+const accordionContent = `import type { AccordionProps, AccordionResult } from './types/accordion.types.js';
 export type { AccordionProps, AccordionResult };
 
 export const createAccordion = function(props: AccordionProps): AccordionResult {
@@ -8,7 +10,7 @@ export const createAccordion = function(props: AccordionProps): AccordionResult 
 
   let isOpen = props.defaultOpen || false;
 
-  element.className = `border border-slate-700 bg-slate-800 rounded min-w-0 flex flex-col shrink-0 ${props.className || ''}`.trim();
+  element.className = \`border border-slate-700 bg-slate-800 rounded min-w-0 flex flex-col shrink-0 \${props.className || ''}\`.trim();
 
   // Header (clickable trigger)
   const header = document.createElement('div');
@@ -130,4 +132,7 @@ export const createAccordion = function(props: AccordionProps): AccordionResult 
       }
     }
   };
-};
+};`;
+
+fs.writeFileSync('packages/atomos-prime/src/features/accordion/create-accordion.ts', accordionContent);
+console.log('Accordion fixed!');

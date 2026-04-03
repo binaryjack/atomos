@@ -1,4 +1,5 @@
-import type { Entity, LinkProps } from '@atomos/structura-core';
+import type { Entity, LinkProps } from '@atomos/structura-core'
+import type { AppSettings } from '../features/settings-page/types/settings-page.types.js'
 
 export interface SchemaModel {
   readonly id: string;
@@ -24,9 +25,10 @@ export interface ReduxState {
   readonly schemas: Record<string, SchemaModel>;
   readonly active_schema_id: string;
   readonly canvas_viewport: ViewportState;
+  readonly settings?: AppSettings;
 }
 
-export type ReduxAction = 
+export type ReduxAction =
   | { type: 'entity-moved'; schema_id: string; entity_id: string; x: number; y: number }
   | { type: 'entity-resized'; schema_id: string; entity_id: string; width: number; height: number }
   | { type: 'entity-updated'; schema_id: string; entity: Entity }
@@ -36,6 +38,7 @@ export type ReduxAction =
   | { type: 'link-updated'; schema_id: string; link: LinkProps }
   | { type: 'link-removed'; schema_id: string; link_id: string }
   | { type: 'viewport-updated'; viewport: ViewportState }
+  | { type: 'settings-updated'; settings: AppSettings }
   | { type: 'state-loaded'; state: ReduxState };
 
 export interface ReduxStore {

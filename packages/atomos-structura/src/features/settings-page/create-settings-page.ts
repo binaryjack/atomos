@@ -1,6 +1,5 @@
-import { defaultToolboxConfig } from '../../core/default-toolbox.config.js'
 import { createButton } from '@atomos/prime'
-import { createDecisionMatrix } from '../decision-matrix/create-decision-matrix.js'
+import { defaultToolboxConfig } from '../../core/default-toolbox.config.js'
 import { createVisualEditorTree } from './create-settings-tree.js'
 import { createShapesEditor } from './create-shapes-editor.js'
 import type { AppSettings, SettingsPageProps, SettingsPageResult } from './types/settings-page.types.js'
@@ -9,18 +8,13 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   const cleanupFunctions: Array<() => void> = [];
   let isDirty = false;
 
-  const defaultMatrices = {
-    criteria: [
-      { id: 'c1', name: 'Criteria 1', weight: 1 }
-    ],
-    options: [
-      { id: 'o1', name: 'Option 1', scores: { c1: 0 } }
-    ]
-  };
-
   const currentSettings: AppSettings = {
     toolbox: props.initialSettings?.toolbox || JSON.parse(JSON.stringify(defaultToolboxConfig)),
-    matrices: props.initialSettings?.matrices || JSON.parse(JSON.stringify(defaultMatrices)),
+    general: props.initialSettings?.general || {
+      gridSize: 20,
+      enableSnapping: true,
+      defaultLinkStyle: 'orthogonal'
+    },
     shapes: props.initialSettings?.shapes || []
   };
 
@@ -84,7 +78,6 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   const navItems = [
     { id: 'general', label: 'General Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
     { id: 'toolbox', label: 'Toolbox Configuration', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
-    { id: 'matrices', label: 'Decision Matrices', icon: 'M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z' },
     { id: 'shapes', label: 'Shapes Repository', icon: 'M4 5a2 2 0 012-2h4a2 2 0 012 2v2H6V5zm0 6h16v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8zm2-2a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2H6z' }
   ];
 
@@ -101,6 +94,7 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   generalSettingsPanel.setAttribute('slot', 'panel');
   const genPane = document.createElement('div');
   genPane.className = 'flex flex-col flex-1 p-6 w-full h-full overflow-y-auto gap-6';
+  
   const genHeader = document.createElement('div');
   const genTitle = document.createElement('h3');
   genTitle.className = 'text-lg font-medium text-slate-200';
@@ -111,6 +105,80 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   genHeader.appendChild(genTitle);
   genHeader.appendChild(genDesc);
   genPane.appendChild(genHeader);
+
+  // Settings Form
+  const genForm = document.createElement('div');
+  genForm.className = 'flex flex-col gap-6 max-w-xl';
+
+  // Grid Size Input
+  const gridSizeRow = document.createElement('div');
+  gridSizeRow.className = 'flex flex-col gap-2';
+  gridSizeRow.innerHTML = `<label class="text-sm font-medium text-slate-300">Canvas Grid Size (px)</label>`;
+  const gridSizeInput = document.createElement('input');
+  gridSizeInput.type = 'number';
+  gridSizeInput.min = '5';
+  gridSizeInput.max = '100';
+  gridSizeInput.className = 'bg-slate-950 border border-slate-700 rounded-md px-3 py-2 text-slate-200 focus:outline-none focus:border-purple-500 w-32';
+  gridSizeInput.value = currentSettings.general?.gridSize?.toString() || '20';
+  gridSizeInput.addEventListener('input', (e) => {
+    if (!currentSettings.general) currentSettings.general = {};
+    currentSettings.general.gridSize = parseInt((e.target as HTMLInputElement).value, 10) || 20;
+    markDirty();
+  });
+  gridSizeRow.appendChild(gridSizeInput);
+  genForm.appendChild(gridSizeRow);
+
+  // Enable Snapping Checkbox
+  const snappingRow = document.createElement('div');
+  snappingRow.className = 'flex items-center gap-3';
+  const snappingCheckbox = document.createElement('input');
+  snappingCheckbox.type = 'checkbox';
+  snappingCheckbox.className = 'w-4 h-4 rounded border-slate-700 text-purple-600 focus:ring-purple-500 bg-slate-950';
+  snappingCheckbox.checked = currentSettings.general?.enableSnapping !== false;
+  snappingCheckbox.addEventListener('change', (e) => {
+    if (!currentSettings.general) currentSettings.general = {};
+    currentSettings.general.enableSnapping = (e.target as HTMLInputElement).checked;
+    markDirty();
+  });
+  const snappingLabel = document.createElement('label');
+  snappingLabel.className = 'text-sm font-medium text-slate-300';
+  snappingLabel.textContent = 'Enable Grid Snapping';
+  snappingRow.appendChild(snappingCheckbox);
+  snappingRow.appendChild(snappingLabel);
+  genForm.appendChild(snappingRow);
+
+  // Default Link Style Select
+  const linkStyleRow = document.createElement('div');
+  linkStyleRow.className = 'flex flex-col gap-2';
+  linkStyleRow.innerHTML = `<label class="text-sm font-medium text-slate-300">Default Link Routing</label>`;
+  const linkStyleSelect = document.createElement('select');
+  linkStyleSelect.className = 'bg-slate-950 border border-slate-700 rounded-md px-3 py-2 text-slate-200 focus:outline-none focus:border-purple-500 w-64';
+  
+  const styles = [
+    { value: 'orthogonal', label: 'Orthogonal' },
+    { value: 'straight', label: 'Straight' },
+    { value: 'curve', label: 'Curved' }
+  ];
+  
+  styles.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.value;
+    opt.textContent = s.label;
+    if (currentSettings.general?.defaultLinkStyle === s.value) {
+      opt.selected = true;
+    }
+    linkStyleSelect.appendChild(opt);
+  });
+  
+  linkStyleSelect.addEventListener('change', (e) => {
+    if (!currentSettings.general) currentSettings.general = {};
+    currentSettings.general.defaultLinkStyle = (e.target as HTMLSelectElement).value;
+    markDirty();
+  });
+  linkStyleRow.appendChild(linkStyleSelect);
+  genForm.appendChild(linkStyleRow);
+
+  genPane.appendChild(genForm);
   generalSettingsPanel.appendChild(genPane);
   vbsTabs.appendChild(generalSettingsPanel);
 
@@ -174,38 +242,7 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   vbsTabs.appendChild(toolboxPanel);
 
 
-  // -- Pane 2: Decision Matrices Editor --
-  const matrixPanel = document.createElement('vbs-tab-panel');
-  matrixPanel.setAttribute('slot', 'panel');
-  const matrixPane = document.createElement('div');
-  matrixPane.className = 'flex flex-col flex-1 p-6 w-full h-full overflow-y-auto gap-6';
-  
-  const mxHeader = document.createElement('div');
-  const mxTitle = document.createElement('h3');
-  mxTitle.className = 'text-lg font-medium text-slate-200';
-  mxTitle.textContent = 'Global Evaluation Matrix';
-  const mxDesc = document.createElement('p');
-  mxDesc.className = 'text-slate-400 text-sm mt-1';
-  mxDesc.textContent = 'Define standard options and configurable criteria used universally.';
-  mxHeader.appendChild(mxTitle);
-  mxHeader.appendChild(mxDesc);
-
-  const { element: matrixEditorElement } = createDecisionMatrix({
-    criteria: currentSettings.matrices.criteria,
-    options: currentSettings.matrices.options,
-    onChange: (c, o) => {
-      currentSettings.matrices.criteria = c;
-      currentSettings.matrices.options = o;
-      markDirty();
-    }
-  });
-
-  matrixPane.appendChild(mxHeader);
-  matrixPane.appendChild(matrixEditorElement);
-  matrixPanel.appendChild(matrixPane);
-  vbsTabs.appendChild(matrixPanel);
-
-  // -- Pane 3: Shapes Repository --
+  // -- Pane 2: Shapes Repository --
   const shapesPanel = document.createElement('vbs-tab-panel');
   shapesPanel.setAttribute('slot', 'panel');
   const shapesPane = document.createElement('div');

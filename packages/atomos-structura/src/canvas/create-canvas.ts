@@ -1,4 +1,4 @@
-import type { EntityState, Store } from '../types/store.types.js';
+import type { EntityState, Store } from '../types/store.types.js'
 
 export const createCanvas = function(store: Store, canvasElement: HTMLCanvasElement) {
   const ctx = canvasElement.getContext('2d')!;

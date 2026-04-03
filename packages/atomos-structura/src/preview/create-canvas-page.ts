@@ -7,6 +7,7 @@ import { createInteractiveEntityDemo } from '../features/entity-with-edges/creat
 import { createSchemaPanel } from '../features/schema-panel/index.js'
 import { createSettingsPage } from '../features/settings-page/create-settings-page.js'
 import { createCanvasToolbar } from './create-canvas-toolbar.js'
+import { getGlobalReduxStore } from '../core/create-redux-store.js'
 
 export const createCanvasPage = function() {
   const cleanups: Array<() => void> = [];
@@ -260,7 +261,7 @@ export const createCanvasPage = function() {
     entityManager: getEntityManager(),
     onSettings: () => {
       const settingsPage = createSettingsPage({
-        initialSettings: { toolbox: getToolboxConfig(), matrices: { criteria: [], options: [] }, shapes: getCustomShapes() },
+        initialSettings: { toolbox: getToolboxConfig(), shapes: getCustomShapes() },
         onClose: () => {
           settingsPage.element.remove();
           settingsPage.cleanup.destroy();

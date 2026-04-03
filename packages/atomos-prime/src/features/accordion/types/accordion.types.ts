@@ -1,7 +1,7 @@
 import type { Signal } from '../../../core/types/signal.types.js';
 
 export interface AccordionProps {
-  title: string | Signal<string>;
+  title: string | Signal<string> | HTMLElement;
   children?: HTMLElement[] | Signal<HTMLElement[]>;
   defaultOpen?: boolean;
   disabled?: boolean | Signal<boolean>;

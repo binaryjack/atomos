@@ -1,4 +1,4 @@
-import { createButton } from '@atomos/prime'
+import { createAccordion, createButton } from '@atomos/prime'
 import type { CustomShape } from './types/settings-page.types.js'
 
 export interface ShapesEditorProps {
@@ -95,7 +95,7 @@ export const createShapesEditor = function(props: ShapesEditorProps) {
     container.appendChild(header);
 
     const listContainer = document.createElement('div');
-    listContainer.className = 'flex flex-col gap-4 mt-2 flex-1 min-h-0';
+    listContainer.className = 'flex flex-col gap-4 mt-2';
 
     if (activeShapes.length === 0) {
       const empty = document.createElement('div');
@@ -105,9 +105,6 @@ export const createShapesEditor = function(props: ShapesEditorProps) {
     }
 
     activeShapes.forEach((shape, index) => {
-      const itemRow = document.createElement('div');
-      itemRow.className = 'flex flex-col gap-3 p-5 bg-slate-950 border border-slate-800 rounded-lg shadow-sm';
-
       const topRow = document.createElement('div');
       topRow.className = 'flex gap-4 items-end';
 
@@ -170,9 +167,29 @@ export const createShapesEditor = function(props: ShapesEditorProps) {
       svgWrap.appendChild(svgLabel);
       svgWrap.appendChild(svgInput);
 
-      itemRow.appendChild(topRow);
-      itemRow.appendChild(svgWrap);
-      listContainer.appendChild(itemRow);
+      const contentWrap = document.createElement('div');
+      contentWrap.className = 'flex flex-col gap-3 p-4 bg-slate-900 border-t border-slate-800';
+      contentWrap.appendChild(topRow);
+      contentWrap.appendChild(svgWrap);
+
+      const accordion = createAccordion({
+        title: shape.name || shape.id,
+        children: [contentWrap],
+        defaultOpen: false,
+        className: 'w-full bg-slate-950 border border-slate-800 mb-3 overflow-hidden flex flex-col shrink-0'
+      });
+
+      const updateTitle = () => {
+        const btnTitle = accordion.element.querySelector('span'); // the title element
+        if (btnTitle) {
+          btnTitle.textContent = nameInput.value || idInput.value || 'Untitled Shape';
+        }
+      };
+
+      nameInput.addEventListener('input', updateTitle);
+      idInput.addEventListener('input', updateTitle);
+
+      listContainer.appendChild(accordion.element);
     });
 
     container.appendChild(listContainer);

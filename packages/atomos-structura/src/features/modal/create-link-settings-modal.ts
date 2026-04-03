@@ -1,6 +1,6 @@
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js';
 import { createButton } from '@atomos/prime';
-import './index.js';
+
 import type { AtpModal } from '@atomos/prime';
 
 const modalCache = new Map<string, AtpModal>();

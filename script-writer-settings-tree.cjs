@@ -1,5 +1,8 @@
-import type { ToolboxConfiguration, ToolboxItem, Toolset } from '@atomos/prime'
-import { createAccordion, createButton } from '@atomos/prime'
+const fs = require('fs');
+
+const code = `import type { ToolboxConfiguration, ToolboxItem, Toolset } from '@atomos/prime'
+import { createAccordion, createButton, createFormularDropdown, createFormularInput, createFormularTextarea } from '@atomos/prime'
+import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
 import { createForm, f } from '@binaryjack/formular.dev'
 
 import type { CustomShape } from './types/settings-page.types.js'
@@ -50,7 +53,7 @@ export const createVisualEditorTree = function(props: VisualEditorTreeProps): Vi
     cleanupFunctions.length = 0;
 
     activeConfig.toolsets.forEach((toolset: Toolset, tsIndex: number) => {      
-      const tsPath = `ts-${tsIndex}`;
+      const tsPath = \`ts-\${tsIndex}\`;
 
       // -- Header Title & Actions --
       const tsTitleContainer = document.createElement('div');
@@ -58,7 +61,7 @@ export const createVisualEditorTree = function(props: VisualEditorTreeProps): Vi
       
       const tsTitle = document.createElement('div');
       tsTitle.className = 'flex-1 font-medium text-slate-200';
-      tsTitle.textContent = `${toolset.name} (Toolset)`;
+      tsTitle.textContent = \`\${toolset.name} (Toolset)\`;
 
       const tsActions = document.createElement('div');
       tsActions.className = 'flex gap-2 items-center';
@@ -106,7 +109,7 @@ export const createVisualEditorTree = function(props: VisualEditorTreeProps): Vi
       tsAddBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         const newItem: ToolboxItem = {
-          id: `new-item-${Date.now()}`,
+          id: \`new-item-\${Date.now()}\`,
           name: 'New Tool',
           shape: 'box',
           baseColor: 'var(--vbs-primary, #3b82f6)',
@@ -121,7 +124,7 @@ export const createVisualEditorTree = function(props: VisualEditorTreeProps): Vi
       // Delete Toolset logic
       tsDelBtn.addEventListener('click', (e) => {
          e.stopPropagation();
-         if (confirm(`Delete toolset ${toolset.name}?`)) {
+         if (confirm(\`Delete toolset \${toolset.name}?\`)) {
             activeConfig.toolsets.splice(tsIndex, 1);
             notifyChange();
             renderTree();
@@ -176,7 +179,7 @@ export const createVisualEditorTree = function(props: VisualEditorTreeProps): Vi
 
             itemDelBtn.addEventListener('click', (e) => {
               e.stopPropagation();
-              if (confirm(`Delete tool ${item.name}?`)) {
+              if (confirm(\`Delete tool \${item.name}?\`)) {
                 activeConfig.toolsets[tsIndex].tools.splice(itemIndex, 1);
                 notifyChange();
                 renderTree();
@@ -277,9 +280,13 @@ export const createVisualEditorTree = function(props: VisualEditorTreeProps): Vi
         cleanupFunctions.length = 0;
       }
     },
-    updateConfig: (newConfig: ToolboxConfiguration, newAvailableShapes?: CustomShape[]) => {
+    updateConfig: (newConfig: ToolboxConfiguration) => {
       activeConfig = JSON.parse(JSON.stringify(newConfig));
       renderTree();
     }
   };
 };
+`;
+
+fs.writeFileSync('packages/atomos-structura/src/features/settings-page/create-settings-tree.ts', code);
+console.log('Settings tree refactored to use createAccordion exclusively.');

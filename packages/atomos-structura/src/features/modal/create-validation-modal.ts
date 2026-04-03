@@ -4,7 +4,7 @@ import type { DataType } from '@atomos/structura-core';
 import { createButton } from '@atomos/prime';
 import { createFormularCheckbox } from '@atomos/prime';
 import { createFormularInput } from '@atomos/prime';
-import './index.js';
+
 import type { AtpModal } from '@atomos/prime';
 
 export interface ValidationModalProps {

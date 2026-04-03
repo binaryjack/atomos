@@ -1,5 +1,5 @@
-import type { Cardinality, LinkProps, RenderType } from '@atomos/structura-core';
-import type { ReduxAction, ReduxState, ReduxStore } from '../types/redux-state.types.js';
+import type { Cardinality, LinkProps, RenderType } from '@atomos/structura-core'
+import type { ReduxAction, ReduxState, ReduxStore } from '../types/redux-state.types.js'
 
 const initial_state: ReduxState = {
   schemas: {},
@@ -191,7 +191,14 @@ const reduce_state = function(state: ReduxState, action: ReduxAction): ReduxStat
         canvas_viewport: action.viewport
       };
     }
-    
+
+    case 'settings-updated': {
+      return {
+        ...state,
+        settings: action.settings
+      };
+    }
+
     case 'state-loaded': {
       return action.state;
     }

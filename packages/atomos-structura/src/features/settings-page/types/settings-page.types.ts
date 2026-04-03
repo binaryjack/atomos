@@ -1,5 +1,4 @@
 import type { ToolboxConfiguration } from '@atomos/prime'
-import type { DecisionMatrixCriterion, DecisionMatrixOption } from '../../decision-matrix/index.js'
 
 export interface CustomShape {
   id: string;
@@ -9,9 +8,10 @@ export interface CustomShape {
 
 export interface AppSettings {
   toolbox: ToolboxConfiguration;
-  matrices: {
-    criteria: DecisionMatrixCriterion[];
-    options: DecisionMatrixOption[];
+  general?: {
+    gridSize?: number;
+    enableSnapping?: boolean;
+    defaultLinkStyle?: string;
   };
   shapes: CustomShape[];
 }

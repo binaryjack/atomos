@@ -9,7 +9,9 @@ module.exports = {
     './src/**/*.{js,ts,jsx,tsx}',
     '../web-ui/src/**/*.{js,ts,jsx,tsx}',
     '../web-ui/**/*.html',
-    '../atomos-prime/src/**/*.{js,ts,jsx,tsx}'
+    '../atomos-prime/src/**/*.{js,ts,jsx,tsx}',
+    '../atomos-structura/src/**/*.{js,ts,jsx,tsx}',
+    '../atomos-structura/canvas.html'
   ],
   theme: {
     extend: {
