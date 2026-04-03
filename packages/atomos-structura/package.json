@@ -20,14 +20,15 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@atomos/structura-core": "workspace:*",
-    "@atomos/prime-style": "workspace:*",
     "@atomos/prime": "workspace:*",
-    "@atomos/structura-mcp": "workspace:*"
+    "@atomos/prime-style": "workspace:*",
+    "@atomos/structura-core": "workspace:*",
+    "@atomos/structura-mcp": "workspace:*",
+    "@binaryjack/formular.dev": "workspace:^"
   },
   "devDependencies": {
     "typescript": "^5.3.0",
-    "vitest": "^1.0.0",
-    "vite": "^5.0.0"
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0"
   }
 }

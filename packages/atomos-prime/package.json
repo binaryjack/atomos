@@ -16,7 +16,7 @@
     "test": "vitest",
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "powershell -Command \"Remove-Item -Force -Recurse dist -ErrorAction SilentlyContinue; exit 0\""
   },
   "dependencies": {
     "@binaryjack/formular.dev": "workspace:*",

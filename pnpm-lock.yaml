@@ -84,6 +84,9 @@ importers:
       '@atomos/structura-mcp':
         specifier: workspace:*
         version: link:../atomos-structura-mcp
+      '@binaryjack/formular.dev':
+        specifier: workspace:^
+        version: link:../formular-dev
     devDependencies:
       typescript:
         specifier: ^5.3.0

@@ -1,31 +1,10 @@
 export { createSignal } from './create-signal.js';
 export { createComputed } from './create-computed.js';
-export { createInteractiveBehaviorManager } from './interactive-behavior-manager.js';
-export { createLinkManager } from './link-manager.js';
-export { createWorkspaceManager } from './create-workspace-manager.js';
 export { createCoordinateTransformer } from './create-coordinate-transformer.js';
-export { createEntityRegistry } from './create-entity-registry.js';
-export { createLinkDrawController } from './create-link-draw-controller.js';
-export { createLinkFinalizer } from './create-link-finalizer.js';
-export { createCanvasEventHandler } from './create-canvas-event-handler.js';
-export { testEdgeHit } from './create-edge-hit-tester.js';
-export { ENTITY_DEFAULT_WIDTH, ENTITY_DEFAULT_HEIGHT } from './entity-defaults.js';
 export type { Signal } from './types/signal.types.js';
-export type { InteractiveBehaviorManager, LinkCreationState, EntityState, InteractionContext, BehaviorState } from './interactive-behavior-manager.js';
-export type { LinkManager, LinkProps, LinkResult } from './link-manager.js';
-export type { WorkspaceManager } from './types/workspace-manager.types.js';
 export type { EntityInstance } from './types/entity-instance.types.js';
 export type { WorkspaceState } from './types/workspace-state.types.js';
-export type { EntitySpawnFactory } from './types/entity-spawn-factory.types.js';
 export type { CoordinateTransformer } from './create-coordinate-transformer.js';
-export type { EntityRegistry } from './create-entity-registry.js';
-export type { LinkDrawController } from './create-link-draw-controller.js';
-export type { LinkFinalizer } from './create-link-finalizer.js';
-export type { CanvasEventHandler } from './create-canvas-event-handler.js';
-export { serializeDAG, deserializeDAG, autoLayoutDAG } from './application/dag-service.js';
-export type { DAGExport } from './application/dag-service.js';
 
-export { createDAGObserver } from './adapters/dag-observer.js';
-export type { DAGObserver, DAGSubscriber } from './adapters/dag-observer.js';
-export { createReactDAGHook } from './adapters/react-hook-adapter.js';
-export type { DAGReactHookAdapter } from './adapters/react-hook-adapter.js';
+
+export { computeContrastColor } from './utils/compute-contrast-color.js';

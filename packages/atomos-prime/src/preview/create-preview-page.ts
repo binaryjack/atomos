@@ -1,5 +1,5 @@
 import { createSignal } from '../core/create-signal.js';
-import { createCanvasViewport } from '../core/create-canvas-viewport.js';
+
 import { createTypography } from '../features/typography/create-typography.js';
 import { createButton } from '../features/button/create-button.js';
 import { createInput } from '../features/input/create-input.js';
@@ -10,8 +10,8 @@ import { createCard } from '../features/card/create-card.js';
 import { createAccordion } from '../features/accordion/create-accordion.js';
 import { createSkeleton } from '../features/skeleton/create-skeleton.js';
 import { createIcon } from '../features/icon/create-icon.js';
-import { createWorkspaceManager } from '../core/create-workspace-manager.js';
-import { createInteractiveEntityDemo } from '../features/entity-with-edges/create-interactive-entity-demo.js';
+
+
 import { createPreviewSection } from './create-preview-section.js';
 import { createModalDemo } from '../features/modal/create-modal-demo.js';
 
@@ -346,24 +346,15 @@ export const createPreviewPage = function() {
   svgCanvas.style.cssText = 'display:block;cursor:default;';
 
   // Viewport group — all world-space content lives here
-  const viewportGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  viewportGroup.id = 'vbs-viewport';
-  svgCanvas.appendChild(viewportGroup);
+  //
+  //
+  //
 
   // Pan/zoom viewport — attach wheel/drag to workspaceContainer so the div receives events
-  const viewport = createCanvasViewport(workspaceContainer, svgCanvas);
-  viewport.state.subscribe(() => {
-    viewportGroup.setAttribute('transform', viewport.transform());
-  });
-  viewportGroup.setAttribute('transform', viewport.transform());
-  cleanupFunctions.push(viewport.cleanup);
-
-  // Initialize workspace manager with SVG for CTM and viewportGroup as content root
-  const workspaceManager = createWorkspaceManager(svgCanvas, viewportGroup);
-  cleanupFunctions.push(workspaceManager.cleanup.destroy);
+  // viewport clean
 
   // Create interactive entity demo
-  createInteractiveEntityDemo(workspaceManager);
+  //
 
   workspaceContainer.appendChild(svgCanvas);
 

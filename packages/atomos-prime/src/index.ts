@@ -1,19 +1,7 @@
+export * from './core/index.js';
 // Core
-export { createSignal } from './core/create-signal.js';
-export { createComputed } from './core/create-computed.js';
-export { createToggleable } from './core/create-toggleable.js';
-export type { Toggleable, ToggleState } from './core/create-toggleable.js';
-export { createKeyBindings } from './core/create-key-bindings.js';
-export type { KeyBindings, KeyBindingHandlers } from './core/create-key-bindings.js';
-export { createPortalRegistry } from './core/create-portal-registry.js';
-export type { PortalRegistry } from './core/create-portal-registry.js';
-export { getToolboxConfig, setToolboxConfig } from './core/adapters/toolbox-config-manager.js';
-export { defaultToolboxConfig } from './core/default-toolbox.config.js';
-export type { Signal, ComputedSignal } from './core/types/signal.types.js';
 export type { ToolboxConfiguration, Toolset, ToolboxItem } from './types/toolbox.types.js';
 
-export { getEntityManager, createEntityManager, type EntityManager } from './core/presentation/entity-manager.js';
-export type { DomainEntity, DomainLink, EntityPosition, EntityDimensions } from './core/domain/entity-aggregate.js';
 // Base components
 export { vbsElement, type VbsElementProps } from './base/vbs-element.js';
 export { createVbsCanvas, type VbsCanvasProps } from './components/vbs-canvas.js';
@@ -43,12 +31,8 @@ export { createCircularProgress } from './features/circular-progress/create-circ
 export type { CircularProgressProps, CircularProgressResult } from './features/circular-progress/types/circular-progress.types.js';
 
 // Layout / Pages
-export { createSettingsPage } from './features/settings-page/create-settings-page.js';
-export type { SettingsPageProps, SettingsPageResult } from './features/settings-page/types/settings-page.types.js';
 
 // Modular Features
-export { createModularTable } from './features/modular-table/create-modular-table.js';
-export type { ModularTableProps, ModularTableResult, ColumnDef } from './features/modular-table/types/modular-table.types.js';
 
 // Date Picker
 export {
@@ -87,11 +71,8 @@ export { createSvgRectangle, type SvgRectangleProps, type SvgRectangleResult } f
 export { createSvgLine, type SvgLineProps, type SvgLineResult } from './features/svg-line/create-svg-line.js';
 
 // Molecule components
-export { createEntityFrame, type EntityFrameProps, type EntityFrameResult } from './features/entity-frame/create-entity-frame.js';
-export { createEntityWithEdges, type EntityWithEdgesProps, type EntityWithEdgesResult } from './features/entity-with-edges/create-entity-with-edges.js';
 
 // Edge and Anchor components
-export { createEdge, type EdgeProps, type EdgeResult } from './features/edge/create-edge.js';
 export { createAnchor, type AnchorProps, type AnchorResult } from './features/anchor/create-anchor.js';
 
 // Preview system
@@ -99,3 +80,9 @@ export { createPreviewPage } from './preview/create-preview-page.js';
 export { createPreviewSection } from './preview/create-preview-section.js';export * from './components/tabs/index.js';
 
 export * from './features/stepper/index.js';
+export * from './features/editable-label/create-editable-label.js';
+export * from './features/formular/index.js';
+
+export * from './features/modal/atp-modal/atp-modal.js';
+export * from './features/modal/create-atp-modal-header.js';
+export * from './features/modal/create-atp-modal-footer.js';

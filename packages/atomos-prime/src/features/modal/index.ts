@@ -2,14 +2,10 @@ export * from './atp-modal/atp-modal.js';
 export * from './create-atp-modal-header.js';
 export * from './create-atp-modal-footer.js';
 
-export * from './create-entity-settings-modal.js';
-export * from './create-link-settings-modal.js';
 export * from './create-modal-animations.js';
 export * from './create-modal-demo.js';
 export * from './create-modal-stack.js';
-export * from './create-property-settings-modal.js';
 export * from './create-validation-badge.js';
-export * from './create-validation-modal.js';
 
 export type { ModalOptions } from './types/modal-options.types.js';
 export type { ModalResult } from './types/modal-result.types.js';
