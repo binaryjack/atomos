@@ -170,14 +170,14 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
   vertLabel.style.cssText = css(
     'writing-mode:vertical-rl', 'text-orientation:mixed',
     'font-size:10px', 'font-weight:600',
-    'color:var(--vbs-border, #27272a)', 'letter-spacing:0.08em', 'text-transform:uppercase',
-    'margin-top:6px',
-  );
+      'color:var(--vbs-text-secondary, #a1a1aa)', 'letter-spacing:0.08em', 'text-transform:uppercase',
+      'margin-top:6px',
+    );
 
-  headerCollapsed.appendChild(expandBtn);
-  headerCollapsed.appendChild(vertLabel);
+    headerCollapsed.appendChild(expandBtn);
+    headerCollapsed.appendChild(vertLabel);
 
-  // ── Treeview ─────────────────────────────────────────────────────────────
+    // ── Treeview ─────────────────────────────────────────────────────────────
   const treeview = document.createElement('div');
   treeview.style.cssText = css(
     'flex:1', 'overflow-y:auto', 'overflow-x:hidden',
@@ -212,7 +212,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
       const empty = document.createElement('div');
       empty.style.cssText = css(
         'padding:24px 12px', 'text-align:center',
-        'color:var(--vbs-border, #27272a)', 'font-size:11px', 'white-space:pre-line',
+        'color:var(--vbs-text-secondary, #a1a1aa)', 'font-size:11px', 'white-space:pre-line',
       );
       empty.textContent = q
         ? 'No matches'
@@ -228,9 +228,9 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
       const sep = document.createElement('div');
       sep.style.cssText = css(
         'margin:8px 8px 2px', 'padding:4px 0',
-        'font-size:10px', 'font-weight:600', 'color:var(--vbs-border, #27272a)',
+        'font-size:10px', 'font-weight:600', 'color:var(--vbs-text-secondary, #a1a1aa)',
         'text-transform:uppercase', 'letter-spacing:0.05em',
-        'border-top:1px solid var(--vbs-bg-panel, #111111)',
+        'border-top:1px solid var(--vbs-border, #27272a)',
       );
       sep.textContent = `Links (${edges.length})`;
       treeview.appendChild(sep);
@@ -258,9 +258,9 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
           return s;
         };
 
-        linkRow.appendChild(mkSpan(srcName,           'var(--vbs-text-secondary, #a1a1aa)'));
-        linkRow.appendChild(mkSpan(` ──(${card})──▶ `, 'var(--vbs-bg-panel, #111111)'));
-        linkRow.appendChild(mkSpan(dstName,           'var(--vbs-text-secondary, #a1a1aa)'));
+        linkRow.appendChild(mkSpan(srcName,           'var(--vbs-text-primary, #f4f4f5)'));
+        linkRow.appendChild(mkSpan(` ──(${card})──▶ `, 'var(--vbs-text-secondary, #a1a1aa)'));
+        linkRow.appendChild(mkSpan(dstName,           'var(--vbs-text-primary, #f4f4f5)'));
         treeview.appendChild(linkRow);
       });
     }
@@ -422,7 +422,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
 
         const connector = document.createElement('span');
         connector.textContent = isLast ? '└' : '├';
-        connector.style.cssText = 'flex-shrink:0;color:var(--vbs-bg-panel, #111111);margin-right:2px;';
+          connector.style.cssText = 'flex-shrink:0;color:var(--vbs-text-secondary, #a1a1aa);margin-right:2px;';
 
         const propName = document.createElement('span');
         propName.textContent = prop.label ?? prop.key;
