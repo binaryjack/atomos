@@ -17,22 +17,21 @@
     position: relative;
     border: 1px solid transparent;
     background: linear-gradient(var(--vbs-bg-panel, #111111), var(--vbs-bg-panel, #111111)) padding-box,
-                var(--vbs-border, #27272a) border-box;
+      var(--vbs-border, #27272a) border-box;
     z-index: 1;
   }
+
   .spotlight-border::before {
     content: "";
     position: absolute;
     inset: -1px;
     border-radius: inherit;
     padding: 1px;
-    background: radial-gradient(
-      150px circle at var(--mouse-x, 0%) var(--mouse-y, 0%),
-      rgba(255, 255, 255, 0.9) 0%,
-      rgba(59, 130, 246, 1) 10%,
-      rgba(59, 130, 246, 0.2) 40%,
-      transparent 60%
-    );
+    background: radial-gradient(150px circle at var(--mouse-x, 0%) var(--mouse-y, 0%),
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(59, 130, 246, 1) 10%,
+        rgba(59, 130, 246, 0.2) 40%,
+        transparent 60%);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -41,6 +40,7 @@
     z-index: -1;
     pointer-events: none;
   }
+
   .spotlight-border:hover::before {
     opacity: 1;
   }
@@ -50,18 +50,18 @@
     @apply transition-all duration-200 ease-in-out;
     @apply hover:bg-vbs-entity-hover hover:shadow-md;
   }
-  
+
   .vbs-edge {
     @apply border-vbs-edge-default;
     border-width: var(--vbs-edge-thickness);
     @apply transition-all duration-200 ease-in-out;
   }
-  
+
   .vbs-edge:hover {
     @apply border-vbs-edge-hover;
     border-width: var(--vbs-edge-thickness-hover);
   }
-  
+
   .vbs-grid {
     background-color: var(--vbs-canvas-bg, transparent);
     background-image:
