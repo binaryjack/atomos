@@ -146,33 +146,24 @@ export const createVisualEditorTree = function(props: VisualEditorTreeProps): Vi
             const itemActions = document.createElement('div');
             itemActions.className = 'flex gap-2 items-center';
 
-            const itemEditBtn = document.createElement('button');
-            itemEditBtn.textContent = 'Edit';
-            itemEditBtn.className = 'text-xs text-blue-400 hover:text-blue-300 px-2 py-1 bg-slate-800 rounded border border-slate-700';
-
             const itemDelBtn = document.createElement('button');
             itemDelBtn.textContent = '×';
             itemDelBtn.className = 'text-xs text-red-500 hover:text-red-400 font-bold px-2 py-1 bg-slate-800 rounded border border-slate-700';
 
-            itemActions.appendChild(itemEditBtn);
             itemActions.appendChild(itemDelBtn);
             itemTitleContainer.appendChild(itemTitle);
             itemTitleContainer.appendChild(itemActions);
 
             const itemEditorContainer = document.createElement('div');
-            itemEditorContainer.className = 'px-4 py-3 bg-slate-950 border border-slate-800 rounded w-full hidden';
+            itemEditorContainer.className = 'px-4 py-3 bg-slate-950 border border-slate-800 rounded w-full';
 
-            itemEditBtn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              itemEditorContainer.classList.remove('hidden');
-              renderFormular(itemEditorContainer, toolItemSchema, item, (newVal) => {
-                activeConfig.toolsets[tsIndex].tools[itemIndex] = { ...item, ...newVal };
-                itemEditorContainer.classList.add('hidden');
-                notifyChange();
-                renderTree();
-              }, () => {
-                itemEditorContainer.classList.add('hidden');
-              });
+            // Always render form immediately for items, so it's ready when Accordion is expanded
+            renderFormular(itemEditorContainer, toolItemSchema, item, (newVal) => {
+              activeConfig.toolsets[tsIndex].tools[itemIndex] = { ...item, ...newVal };
+              notifyChange();
+              renderTree();
+            }, () => {
+              renderTree(); // Simply re-render to discard changes and close
             });
 
             itemDelBtn.addEventListener('click', (e) => {
@@ -184,11 +175,17 @@ export const createVisualEditorTree = function(props: VisualEditorTreeProps): Vi
               }
             });
 
+            const itemPath = `${tsPath}-item-${itemIndex}`;
+            
             const itemAccordion = createAccordion({
                title: itemTitleContainer,
                children: [itemEditorContainer],
-               defaultOpen: false,
-               className: 'w-full'
+               defaultOpen: expandedSets.has(itemPath),
+               className: 'w-full',
+               onToggle: (isOpen) => {
+                 if (isOpen) expandedSets.add(itemPath);
+                 else expandedSets.delete(itemPath);
+               }
             });
 
             cleanupFunctions.push(itemAccordion.cleanup.destroy);
