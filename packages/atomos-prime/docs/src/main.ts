@@ -1,3 +1,4 @@
+import '../../../atomos-prime-style/dist/styles.css'
 import { createSignal } from '../../src/index.js'
 import { COMPONENT_REGISTRY, getDocById } from './registry.js'
 
@@ -16,25 +17,35 @@ sidebar.innerHTML = `
 `;
 
 const navList = document.createElement('div');
-navList.style.cssText = 'display:flex;flex-direction:column;gap:0.5rem;';
+navList.style.cssText = 'display:flex;flex-direction:column;gap:1.5rem;';       
 
-COMPONENT_REGISTRY.forEach(doc => {
-  const link = document.createElement('a');
-  link.href = `#${doc.id}`;
-  link.textContent = doc.title;
-  link.style.cssText = 'display:block;padding:0.5rem;border-radius:4px;color:#cbd5e1;text-decoration:none;font-size:0.875rem;';
-  link.onmouseover = () => link.style.background = '#1e293b';
-  link.onmouseout = () => {
-    if (window.location.hash !== `#${doc.id}`) {
-       link.style.background = 'transparent';
-    }
-  };
-  link.onclick = () => {
-    // Basic routing trick
-    Array.from(navList.children).forEach(child => (child as HTMLElement).style.background = 'transparent');
-    link.style.background = '#334155';
-  };
-  navList.appendChild(link);
+const categories = Array.from(new Set(COMPONENT_REGISTRY.map(d => d.category)));
+
+categories.forEach(cat => {
+  const groupWrap = document.createElement('div');
+      
+  const groupTitle = document.createElement('div');
+  groupTitle.textContent = cat;
+  groupTitle.style.cssText = 'font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;font-weight:700;margin-bottom:0.5rem;padding-left:0.5rem;';
+  groupWrap.appendChild(groupTitle);
+  
+  const groupLinks = document.createElement('div');
+  groupLinks.style.cssText = 'display:flex;flex-direction:column;gap:0.25rem;';
+  
+  COMPONENT_REGISTRY.filter(d => d.category === cat).forEach(doc => {
+    const link = document.createElement('a');
+    link.href = `#${doc.id}`;
+    link.textContent = doc.title;
+    link.className = 'nav-link';
+    link.id = `nav-${doc.id}`;
+    link.style.cssText = 'display:block;padding:0.5rem;border-radius:4px;color:#cbd5e1;text-decoration:none;font-size:0.875rem;transition:all 0.15s;';
+    link.onmouseover = () => { if (window.location.hash !== `#${doc.id}`) link.style.background = '#1e293b'; };
+    link.onmouseout = () => { if (window.location.hash !== `#${doc.id}`) link.style.background = 'transparent'; };
+    groupLinks.appendChild(link);
+  });
+  
+  groupWrap.appendChild(groupLinks);
+  navList.appendChild(groupWrap);
 });
 
 sidebar.appendChild(navList);
@@ -53,12 +64,21 @@ mainContent.appendChild(sandboxViewport);
 
 // The Router State Manager
 let currentCleanup: (() => void) | null = null;
+let currentSignalUnsub: (() => void) | null = null;
 const activeStateSignal = createSignal<any>({});
 
 const loadComponent = (id: string) => {
   if (currentCleanup) currentCleanup();
+  if (currentSignalUnsub) currentSignalUnsub();
   sandboxViewport.innerHTML = '';
-  
+
+  // Update navigation highlighting
+  document.querySelectorAll('.nav-link').forEach(el => {
+    (el as HTMLElement).style.background = 'transparent';
+  });
+  const actLink = document.getElementById(`nav-${id}`);
+  if (actLink) actLink.style.background = '#334155';
+
   const doc = getDocById(id) || COMPONENT_REGISTRY[0];
   if (!doc) return;
   
@@ -162,7 +182,7 @@ const loadComponent = (id: string) => {
   });
 
   // -- Subscribe to State updates to Re-render Component and Code
-  const unsub = activeStateSignal.subscribe(newState => {
+  currentSignalUnsub = activeStateSignal.subscribe(newState => {
     // 1. Update Preview Render
     previewOutput.innerHTML = '';
     const comp = doc.renderPreview(newState);
@@ -173,7 +193,7 @@ const loadComponent = (id: string) => {
     } else {
        elToAppend = comp.element;
        if (currentCleanup) currentCleanup(); // clean old
-       currentCleanup = comp.cleanup.destroy;
+       currentCleanup = comp.cleanup?.destroy || null;
     }
     previewOutput.appendChild(elToAppend);
 
@@ -188,7 +208,7 @@ const loadComponent = (id: string) => {
   });
 
   // Initial render
-  activeStateSignal.set(activeStateSignal.value);
+  activeStateSignal.set({ ...activeStateSignal.value });
 };
 
 // Basic Hash Router
@@ -198,4 +218,8 @@ window.addEventListener('hashchange', () => {
 });
 
 // Load first or hash
-loadComponent(window.location.hash.slice(1) || COMPONENT_REGISTRY[0].id);
+if (window.location.hash && window.location.hash.length > 1) {
+  loadComponent(window.location.hash.slice(1));
+} else {
+  loadComponent(COMPONENT_REGISTRY[0].id);
+}

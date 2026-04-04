@@ -1,9 +1,7 @@
 // Core Doc Definition Interface
 export interface DocDefinition<TState> {
   id: string;               
-  title: string;            
-  description: string;      
-  
+  category: string;
   defaultState: TState;     
   
   controls: Array<{

@@ -1,15 +1,15 @@
-import type { IconName } from '../../../src/index.js'
 import { createIcon } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface IconState {
-  name: IconName;
+  name: string;
   size: number;
   color: string;
 }
 
 export const iconDoc: DocDefinition<IconState> = {
   id: 'icon',
+  category: 'Asset / Visual',
   title: 'SVG Icon (createIcon)',
   description: 'A deeply reactive SVG icon component that supports various sizes, colors, and predefined paths.',
   defaultState: {
