@@ -1,4 +1,4 @@
-import { VbsTabs, VbsTab, VbsTabPanel } from '../../../src/components/tabs/index.js'
+import { VbsTab, VbsTabPanel, VbsTabs } from '../../../src/components/tabs/index.js'
 import type { DocDefinition } from '../types.js'
 
 if (!customElements.get('vbs-tabs')) customElements.define('vbs-tabs', VbsTabs);

@@ -1,5 +1,5 @@
+import { AtpModal, defineAtpModal } from '../../../src/features/modal/atp-modal/atp-modal.js'
 import { createButton } from '../../../src/index.js'
-import { defineAtpModal, AtpModal } from '../../../src/features/modal/atp-modal/atp-modal.js'
 import type { DocDefinition } from '../types.js'
 
 // Pre-register for docs
