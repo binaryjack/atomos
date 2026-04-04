@@ -1,6 +1,6 @@
-import type { DpContext }    from '../dp-context.js';
-import { createDpSwitch }    from './create-dp-switch.js';
-import type { DpSwitchResult } from './create-dp-switch.js';
+import type { DpContext } from '../dp-context.js'
+import type { DpSwitchResult } from './create-dp-switch.js'
+import { createDpSwitch } from './create-dp-switch.js'
 
 export interface DpHeaderResult {
   element: HTMLDivElement;

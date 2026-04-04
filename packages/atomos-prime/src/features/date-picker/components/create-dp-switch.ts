@@ -1,6 +1,6 @@
-import type { DpContext }           from '../dp-context.js';
-import type { DatePickerGridModeType } from '../types/date-picker.types.js';
-import { MONTHS }                   from '../models.js';
+import type { DpContext } from '../dp-context.js'
+import { MONTHS } from '../models.js'
+import type { DatePickerGridModeType } from '../types/date-picker.types.js'
 
 export interface DpSwitchResult {
   element: HTMLButtonElement;

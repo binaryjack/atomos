@@ -1,12 +1,12 @@
-import type { DpContext }          from '../dp-context.js';
-import { createDpHeader }          from './create-dp-header.js';
-import { createDpBodyDays }        from './create-dp-body-days.js';
-import { createDpBodyMonths }      from './create-dp-body-months.js';
-import { createDpBodyYears }       from './create-dp-body-years.js';
-import type { DpHeaderResult }     from './create-dp-header.js';
-import type { DpBodyDaysResult }   from './create-dp-body-days.js';
-import type { DpBodyMonthsResult } from './create-dp-body-months.js';
-import type { DpBodyYearsResult }  from './create-dp-body-years.js';
+import type { DpContext } from '../dp-context.js'
+import type { DpBodyDaysResult } from './create-dp-body-days.js'
+import { createDpBodyDays } from './create-dp-body-days.js'
+import type { DpBodyMonthsResult } from './create-dp-body-months.js'
+import { createDpBodyMonths } from './create-dp-body-months.js'
+import type { DpBodyYearsResult } from './create-dp-body-years.js'
+import { createDpBodyYears } from './create-dp-body-years.js'
+import type { DpHeaderResult } from './create-dp-header.js'
+import { createDpHeader } from './create-dp-header.js'
 
 export interface DpDrawerUiResult {
   element: HTMLDivElement;

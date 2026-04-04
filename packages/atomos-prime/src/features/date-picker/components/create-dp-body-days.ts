@@ -1,7 +1,7 @@
-import type { DpContext }            from '../dp-context.js';
-import { createDpCell }              from './create-dp-cell.js';
-import type { DpCellResult }         from './create-dp-cell.js';
-import { WEEK_DAYS }                 from '../models.js';
+import type { DpContext } from '../dp-context.js'
+import { WEEK_DAYS } from '../models.js'
+import type { DpCellResult } from './create-dp-cell.js'
+import { createDpCell } from './create-dp-cell.js'
 
 export interface DpBodyDaysResult {
   element: HTMLDivElement;

@@ -1,9 +1,9 @@
-import { createSignal } from '../../core/create-signal.js';
-import type { Signal } from '../../core/types/signal.types.js';
-import { DateFormatsEnum, formatDate } from './date-utils.js';
-import type { DpDrawerResult } from './dp-drawer.js';
-import { createDpDrawer } from './dp-drawer.js';
-import type { DatePickerSelectionModeType } from './types/date-picker.types.js';
+import { createSignal } from '../../core/create-signal.js'
+import type { Signal } from '../../core/types/signal.types.js'
+import { DateFormatsEnum, formatDate } from './date-utils.js'
+import type { DpDrawerResult } from './dp-drawer.js'
+import { createDpDrawer } from './dp-drawer.js'
+import type { DatePickerSelectionModeType } from './types/date-picker.types.js'
 
 export interface DatePickerProps {
   name?:          string;

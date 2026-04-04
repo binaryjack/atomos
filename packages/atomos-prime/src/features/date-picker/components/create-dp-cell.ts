@@ -1,6 +1,6 @@
-import type { IDatePickerCell } from '../models.js';
-import type { DpContext }       from '../dp-context.js';
-import { MONTHS }               from '../models.js';
+import type { DpContext } from '../dp-context.js'
+import type { IDatePickerCell } from '../models.js'
+import { MONTHS } from '../models.js'
 
 export interface DpCellResult {
   element: HTMLButtonElement;
