@@ -85,8 +85,12 @@ export const createCanvasPage = function() {
   const viewport = createCanvasViewport(canvasWrap, svg);
   viewport.state.subscribe(() => {
     viewportGroup.setAttribute('transform', viewport.transform());
+    smallGrid.setAttribute('patternTransform', viewport.transform());
+    largeGrid.setAttribute('patternTransform', viewport.transform());
   });
   viewportGroup.setAttribute('transform', viewport.transform());
+  smallGrid.setAttribute('patternTransform', viewport.transform());
+  largeGrid.setAttribute('patternTransform', viewport.transform());
   cleanups.push(viewport.cleanup);
 
   // Workspace

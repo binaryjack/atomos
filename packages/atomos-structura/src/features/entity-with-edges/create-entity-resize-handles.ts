@@ -76,8 +76,24 @@ export const createEntityResizeHandles = function(
       if (corner === 'bl') { newW = Math.max(MIN_W, resizeStart.w - dx); newH = Math.max(MIN_H, resizeStart.h + dy); newX = resizeStart.px + (resizeStart.w - newW); }
       if (corner === 'tr') { newW = Math.max(MIN_W, resizeStart.w + dx); newH = Math.max(MIN_H, resizeStart.h - dy); newY = resizeStart.py + (resizeStart.h - newH); }
       if (corner === 'tl') { newW = Math.max(MIN_W, resizeStart.w - dx); newH = Math.max(MIN_H, resizeStart.h - dy); newX = resizeStart.px + (resizeStart.w - newW); newY = resizeStart.py + (resizeStart.h - newH); }
-      dimensions.set({ width: newW, height: newH });
-      position.set({ x: newX, y: newY });
+
+      // Identify if grid snap should happen
+      const root = document.querySelector('.vbs-workspace, vbs-workspace') as HTMLElement || document.body;
+      let gridSize = 16;
+      if (root) {
+        const gridVar = getComputedStyle(root).getPropertyValue('--vbs-grid-size');
+        const parsed = parseInt(gridVar);
+        if (!isNaN(parsed) && parsed > 0) gridSize = parsed;
+      }
+      
+      dimensions.set({ 
+        width: Math.max(MIN_W, Math.round(newW / gridSize) * gridSize), 
+        height: Math.max(MIN_H, Math.round(newH / gridSize) * gridSize) 
+      });
+      position.set({ 
+        x: Math.round(newX / gridSize) * gridSize, 
+        y: Math.round(newY / gridSize) * gridSize 
+      });
     };
 
     const onMouseUp = (): void => {
