@@ -48,7 +48,7 @@ export const accordionDoc: DocDefinition<AccordionState> = {
     };
   },
   renderCode: (state) => {
-    return \`import { createAccordion, createTypography } from '@atomos/prime';
+    return `import { createAccordion, createTypography } from '@atomos/prime';
 
 const textNode = createTypography({ 
   variant: 'p', 
@@ -56,13 +56,13 @@ const textNode = createTypography({
 });
 
 const { element, cleanup } = createAccordion({
-  title: '\${state.title}',
-  defaultOpen: \${state.defaultOpen},
-  disabled: \${state.disabled},
+  title: '${state.title}',
+  defaultOpen: ${state.defaultOpen},
+  disabled: ${state.disabled},
   children: [textNode.element],
   onToggle: (isOpen) => console.log('Accordion stat:', isOpen)
 });
 
-document.body.appendChild(element);\`;
+document.body.appendChild(element);`;
   }
 };

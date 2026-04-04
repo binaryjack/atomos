@@ -51,7 +51,7 @@ export const cardDoc: DocDefinition<CardState> = {
     };
   },
   renderCode: (state) => {
-    return \`import { createCard, createTypography } from '@atomos/prime';
+    return `import { createCard, createTypography } from '@atomos/prime';
 
 const textNode = createTypography({ 
   variant: 'p', 
@@ -59,13 +59,13 @@ const textNode = createTypography({
 });
 
 const { element, cleanup } = createCard({
-  title: '\${state.title}',
-  subtitle: '\${state.subtitle}',
-  padding: '\${state.padding}',
-  shadow: '\${state.shadow}',
+  title: '${state.title}',
+  subtitle: '${state.subtitle}',
+  padding: '${state.padding}',
+  shadow: '${state.shadow}',
   children: [textNode.element]
 });
 
-document.body.appendChild(element);\`;
+document.body.appendChild(element);`;
   }
 };

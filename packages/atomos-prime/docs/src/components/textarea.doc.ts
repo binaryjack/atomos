@@ -39,17 +39,17 @@ export const textareaDoc: DocDefinition<TextareaState> = {
     });
   },
   renderCode: (state) => {
-    return \`import { createTextarea } from '@atomos/prime';
+    return `import { createTextarea } from '@atomos/prime';
 
 const { element, cleanup } = createTextarea({
-  value: '\${state.value}',
-  placeholder: '\${state.placeholder}',
-  rows: \${state.rows},
-  cols: \${state.cols},
-  disabled: \${state.disabled},
+  value: '${state.value}',
+  placeholder: '${state.placeholder}',
+  rows: ${state.rows},
+  cols: ${state.cols},
+  disabled: ${state.disabled},
   onChange: (v) => console.log(v)
 });
 
-document.body.appendChild(element);\`;
+document.body.appendChild(element);`;
   }
 };

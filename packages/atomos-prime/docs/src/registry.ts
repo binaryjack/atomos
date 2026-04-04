@@ -9,19 +9,31 @@ import { skeletonDoc } from './components/skeleton.doc.js'
 import { spinnerDoc } from './components/spinner.doc.js'
 import { themeBuilderDoc } from './components/theme-builder.doc.js'
 import { toggleDoc } from './components/toggle.doc.js'
+import { typographyDoc } from './components/typography.doc.js'
+import { textareaDoc } from './components/textarea.doc.js'
+import { cardDoc } from './components/card.doc.js'
+import { accordionDoc } from './components/accordion.doc.js'
+import { dropdownDoc } from './components/dropdown.doc.js'
+import { editableLabelDoc } from './components/editable-label.doc.js'
 
 export const COMPONENT_REGISTRY = [
   themeBuilderDoc,
+  accordionDoc,
   badgeDoc,
   buttonDoc,
+  cardDoc,
   checkboxDoc,
   circularProgressDoc,
+  dropdownDoc,
+  editableLabelDoc,
   iconDoc,
   inputDoc,
   progressBarDoc,
   skeletonDoc,
   spinnerDoc,
-  toggleDoc
+  textareaDoc,
+  toggleDoc,
+  typographyDoc
 ];
 
 export const getDocById = (id: string) => {

@@ -75,12 +75,12 @@ export const createIcon = function(props: IconProps): IconResult {
   // Handle icon name (string or signal)
   if (typeof props.name === 'string') {
     updateIcon(props.name);
-  } else {
+  } else if (props.name) {
     updateIcon(props.name.value);
     const unsubscribe = props.name.subscribe(updateIcon);
     cleanupFunctions.push(unsubscribe);
   }
-  
+
   // Click handler
   if (props.onClick) {
     svg.style.cursor = 'pointer';

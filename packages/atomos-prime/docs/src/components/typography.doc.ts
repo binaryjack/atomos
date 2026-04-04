@@ -26,13 +26,13 @@ export const typographyDoc: DocDefinition<TypographyState> = {
     });
   },
   renderCode: (state) => {
-    return \`import { createTypography } from '@atomos/prime';
+    return `import { createTypography } from '@atomos/prime';
 
 const { element, cleanup } = createTypography({
-  children: '\${state.children}',
-  variant: '\${state.variant}'
+  children: '${state.children}',
+  variant: '${state.variant}'
 });
 
-document.body.appendChild(element);\`;
+document.body.appendChild(element);`;
   }
 };
