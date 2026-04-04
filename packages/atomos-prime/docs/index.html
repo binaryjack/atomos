@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Atomos Prime Component Documentation</title>
+    <!-- We'll import Prime Styles here -->
+    <link rel="stylesheet" href="../../atomos-prime-style/dist/output.css" />
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, sans-serif;
+        background-color: var(--vbs-bg-body, #0f172a);
+        color: var(--vbs-text-primary, #f1f5f9);
+      }
+      
+      /* Basic syntax highlighting colors for our code tab */
+      .string { color: #86efac; }
+      .number { color: #fca5a5; }
+      .boolean { color: #fcd34d; }
+      .null { color: #9ca3af; }
+      .key { color: #93c5fd; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <div id="docs-root"></div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

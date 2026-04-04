@@ -12,6 +12,7 @@
     "dev": "pnpm -r dev",
     "demo": "pnpm -r build && npx http-server packages -p 3002 -o /atomos-structura/canvas.html",
     "demo:dev": "start cmd /k \"pnpm --filter @atomos/structura dev\" && npx http-server packages -p 3002 -o /atomos-structura/canvas.html",
+    "docs:prime": "pnpm --filter @atomos/prime docs",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "type-check": "pnpm -r type-check",
@@ -23,6 +24,8 @@
     "vitest": "^1.0.0",
     "eslint": "^8.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0"
+    "@typescript-eslint/parser": "^6.0.0",
+    "@ai-agencee/cli": "^1.4.1",
+    "@ai-agencee/mcp": "^1.3.5"
   }
 }

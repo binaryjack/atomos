@@ -138,20 +138,19 @@
         
         try {
           // This simulates the old behavior that would cause quota issues
-          localStorage.setItem(\`vbe2:movement-\${i}\`, JSON.stringify(pos));
+          localStorage.setItem(`vbe2:movement-${i}`, JSON.stringify(pos));   
           performanceCounters.persistCalls++;
         } catch (error) {
           if (error.name === 'QuotaExceededError') {
             performanceCounters.quotaErrors++;
-            console.warn('Quota exceeded detected - cleanup should trigger');
+            console.warn('Quota exceeded detected - cleanup should trigger');   
           }
         }
       }
-      
+
       // Clean up test data
       for (let i = 0; i < 50; i++) {
-        localStorage.removeItem(\`vbe2:movement-\${i}\`);
-      }
+        localStorage.removeItem(`vbe2:movement-${i}`);
       
       performanceCounters.debouncedSaves++; // In real scenario, this would be much lower
       updateMetrics();
