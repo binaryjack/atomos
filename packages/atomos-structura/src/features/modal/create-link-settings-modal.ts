@@ -1,7 +1,8 @@
-import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js';
-import { createButton } from '@atomos/prime';
+import { createButton } from '@atomos/prime'
+import type { RenderType } from '@atomos/structura-core'
+import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
 
-import type { AtpModal } from '@atomos/prime';
+import type { AtpModal } from '@atomos/prime'
 
 const modalCache = new Map<string, AtpModal>();
 
@@ -140,7 +141,7 @@ export const openLinkSettingsModal = function(linkId: string): void {
         targetCardinality: targetCardDropdown.getSelectElement().value,
         sourceProperty: sourcePropDropdown.getSelectElement().value || undefined, 
         targetProperty: targetPropDropdown.getSelectElement().value || undefined,
-        renderType: renderTypeDropdown.getSelectElement().value as any  
+        renderType: renderTypeDropdown.getSelectElement().value as RenderType
       });
       modal!.close();
     }

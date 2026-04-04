@@ -79,7 +79,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
 
   // ─── scrollable body ──────────────────────────────────────────────────────
   const scrollBody = document.createElement('div');
-  scrollBody.style.cssText = 'flex:1;overflow-y:auto;overflow-x:hidden;background:var(--vbs-bg-input, #09090b);';
+  scrollBody.style.cssText = 'flex:1;overflow-y:auto;overflow-x:auto;background:var(--vbs-bg-input, #09090b);';
   body.appendChild(scrollBody);
 
 // Track existing rows by property key

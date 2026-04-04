@@ -2,7 +2,7 @@ import type { Signal } from '@atomos/prime'
 import type { EdgePosition } from '../features/edge/types/edge-position.types.js'
 import { openLinkSettingsModal } from '../features/modal/create-link-settings-modal.js'
 import { getCanvasAdapter } from './adapters/canvas-adapter.js'
-import { bezierMidpoint, getMidpoint } from './bezier.js'
+import { getMidpoint } from './bezier.js'
 import { registry } from './create-signal-registry.js'
 import { validateTopologicalConnection } from './domain/validate-topological-connection.js'
 import { GLOBAL_KEY } from './registry-keys.js'
@@ -321,12 +321,15 @@ export const createLinkFinalizer = function(
         const d = getCurDst();
         const currentLink = adapter.getLink(linkId);
         const currentRenderType: any = currentLink?.renderType || 'bezier';
-        permanentLink.updatePath(s, d, srcEdge, dstEdge, currentRenderType);
+        const srcRect = { ...srcEntity.position.value, ...srcEntity.dimensions.value };
+        const dstRect = { ...dstEntity.position.value, ...dstEntity.dimensions.value };
+        
+        permanentLink.updatePath(s, d, srcEdge, dstEdge, currentRenderType, srcRect, dstRect);
         
         const valid = currentLink?.isValid ?? true;
         permanentLink.setValidity(valid);
         
-        moveLinkLabelFO(fo, getMidpoint(currentRenderType, s, srcEdge, d, dstEdge));
+        moveLinkLabelFO(fo, getMidpoint(currentRenderType, s, srcEdge, d, dstEdge, srcRect, dstRect));
       };
       linkSubscriptions.set(linkId, [
         srcEntity.position.subscribe(recompute),
@@ -334,6 +337,9 @@ export const createLinkFinalizer = function(
         dstEntity.position.subscribe(recompute),
         dstEntity.dimensions.subscribe(recompute),
       ]);
+      
+      // Perform initial computation
+      recompute();
       
       // Hook into adapter to update if renderType changes
       linkSubscriptions.get(linkId)?.push(

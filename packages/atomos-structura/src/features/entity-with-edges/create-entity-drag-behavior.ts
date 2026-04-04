@@ -1,5 +1,5 @@
-import type { Signal } from '@atomos/prime';
-import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js';
+import type { Signal } from '@atomos/prime'
+import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js'
 
 export interface EntityDragBehaviorResult {
   readonly cleanup: () => void;
@@ -53,9 +53,22 @@ export const createEntityDragBehavior = function(
     if (!didMove && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
       didMove = true;
     }
+    
+    // Grid snapping: use CSS variable --vbs-grid-size or default to 16
+    const root = document.querySelector('.vbs-workspace, vbs-workspace') as HTMLElement || document.body;
+    let gridSize = 16;
+    if (root) {
+      const gridVar = getComputedStyle(root).getPropertyValue('--vbs-grid-size');
+      const parsed = parseInt(gridVar);
+      if (!isNaN(parsed) && parsed > 0) gridSize = parsed;
+    }
+
+    const rawX = dragStart.posX + dx;
+    const rawY = dragStart.posY + dy;
+
     position.set({
-      x: dragStart.posX + dx,
-      y: dragStart.posY + dy
+      x: Math.round(rawX / gridSize) * gridSize,
+      y: Math.round(rawY / gridSize) * gridSize
     });
   };
 

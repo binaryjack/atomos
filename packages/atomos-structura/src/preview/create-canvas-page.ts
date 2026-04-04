@@ -1,13 +1,14 @@
+import { getCanvasAdapter } from '../core/adapters/canvas-adapter.js'
 import { createDAGObserver } from '../core/adapters/dag-observer.js'
-import { getCustomShapes, getToolboxConfig, setCustomShapes, setToolboxConfig, getGeneralSettings, setGeneralSettings } from '../core/adapters/toolbox-config-manager.js'
+import { getCustomShapes, getGeneralSettings, getToolboxConfig, setCustomShapes, setGeneralSettings, setToolboxConfig } from '../core/adapters/toolbox-config-manager.js'
 import { createCanvasViewport } from '../core/create-canvas-viewport.js'
+import { getGlobalReduxStore } from '../core/create-redux-store.js'
 import { createWorkspaceManager } from '../core/create-workspace-manager.js'
 import { getEntityManager } from '../core/presentation/entity-manager.js'
 import { createInteractiveEntityDemo } from '../features/entity-with-edges/create-interactive-entity-demo.js'
 import { createSchemaPanel } from '../features/schema-panel/index.js'
 import { createSettingsPage } from '../features/settings-page/create-settings-page.js'
 import { createCanvasToolbar } from './create-canvas-toolbar.js'
-import { getGlobalReduxStore } from '../core/create-redux-store.js'
 
 export const createCanvasPage = function() {
   const cleanups: Array<() => void> = [];
@@ -323,6 +324,19 @@ export const createCanvasPage = function() {
           setCustomShapes(settings.shapes);
           setGeneralSettings(settings.general);
           applyGridSettings();
+          
+          const adapter = getCanvasAdapter();
+          const allLinks = adapter.getAllLinks() || [];
+          allLinks.forEach((link: any) => {
+            if (!link.renderType || link.renderType === 'bezier' || link.renderType === 'orthogonal' || link.renderType === 'linear') {
+              if (settings.general?.defaultLinkStyle) {
+                adapter.updateLinkProperties(link.id, {
+                  renderType: settings.general.defaultLinkStyle
+                });
+              }
+            }
+          });
+          
           store.dispatch({ type: 'settings-toggled', is_open: false });
         },
       });

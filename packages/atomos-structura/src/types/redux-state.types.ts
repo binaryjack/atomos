@@ -35,7 +35,7 @@ export type ReduxAction =
   | { type: 'entity-updated'; schema_id: string; entity: Entity }
   | { type: 'entity-added'; schema_id: string; entity: Entity }
   | { type: 'entity-removed'; schema_id: string; entity_id: string }
-  | { type: 'link-created'; schema_id: string; link_id?: string; from_id: string; to_id: string; from_anchor?: string; to_anchor?: string; leftCardinality?: string; rightCardinality?: string; leftProperty?: string; rightProperty?: string }
+  | { type: 'link-created'; schema_id: string; link_id?: string; from_id: string; to_id: string; from_anchor?: string; to_anchor?: string; leftCardinality?: string; rightCardinality?: string; leftProperty?: string; rightProperty?: string; renderType?: string }
   | { type: 'link-updated'; schema_id: string; link: LinkProps }
   | { type: 'link-removed'; schema_id: string; link_id: string }
   | { type: 'viewport-updated'; viewport: ViewportState }

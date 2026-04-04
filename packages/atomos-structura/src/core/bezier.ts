@@ -1,4 +1,4 @@
-import type { EdgePosition } from '../features/edge/types/edge.types.js';
+import type { EdgePosition } from '../features/edge/types/edge.types.js'
 
 // Control-point offset as fraction of distance, clamped to [minOffset, maxOffset]
 const MIN_OFFSET = 40;
@@ -63,6 +63,157 @@ export const linearPath = (
   return `M ${src.x} ${src.y} L ${dst.x} ${dst.y}`;
 };
 
+interface Box { minX: number; maxX: number; minY: number; maxY: number; }
+
+const getBox = (pt: {x: number; y: number}, edge: EdgePosition, rect?: {x: number; y: number; width: number; height: number}): Box | null => {
+  if (!rect) return null;
+  const padding = 20; 
+  return {
+    minX: rect.x - padding,
+    maxX: rect.x + rect.width + padding,
+    minY: rect.y - padding,
+    maxY: rect.y + rect.height + padding
+  };
+};
+
+const routeToX = (p: {x: number; y: number}, edge: EdgePosition, targetX: number, box: Box | null): {x: number; y: number}[] => {
+  if (!box || (edge === 'left' && targetX <= p.x) || (edge === 'right' && targetX >= p.x)) {
+    return [{ x: targetX, y: p.y }];
+  }
+  const routeTop = Math.abs(p.y - box.minY) < Math.abs(p.y - box.maxY);
+  const yRoute = routeTop ? box.minY : box.maxY;
+  return [{ x: p.x, y: yRoute }, { x: targetX, y: yRoute }];
+};
+
+const routeToY = (p: {x: number; y: number}, edge: EdgePosition, targetY: number, box: Box | null): {x: number; y: number}[] => {
+  if (!box || (edge === 'top' && targetY <= p.y) || (edge === 'bottom' && targetY >= p.y)) {
+    return [{ x: p.x, y: targetY }];
+  }
+  const routeLeft = Math.abs(p.x - box.minX) < Math.abs(p.x - box.maxX);
+  const xRoute = routeLeft ? box.minX : box.maxX;
+  return [{ x: xRoute, y: p.y }, { x: xRoute, y: targetY }];
+};
+
+export const getOrthogonalPoints = (
+  src: { x: number; y: number },
+  srcEdge: EdgePosition,
+  dst: { x: number; y: number },
+  dstEdge?: EdgePosition,
+  srcRect?: { x: number; y: number; width: number; height: number },
+  dstRect?: { x: number; y: number; width: number; height: number }
+): { x: number; y: number }[] => {
+  const inferredDstEdge: EdgePosition = dstEdge ?? (
+    srcEdge === 'top'    ? 'bottom' :
+    srcEdge === 'bottom' ? 'top'    :
+    srcEdge === 'left'   ? 'right'  : 'left'
+  );
+
+  const isSrcHorizontal = srcEdge === 'left' || srcEdge === 'right';
+  const isDstHorizontal = inferredDstEdge === 'left' || inferredDstEdge === 'right';
+
+  const MIN_OFFSET = 20;
+
+  const p1 = { x: src.x, y: src.y };
+  if (srcEdge === 'top') p1.y -= MIN_OFFSET;
+  if (srcEdge === 'bottom') p1.y += MIN_OFFSET;
+  if (srcEdge === 'left') p1.x -= MIN_OFFSET;
+  if (srcEdge === 'right') p1.x += MIN_OFFSET;
+
+  const p2 = { x: dst.x, y: dst.y };
+  if (inferredDstEdge === 'top') p2.y -= MIN_OFFSET;
+  if (inferredDstEdge === 'bottom') p2.y += MIN_OFFSET;
+  if (inferredDstEdge === 'left') p2.x -= MIN_OFFSET;
+  if (inferredDstEdge === 'right') p2.x += MIN_OFFSET;
+
+  const srcBox = getBox(src, srcEdge, srcRect);
+  const dstBox = getBox(dst, inferredDstEdge, dstRect);
+
+  const pts = [{ x: src.x, y: src.y }, p1];
+
+  if (isSrcHorizontal && isDstHorizontal) {
+    let midX = (p1.x + p2.x) / 2;
+    if (srcEdge === 'right' && inferredDstEdge === 'left' && p2.x < p1.x) {
+      midX = (p1.x + p2.x) / 2;
+    } else if (srcEdge === inferredDstEdge) {
+      midX = srcEdge === 'right' ? Math.max(p1.x, p2.x) + MIN_OFFSET : Math.min(p1.x, p2.x) - MIN_OFFSET;
+    }
+    const pSrcHalf = routeToX(p1, srcEdge, midX, srcBox);
+    const pDstHalf = routeToX(p2, inferredDstEdge, midX, dstBox);
+    pts.push(...pSrcHalf);
+    pts.push(...pDstHalf.reverse());
+  } else if (!isSrcHorizontal && !isDstHorizontal) {
+    let midY = (p1.y + p2.y) / 2;
+    if (srcEdge === 'bottom' && inferredDstEdge === 'top' && p2.y < p1.y) {
+      midY = (p1.y + p2.y) / 2;
+    } else if (srcEdge === inferredDstEdge) {
+      midY = srcEdge === 'bottom' ? Math.max(p1.y, p2.y) + MIN_OFFSET : Math.min(p1.y, p2.y) - MIN_OFFSET;
+    }
+    const pSrcHalf = routeToY(p1, srcEdge, midY, srcBox);
+    const pDstHalf = routeToY(p2, inferredDstEdge, midY, dstBox);
+    pts.push(...pSrcHalf);
+    pts.push(...pDstHalf.reverse());
+  } else if (isSrcHorizontal && !isDstHorizontal) {
+    const targetX = (p1.x + p2.x) / 2;
+    const targetY = (p1.y + p2.y) / 2;
+    const pSrcHalf = routeToX(p1, srcEdge, targetX, srcBox);
+    const pDstHalf = routeToY(p2, inferredDstEdge, targetY, dstBox);
+    pts.push(...pSrcHalf);
+    const lastSrc = pSrcHalf[pSrcHalf.length - 1] || p1;
+    const lastDst = pDstHalf[pDstHalf.length - 1] || p2;
+    if (lastSrc.x !== targetX || lastDst.y !== targetY) {
+      pts.push({ x: targetX, y: targetY });
+    }
+    pts.push({ x: lastSrc.x, y: lastDst.y });
+    pts.push(...pDstHalf.reverse());
+  } else {
+    const targetX = (p1.x + p2.x) / 2;
+    const targetY = (p1.y + p2.y) / 2;
+    const pSrcHalf = routeToY(p1, srcEdge, targetY, srcBox);
+    const pDstHalf = routeToX(p2, inferredDstEdge, targetX, dstBox);
+    pts.push(...pSrcHalf);
+    const lastSrc = pSrcHalf[pSrcHalf.length - 1] || p1;
+    const lastDst = pDstHalf[pDstHalf.length - 1] || p2;
+    if (lastSrc.y !== targetY || lastDst.x !== targetX) {
+      pts.push({ x: targetX, y: targetY }); 
+    }
+    pts.push({ x: lastDst.x, y: lastSrc.y });
+    pts.push(...pDstHalf.reverse());
+  }
+
+  pts.push(p2);
+  pts.push({ x: dst.x, y: dst.y });
+
+  return cleanCollinearPoints(pts);
+};
+
+const cleanCollinearPoints = (pts: {x: number; y: number}[]): {x: number; y: number}[] => {
+  if (pts.length <= 2) return pts;
+  
+  const cleanPts = [pts[0]!];
+  for (let i = 1; i < pts.length - 1; i++) {
+    const prev = cleanPts[cleanPts.length - 1]!;
+    const curr = pts[i]!;
+    const next = pts[i + 1]!;
+    
+    // If it's a straight line, skip the middle point
+    if ((prev.x === curr.x && curr.x === next.x) || (prev.y === curr.y && curr.y === next.y)) {
+      continue;
+    }
+    // Also skip duplicate points
+    if (prev.x === curr.x && prev.y === curr.y) {
+      continue;
+    }
+    cleanPts.push(curr);
+  }
+  const lastPrev = cleanPts[cleanPts.length - 1]!;
+  const last = pts[pts.length - 1]!;
+  if (lastPrev.x !== last.x || lastPrev.y !== last.y) {
+    cleanPts.push(last);
+  }
+
+  return cleanPts;
+};
+
 /**
  * Returns an SVG orthogonal path string (composed of horizontal and vertical line segments).
  */
@@ -70,16 +221,12 @@ export const orthogonalPath = (
   src: { x: number; y: number },
   srcEdge: EdgePosition,
   dst: { x: number; y: number },
-  dstEdge?: EdgePosition
+  dstEdge?: EdgePosition,
+  srcRect?: { x: number; y: number; width: number; height: number },
+  dstRect?: { x: number; y: number; width: number; height: number }
 ): string => {
-  const dx = dst.x - src.x;
-  
-  // Use the same collision detection heuristic as createSvgLine:
-  // Avoid origin entity up to half the length if moving forward,
-  // or go 90% from the origin (10% from target/nearest entity) if moving backward.
-  const midX = dx >= 0 ? src.x + dx * 0.5 : src.x + dx * 0.9;
-  
-  return `M ${src.x} ${src.y} L ${midX} ${src.y} L ${midX} ${dst.y} L ${dst.x} ${dst.y}`;
+  const pts = getOrthogonalPoints(src, srcEdge, dst, dstEdge, srcRect, dstRect);
+  return `M ${pts[0]!.x} ${pts[0]!.y} ` + pts.slice(1).map((p: any) => `L ${p.x} ${p.y}`).join(' ');
 };
 
 /**
@@ -122,11 +269,49 @@ export const orthogonalMidpoint = (
   src: { x: number; y: number },
   srcEdge: EdgePosition,
   dst: { x: number; y: number },
-  dstEdge?: EdgePosition
+  dstEdge?: EdgePosition,
+  srcRect?: { x: number; y: number; width: number; height: number },
+  dstRect?: { x: number; y: number; width: number; height: number }
 ): { x: number; y: number } => {
-  const dx = dst.x - src.x;
-  const midX = dx >= 0 ? src.x + dx * 0.5 : src.x + dx * 0.9;
-  return { x: midX, y: (src.y + dst.y) / 2 };
+  const pts = getOrthogonalPoints(src, srcEdge, dst, dstEdge, srcRect, dstRect);
+  
+  // Calculate total path length
+  let totalLength = 0;
+  const segmentLengths: number[] = [];
+  
+  for (let i = 1; i < pts.length; i++) {
+    const p1 = pts[i - 1]!;
+    const p2 = pts[i]!;
+    const segLength = Math.abs(p2.x - p1.x) + Math.abs(p2.y - p1.y); // orthogonol distance
+    segmentLengths.push(segLength);
+    totalLength += segLength;
+  }
+  
+  const targetLength = totalLength / 2;
+  let currentLength = 0;
+  
+  for (let i = 0; i < segmentLengths.length; i++) {
+    const segLength = segmentLengths[i]!;
+    if (currentLength + segLength >= targetLength) {
+      const remainingLength = targetLength - currentLength;
+      const fraction = segLength > 0 ? remainingLength / segLength : 0;
+      
+      const p1 = pts[i]!;
+      const p2 = pts[i + 1]!;
+      
+      return {
+        x: p1.x + (p2.x - p1.x) * fraction,
+        y: p1.y + (p2.y - p1.y) * fraction
+      };
+    }
+    currentLength += segLength;
+  }
+  
+  // Fallback to the physical midpoint if calculation fails
+  const midIndex = Math.floor(pts.length / 2);
+  const pA = pts[midIndex - 1]!;
+  const pB = pts[midIndex]!;
+  return { x: (pA.x + pB.x) / 2, y: (pA.y + pB.y) / 2 };
 };
 
 export const getMidpoint = (
@@ -134,9 +319,11 @@ export const getMidpoint = (
   src: { x: number; y: number },
   srcEdge: EdgePosition,
   dst: { x: number; y: number },
-  dstEdge?: EdgePosition
+  dstEdge?: EdgePosition,
+  srcRect?: { x: number; y: number; width: number; height: number },
+  dstRect?: { x: number; y: number; width: number; height: number }
 ): { x: number; y: number } => {
   if (renderType === 'linear') return linearMidpoint(src, dst);
-  if (renderType === 'orthogonal') return orthogonalMidpoint(src, srcEdge, dst, dstEdge);
+  if (renderType === 'orthogonal') return orthogonalMidpoint(src, srcEdge, dst, dstEdge, srcRect, dstRect);
   return bezierMidpoint(src, srcEdge, dst, dstEdge);
 };

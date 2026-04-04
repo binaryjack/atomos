@@ -1,8 +1,8 @@
-import type { DomainEntity, DomainLink } from '../core/domain/entity-aggregate.js';
-import type { EntityManager } from '../core/presentation/entity-manager.js';
+import type { DomainEntity, DomainLink } from '../core/domain/entity-aggregate.js'
+import type { EntityManager } from '../core/presentation/entity-manager.js'
 
-import type { Cardinality, RenderType } from '@atomos/structura-core';
-import type { SchemaGraphKernel } from '../core/create-schema-graph-kernel.js';
+import type { Cardinality, RenderType } from '@atomos/structura-core'
+import type { SchemaGraphKernel } from '../core/create-schema-graph-kernel.js'
 
 /**
  * Creates a two-way synchronization bridge between the headless SchemaGraphKernel
@@ -126,9 +126,9 @@ export const createKernelAdapter = (kernel: SchemaGraphKernel, entityManager: En
                         rightEntityId: targetId,
                         leftAnchorId: event.link.sourceAnchorId,
                         rightAnchorId: event.link.targetAnchorId,
-                        leftCardinality: '1' as Cardinality,
-                        rightCardinality: '1' as Cardinality,
-                        renderType: 'linear' as RenderType
+                        leftCardinality: event.link.sourceCardinality as Cardinality || '1',
+                        rightCardinality: event.link.targetCardinality as Cardinality || '1',
+                        renderType: event.link.renderType as RenderType || 'bezier'
                     });
                 } else {
                     console.warn(`Kernel Rejected Link: ${sourceId} -> ${targetId}`);
@@ -142,6 +142,16 @@ export const createKernelAdapter = (kernel: SchemaGraphKernel, entityManager: En
                 break;
             case 'LinkRemoved':
                 kernel.removeLink(event.linkId);
+                break;
+            case 'LinkPropertiesUpdated':
+                const linkToUpdate = entityManager.getLink(event.linkId);
+                if (linkToUpdate) {
+                    kernel.updateLink(event.linkId, {
+                        leftCardinality: linkToUpdate.sourceCardinality as Cardinality,
+                        rightCardinality: linkToUpdate.targetCardinality as Cardinality,
+                        renderType: linkToUpdate.renderType as RenderType
+                    });
+                }
                 break;
             case 'EntityPropertiesUpdated':
                 const propEnt = entityManager.getEntity(event.entityId);

@@ -2,8 +2,8 @@
  * Infrastructure Layer - Repository Implementation
  * Handles persistence through the Global Redux Store
  */
-import type { DomainEntity, DomainLink, EntityRepository, LinkRepository } from '../domain/entity-aggregate.js';
-import { getGlobalReduxStore } from '../create-redux-store.js';
+import { getGlobalReduxStore } from '../create-redux-store.js'
+import type { DomainEntity, DomainLink, EntityRepository, LinkRepository } from '../domain/entity-aggregate.js'
 
 const SCHEMA_ID = 'schema-default';
 
@@ -79,6 +79,7 @@ export const createPersistedLinkRepository = function(): LinkRepository {
       targetCardinality: link.rightCardinality || '1',
       sourceProperty: link.leftProperty,
       targetProperty: link.rightProperty,
+      renderType: (link.renderType as "bezier" | "orthogonal" | "linear") || undefined,
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
@@ -101,7 +102,7 @@ export const createPersistedLinkRepository = function(): LinkRepository {
           rightEntityId: link.targetEntityId,
           leftCardinality: (link.sourceCardinality || '1') as '1' | '*' | '0..1' | '1..*',
           rightCardinality: (link.targetCardinality || '1') as '1' | '*' | '0..1' | '1..*',
-          renderType: 'bezier',
+          renderType: (link.renderType as "bezier" | "orthogonal" | "linear") || 'bezier',
           ...(link.sourceProperty ? { leftProperty: link.sourceProperty } : {}),
           ...(link.targetProperty ? { rightProperty: link.targetProperty } : {})
         } as unknown as any
@@ -118,7 +119,8 @@ export const createPersistedLinkRepository = function(): LinkRepository {
         leftCardinality: link.sourceCardinality,
         rightCardinality: link.targetCardinality,
         leftProperty: link.sourceProperty,
-        rightProperty: link.targetProperty
+        rightProperty: link.targetProperty,
+        renderType: (link.renderType as "bezier" | "orthogonal" | "linear") || 'bezier'
       } as any);
     }
   };
@@ -158,7 +160,7 @@ export const createPersistedLinkRepository = function(): LinkRepository {
  * Simple Event Bus Implementation
  * Decouples components with pub/sub pattern
  */
-import type { ApplicationEvent, EventBus } from '../application/entity-service.js';
+import type { ApplicationEvent, EventBus } from '../application/entity-service.js'
 
 export const createEventBus = function(): EventBus {
   const handlers = new Set<(event: ApplicationEvent) => void>();

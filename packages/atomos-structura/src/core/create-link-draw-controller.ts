@@ -1,7 +1,7 @@
-import type { EdgePosition } from '../features/edge/types/edge-position.types.js';
-import type { LinkFinalizer } from './create-link-finalizer.js';
-import type { InteractiveBehaviorManager } from './types/interactive-behavior-manager.types.js';
-import type { LinkManager } from './types/link-manager.types.js';
+import type { EdgePosition } from '../features/edge/types/edge-position.types.js'
+import type { LinkFinalizer } from './create-link-finalizer.js'
+import type { InteractiveBehaviorManager } from './types/interactive-behavior-manager.types.js'
+import type { LinkManager } from './types/link-manager.types.js'
 
 export interface LinkDrawController {
   readonly startLinkFromAnchor: (
@@ -105,6 +105,8 @@ export const createLinkDrawController = function(
   const updateTempLink = (svgCoords: { x: number; y: number }): void => {
     if (!activeTempLinkId || !activeTempLinkSourcePos) return;
     const tempLink = linkManager.getLink(activeTempLinkId);
+    // Temporary links might overlap origin slightly during drawing, but since the target isn't fixed yet, 
+    // omitting collision checks for temp links creates a smooth drawing feel.
     if (tempLink) tempLink.updatePath(activeTempLinkSourcePos, svgCoords, activeTempSrcEdge);
   };
 

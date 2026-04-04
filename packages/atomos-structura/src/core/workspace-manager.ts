@@ -6,13 +6,13 @@
  * - Clean architecture compatibility
  */
 
-import type { EdgePosition } from '../features/edge/types/edge.types.js';
-import { createSignal } from '@atomos/prime';
-import type { InteractiveBehaviorManager } from './interactive-behavior-manager.js';
-import { createInteractiveBehaviorManager } from './interactive-behavior-manager.js';
-import type { LinkManager } from './link-manager.js';
-import { createLinkManager } from './link-manager.js';
-import type { Signal } from '@atomos/prime';
+import type { Signal } from '@atomos/prime'
+import { createSignal } from '@atomos/prime'
+import type { EdgePosition } from '../features/edge/types/edge.types.js'
+import type { InteractiveBehaviorManager } from './interactive-behavior-manager.js'
+import { createInteractiveBehaviorManager } from './interactive-behavior-manager.js'
+import type { LinkManager } from './link-manager.js'
+import { createLinkManager } from './link-manager.js'
 
 export const ENTITY_DEFAULT_WIDTH  = 200;
 export const ENTITY_DEFAULT_HEIGHT = 120;
@@ -243,7 +243,10 @@ export const createWorkspaceManager = function(
           computeAnchorWorldPos(srcEntityId, srcEdge),
           computeAnchorWorldPos(dstEntityId, dstEdge),
           srcEdge,
-          dstEdge
+          dstEdge,
+          undefined, // renderType default
+          { ...srcEntity.position.value, ...srcEntity.dimensions.value },
+          { ...dstEntity.position.value, ...dstEntity.dimensions.value }
         );
       };
       linkSubscriptions.set(linkId, [
@@ -252,6 +255,9 @@ export const createWorkspaceManager = function(
         dstEntity.position.subscribe(recompute),
         dstEntity.dimensions.subscribe(recompute),
       ]);
+      
+      // Fire immediately
+      recompute();
     }
 
     // Notify entities that their anchors are now connected
@@ -363,7 +369,23 @@ export const createWorkspaceManager = function(
         && activeTempLinkId && activeTempLinkSourcePos) {
       behaviorManager.updateLinkDrawing(svgCoords);
       const tempLink = linkManager.getLink(activeTempLinkId);
-      if (tempLink) tempLink.updatePath(activeTempLinkSourcePos, svgCoords, activeTempSrcEdge);
+      const srcEntity = activeTempSrcEntityId ? workspaceState.value.entities.get(activeTempSrcEntityId) : undefined;
+      const srcRect = srcEntity ? { ...srcEntity.position.value, ...srcEntity.dimensions.value } : undefined;
+      const fakeDstRect = { x: svgCoords.x, y: svgCoords.y, width: 0, height: 0 };
+      
+      const inferredDstEdge: EdgePosition = activeTempSrcEdge === 'top' ? 'bottom' :
+                                            activeTempSrcEdge === 'bottom' ? 'top' :
+                                            activeTempSrcEdge === 'left' ? 'right' : 'left';
+
+      if (tempLink) tempLink.updatePath(
+        activeTempLinkSourcePos, 
+        svgCoords, 
+        activeTempSrcEdge, 
+        inferredDstEdge, 
+        undefined, // renderType default
+        srcRect, 
+        fakeDstRect
+      );
     }
   };
 

@@ -14,7 +14,7 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
     general: props.initialSettings?.general || {
       gridSize: 20,
       enableSnapping: true,
-      defaultLinkStyle: 'orthogonal',
+      defaultLinkStyle: 'bezier',
       gridPrimaryColor: '#334155',
       gridSecondaryColor: '#1e293b'
     },
@@ -159,9 +159,9 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   linkStyleSelect.className = 'bg-slate-950 border border-slate-700 rounded-md px-3 py-2 text-slate-200 focus:outline-none focus:border-purple-500 w-64';
   
   const styles = [
-    { value: 'orthogonal', label: 'Orthogonal' },
-    { value: 'straight', label: 'Straight' },
-    { value: 'curve', label: 'Curved' }
+    { value: 'bezier', label: 'Bezier (Curved)' },
+    { value: 'orthogonal', label: 'Orthogonal (Lines)' },
+    { value: 'linear', label: 'Linear (Straight)' }
   ];
   
   styles.forEach(s => {

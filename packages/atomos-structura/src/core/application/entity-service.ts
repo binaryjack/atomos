@@ -2,9 +2,9 @@
  * Application Layer - Use Cases & Commands  
  * Orchestrates domain logic with clean command/query separation
  */
-import type { Property } from '@atomos/structura-core';
-import type { DomainEntity, DomainLink, EntityDimensions, EntityPosition, EntityRepository, LinkRepository } from '../domain/entity-aggregate.js';
-import { createEntityAggregate, createLinkAggregate, moveEntity, resizeEntity, updateEntityMetadata, updateEntityName, updateEntityProperties, updateLinkEndpoints, updateLinkProperties } from '../domain/entity-aggregate.js';
+import type { Property } from '@atomos/structura-core'
+import type { DomainEntity, DomainLink, EntityDimensions, EntityPosition, EntityRepository, LinkRepository } from '../domain/entity-aggregate.js'
+import { createEntityAggregate, createLinkAggregate, moveEntity, resizeEntity, updateEntityMetadata, updateEntityName, updateEntityProperties, updateLinkEndpoints, updateLinkProperties } from '../domain/entity-aggregate.js'
 
 // ...
 export interface CreateEntityCommand {
@@ -91,6 +91,7 @@ export interface CreateLinkCommand {
   readonly targetCardinality?: string | undefined;
   readonly sourceProperty?: string | undefined;
   readonly targetProperty?: string | undefined;
+  readonly renderType?: string | undefined;
 }
 
 export interface RemoveLinkCommand {
@@ -106,6 +107,7 @@ export interface UpdateLinkPropertiesCommand {
     readonly targetCardinality?: string | undefined;
     readonly sourceProperty?: string | undefined;
     readonly targetProperty?: string | undefined;
+    readonly renderType?: string | undefined;
   };
 }
 
@@ -206,6 +208,7 @@ export interface LinkPropertiesUpdatedEvent {
     readonly targetCardinality?: string | undefined;
     readonly sourceProperty?: string | undefined;
     readonly targetProperty?: string | undefined;
+    readonly renderType?: string | undefined;
   };
 }
 
@@ -346,7 +349,8 @@ export const createEntityApplicationService = function(
           command.sourceCardinality,
           command.targetCardinality,
           command.sourceProperty,
-          command.targetProperty
+          command.targetProperty,
+          command.renderType
         );
         linkRepository.save(link);
         eventBus.publish({ type: 'LinkCreated', link });

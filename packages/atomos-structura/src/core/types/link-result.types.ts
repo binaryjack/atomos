@@ -1,5 +1,5 @@
-import type { EdgePosition } from '../../features/edge/types/edge-position.types.js';
-import type { RenderType } from '@atomos/structura-core';
+import type { RenderType } from '@atomos/structura-core'
+import type { EdgePosition } from '../../features/edge/types/edge-position.types.js'
 
 export interface LinkResult {
   readonly element: SVGPathElement;
@@ -10,7 +10,9 @@ export interface LinkResult {
     targetPos: { x: number; y: number },
     srcEdge?: EdgePosition,
     dstEdge?: EdgePosition,
-    renderType?: RenderType
+    renderType?: RenderType,
+    srcRect?: { x: number; y: number; width: number; height: number },
+    dstRect?: { x: number; y: number; width: number; height: number }
   ) => void;
   readonly setTemporary: (temporary: boolean) => void;
   readonly setValidity: (isValid: boolean) => void;

@@ -3,6 +3,7 @@
  * Provides simple interface hiding architectural complexity
  */
 import type { Property } from '@atomos/structura-core'
+import { getGeneralSettings } from '../adapters/toolbox-config-manager.js'
 import type { ApplicationEvent } from '../application/entity-service.js'
 import { createEntityApplicationService } from '../application/entity-service.js'
 import type { DomainEntity, DomainLink, EntityDimensions, EntityPosition } from '../domain/entity-aggregate.js'
@@ -141,13 +142,15 @@ export const createEntityManager = function(): EntityManager {
     targetEntityId: string
   ): void {
     console.log('[ENTITY-MANAGER] 🔗 Creating link:', { id, sourceAnchorId, targetAnchorId, sourceEntityId, targetEntityId });
+    const settings = getGeneralSettings();
     applicationService.executeCommand({
       type: 'CreateLink',
       id,
       sourceAnchorId,
       targetAnchorId,
       sourceEntityId,
-      targetEntityId
+      targetEntityId,
+      renderType: settings?.defaultLinkStyle
     });
     console.log('[ENTITY-MANAGER] ✅ Link command executed');
   };

@@ -1,6 +1,6 @@
-import type { CustomShape, AppSettings } from '../../features/settings-page/types/settings-page.types.js'
 import type { ToolboxConfiguration } from '@atomos/prime'
-import { defaultToolboxConfig, defaultShapes } from '../default-toolbox.config.js'
+import type { AppSettings, CustomShape } from '../../features/settings-page/types/settings-page.types.js'
+import { defaultShapes, defaultToolboxConfig } from '../default-toolbox.config.js'
 
 const STORAGE_KEY_CONFIG = 'atomos_toolbox_config';
 const STORAGE_KEY_SHAPES = 'atomos_custom_shapes';
@@ -11,7 +11,7 @@ let currentShapes: CustomShape[] = JSON.parse(JSON.stringify(defaultShapes));
 let currentGeneral: AppSettings['general'] = {
   gridSize: 20,
   enableSnapping: true,
-  defaultLinkStyle: 'orthogonal',
+  defaultLinkStyle: 'bezier',
   gridPrimaryColor: '#334155',
   gridSecondaryColor: '#1e293b'
 };

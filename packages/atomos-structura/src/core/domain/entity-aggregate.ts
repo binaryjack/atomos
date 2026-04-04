@@ -2,7 +2,7 @@
  * Domain Layer - Entity Aggregate Root
  * Manages entity lifecycle and business rules in pure domain logic
  */
-import type { Property } from '@atomos/structura-core';
+import type { Property } from '@atomos/structura-core'
 
 export interface EntityPosition {
   readonly x: number;
@@ -144,7 +144,8 @@ export const createLinkAggregate = function(
   sourceCardinality?: string,
   targetCardinality?: string,
   sourceProperty?: string,
-  targetProperty?: string
+  targetProperty?: string,
+  renderType?: string
 ): DomainLink {
   const now = Date.now();
 
@@ -158,6 +159,7 @@ export const createLinkAggregate = function(
     targetCardinality: targetCardinality ?? '1',
     sourceProperty,
     targetProperty,
+    renderType,
     createdAt: now,
     updatedAt: now
   };
@@ -179,7 +181,7 @@ export const updateLinkProperties = function(
     targetCardinality: updates.targetCardinality ?? link.targetCardinality,
     sourceProperty: updates.sourceProperty !== undefined ? updates.sourceProperty : link.sourceProperty,
     targetProperty: updates.targetProperty !== undefined ? updates.targetProperty : link.targetProperty,
-    renderType: updates.renderType !== undefined ? updates.renderType : (link as any).renderType,
+    renderType: updates.renderType !== undefined ? updates.renderType : link.renderType,
     updatedAt: Date.now()
   };
 };
