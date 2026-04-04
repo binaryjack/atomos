@@ -1,5 +1,5 @@
-import type { Signal } from '@atomos/prime';
-import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js';
+import type { Signal } from '@atomos/prime'
+import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js'
 
 const HANDLE_SIZE = 8;
 
@@ -134,5 +134,6 @@ export const createEntityResizeHandles = function(
   };
 };
 
-export type { Corner };
-export { CORNERS };
+export { CORNERS }
+export type { Corner }
+

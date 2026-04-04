@@ -207,8 +207,19 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
     cleanup: () => { cleanups.forEach(fn => fn()); cleanups.length = 0; },
     notifyAnchorConnected: (_anchorId, _linkId) => { /* visual state: TODO */ },
     updateMetadata: (metadata) => {
-      // Rebuild the SVG view dynamically
-      buildContent(metadata.shape, metadata.color);
+      let needsRebuild = false;
+      if (metadata.shape !== undefined && metadata.shape !== currentShape) {
+        currentShape = metadata.shape;
+        needsRebuild = true;
+      }
+      if (metadata.color !== undefined && metadata.color !== currentColor) {
+        currentColor = metadata.color;
+        needsRebuild = true;
+      }
+      if (needsRebuild) {
+        // Rebuild the SVG view dynamically only if appearance drastically changes
+        buildContent(currentShape, currentColor);
+      }
     }
   };
 
