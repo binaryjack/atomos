@@ -12,8 +12,8 @@ export const createDpSwitch = function(ctx: DpContext): DpSwitchResult {
   btn.type = 'button';
   btn.className = [
     'dp-switch', 'font-semibold', 'text-sm', 'px-2', 'py-1',
-    'rounded', 'hover:bg-gray-100', 'transition-colors',
-    'focus:outline-none', 'focus:ring-2', 'focus:ring-blue-400',
+    'rounded-[var(--vbs-radius,4px)]', 'hover:bg-[var(--vbs-hover,rgba(255,255,255,0.05))]', 'transition-colors',
+    'focus:outline-none', 'focus:ring-2', 'focus:ring-[var(--vbs-primary,#3b82f6)]',
   ].join(' ');
 
   const render = (): void => {

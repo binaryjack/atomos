@@ -17,8 +17,7 @@ export const createDpDrawerUi = function(ctx: DpContext): DpDrawerUiResult {
   const el = document.createElement('div');
   el.className = [
     'dp-drawer-ui',
-    'bg-white', 'rounded-xl', 'shadow-lg', 'border', 'border-gray-200',
-    'p-2', 'min-w-[260px]', 'select-none',
+    'bg-[var(--vbs-bg-panel,#ffffff)]', 'text-[var(--vbs-text-primary,#111111)]', 'rounded-[var(--vbs-radius,12px)]', 'shadow-lg', 'border', 'border-[var(--vbs-border,#e5e7eb)]',
   ].join(' ');
 
   let header:      DpHeaderResult     | null = createDpHeader(ctx);

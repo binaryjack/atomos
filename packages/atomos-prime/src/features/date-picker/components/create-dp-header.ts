@@ -17,8 +17,8 @@ const navBtn = function(icon: string, label: string, onClick: () => void): HTMLB
   btn.textContent = icon;
   btn.className = [
     'dp-nav', 'w-7', 'h-7', 'flex', 'items-center', 'justify-center',
-    'rounded', 'hover:bg-gray-100', 'text-lg', 'font-bold',
-    'focus:outline-none', 'focus:ring-2', 'focus:ring-blue-400', 'transition-colors',
+    'rounded-[var(--vbs-radius,4px)]', 'hover:bg-[var(--vbs-hover,rgba(255,255,255,0.05))]', 'text-lg', 'font-bold',
+    'focus:outline-none', 'focus:ring-2', 'focus:ring-[var(--vbs-primary,#3b82f6)]', 'transition-colors',
   ].join(' ');
   btn.addEventListener('click', onClick);
   return btn;

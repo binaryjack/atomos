@@ -53,9 +53,9 @@ export const createDatePicker = function(props: DatePickerProps = {}): DatePicke
   input.placeholder = props.placeholder ?? fmt;
   if (props.name) input.name = props.name;
   input.className = [
-    'dp-input', 'flex-1', 'px-3', 'py-2', 'border', 'border-gray-300',
-    'rounded-lg', 'text-sm', 'bg-white', 'cursor-pointer',
-    'focus:outline-none', 'focus:ring-2', 'focus:ring-blue-400',
+    'dp-input', 'flex-1', 'px-3', 'py-2', 'border', 'border-[var(--vbs-border,#27272a)]',
+    'rounded-[var(--vbs-radius,4px)]', 'text-sm', 'bg-[var(--vbs-bg-panel,#111111)]', 'text-[var(--vbs-text-primary,#f4f4f5)]', 'cursor-pointer',
+    'focus:outline-none', 'focus:ring-2', 'focus:ring-[var(--vbs-primary,#3b82f6)]',
     'disabled:opacity-50', 'disabled:cursor-not-allowed',
   ].join(' ');
 
@@ -64,8 +64,8 @@ export const createDatePicker = function(props: DatePickerProps = {}): DatePicke
   clearBtn.textContent = '×';
   clearBtn.setAttribute('aria-label', 'Clear date');
   clearBtn.className = [
-    'dp-clear', 'w-6', 'h-6', 'rounded', 'text-gray-400',
-    'hover:text-gray-600', 'hover:bg-gray-100',
+    'dp-clear', 'w-6', 'h-6', 'rounded-[var(--vbs-radius,4px)]', 'text-[var(--vbs-text-secondary,#a1a1aa)]',
+    'hover:text-[var(--vbs-text-primary,#f4f4f5)]', 'hover:bg-[var(--vbs-hover,rgba(255,255,255,0.05))]',
     'flex', 'items-center', 'justify-center', 'text-base',
     'focus:outline-none', 'hidden',
   ].join(' ');
@@ -75,9 +75,9 @@ export const createDatePicker = function(props: DatePickerProps = {}): DatePicke
   calIcon.setAttribute('aria-label', 'Open calendar');
   calIcon.innerHTML = '📅';
   calIcon.className = [
-    'dp-icon', 'w-8', 'h-8', 'rounded', 'hover:bg-gray-100',
+    'dp-icon', 'w-8', 'h-8', 'rounded-[var(--vbs-radius,4px)]', 'hover:bg-[var(--vbs-hover,rgba(255,255,255,0.05))]', 'text-[var(--vbs-text-primary,#f4f4f5)]',
     'flex', 'items-center', 'justify-center', 'text-sm',
-    'focus:outline-none', 'focus:ring-2', 'focus:ring-blue-400',
+    'focus:outline-none', 'focus:ring-2', 'focus:ring-[var(--vbs-primary,#3b82f6)]',
   ].join(' ');
 
   inputRow.appendChild(input);

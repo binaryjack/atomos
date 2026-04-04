@@ -22,7 +22,7 @@ export const createDpCell = function(
 
   const handleClick = (): void => {
     if (cell.isDisabled) return;
-    ctx.selectCell(cell.ts, cell.item.day, cell.item.month, cell.item.year);
+    ctx.selectCell(cell.ts, cell.item.day, cell.item.month, cell.item.year);    
   };
 
   btn.addEventListener('click', handleClick);
@@ -44,7 +44,7 @@ export const createDpCell = function(
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
-const buildLabel = function(cell: IDatePickerCell, ctx: DpContext): string {
+const buildLabel = function(cell: IDatePickerCell, ctx: DpContext): string {    
   switch (ctx.mode.value) {
     case 'DAY':   return String(cell.item.day);
     case 'MONTH': return MONTHS[cell.item.month - 1]?.shortName ?? String(cell.item.month);
@@ -56,19 +56,19 @@ const applyClasses = function(btn: HTMLButtonElement, cell: IDatePickerCell): vo
   const base: string[] = [
     'dp-cell',
     'inline-flex', 'items-center', 'justify-center',
-    'w-8', 'h-8', 'rounded', 'text-sm', 'transition-colors',
-    'focus:outline-none', 'focus:ring-2', 'focus:ring-blue-400',
+    'w-8', 'h-8', 'rounded-[var(--vbs-radius,4px)]', 'text-sm', 'transition-colors',
+    'focus:outline-none', 'focus:ring-2', 'focus:ring-[var(--vbs-primary,#3b82f6)]', 'text-[var(--vbs-text-primary,#f4f4f5)]'
   ];
 
-  if (cell.displayType !== 'current') base.push('text-gray-400');
-  if (cell.isToday)    base.push('font-bold', 'ring-1', 'ring-blue-400');
-  if (cell.isSelected) base.push('bg-blue-600', 'text-white');
-  if (cell.isInRange)  base.push('bg-blue-100', 'text-blue-800');
-  if (cell.isRangeEnd) base.push('bg-blue-500', 'text-white');
+  if (cell.displayType !== 'current') base.push('opacity-50', 'text-[var(--vbs-text-secondary,#a1a1aa)]');
+  if (cell.isToday)    base.push('font-bold', 'ring-1', 'ring-[var(--vbs-primary,#3b82f6)]');
+  if (cell.isSelected) base.push('bg-[var(--vbs-primary,#3b82f6)]', '!text-[#fff]');
+  if (cell.isInRange)  base.push('bg-[color-mix(in_srgb,var(--vbs-primary,#3b82f6)_20%,transparent)]');
+  if (cell.isRangeEnd) base.push('bg-[var(--vbs-primary,#3b82f6)]', '!text-[#fff]');
   if (cell.isWeekEnd && !cell.isSelected && !cell.isRangeEnd)
-    base.push('text-red-500');
+    base.push('text-[var(--vbs-danger,#ef4444)]');
   if (cell.isDisabled) base.push('opacity-40', 'cursor-not-allowed');
-  else                 base.push('hover:bg-blue-50', 'cursor-pointer');
+  else                 base.push('hover:bg-[var(--vbs-hover,rgba(255,255,255,0.05))]', 'cursor-pointer');
 
   btn.className = base.join(' ');
 };

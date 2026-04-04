@@ -18,7 +18,7 @@ export const createDpBodyDays = function(ctx: DpContext): DpBodyDaysResult {
   for (const wd of WEEK_DAYS) {
     const cell = document.createElement('span');
     cell.textContent = wd.shortName;
-    cell.className = 'text-center text-xs font-medium text-gray-500 py-1';
+    cell.className = 'text-center text-xs font-medium text-[var(--vbs-text-secondary,#6b7280)] py-1';      
     headerRow.appendChild(cell);
   }
   el.appendChild(headerRow);
