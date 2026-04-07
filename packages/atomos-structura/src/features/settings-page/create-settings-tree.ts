@@ -1,6 +1,6 @@
 import type { ToolboxConfiguration, ToolboxItem, Toolset } from '@atomos/prime'
 import { createAccordion, createButton } from '@atomos/prime'
-import { createForm, f } from '@binaryjack/formular.dev'
+import { f } from '@binaryjack/formular.dev'
 
 import type { CustomShape } from './types/settings-page.types.js'
 import { ICON_LIBRARY } from './icon-library.js'
@@ -229,7 +229,6 @@ export const createVisualEditorTree = function(props: VisualEditorTreeProps): Vi
   function renderFormular(parent: HTMLElement, schema: any, initialData: any, onSave: (data: any) => void, onCancel: () => void) {
     parent.innerHTML = '';
     let currentData = { ...initialData };
-    const form = createForm(schema);
 
     Object.keys(schema.shape || schema.properties || {}).forEach((key) => {
       const val = currentData[key] || '';

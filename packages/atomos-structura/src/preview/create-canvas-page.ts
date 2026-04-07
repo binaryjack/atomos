@@ -1,6 +1,7 @@
 import { getCanvasAdapter } from '../core/adapters/canvas-adapter.js'
 import { createDAGObserver } from '../core/adapters/dag-observer.js'
-import { getCustomShapes, getGeneralSettings, getToolboxConfig, setCustomShapes, setGeneralSettings, setToolboxConfig } from '../core/adapters/toolbox-config-manager.js'
+import { getCustomShapes, getGeneralSettings, getToolboxConfig, setCustomShapes, setGeneralSettings, setToolboxConfig, getAppearanceSettings, setAppearanceSettings } from '../core/adapters/toolbox-config-manager.js'
+import { applyAppearanceTokens } from '../core/presentation/design-system.js'
 import { createCanvasViewport } from '../core/create-canvas-viewport.js'
 import { getGlobalReduxStore } from '../core/create-redux-store.js'
 import { createWorkspaceManager } from '../core/create-workspace-manager.js'
@@ -96,6 +97,12 @@ export const createCanvasPage = function() {
   // Workspace
   const workspace = createWorkspaceManager(svg, viewportGroup);
   cleanups.push(workspace.cleanup.destroy);
+
+  // Apply persisted appearance tokens AFTER design system is injected
+  const savedAppearance = getAppearanceSettings();
+  if (savedAppearance) {
+    applyAppearanceTokens(savedAppearance.entity, savedAppearance.link);
+  }
 
   // Phase 5: Shape Palette (Drag & Drop or Click to spawn)
   const palette = document.createElement('div');
@@ -322,7 +329,7 @@ export const createCanvasPage = function() {
     const st = store.get_state();
     if (st.is_settings_open && !currentSettingsPage) {
       currentSettingsPage = createSettingsPage({
-        initialSettings: { toolbox: getToolboxConfig(), shapes: getCustomShapes(), general: getGeneralSettings() || {} },
+        initialSettings: { toolbox: getToolboxConfig(), shapes: getCustomShapes(), general: getGeneralSettings() || {}, appearance: getAppearanceSettings() || {} },
         onClose: () => {
           store.dispatch({ type: 'settings-toggled', is_open: false });
         },
@@ -330,6 +337,8 @@ export const createCanvasPage = function() {
           setToolboxConfig(settings.toolbox);
           setCustomShapes(settings.shapes);
           setGeneralSettings(settings.general);
+          setAppearanceSettings(settings.appearance);
+          applyAppearanceTokens(settings.appearance?.entity, settings.appearance?.link);
           applyGridSettings();
           
           const adapter = getCanvasAdapter();

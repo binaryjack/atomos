@@ -5,9 +5,10 @@ import { defaultShapes, defaultToolboxConfig } from '../default-toolbox.config.j
 const STORAGE_KEY_CONFIG = 'atomos_toolbox_config';
 const STORAGE_KEY_SHAPES = 'atomos_custom_shapes';
 const STORAGE_KEY_GENERAL = 'atomos_general_settings';
+const STORAGE_KEY_APPEARANCE = 'atomos_appearance_settings';
 
 let currentConfig: ToolboxConfiguration = defaultToolboxConfig;
-let currentShapes: CustomShape[] = JSON.parse(JSON.stringify(defaultShapes));   
+let currentShapes: CustomShape[] = JSON.parse(JSON.stringify(defaultShapes));
 let currentGeneral: AppSettings['general'] = {
   gridSize: 20,
   enableSnapping: true,
@@ -16,6 +17,7 @@ let currentGeneral: AppSettings['general'] = {
   gridSecondaryColor: '#1e293b',
   canvasBackgroundColor: '#0f172a'
 };
+let currentAppearance: AppSettings['appearance'] = {};
 
 try {
   const storedConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
@@ -29,6 +31,10 @@ try {
   const storedGeneral = localStorage.getItem(STORAGE_KEY_GENERAL);
   if (storedGeneral) {
     currentGeneral = { ...currentGeneral, ...JSON.parse(storedGeneral) };
+  }
+  const storedAppearance = localStorage.getItem(STORAGE_KEY_APPEARANCE);
+  if (storedAppearance) {
+    currentAppearance = JSON.parse(storedAppearance);
   }
 } catch (e) {
   // Ignored
@@ -65,4 +71,15 @@ export const setGeneralSettings = function(general: AppSettings['general']): voi
 
 export const getGeneralSettings = function(): AppSettings['general'] {
   return currentGeneral;
+};
+
+export const setAppearanceSettings = function(appearance: AppSettings['appearance']): void {
+  currentAppearance = appearance;
+  try {
+    localStorage.setItem(STORAGE_KEY_APPEARANCE, JSON.stringify(appearance));
+  } catch (e) {}
+};
+
+export const getAppearanceSettings = function(): AppSettings['appearance'] {
+  return currentAppearance;
 };

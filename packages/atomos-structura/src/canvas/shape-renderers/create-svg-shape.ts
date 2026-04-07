@@ -40,12 +40,16 @@ export const createSVGShape = (shape: EntityShape, width: number, height: number
     case 'note' as any: return createParallelogram(width, height, color); // Fallback
     default: {
       const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('class', 'vbs-entity-shape vbs-entity-rect');
       rect.setAttribute('width', width.toString());
       rect.setAttribute('height', height.toString());
       const finalColor = color || 'var(--vbs-bg-panel, #09090b)';
+      // fill and stroke via inline style: var() resolves, highest priority, always visible
+      // stroke-width via presentation attribute: CSS class .vbs-entity-shape can override it
       rect.style.fill = finalColor;
       rect.style.stroke = 'var(--vbs-primary, #3b82f6)';
-      rect.style.strokeWidth = '1px';
+      rect.style.transition = 'all 0.2s ease-in-out';
+      rect.setAttribute('stroke-width', '1');
       return rect;
     }
   }

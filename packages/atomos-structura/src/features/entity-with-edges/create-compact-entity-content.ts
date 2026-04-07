@@ -27,21 +27,16 @@ export const createCompactEntityContent = (props: {
   const textNode = document.createElementNS('http://www.w3.org/2000/svg', 'text');
   textNode.setAttribute('text-anchor', 'middle');
   textNode.setAttribute('dominant-baseline', 'middle');
+  textNode.setAttribute('class', 'vbs-entity-name');
   textNode.style.pointerEvents = 'none';
   textNode.style.userSelect = 'none';
-  textNode.style.fontFamily = 'sans-serif';
-  textNode.style.fontWeight = 'bold';
-  textNode.style.fontSize = '14px';
-  textNode.style.fill = contrast.textColor;
 
   const propsNode = document.createElementNS('http://www.w3.org/2000/svg', 'text');
   propsNode.setAttribute('text-anchor', 'middle');
   propsNode.setAttribute('dominant-baseline', 'middle');
+  propsNode.setAttribute('class', 'vbs-entity-props');
   propsNode.style.pointerEvents = 'none';
   propsNode.style.userSelect = 'none';
-  propsNode.style.fontFamily = 'sans-serif';
-  propsNode.style.fontSize = '10px';
-  propsNode.style.fill = contrast.mutedColor;
   
   const updateLabel = () => {
     textNode.textContent = props.entitySignal.value.name || props.shape;
@@ -86,12 +81,16 @@ export const createCompactEntityContent = (props: {
     }
     currentShape = createSVGShape(props.shape, width, height, props.color);
     shapeWrapper.appendChild(currentShape);
-    
+
+    const rootStyle = getComputedStyle(document.documentElement);
+    const namePy = parseInt(rootStyle.getPropertyValue('--vbs-entity-name-padding-y') || '-8', 10) || -8;
+    const propsPy = parseInt(rootStyle.getPropertyValue('--vbs-entity-props-padding-y') || '12', 10) || 12;
+
     textNode.setAttribute('x', (width / 2).toString());
-    textNode.setAttribute('y', (height / 2 - 8).toString());
+    textNode.setAttribute('y', (height / 2 + namePy).toString());
 
     propsNode.setAttribute('x', (width / 2).toString());
-    propsNode.setAttribute('y', (height / 2 + 12).toString());
+    propsNode.setAttribute('y', (height / 2 + propsPy).toString());
 
     deleteBtnGroup.setAttribute('transform', `translate(${width - 10}, 10)`);
   };

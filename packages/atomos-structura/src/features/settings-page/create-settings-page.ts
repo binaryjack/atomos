@@ -2,6 +2,7 @@ import { createButton } from '@atomos/prime'
 import { defaultToolboxConfig } from '../../core/default-toolbox.config.js'
 import { createVisualEditorTree } from './create-settings-tree.js'
 import { createShapesEditor } from './create-shapes-editor.js'
+import { createAppearanceTab } from './create-appearance-tab.js'
 import { ICON_LIBRARY } from './icon-library.js'
 import type { AppSettings, SettingsPageProps, SettingsPageResult } from './types/settings-page.types.js'
 
@@ -19,6 +20,7 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
       gridSecondaryColor: '#1e293b',
       canvasBackgroundColor: '#0f172a'
     },
+    appearance: props.initialSettings?.appearance || {},
     shapes: props.initialSettings?.shapes || []
   };
 
@@ -81,6 +83,7 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   // Tab Details
   const navItems = [
     { id: 'general', label: 'General Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
+    { id: 'appearance', label: 'Appearance', icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01' },
     { id: 'toolbox', label: 'Toolbox Configuration', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
     { id: 'shapes', label: 'Shapes Repository', icon: 'M4 5a2 2 0 012-2h4a2 2 0 012 2v2H6V5zm0 6h16v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8zm2-2a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2H6z' },
     { id: 'icons', label: 'Icon Library', icon: 'M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm4 3a2 2 0 11-4 0 2 2 0 014 0zm0 6a2 2 0 11-4 0 2 2 0 014 0zm6-6a2 2 0 11-4 0 2 2 0 014 0zm0 6a2 2 0 11-4 0 2 2 0 014 0z' }
@@ -285,7 +288,21 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   generalSettingsPanel.appendChild(genPane);
   vbsTabs.appendChild(generalSettingsPanel);
 
-  // -- Pane 1: Toolbox Editor --
+  // -- Pane 1: Appearance --
+  const appearancePanel = document.createElement('vbs-tab-panel');
+  appearancePanel.setAttribute('slot', 'panel');
+  const { element: appearanceElement, cleanup: appearanceCleanup } = createAppearanceTab(currentSettings, () => markDirty());
+  appearancePanel.addEventListener('appearance-reset', () => {
+    // Replace pane content by recreating — simplest approach
+    appearancePanel.innerHTML = '';
+    const { element: fresh } = createAppearanceTab(currentSettings, () => markDirty());
+    appearancePanel.appendChild(fresh);
+  });
+  appearancePanel.appendChild(appearanceElement);
+  cleanupFunctions.push(appearanceCleanup.destroy);
+  vbsTabs.appendChild(appearancePanel);
+
+  // -- Pane 3: Toolbox Editor --
   const toolboxPanel = document.createElement('vbs-tab-panel');
   toolboxPanel.setAttribute('slot', 'panel');
   const toolboxPane = document.createElement('div');
@@ -345,7 +362,7 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   vbsTabs.appendChild(toolboxPanel);
 
 
-  // -- Pane 2: Shapes Repository --
+  // -- Pane 4: Shapes Repository --
   const shapesPanel = document.createElement('vbs-tab-panel');
   shapesPanel.setAttribute('slot', 'panel');
   const shapesPane = document.createElement('div');
@@ -363,7 +380,7 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   shapesPanel.appendChild(shapesPane);
   vbsTabs.appendChild(shapesPanel);
 
-  // -- Pane 3: Icon Library --
+  // -- Pane 5: Icon Library --
   const iconsPanel = document.createElement('vbs-tab-panel');
   iconsPanel.setAttribute('slot', 'panel');
   const iconsPane = document.createElement('div');

@@ -57,6 +57,7 @@ export const createLinkManager = function(): LinkManager {
     path.setAttribute('stroke-width', (props.strokeWidth ?? 2).toString());
     path.setAttribute('fill', 'none');
     path.setAttribute('stroke-linecap', 'round');
+    if (!props.temporary) path.setAttribute('class', 'vbs-link');
     path.style.pointerEvents = 'stroke';
     path.style.cursor = 'pointer';
     path.style.transition = 'stroke-width 0.15s ease, opacity 0.15s ease';
