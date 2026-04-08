@@ -125,7 +125,8 @@ export const createLegacyPropertyRepositoryBridge = function(config: {
     const entity = adapter.getEntity(config.entityId);
     if (!entity) throw new Error(`Entity ${config.entityId} not found`);
     
-    const existing = entity.properties.find((p: any) => p.key === key);
+    const props = entity.properties ?? [];
+    const existing = props.find((p: any) => p.key === key);
     if (!existing) throw new Error(`Property ${key} not found`);
     
     const updated: Property = {
@@ -134,7 +135,7 @@ export const createLegacyPropertyRepositoryBridge = function(config: {
       key: existing.key
     };
     
-    const newProperties = entity.properties.map((p: any) =>
+    const newProperties = props.map((p: any) =>
       p.key === key ? updated : p
     );
     
@@ -159,7 +160,7 @@ export const createLegacyPropertyRepositoryBridge = function(config: {
     const entity = adapter.getEntity(config.entityId);
     if (!entity) throw new Error(`Entity ${config.entityId} not found`);
     
-    const newProperties = [...entity.properties, validated];
+    const newProperties = [...(entity.properties ?? []), validated];
     adapter.updateEntityProperties(config.entityId, newProperties);
     
     return validated;
@@ -171,7 +172,7 @@ export const createLegacyPropertyRepositoryBridge = function(config: {
     const entity = adapter.getEntity(config.entityId);
     if (!entity) throw new Error(`Entity ${config.entityId} not found`);
     
-    const newProperties = entity.properties.filter((p: any) => p.key !== key);
+    const newProperties = (entity.properties ?? []).filter((p: any) => p.key !== key);
     adapter.updateEntityProperties(config.entityId, newProperties);
   };
   

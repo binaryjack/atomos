@@ -24,6 +24,13 @@ export const createSchemaValidator = (store: ReduxStore): SchemaValidator => {
 
       const warnings: ValidationWarning[] = [];
 
+      // Rule 1: entity has no properties defined
+      schema.entities.forEach(e => {
+        if ((e.properties ?? []).length === 0) {
+          warnings.push({ entityId: e.id, rule: 'no-properties', message: `"${e.name ?? e.id}" has no properties defined` });
+        }
+      });
+
       // Rule 2: duplicate entity names (case-insensitive)
       const names = new Map<string, string>();
       schema.entities.forEach(e => {
