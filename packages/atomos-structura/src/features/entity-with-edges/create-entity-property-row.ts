@@ -55,7 +55,7 @@ const buildValueInput = function(
       cb.type = 'checkbox';
       cb.className = 'no-drag';
       cb.checked = Boolean(value.value);
-      cb.style.cssText = 'cursor:pointer;flex-shrink:0;width:14px;height:14px;align-self:center;appearance:none;background:var(--vbs-bg-input, #09090b);border:1px solid var(--vbs-border, #27272a);border-radius:var(--vbs-radius, 2px);transition:background-color 0.15s, border-color 0.15s;';
+      cb.style.cssText = 'cursor:pointer;flex-shrink:0;width:calc(var(--vbs-entity-props-font-size, 12px) + 2px);height:calc(var(--vbs-entity-props-font-size, 12px) + 2px);align-self:center;appearance:none;background:var(--vbs-bg-input, #09090b);border:1px solid var(--vbs-border, #27272a);border-radius:var(--vbs-radius, 2px);transition:background-color 0.15s, border-color 0.15s;';
       cb.addEventListener('change', () => {
         onValueChange(cb.checked);
         if(cb.checked) {
@@ -131,7 +131,7 @@ export const createEntityPropertyRow = function(
     'display:flex', 'align-items:center', 'gap:4px',
     'padding:4px 8px',
     'box-sizing:border-box',
-    'min-height:36px',
+    'min-height:calc(var(--vbs-entity-props-font-size, 12px) + 24px)',
     'border-bottom:1px solid var(--vbs-border, #27272a)',
   ].join(';');
 
@@ -143,8 +143,8 @@ export const createEntityPropertyRow = function(
     inputClassName: 'text-xs text-slate-300',
     onChange: props.onLabelChange,
   });
-  editableLabel.element.style.flex = '0 0 70px';
-  editableLabel.element.style.maxWidth = '100px';
+  editableLabel.element.style.flex = '1 1 min-content';
+  editableLabel.element.style.minWidth = '50px';
   editableLabel.element.style.overflow = 'hidden';
   editableLabel.element.style.fontFamily = 'var(--vbs-entity-props-font-family, system-ui, sans-serif)';
   editableLabel.element.style.fontSize = 'var(--vbs-entity-props-font-size, 12px)';
@@ -160,6 +160,7 @@ export const createEntityPropertyRow = function(
     props.onValueChange,
     cleanups
   );
+  valueInput.style.flex = '2 1 100px';
 
   // ComponentType dropdown (compact: inp / sel / chk / txt)
   const ctOptions: Array<{ value: ComponentType; label: string }> = [
@@ -214,7 +215,7 @@ export const createEntityPropertyRow = function(
   cleanups.push(dropdown.cleanup.destroy);
 
   // Settings button
-  const settingsIcon = createIcon({ name: 'settings', size: 12, color: '#64748b' });
+  const settingsIcon = createIcon({ name: 'settings', size: 'calc(var(--vbs-entity-props-font-size, 12px) + 2px)', color: '#64748b' });
   const settingsBtn = document.createElement('button');
   settingsBtn.type = 'button';
   settingsBtn.style.cssText = 'flex-shrink:0;align-self:center;background:none;border:none;cursor:pointer;padding:1px;display:flex;align-items:center;border-radius:2px;';
@@ -227,7 +228,7 @@ export const createEntityPropertyRow = function(
   });
 
   // Delete button
-  const deleteIcon = createIcon({ name: 'delete', size: 12, color: 'var(--vbs-danger, #ef4444)' });
+  const deleteIcon = createIcon({ name: 'delete', size: 'calc(var(--vbs-entity-props-font-size, 12px) + 2px)', color: 'var(--vbs-danger, #ef4444)' });
   const deleteBtn = document.createElement('button');
   deleteBtn.type = 'button';
   deleteBtn.style.cssText = 'flex-shrink:0;align-self:center;background:none;border:none;cursor:pointer;padding:1px;display:flex;align-items:center;border-radius:2px;';
