@@ -8,13 +8,7 @@ import type { EntitySpawnFactory } from '../../core/types/entity-spawn-factory.t
 import { DEFAULT_GLOBAL_CONFIG } from '../../core/types/global-config.types.js';
 import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js';
 import { createDemoEntity } from './create-demo-entity.js';
-
-interface DemoConfig {
-  readonly id: string;
-  readonly name: string;
-  readonly x: number;
-  readonly y: number;
-}
+import { getGlobalReduxStore } from '../../core/create-redux-store.js';
 
 const makeEntityProps = (id: string, name: string, x: number, y: number, width?: number, height?: number, properties?: any[]): Entity => ({
   id,
@@ -79,7 +73,18 @@ const spawnEntity = (
   
   posSignal.subscribe(pos => {
     const roundedPos = { x: Math.round(pos.x * 10) / 10, y: Math.round(pos.y * 10) / 10 };
-    
+
+    // If Redux already has this position (set by undo/reconcile), sync and skip write-back
+    const reduxEntity = adapter.getEntity(entityProps.id);
+    if (reduxEntity) {
+      const rx = Math.round(reduxEntity.position.x * 10) / 10;
+      const ry = Math.round(reduxEntity.position.y * 10) / 10;
+      if (Math.abs(rx - roundedPos.x) < 0.1 && Math.abs(ry - roundedPos.y) < 0.1) {
+        lastPersistedPos = roundedPos; // keep baseline current
+        return;
+      }
+    }
+
     // Skip if change is too small to prevent excessive persistence calls
     const deltaX = Math.abs(roundedPos.x - lastPersistedPos.x);
     const deltaY = Math.abs(roundedPos.y - lastPersistedPos.y);
@@ -100,7 +105,18 @@ const spawnEntity = (
       width: Math.round(dims.width * 10) / 10, 
       height: Math.round(dims.height * 10) / 10 
     };
-    
+
+    // If Redux already has these dimensions (set by undo/reconcile), sync and skip write-back
+    const reduxEntityForDims = adapter.getEntity(entityProps.id);
+    if (reduxEntityForDims) {
+      const rw = Math.round(reduxEntityForDims.dimensions.width * 10) / 10;
+      const rh = Math.round(reduxEntityForDims.dimensions.height * 10) / 10;
+      if (Math.abs(rw - roundedDims.width) < 0.1 && Math.abs(rh - roundedDims.height) < 0.1) {
+        lastPersistedDims = roundedDims;
+        return;
+      }
+    }
+
     // Skip if change is too small
     const deltaW = Math.abs(roundedDims.width - lastPersistedDims.width);
     const deltaH = Math.abs(roundedDims.height - lastPersistedDims.height);
@@ -142,25 +158,6 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
   // Get clean architecture adapter - Single source of truth
   const canvasAdapter = getCanvasAdapter();
   
-  // Initialize entities from persisted data
-  const existingEntities = canvasAdapter.getAllEntities();
-  console.log(`? [CANVAS-PAGE] CANVAS WORKING: Found ${existingEntities.length} existing entities through clean architecture`);
-  
-  // Load existing entities or create demo data
-  if (existingEntities.length === 0) {
-    console.log('?? [CANVAS-PAGE] CANVAS WORKING: Creating default demo entities through clean architecture');
-    const demoConfigs: DemoConfig[] = [
-      { id: 'entity-a', name: 'Entity A', x: 100, y: 100 },
-      { id: 'entity-b', name: 'Entity B', x: 400, y: 200 },
-      { id: 'entity-c', name: 'Entity C', x: 200, y: 300 },
-    ];
-    
-    demoConfigs.forEach(config => {
-      canvasAdapter.createEntity(config.id, config.name, config.x, config.y);
-    });
-    console.log('? [CANVAS-PAGE] CANVAS WORKING: Demo entities created through clean domain layer');
-  }
-  
   // Clean event handling - No cascading subscriptions
   canvasAdapter.onEntityChanged(event => {
     console.log('?? [CANVAS-PAGE] CANVAS WORKING: Clean architecture entity event:', event.type);
@@ -169,6 +166,13 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
       case 'EntityCreated': {
         const exists = workspace.workspaceState.value.entities.has(event.entity.id);
         if (!exists) {
+          // Only spawn if this entity belongs to the currently active schema.
+          // Prevents cross-tab contamination when reannounceEntity fires events.
+          const reduxState = getGlobalReduxStore().get_state();
+          const activeSchema = reduxState.schemas[reduxState.active_schema_id];
+          const entityInActiveSchema = activeSchema?.entities.some((e: { id: string }) => e.id === event.entity.id);
+          if (!entityInActiveSchema) break;
+
           const domainEntity = event.entity;
           const ep: Entity & { shape?: string, color?: string | undefined } = makeEntityProps(domainEntity.id, domainEntity.name, domainEntity.position.x, domainEntity.position.y, domainEntity.dimensions.width, domainEntity.dimensions.height, domainEntity.properties as any[]);
           ep.shape = domainEntity.shape as any;
@@ -212,12 +216,18 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
           const srcEntity = canvasAdapter.getEntity(link.sourceEntityId);
           const dstEntity = canvasAdapter.getEntity(link.targetEntityId);
           if (srcEntity && dstEntity) {
-            const srcPos = computeAnchorPos(srcEntity, link.sourceAnchorId.split('-').pop() || 'right');
-            const dstPos = computeAnchorPos(dstEntity, link.targetAnchorId.split('-').pop() || 'left');
+            // Extract the true edge direction from the anchor ID.
+            // Anchor IDs follow the pattern "${entityId}-anchor-${edge}" where
+            // edge ∈ {top, bottom, left, right}.  Splitting on '-anchor-' is
+            // unambiguous regardless of hyphens in the entity ID itself.
+            const srcEdge = (link.sourceAnchorId.split('-anchor-')[1] || 'right') as any;
+            const dstEdge = (link.targetAnchorId.split('-anchor-')[1] || 'left') as any;
+            const srcPos = computeAnchorPos(srcEntity, srcEdge);
+            const dstPos = computeAnchorPos(dstEntity, dstEdge);
             workspace.restoreLink(
               link.id,
-              link.sourceAnchorId, srcPos, link.sourceEntityId, 'right' as any,
-              link.targetAnchorId, dstPos, link.targetEntityId, 'left' as any
+              link.sourceAnchorId, srcPos, link.sourceEntityId, srcEdge,
+              link.targetAnchorId, dstPos, link.targetEntityId, dstEdge
             );
           }
         }
@@ -273,108 +283,5 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
   console.log('?? [CANVAS-PAGE] ?? MAIN CANVAS PAGE WORKING PROPERLY! Clean architecture initialized successfully!');
     
   // === DEBUGGING: Add manual link debugging to window === 
-  (window as any).debugLinkSystem = function() {
-    console.log('=== ?? DEBUGGING LINK SYSTEM ===');
-    console.log('1. Canvas Adapter:', canvasAdapter);
-    console.log('2. Test creating debug link...');
-    
-    try {
-      canvasAdapter.createLink('debug-link-' + Date.now(), 'entity-a-anchor-right', 'entity-b-anchor-left', 'entity-a', 'entity-b');
-      console.log('3. ? Debug link created');
-    } catch (error) {
-      console.error('3. ? Debug link creation failed:', error);
-    }
-    
-    const links = canvasAdapter.getAllLinks();
-    console.log('4. All links from adapter:', links);
-    
-    const rawLinks = localStorage.getItem('vbe2:links');
-    console.log('5. Raw localStorage vbe2:links:', rawLinks);
-    
-    if (rawLinks) {
-      try {
-        const parsed = JSON.parse(rawLinks);
-        console.log('6. Parsed links:', parsed);
-      } catch (e) {
-        console.error('6. Failed to parse links:', e);
-      }
-    }
-    
-    console.log('=== END DEBUG ===');
-  };
-  
-  console.log('?? [CANVAS-PAGE] Link debugging available: window.debugLinkSystem()');
-  
-  // Clean architecture link restoration using existing adapter
-  const savedEntities = canvasAdapter.getAllEntities();
-  const savedLinks = canvasAdapter.getAllLinks();
-  
-  console.log(`?? [CANVAS-PAGE] DEBUG: Found ${savedEntities.length} entities, ${savedLinks.length} links`);
-  
-  if (savedEntities.length > 0) {
-    console.log(`? [CANVAS-PAGE] SUCCESS: Canvas found ${savedEntities.length} entities managed by clean architecture`);
-    // Entity restoration is handled automatically by the clean architecture
-    // No complex timeout/callback cascades needed - clean separation prevents infinite loops
-    setTimeout(() => {
-      console.log('?? [CANVAS-PAGE] SUCCESS: Entity layout stabilized - CANVAS IS WORKING!');
-      
-      // Now restore saved links after entities are stabilized
-      if (savedLinks.length > 0) {
-        console.log(`?? [CANVAS-PAGE] Restoring ${savedLinks.length} saved links...`);
-        
-        savedLinks.forEach((savedLink: any) => {
-          console.log(`[CANVAS-PAGE] ?? Restoring link:`, savedLink);
-          
-          // Parse anchor IDs to get entity and edge info - FIXED PARSING LOGIC
-          // For anchor ID like "entity-1774790333387-anchor-right":
-          // - Entity ID: "entity-1774790333387" (everything before "-anchor-")
-          // - Direction: "right" (everything after "-anchor-")
-          const srcEntityId = savedLink.sourceAnchorId.split('-anchor-')[0];
-          const srcDirection = savedLink.sourceAnchorId.split('-anchor-')[1];
-          const dstEntityId = savedLink.targetAnchorId.split('-anchor-')[0]; 
-          const dstDirection = savedLink.targetAnchorId.split('-anchor-')[1];
-          
-          console.log(`[CANVAS-PAGE] ?? Parsed entities: ${srcEntityId}(${srcDirection}) ? ${dstEntityId}(${dstDirection})`);
-          
-          // Get entity positions for anchor positions
-          console.log(`[CANVAS-PAGE] ?? Looking up source entity: ${srcEntityId}`);
-          const srcEntity = canvasAdapter.getEntity(srcEntityId);
-          console.log(`[CANVAS-PAGE] ?? Looking up destination entity: ${dstEntityId}`);
-          const dstEntity = canvasAdapter.getEntity(dstEntityId);
-          
-          console.log(`[CANVAS-PAGE] ?? Found entities:`, { 
-            srcEntity: !!srcEntity, 
-            dstEntity: !!dstEntity,
-            srcEntityDetails: srcEntity ? { id: srcEntity.id, pos: srcEntity.position } : null,
-            dstEntityDetails: dstEntity ? { id: dstEntity.id, pos: dstEntity.position } : null
-          });
-          
-          if (srcEntity && dstEntity) {
-            // Calculate anchor positions
-            const srcPos = computeAnchorPos(srcEntity, srcDirection);
-            const dstPos = computeAnchorPos(dstEntity, dstDirection);
-            
-            console.log(`[CANVAS-PAGE] ?? Computed positions:`, { srcPos, dstPos });
-            
-            // Restore the visual link using workspace restoreLink method
-            workspace.restoreLink(
-              savedLink.id,
-              savedLink.sourceAnchorId, srcPos, srcEntityId, srcDirection,
-              savedLink.targetAnchorId, dstPos, dstEntityId, dstDirection
-            );
-            
-            console.log(`[CANVAS-PAGE] ? Link restored: ${savedLink.id}`);
-          } else {
-            console.warn(`[CANVAS-PAGE] ?? Cannot restore link ${savedLink.id}: missing entities (src:${!!srcEntity}, dst:${!!dstEntity})`);
-          }
-        });
-      } else {
-        console.log(`[CANVAS-PAGE] ?? No saved links to restore`);
-      }
-    }, 100);
-  } else {
-    console.log(`[CANVAS-PAGE] ?? No saved entities found, skipping link restoration`);
-  }
-    
     console.log('?? [CANVAS-PAGE] ?? SUCCESS! MAIN CANVAS WORKING PROPERLY - No more errors!');
 };

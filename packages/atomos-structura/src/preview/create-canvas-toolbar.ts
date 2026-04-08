@@ -1,11 +1,20 @@
 import { autoLayoutDAG, deserializeDAG, serializeDAG } from '../core/application/dag-service.js';
 import type { CanvasViewport } from '../core/create-canvas-viewport.js';
 import type { EntityManager } from '../core/presentation/entity-manager.js';
+import { getGlobalReduxStore } from '../core/create-redux-store.js';
+import { createSchemaGraphKernel } from '../core/create-schema-graph-kernel.js';
+import { createTypescriptAdapter } from '../adapters/create-typescript-adapter.js';
+import { createSqlAdapter } from '../adapters/create-sql-adapter.js';
+import { createPrismaAdapter } from '../adapters/create-prisma-adapter.js';
+import type { SchemaGraphKernel } from '../core/create-schema-graph-kernel.js';
+import { createCanvasSnapshot } from '../features/export/create-canvas-snapshot.js';
 
 export interface CanvasToolbarConfig {
   readonly viewport: CanvasViewport;
   readonly entityManager: EntityManager;
   readonly onSettings: () => void;
+  readonly getKernel: () => SchemaGraphKernel;
+  readonly getSnapshot: () => SVGSVGElement;
 }
 
 export const createCanvasToolbar = function(config: CanvasToolbarConfig): HTMLElement {
@@ -153,12 +162,97 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): HTMLEl
     () => fitToScreen()
   );
 
+  // -- Export helpers --
+  const downloadText = (content: string, filename: string, mime = 'text/plain'): void => {
+    const url = URL.createObjectURL(new Blob([content], { type: mime }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportTsBtn = createIconButton(
+    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
+    'Export TypeScript Interfaces (.ts)',
+    () => downloadText(createTypescriptAdapter(config.getKernel()).generateInterfaces(), `schema-${Date.now()}.ts`)
+  );
+
+  const exportSqlBtn = createIconButton(
+    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>`,
+    'Export SQL DDL (.sql)',
+    () => downloadText(createSqlAdapter(config.getKernel()).generateDDL(), `schema-${Date.now()}.sql`)
+  );
+
+  const exportJsonSchemaBtn = createIconButton(
+    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
+    'Export JSON Schema (.json)',
+    () => {
+      const kernel = config.getKernel();
+      const snap = kernel.getSnapshot();
+      const defs: Record<string, unknown> = {};
+      Object.keys(snap.entities).forEach(id => {
+        const ent = snap.entities[id];
+        if (ent) { defs[ent.name] = kernel.extractJsonSchema(id); }
+      });
+      const output = JSON.stringify({ $schema: 'http://json-schema.org/draft-07/schema#', definitions: defs }, null, 2);
+      downloadText(output, `schema-${Date.now()}.schema.json`, 'application/json');
+    }
+  );
+
+  const exportPrismaBtn = createIconButton(
+    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 7-9 13L3 9z"/></svg>`,
+    'Export Prisma Schema (.prisma)',
+    () => downloadText(createPrismaAdapter(config.getKernel()).generatePrismaSchema(), `schema-${Date.now()}.prisma`)
+  );
+
+  const snapshot = createCanvasSnapshot(config.getSnapshot);
+
+  const exportSvgBtn = createIconButton(
+    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>`,
+    'Export SVG',
+    () => snapshot.exportSVG()
+  );
+
+  const exportPngBtn = createIconButton(
+    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`,
+    'Export PNG',
+    () => snapshot.exportPNG()
+  );
+
   // -- Settings --
   const settingsBtn = createIconButton(
     `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>`,
     'Settings',
     () => config.onSettings()
   );
+
+  // -- Undo/Redo --
+  const store = getGlobalReduxStore();
+
+  const setUndoRedoDisabled = (btn: HTMLButtonElement, disabled: boolean): void => {
+    btn.disabled = disabled;
+    btn.style.opacity = disabled ? '0.3' : '1';
+    btn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+  };
+
+  const undoBtn = createIconButton(
+    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 2.83-6.36L3 10"/></svg>`,
+    'Undo (Ctrl+Z)',
+    () => store.undo()
+  );
+  const redoBtn = createIconButton(
+    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M21 13a9 9 0 1 1-2.83-6.36L21 10"/></svg>`,
+    'Redo (Ctrl+Y)',
+    () => store.redo()
+  );
+
+  const syncUndoRedo = (): void => {
+    setUndoRedoDisabled(undoBtn, !store.can_undo());
+    setUndoRedoDisabled(redoBtn, !store.can_redo());
+  };
+  syncUndoRedo();
+  store.subscribe(syncUndoRedo);
 
   // -- Zoom Label --
   const zoomLabel = document.createElement('div');
@@ -175,6 +269,16 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): HTMLEl
   toolbar.appendChild(importBtn);
   toolbar.appendChild(exportBtn);
   toolbar.appendChild(autoLayoutBtn);
+  toolbar.appendChild(divider());
+  toolbar.appendChild(exportTsBtn);
+  toolbar.appendChild(exportSqlBtn);
+  toolbar.appendChild(exportJsonSchemaBtn);
+  toolbar.appendChild(exportPrismaBtn);
+  toolbar.appendChild(exportSvgBtn);
+  toolbar.appendChild(exportPngBtn);
+  toolbar.appendChild(divider());
+  toolbar.appendChild(undoBtn);
+  toolbar.appendChild(redoBtn);
   toolbar.appendChild(divider());
   toolbar.appendChild(centerBtn);
   toolbar.appendChild(fitBtn);

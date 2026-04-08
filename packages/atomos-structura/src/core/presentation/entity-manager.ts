@@ -37,6 +37,10 @@ export interface EntityManager {
   // Events (UI Reactions)  
   readonly onApplicationEvent: (handler: (event: ApplicationEvent) => void) => () => void;
   
+  // Re-announce to DOM without writing to Redux (used by reconcile on tab switch / undo)
+  readonly reannounceEntity: (entityId: string) => void;
+  readonly reannounceLink: (linkId: string) => void;
+
   // Redux DevTools Integration
   readonly connectDevTools: () => void;
   readonly cleanup: () => void;
@@ -203,6 +207,18 @@ export const createEntityManager = function(): EntityManager {
   const onApplicationEvent = function(handler: (event: ApplicationEvent) => void): () => void {
     return eventBus.subscribe(handler);
   };
+
+  // Re-announce entity to DOM without writing to Redux
+  const reannounceEntity = function(entityId: string): void {
+    const entity = repository.getById(entityId);
+    if (entity) eventBus.publish({ type: 'EntityCreated', entity });
+  };
+
+  // Re-announce link to DOM without writing to Redux
+  const reannounceLink = function(linkId: string): void {
+    const link = linkRepository.getById(linkId);
+    if (link) eventBus.publish({ type: 'LinkCreated', link });
+  };
   
   // Redux DevTools Integration  
   const connectDevTools = function(): void {
@@ -259,6 +275,8 @@ export const createEntityManager = function(): EntityManager {
     getLink,
     getAllLinks,
     onApplicationEvent,
+    reannounceEntity,
+    reannounceLink,
     connectDevTools,
     cleanup
   };
