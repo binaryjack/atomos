@@ -20,6 +20,19 @@ import { copyEntity, pasteEntity } from '../core/clipboard.js'
 import { createMcpSync } from '../features/mcp-sync/create-mcp-sync.js'
 import { createRubberBand } from '../features/rubber-band/create-rubber-band.js'
 import { createShortcutsPanel } from '../features/shortcuts/create-shortcuts-panel.js'
+import { registerExportPlugin } from '../features/export/create-export-registry.js'
+import { sqlDdlPlugin } from '../features/export/plugins/sql-ddl.plugin.js'
+import { prismaPlugin } from '../features/export/plugins/prisma.plugin.js'
+import { typescriptPlugin } from '../features/export/plugins/typescript.plugin.js'
+import { jsonSchemaPlugin } from '../features/export/plugins/json-schema.plugin.js'
+import { mermaidPlugin } from '../features/export/plugins/mermaid.plugin.js'
+
+// Register built-in export plugins once at module load
+registerExportPlugin(sqlDdlPlugin);
+registerExportPlugin(prismaPlugin);
+registerExportPlugin(typescriptPlugin);
+registerExportPlugin(jsonSchemaPlugin);
+registerExportPlugin(mermaidPlugin);
 
 export const createCanvasPage = function() {
   const cleanups: Array<() => void> = [];
@@ -464,6 +477,13 @@ export const createCanvasPage = function() {
     if (st.is_settings_open && !currentSettingsPage) {
       currentSettingsPage = createSettingsPage({
         initialSettings: { toolbox: getToolboxConfig(), shapes: getCustomShapes(), general: getGeneralSettings() || {}, appearance: getAppearanceSettings() || {} },
+        getKernel: () => {
+          const reduxSt = store.get_state();
+          const activeSchema = reduxSt.schemas[reduxSt.active_schema_id];
+          const entities = Object.fromEntries((activeSchema?.entities ?? []).map(e => [e.id, e]));
+          const links = Object.fromEntries((activeSchema?.links ?? []).map(l => [l.id, l]));
+          return createSchemaGraphKernel({ entities, links });
+        },
         onClose: () => {
           store.dispatch({ type: 'settings-toggled', is_open: false });
         },

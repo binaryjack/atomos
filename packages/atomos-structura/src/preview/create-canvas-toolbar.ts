@@ -2,12 +2,9 @@ import { autoLayoutDAG, deserializeDAG, serializeDAG } from '../core/application
 import type { CanvasViewport } from '../core/create-canvas-viewport.js';
 import type { EntityManager } from '../core/presentation/entity-manager.js';
 import { getGlobalReduxStore } from '../core/create-redux-store.js';
-import { createSchemaGraphKernel } from '../core/create-schema-graph-kernel.js';
-import { createTypescriptAdapter } from '../adapters/create-typescript-adapter.js';
-import { createSqlAdapter } from '../adapters/create-sql-adapter.js';
-import { createPrismaAdapter } from '../adapters/create-prisma-adapter.js';
 import type { SchemaGraphKernel } from '../core/create-schema-graph-kernel.js';
 import { createCanvasSnapshot } from '../features/export/create-canvas-snapshot.js';
+import { getExportPlugins } from '../features/export/create-export-registry.js';
 
 export interface CanvasToolbarConfig {
   readonly viewport: CanvasViewport;
@@ -172,39 +169,85 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): HTMLEl
     URL.revokeObjectURL(url);
   };
 
-  const exportTsBtn = createIconButton(
-    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
-    'Export TypeScript Interfaces (.ts)',
-    () => downloadText(createTypescriptAdapter(config.getKernel()).generateInterfaces(), `schema-${Date.now()}.ts`)
-  );
+  // -- Schema Export Dropdown (plugin-driven) --
+  const schemaExportWrap = document.createElement('div');
+  schemaExportWrap.style.cssText = 'position:relative;display:flex;';
 
-  const exportSqlBtn = createIconButton(
-    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>`,
-    'Export SQL DDL (.sql)',
-    () => downloadText(createSqlAdapter(config.getKernel()).generateDDL(), `schema-${Date.now()}.sql`)
-  );
+  const schemaExportBtn = document.createElement('button');
+  schemaExportBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+  schemaExportBtn.title = 'Export Schema…';
+  schemaExportBtn.style.cssText = [
+    'display:flex;align-items:center;justify-content:center;',
+    'width:36px;height:36px;border:none;background:transparent;',
+    'color:var(--vbs-text-secondary, #a1a1aa);border-radius:var(--vbs-radius, 2px);cursor:pointer;transition:all 0.2s;'
+  ].join('');
+  schemaExportBtn.onmouseover = () => { schemaExportBtn.style.background = 'var(--vbs-bg-panel, #111111)'; schemaExportBtn.style.color = '#f8fafc'; };
+  schemaExportBtn.onmouseout  = () => { schemaExportBtn.style.background = 'transparent'; schemaExportBtn.style.color = 'var(--vbs-text-secondary, #a1a1aa)'; };
 
-  const exportJsonSchemaBtn = createIconButton(
-    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
-    'Export JSON Schema (.json)',
-    () => {
-      const kernel = config.getKernel();
-      const snap = kernel.getSnapshot();
-      const defs: Record<string, unknown> = {};
-      Object.keys(snap.entities).forEach(id => {
-        const ent = snap.entities[id];
-        if (ent) { defs[ent.name] = kernel.extractJsonSchema(id); }
-      });
-      const output = JSON.stringify({ $schema: 'http://json-schema.org/draft-07/schema#', definitions: defs }, null, 2);
-      downloadText(output, `schema-${Date.now()}.schema.json`, 'application/json');
+  const schemaExportPanel = document.createElement('div');
+  schemaExportPanel.style.cssText = [
+    'display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);',
+    'background:rgba(15,23,42,0.98);backdrop-filter:blur(8px);',
+    'border:1px solid #27272a;border-radius:10px;padding:6px;min-width:220px;',
+    'box-shadow:0 -10px 15px -3px rgba(0,0,0,0.4);z-index:50;',
+  ].join('');
+
+  const buildSchemaExportPanel = (): void => {
+    schemaExportPanel.innerHTML = '';
+    const header = document.createElement('div');
+    header.style.cssText = 'padding:4px 8px 6px;font-size:11px;color:#64748b;font-family:system-ui,sans-serif;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #1e293b;margin-bottom:4px;';
+    header.textContent = 'Export Schema As…';
+    schemaExportPanel.appendChild(header);
+
+    getExportPlugins().forEach(plugin => {
+      const row = document.createElement('button');
+      row.style.cssText = [
+        'display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;',
+        'border:none;background:transparent;color:#cbd5e1;text-align:left;cursor:pointer;border-radius:6px;',
+        'font-family:system-ui,sans-serif;font-size:13px;transition:background 0.12s;',
+      ].join('');
+      row.onmouseover = () => { row.style.background = '#1e293b'; };
+      row.onmouseout  = () => { row.style.background = 'transparent'; };
+      row.onclick = (e) => {
+        e.stopPropagation();
+        schemaExportPanel.style.display = 'none';
+        const snapshot = config.getKernel().getSnapshot();
+        try {
+          const content = plugin.generate(snapshot);
+          downloadText(content, `schema-${Date.now()}.${plugin.fileExtension}`, plugin.mimeType);
+        } catch (err) {
+          console.error(`[Export] ${plugin.id} failed:`, err);
+        }
+      };
+      const extBadge = document.createElement('span');
+      extBadge.textContent = `.${plugin.fileExtension}`;
+      extBadge.style.cssText = 'flex-shrink:0;font-size:10px;font-family:monospace;padding:1px 6px;border-radius:4px;background:#312e81;color:#a5b4fc;';
+      const lbl = document.createElement('span');
+      lbl.textContent = plugin.label;
+      row.appendChild(extBadge);
+      row.appendChild(lbl);
+      schemaExportPanel.appendChild(row);
+    });
+  };
+
+  let schemaExportOpen = false;
+  schemaExportBtn.onclick = (e) => {
+    e.stopPropagation();
+    schemaExportOpen = !schemaExportOpen;
+    if (schemaExportOpen) {
+      buildSchemaExportPanel();
+      schemaExportPanel.style.display = 'block';
+    } else {
+      schemaExportPanel.style.display = 'none';
     }
-  );
+  };
+  document.addEventListener('click', () => {
+    schemaExportOpen = false;
+    schemaExportPanel.style.display = 'none';
+  });
 
-  const exportPrismaBtn = createIconButton(
-    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 7-9 13L3 9z"/></svg>`,
-    'Export Prisma Schema (.prisma)',
-    () => downloadText(createPrismaAdapter(config.getKernel()).generatePrismaSchema(), `schema-${Date.now()}.prisma`)
-  );
+  schemaExportWrap.appendChild(schemaExportBtn);
+  schemaExportWrap.appendChild(schemaExportPanel);
 
   const snapshot = createCanvasSnapshot(config.getSnapshot);
 
@@ -270,10 +313,7 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): HTMLEl
   toolbar.appendChild(exportBtn);
   toolbar.appendChild(autoLayoutBtn);
   toolbar.appendChild(divider());
-  toolbar.appendChild(exportTsBtn);
-  toolbar.appendChild(exportSqlBtn);
-  toolbar.appendChild(exportJsonSchemaBtn);
-  toolbar.appendChild(exportPrismaBtn);
+  toolbar.appendChild(schemaExportWrap);
   toolbar.appendChild(exportSvgBtn);
   toolbar.appendChild(exportPngBtn);
   toolbar.appendChild(divider());

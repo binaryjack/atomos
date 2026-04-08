@@ -1,6 +1,9 @@
 import type { SchemaGraphKernel } from '../core/create-schema-graph-kernel.js';
 import type { Property } from '@atomos/structura-core';
 
+/** Wrap any identifier in square brackets so kebab-case, spaces, and reserved words are valid. */
+const q = (identifier: string): string => `[${identifier.replace(/]/g, ']]')}]`;
+
 const mapSqlType = (dataType: string): string => {
   switch (dataType) {
     case 'integer': return 'INTEGER';
@@ -12,6 +15,9 @@ const mapSqlType = (dataType: string): string => {
   }
 };
 
+const toTableName = (entityName: string): string =>
+  entityName.replace(/([A-Z])/g, '_$1').replace(/^_/, '').toLowerCase();
+
 export const createSqlAdapter = (kernel: SchemaGraphKernel) => {
   return Object.freeze({
     generateDDL: (): string => {
@@ -22,20 +28,20 @@ export const createSqlAdapter = (kernel: SchemaGraphKernel) => {
       ];
 
       Object.values(entities).forEach(entity => {
-        const tableName = entity.name.replace(/([A-Z])/g, '_$1').replace(/^_/, '').toLowerCase();
-        lines.push(`CREATE TABLE IF NOT EXISTS ${tableName} (`);
+        const tableName = toTableName(entity.name);
+        lines.push(`CREATE TABLE IF NOT EXISTS ${q(tableName)} (`);
         const cols: string[] = [];
 
         const hasId = entity.properties.some(p => p.key === 'id');
         if (!hasId) {
-          cols.push('  id UUID PRIMARY KEY DEFAULT gen_random_uuid()');
+          cols.push(`  ${q('id')} UUID PRIMARY KEY DEFAULT gen_random_uuid()`);
         }
 
         entity.properties.forEach((prop: Property) => {
           const sqlType = mapSqlType(prop.dataType);
           const notNull = prop.validation?.required ? ' NOT NULL' : '';
           const pk = prop.key === 'id' ? ' PRIMARY KEY DEFAULT gen_random_uuid()' : '';
-          cols.push(`  ${prop.key} ${sqlType}${pk}${notNull}`);
+          cols.push(`  ${q(prop.key)} ${sqlType}${pk}${notNull}`);
         });
 
         lines.push(cols.join(',\n'), `);\n`);
@@ -47,31 +53,34 @@ export const createSqlAdapter = (kernel: SchemaGraphKernel) => {
         const right = entities[link.rightEntityId];
         if (!left || !right) return;
 
-        const leftTable = left.name.replace(/([A-Z])/g, '_$1').replace(/^_/, '').toLowerCase();
-        const rightTable = right.name.replace(/([A-Z])/g, '_$1').replace(/^_/, '').toLowerCase();
+        const leftTable  = toTableName(left.name);
+        const rightTable = toTableName(right.name);
 
-        const isLeftMany = link.leftCardinality === '*' || link.leftCardinality === '1..*';
+        const isLeftMany  = link.leftCardinality  === '*' || link.leftCardinality  === '1..*';
         const isRightMany = link.rightCardinality === '*' || link.rightCardinality === '1..*';
 
         if (isLeftMany && isRightMany) {
           // Many-to-many: pivot table
           const pivot = `${leftTable}_${rightTable}`;
+          const leftFk  = `${leftTable}_id`;
+          const rightFk = `${rightTable}_id`;
           lines.push(
-            `CREATE TABLE IF NOT EXISTS ${pivot} (`,
-            `  ${leftTable}_id UUID REFERENCES ${leftTable}(id) ON DELETE CASCADE,`,
-            `  ${rightTable}_id UUID REFERENCES ${rightTable}(id) ON DELETE CASCADE,`,
-            `  PRIMARY KEY (${leftTable}_id, ${rightTable}_id)`,
+            `CREATE TABLE IF NOT EXISTS ${q(pivot)} (`,
+            `  ${q(leftFk)}  UUID REFERENCES ${q(leftTable)}(${q('id')}) ON DELETE CASCADE,`,
+            `  ${q(rightFk)} UUID REFERENCES ${q(rightTable)}(${q('id')}) ON DELETE CASCADE,`,
+            `  PRIMARY KEY (${q(leftFk)}, ${q(rightFk)})`,
             `);\n`,
           );
         } else {
           // FK on the "many" side
-          const fkTable = isRightMany ? rightTable : leftTable;
-          const refTable = isRightMany ? leftTable : rightTable;
+          const fkTable  = isRightMany ? rightTable : leftTable;
+          const refTable = isRightMany ? leftTable  : rightTable;
+          const fkCol    = `${refTable}_id`;
           lines.push(
-            `ALTER TABLE ${fkTable}`,
-            `  ADD COLUMN IF NOT EXISTS ${refTable}_id UUID,`,
-            `  ADD CONSTRAINT fk_${fkTable}_${refTable}`,
-            `    FOREIGN KEY (${refTable}_id) REFERENCES ${refTable}(id) ON DELETE SET NULL;\n`,
+            `ALTER TABLE ${q(fkTable)}`,
+            `  ADD COLUMN IF NOT EXISTS ${q(fkCol)} UUID,`,
+            `  ADD CONSTRAINT ${q(`fk_${fkTable}_${refTable}`)}`,
+            `    FOREIGN KEY (${q(fkCol)}) REFERENCES ${q(refTable)}(${q('id')}) ON DELETE SET NULL;\n`,
           );
         }
       });
