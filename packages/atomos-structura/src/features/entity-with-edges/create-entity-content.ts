@@ -253,7 +253,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
       
       try {
         const newProp = await repository.create({
-          key: `prop-${Date.now()}`,
+          key: `prop-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           label: 'new property',
           dataType: 'string',
           componentType: 'input',

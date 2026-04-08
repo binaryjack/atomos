@@ -20,6 +20,10 @@ export const createEntityRegistry = function(
   });
 
   const registerEntity = (entity: EntityInstance): void => {
+    // Idempotency guard: if the EventBus chain already pre-registered this entity
+    // (via reconcile → reannounceEntity → EntityCreated handler) before the factory
+    // caller's registerEntity() fires, silently skip to avoid a duplicate DOM tree.
+    if (workspaceState.value.entities.has(entity.id)) return;
     const newEntities = new Map(workspaceState.value.entities);
     newEntities.set(entity.id, entity);
     workspaceState.set({ ...workspaceState.value, entities: newEntities });

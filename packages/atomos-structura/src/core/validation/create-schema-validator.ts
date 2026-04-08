@@ -24,15 +24,6 @@ export const createSchemaValidator = (store: ReduxStore): SchemaValidator => {
 
       const warnings: ValidationWarning[] = [];
 
-      // Rule 1: entity missing an 'id' property (key or label match)
-      // Properties field is nullable in older persisted data — guard with ?? []
-      schema.entities.forEach(e => {
-        const props = e.properties ?? [];
-        if (!props.some(p => p.key === 'id' || (p.label ?? '').toLowerCase().trim() === 'id')) {
-          warnings.push({ entityId: e.id, rule: 'missing-id', message: `"${e.name}" has no id property` });
-        }
-      });
-
       // Rule 2: duplicate entity names (case-insensitive)
       const names = new Map<string, string>();
       schema.entities.forEach(e => {

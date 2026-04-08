@@ -263,9 +263,17 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
   // Register spawn factory for new entity creation
   const factory: EntitySpawnFactory = (id, pos, ws) => {
     const ep = makeEntityProps(id, 'New Entity', pos.x, pos.y);
+    // createEntity dispatches to Redux synchronously. That triggers runReconcile
+    // which calls reannounceEntity → EventBus EntityCreated → the handler above
+    // spawns + registers the instance before this line returns.
     canvasAdapter.createEntity(id, 'New Entity', pos.x, pos.y);
+    // If the EventBus chain already spawned and registered this entity, return
+    // the existing instance. Calling spawnEntity again would create a second
+    // orphaned SVG tree that no cleanup path can ever reach.
+    const preRegistered = ws.workspaceState.value.entities.get(id);
+    if (preRegistered) return preRegistered;
     console.log(`[CANVAS-PAGE] ? New entity spawned at (${pos.x}, ${pos.y}) through clean architecture`);
-    return spawnEntity(ep, ws, { value: DEFAULT_GLOBAL_CONFIG }, canvasAdapter); // Default global config
+    return spawnEntity(ep, ws, { value: DEFAULT_GLOBAL_CONFIG }, canvasAdapter);
   };
   workspace.setEntitySpawnFactory(factory);
 
