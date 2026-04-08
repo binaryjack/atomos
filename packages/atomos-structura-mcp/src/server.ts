@@ -17,6 +17,11 @@ const httpServer = createServer((req, res) => {
     res.end();
     return;
   }
+
+  if (req.method === 'GET' && req.url === '/events') {
+    server.handleSSE(req, res);
+    return;
+  }
   
   server.handleRequest(req, res);
 });

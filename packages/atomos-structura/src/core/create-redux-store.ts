@@ -209,7 +209,42 @@ const reduce_state = function(state: ReduxState, action: ReduxAction): ReduxStat
     case 'state-loaded': {
       return action.state;
     }
-    
+
+    case 'schema-created': {
+      const existing = state.schemas[action.id];
+      if (existing) return state;
+      const newSchema = { id: action.id, name: action.name, entities: [], links: [] };
+      return {
+        ...state,
+        schemas: { ...state.schemas, [action.id]: newSchema },
+        active_schema_id: action.id,
+      };
+    }
+
+    case 'schema-renamed': {
+      const target = state.schemas[action.id];
+      if (!target) return state;
+      return {
+        ...state,
+        schemas: { ...state.schemas, [action.id]: { ...target, name: action.name } },
+      };
+    }
+
+    case 'schema-deleted': {
+      const ids = Object.keys(state.schemas);
+      if (ids.length <= 1) return state; // never delete the last schema
+      const { [action.id]: _removed, ...remaining } = state.schemas;
+      const next_active = state.active_schema_id === action.id
+        ? (Object.keys(remaining)[0] ?? state.active_schema_id)
+        : state.active_schema_id;
+      return { ...state, schemas: remaining, active_schema_id: next_active };
+    }
+
+    case 'schema-activated': {
+      if (!state.schemas[action.id]) return state;
+      return { ...state, active_schema_id: action.id };
+    }
+
     default:
       return state;
   }
@@ -218,6 +253,17 @@ const reduce_state = function(state: ReduxState, action: ReduxAction): ReduxStat
 export const create_redux_store = function(): ReduxStore {
   let current_state = initial_state;
   const listeners = new Set<(state: ReduxState) => void>();
+
+  // Undo/redo history — never persisted, only lives in memory
+  const HISTORY_LIMIT = 50;
+  const SKIP_HISTORY = new Set<ReduxAction['type']>([
+    'viewport-updated', 'settings-toggled', 'settings-updated', 'state-loaded',
+  ]);
+  const history_past: ReduxState[] = [];
+  const history_future: ReduxState[] = [];
+
+  // Reconciliation mode — dispatches inside reconcile() don't affect undo/redo history
+  let is_reconciling = false;
 
   const persist = function(): void {
     const serialized = JSON.stringify(current_state);
@@ -267,6 +313,21 @@ export const create_redux_store = function(): ReduxStore {
       console.error('❌ Failed to load Redux state:', error);
       current_state = initial_state;
     }
+    // Guarantee the active schema always has an entry in the schemas map
+    if (!current_state.schemas[current_state.active_schema_id]) {
+      current_state = {
+        ...current_state,
+        schemas: {
+          ...current_state.schemas,
+          [current_state.active_schema_id]: {
+            id: current_state.active_schema_id,
+            name: 'Default Schema',
+            entities: [],
+            links: [],
+          },
+        },
+      };
+    }
   };
 
   const get_state = function(): ReduxState {
@@ -276,11 +337,42 @@ export const create_redux_store = function(): ReduxStore {
   const dispatch = function(action: ReduxAction): void {
     const previous_state = current_state;
     current_state = reduce_state(current_state, action);
-    
+
     if (current_state !== previous_state) {
+      if (!is_reconciling && !SKIP_HISTORY.has(action.type)) {
+        history_past.push(previous_state);
+        if (history_past.length > HISTORY_LIMIT) history_past.shift();
+        history_future.length = 0;
+      }
       persist();
-      listeners.forEach(listener => listener(current_state));
+      listeners.forEach(listener => { try { listener(current_state); } catch (err) { console.error('[Redux] listener error:', err); } });
     }
+  };
+
+  const undo = function(): void {
+    const prev = history_past.pop();
+    if (!prev) return;
+    history_future.push(current_state);
+    current_state = prev;
+    persist();
+    listeners.forEach(listener => { try { listener(current_state); } catch (err) { console.error('[Redux] listener error:', err); } });
+  };
+
+  const redo = function(): void {
+    const next = history_future.pop();
+    if (!next) return;
+    history_past.push(current_state);
+    current_state = next;
+    persist();
+    listeners.forEach(listener => { try { listener(current_state); } catch (err) { console.error('[Redux] listener error:', err); } });
+  };
+
+  const can_undo = function(): boolean { return history_past.length > 0; };
+  const can_redo = function(): boolean { return history_future.length > 0; };
+
+  const reconcile = function(fn: () => void): void {
+    is_reconciling = true;
+    try { fn(); } finally { is_reconciling = false; }
   };
 
   const subscribe = function(listener: (state: ReduxState) => void): () => void {
@@ -291,7 +383,7 @@ export const create_redux_store = function(): ReduxStore {
   // Load initial state
   load();
 
-  return { get_state, dispatch, subscribe };
+  return { get_state, dispatch, subscribe, undo, redo, can_undo, can_redo, reconcile };
 };
 
 let globalReduxStore: ReduxStore | null = null;

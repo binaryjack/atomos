@@ -98,6 +98,8 @@ export const createCanvasViewport = function(container: HTMLElement, svgElement?
 
   const onMouseDown = (e: MouseEvent) => {
     // Only pan on middle-button OR primary on the SVG background itself (not bubbled from entities)
+    // Shift+drag is reserved for rubber-band multi-select — do not start panning
+    if (e.shiftKey) return;
     const targetIsSvgBg = svgElement
       ? (e.target === svgElement || (e.target as Element).tagName === 'svg')
       : (e.target as Element).tagName === 'svg';

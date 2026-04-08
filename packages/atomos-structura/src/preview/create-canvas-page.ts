@@ -10,6 +10,29 @@ import { createInteractiveEntityDemo } from '../features/entity-with-edges/creat
 import { createSchemaPanel } from '../features/schema-panel/index.js'
 import { createSettingsPage } from '../features/settings-page/create-settings-page.js'
 import { createCanvasToolbar } from './create-canvas-toolbar.js'
+import { createSchemaTabs } from './create-schema-tabs.js'
+import { createMinimap } from '../features/minimap/create-minimap.js'
+import { createEntitySearch } from '../features/search/create-entity-search.js'
+import { createSchemaGraphKernel } from '../core/create-schema-graph-kernel.js'
+import { createSchemaValidator } from '../core/validation/create-schema-validator.js'
+import { createValidationOverlay } from '../features/validation-overlay/create-validation-overlay.js'
+import { copyEntity, pasteEntity } from '../core/clipboard.js'
+import { createMcpSync } from '../features/mcp-sync/create-mcp-sync.js'
+import { createRubberBand } from '../features/rubber-band/create-rubber-band.js'
+import { createShortcutsPanel } from '../features/shortcuts/create-shortcuts-panel.js'
+import { registerExportPlugin } from '../features/export/create-export-registry.js'
+import { sqlDdlPlugin } from '../features/export/plugins/sql-ddl.plugin.js'
+import { prismaPlugin } from '../features/export/plugins/prisma.plugin.js'
+import { typescriptPlugin } from '../features/export/plugins/typescript.plugin.js'
+import { jsonSchemaPlugin } from '../features/export/plugins/json-schema.plugin.js'
+import { mermaidPlugin } from '../features/export/plugins/mermaid.plugin.js'
+
+// Register built-in export plugins once at module load
+registerExportPlugin(sqlDdlPlugin);
+registerExportPlugin(prismaPlugin);
+registerExportPlugin(typescriptPlugin);
+registerExportPlugin(jsonSchemaPlugin);
+registerExportPlugin(mermaidPlugin);
 
 export const createCanvasPage = function() {
   const cleanups: Array<() => void> = [];
@@ -18,9 +41,15 @@ export const createCanvasPage = function() {
   const root = document.createElement('div');
   root.style.cssText = 'position:fixed;inset:0;overflow:hidden;background:var(--vbs-bg-input, #09090b);';
 
-  // Canvas container — full area below nav
+  // Schema tabs bar
+  const schemaTabs = createSchemaTabs();
+  root.appendChild(schemaTabs.element);
+  cleanups.push(schemaTabs.cleanup.destroy);
+  const TAB_H = schemaTabs.height;
+
+  // Canvas container — full area below tab bar
   const canvasWrap = document.createElement('div');
-  canvasWrap.style.cssText = 'position:absolute;inset:0;overflow:hidden;';
+  canvasWrap.style.cssText = `position:absolute;top:${TAB_H}px;left:0;right:0;bottom:0;overflow:hidden;`;
   root.appendChild(canvasWrap);
 
   // SVG — no viewBox, 1 unit = 1 CSS px
@@ -270,6 +299,14 @@ export const createCanvasPage = function() {
 
   createInteractiveEntityDemo(workspace);
 
+  // Minimap — anchored to the right edge of the shape palette
+  const minimap = createMinimap(getEntityManager(), viewport, canvasWrap, palette);
+  cleanups.push(minimap.cleanup.destroy);
+
+  // Entity search (Ctrl+K)
+  const entitySearch = createEntitySearch(getEntityManager(), viewport, canvasWrap);
+  cleanups.push(entitySearch.cleanup.destroy);
+
   // Mount Floating Toolbar
   const toolbar = createCanvasToolbar({
     viewport,
@@ -279,11 +316,121 @@ export const createCanvasPage = function() {
       const st = store.get_state();
       store.dispatch({ type: 'settings-toggled', is_open: !st.is_settings_open });
     },
+    getKernel: () => {
+      const reduxStore = getGlobalReduxStore();
+      const st = reduxStore.get_state();
+      const schema = st.schemas[st.active_schema_id];
+      const entities = Object.fromEntries((schema?.entities ?? []).map(e => [e.id, e]));
+      const links = Object.fromEntries((schema?.links ?? []).map(l => [l.id, l]));
+      return createSchemaGraphKernel({ entities, links });
+    },
+    getSnapshot: () => canvasWrap.querySelector('svg') as SVGSVGElement,
   });
   canvasWrap.appendChild(toolbar);
 
-  let currentSettingsPage: { element: HTMLElement; cleanup: { destroy: () => void } } | null = null;
+  // Validation overlay
   const store = getGlobalReduxStore();
+  const validator = createSchemaValidator(store);
+  const validationOverlay = createValidationOverlay(validator, viewport, getEntityManager(), canvasWrap);
+  cleanups.push(validationOverlay.cleanup.destroy);
+  cleanups.push(validator.cleanup);
+
+  // Rubber-band multi-select
+  const rubberBand = createRubberBand(svg, viewportGroup, viewport, getEntityManager());
+  cleanups.push(rubberBand.cleanup.destroy);
+  // Visual selection feedback — highlight matched entities with a blue glow
+  cleanups.push(rubberBand.subscribe(ids => {
+    workspace.workspaceState.value.entities.forEach((instance, entityId) => {
+      (instance.element as SVGElement).style.filter = ids.has(entityId)
+        ? 'drop-shadow(0 0 6px #3b82f6)'
+        : '';
+    });
+  }));
+
+  // Shortcuts panel
+  const shortcutsPanel = createShortcutsPanel();
+  cleanups.push(shortcutsPanel.cleanup.destroy);
+
+  // MCP live sync (silent if server is not running)
+  try {
+    const mcpSync = createMcpSync(store);
+    cleanups.push(mcpSync.cleanup);
+  } catch { /* noop */ }
+
+  // Canvas reconciliation — syncs the DOM when undo/redo changes Redux state
+  // without going through entity-manager commands (which would pollute history).
+  let reconciling = false;
+  const runReconcile = (state: ReturnType<typeof store.get_state>): void => {
+    if (reconciling) return;
+    reconciling = true;
+    try {
+      const schema = state.schemas[state.active_schema_id];
+      const reduxEntities = schema?.entities ?? [];
+      const reduxEntityMap = new Map(reduxEntities.map(e => [e.id, e]));
+      const domEntities = workspace.workspaceState.value.entities;
+
+      // 1. Remove DOM entities that are no longer in the active Redux schema.
+      //    Temporarily suppress onEntityDeleted / onLinkDeleted so this DOM-only
+      //    cleanup never cascades into Redux deletions (which would corrupt data on tab switch).
+      const savedOnEntityDeleted = (workspace as any).onEntityDeleted as ((id: string) => void) | null;
+      const savedOnLinkDeleted = (workspace as any).onLinkDeleted as ((id: string) => void) | null;
+      (workspace as any).onEntityDeleted = null;
+      (workspace as any).onLinkDeleted = null;
+      try {
+        domEntities.forEach((_, id) => {
+          if (!reduxEntityMap.has(id)) workspace.unregisterEntity(id);
+        });
+      } finally {
+        (workspace as any).onEntityDeleted = savedOnEntityDeleted;
+        (workspace as any).onLinkDeleted = savedOnLinkDeleted;
+      }
+
+      // 2. Update positions / dimensions for existing entities directly on signals
+      //    posSignal subscribers will see Redux-match and skip write-back
+      reduxEntities.forEach(re => {
+        const inst = workspace.workspaceState.value.entities.get(re.id);
+        if (!inst) return;
+        const cur = inst.position.value;
+        if (Math.abs(cur.x - re.position.x) > 0.5 || Math.abs(cur.y - re.position.y) > 0.5) {
+          inst.position.set({ x: re.position.x, y: re.position.y });
+        }
+        const curD = inst.dimensions.value;
+        if (Math.abs(curD.width - re.dimensions.width) > 0.5 || Math.abs(curD.height - re.dimensions.height) > 0.5) {
+          inst.dimensions.set({ width: re.dimensions.width, height: re.dimensions.height });
+        }
+      });
+
+      // 1.5. Remove DOM link paths that no longer belong to the active schema.
+      //      Entity cascade cleanup (step 1) removes links via their entity endpoints,
+      //      but any orphaned paths are caught here as an explicit safety net.
+      const reduxLinks = schema?.links ?? [];
+      const activeLinkIdSet = new Set(reduxLinks.map(l => l.id));
+      const staleLinkIds: string[] = [];
+      workspace.linkManager.links.value.forEach((_, linkId) => {
+        if (!activeLinkIdSet.has(linkId)) staleLinkIds.push(linkId);
+      });
+      staleLinkIds.forEach(linkId => workspace.linkManager.removeLink(linkId));
+
+      // 3. Re-announce entities that are in Redux but missing from DOM.
+      //    Uses reannounceEntity to fire EntityCreated without any Redux write,
+      //    avoiding data corruption (no overwriting properties with empty values).
+      const missing = reduxEntities.filter(re => !workspace.workspaceState.value.entities.has(re.id));
+      missing.forEach(re => getEntityManager().reannounceEntity(re.id));
+
+      // 4. Re-announce links that are in Redux but missing from DOM (tab switch / undo).
+      const missingLinks = reduxLinks.filter(rl => !workspace.linkManager.getLink(rl.id));
+      missingLinks.forEach(rl => getEntityManager().reannounceLink(rl.id));
+    } finally {
+      reconciling = false;
+    }
+  };
+  const unsubReconcile = store.subscribe(runReconcile);
+  // Trigger immediately so persisted entities/links appear on page load without
+  // requiring a Redux dispatch (the store does not fire subscribers on the initial load).
+  runReconcile(store.get_state());
+  cleanups.push(unsubReconcile);
+
+  let currentSettingsPage: { element: HTMLElement; cleanup: { destroy: () => void } } | null = null;
 
   const applyGridSettings = () => {
     const general = getGeneralSettings();
@@ -330,6 +477,13 @@ export const createCanvasPage = function() {
     if (st.is_settings_open && !currentSettingsPage) {
       currentSettingsPage = createSettingsPage({
         initialSettings: { toolbox: getToolboxConfig(), shapes: getCustomShapes(), general: getGeneralSettings() || {}, appearance: getAppearanceSettings() || {} },
+        getKernel: () => {
+          const reduxSt = store.get_state();
+          const activeSchema = reduxSt.schemas[reduxSt.active_schema_id];
+          const entities = Object.fromEntries((activeSchema?.entities ?? []).map(e => [e.id, e]));
+          const links = Object.fromEntries((activeSchema?.links ?? []).map(l => [l.id, l]));
+          return createSchemaGraphKernel({ entities, links });
+        },
         onClose: () => {
           store.dispatch({ type: 'settings-toggled', is_open: false });
         },
@@ -381,6 +535,57 @@ export const createCanvasPage = function() {
     }
   });
 
+  // Keyboard shortcuts: Undo, Redo, Search, Copy/Paste, Delete, Shortcuts panel
+  const onKeyDown = (e: KeyboardEvent): void => {
+    const target = e.target as HTMLElement;
+    const isEditing = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || (target as HTMLElement).isContentEditable;
+    if (isEditing) return;
+
+    if (e.ctrlKey && !e.shiftKey && e.key === 'z') {
+      e.preventDefault();
+      store.undo();
+    } else if (e.ctrlKey && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))) {
+      e.preventDefault();
+      store.redo();
+    } else if (e.ctrlKey && e.key === 'k') {
+      e.preventDefault();
+      entitySearch.open();
+    } else if (e.ctrlKey && e.key === 'c') {
+      // Copy: prefer multi-select first entity, else selected entity
+      const multiIds = rubberBand.getSelectedIds();
+      const entityId = multiIds.size > 0
+        ? multiIds.values().next().value as string
+        : (getCanvasAdapter().getSelectedEntityId() ?? undefined);
+      if (entityId) {
+        const entity = getEntityManager().getEntity(entityId);
+        if (entity) copyEntity(entity);
+      }
+    } else if (e.ctrlKey && e.key === 'v') {
+      e.preventDefault();
+      pasteEntity(getEntityManager());
+    } else if (e.key === 'Delete' || e.key === 'Backspace') {
+      const multiIds = rubberBand.getSelectedIds();
+      if (multiIds.size > 0) {
+        e.preventDefault();
+        const count = multiIds.size;
+        if (count === 1 || window.confirm(`Delete ${count} entities?`)) {
+          multiIds.forEach(id => getEntityManager().removeEntity(id));
+        }
+      } else {
+        const selectedId = getCanvasAdapter().getSelectedEntityId();
+        if (selectedId) {
+          e.preventDefault();
+          getEntityManager().removeEntity(selectedId);
+        }
+      }
+    } else if (e.shiftKey && e.key === '?') {
+      e.preventDefault();
+      shortcutsPanel.open();
+    }
+  };
+  document.addEventListener('keydown', onKeyDown);
+  cleanups.push(() => document.removeEventListener('keydown', onKeyDown));
+
   // ── Schema Panel (right side, collapsible treeview) ──────────────────────
   const dagObserver = createDAGObserver(getEntityManager());
 
@@ -393,6 +598,8 @@ export const createCanvasPage = function() {
 
   // Append to root so it floats over the canvas on the right side
   root.appendChild(schemaPanel.element);
+  // Push panel below the tab bar
+  schemaPanel.element.style.top = `${TAB_H}px`;
 
   cleanups.push(() => {
     schemaPanel.cleanup.destroy();

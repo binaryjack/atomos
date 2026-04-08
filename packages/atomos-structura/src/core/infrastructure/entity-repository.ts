@@ -5,21 +5,23 @@
 import { getGlobalReduxStore } from '../create-redux-store.js'
 import type { DomainEntity, DomainLink, EntityRepository, LinkRepository } from '../domain/entity-aggregate.js'
 
-const SCHEMA_ID = 'schema-default';
+/** Always routes to whichever schema is currently active. */
+const getSchemaId = (): string => getGlobalReduxStore().get_state().active_schema_id;
 
 export const createPersistedEntityRepository = function(): EntityRepository {
   const store = getGlobalReduxStore();
 
   const getById = function(id: string): DomainEntity | undefined {
     const state = store.get_state();
-    const schema = state.schemas[SCHEMA_ID];
+    const schema = state.schemas[getSchemaId()];
     if (!schema) return undefined;
     return schema.entities.find((e: any) => e.id === id) as unknown as DomainEntity;
   };
 
   const save = function(entity: DomainEntity): void {
+    const schemaId = getSchemaId();
     const state = store.get_state();
-    const schema = state.schemas[SCHEMA_ID];
+    const schema = state.schemas[schemaId];
     const exists = schema?.entities.some((e: any) => e.id === entity.id);
 
     // Convert DomainEntity to Entity
@@ -32,25 +34,25 @@ export const createPersistedEntityRepository = function(): EntityRepository {
     if (exists) {
       store.dispatch({
         type: 'entity-updated',
-        schema_id: SCHEMA_ID,
+        schema_id: schemaId,
         entity: reduxEntity
       });
     } else {
       store.dispatch({
         type: 'entity-added',
-        schema_id: SCHEMA_ID,
+        schema_id: schemaId,
         entity: reduxEntity
       });
     }
   };
 
   const remove = function(id: string): void {
-    store.dispatch({ type: 'entity-removed', schema_id: SCHEMA_ID, entity_id: id });
+    store.dispatch({ type: 'entity-removed', schema_id: getSchemaId(), entity_id: id });
   };
 
   const getAll = function(): readonly DomainEntity[] {
     const state = store.get_state();
-    const schema = state.schemas[SCHEMA_ID];
+    const schema = state.schemas[getSchemaId()];
     if (!schema) return [];
     return schema.entities as unknown as DomainEntity[];
   };
@@ -63,7 +65,7 @@ export const createPersistedLinkRepository = function(): LinkRepository {
 
   const getById = function(id: string): DomainLink | undefined {
     const state = store.get_state();
-    const schema = state.schemas[SCHEMA_ID];
+    const schema = state.schemas[getSchemaId()];
     if (!schema) return undefined;
 
     const link = schema.links.find((l: any) => l.id === id);
@@ -86,14 +88,15 @@ export const createPersistedLinkRepository = function(): LinkRepository {
   };
 
   const save = function(link: DomainLink): void {
+    const schemaId = getSchemaId();
     const state = store.get_state();
-    const schema = state.schemas[SCHEMA_ID];
+    const schema = state.schemas[schemaId];
     const exists = schema?.links.some((l: any) => l.id === link.id);
 
     if (exists) {
       store.dispatch({
         type: 'link-updated',
-        schema_id: SCHEMA_ID,
+        schema_id: schemaId,
         link: {
           id: link.id,
           leftAnchorId: link.sourceAnchorId,
@@ -110,7 +113,7 @@ export const createPersistedLinkRepository = function(): LinkRepository {
     } else {
       store.dispatch({
         type: 'link-created',
-        schema_id: SCHEMA_ID,
+        schema_id: schemaId,
         link_id: link.id,
         from_id: link.sourceEntityId,
         to_id: link.targetEntityId,
@@ -128,14 +131,14 @@ export const createPersistedLinkRepository = function(): LinkRepository {
   const remove = function(id: string): void {
     store.dispatch({
       type: 'link-removed',
-      schema_id: SCHEMA_ID,
+      schema_id: getSchemaId(),
       link_id: id
     });
   };
 
   const getAll = function(): readonly DomainLink[] {
     const state = store.get_state();
-    const schema = state.schemas[SCHEMA_ID];
+    const schema = state.schemas[getSchemaId()];
     if (!schema) return [];
 
     return schema.links.map((l: any) => ({
@@ -168,16 +171,16 @@ export const createEventBus = function(): EventBus {
   const publish = function(event: ApplicationEvent): void {
     console.log(`[EventBus] Publishing ${event.type}:`, event);
 
-    // Handle events asynchronously to prevent cascading updates
-    setTimeout(() => {
-      handlers.forEach(handler => {
-        try {
-          handler(event);
-        } catch (error) {
-          console.error(`[EventBus] Handler failed for ${event.type}:`, error);
-        }
-      });
-    }, 0);
+    // Snapshot handlers before iterating so that re-entrant publishes (e.g. entity
+    // spawn triggering another event) do not corrupt the iteration.
+    const snapshot = Array.from(handlers);
+    snapshot.forEach(handler => {
+      try {
+        handler(event);
+      } catch (error) {
+        console.error(`[EventBus] Handler failed for ${event.type}:`, error);
+      }
+    });
   };
 
   const subscribe = function(handler: (event: ApplicationEvent) => void): () => void {

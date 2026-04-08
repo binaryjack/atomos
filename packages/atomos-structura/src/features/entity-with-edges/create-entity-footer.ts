@@ -22,10 +22,10 @@ export const createEntityFooter = function(props: EntityFooterProps): EntityFoot
     `background:${bgColor}`,
     'border-top:1px solid var(--vbs-border, #27272a)',
     'flex-shrink:0',
-    'min-height:30px',
+    'min-height:calc(var(--vbs-entity-props-font-size, 11px) + 20px)',
   ].join(';');
 
-  const plusIcon = createIcon({ name: 'plus', size: 12, color: contrast.mutedColor });
+  const plusIcon = createIcon({ name: 'plus', size: 'calc(var(--vbs-entity-props-font-size, 11px) + 2px)', color: contrast.mutedColor });
 
   const addBtn = document.createElement('button');
   addBtn.type = 'button';

@@ -1,4 +1,5 @@
 import type { ToolboxConfiguration } from '@atomos/prime'
+import type { SchemaGraphKernel } from '../../../core/create-schema-graph-kernel.js'
 
 export interface CustomShape {
   id: string;
@@ -52,6 +53,8 @@ export interface SettingsPageProps {
   readonly initialSettings?: AppSettings;
   readonly onClose: (hasUnsavedChanges: boolean) => void;
   readonly onSave: (settings: AppSettings) => void;
+  /** If provided, the Exports tab can test-export the live schema. */
+  readonly getKernel?: () => SchemaGraphKernel;
 }
 
 export interface SettingsPageResult {

@@ -19,6 +19,24 @@ export interface McpResponse {
 export class VbsMcpServer {
   private entities: Map<string, Entity> = new Map();
   private links: Map<string, LinkProps> = new Map();
+  private sseClients: Set<ServerResponse> = new Set();
+
+  handleSSE(req: IncomingMessage, res: ServerResponse): void {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.writeHead(200);
+    res.write(':ok\n\n');
+    this.sseClients.add(res);
+    req.on('close', () => this.sseClients.delete(res));
+  }
+
+  private emit(data: unknown): void {
+    const payload = `event: change\ndata: ${JSON.stringify(data)}\n\n`;
+    this.sseClients.forEach(res => {
+      try { res.write(payload); } catch { this.sseClients.delete(res); }
+    });
+  }
   
   async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
     try {
@@ -55,6 +73,8 @@ export class VbsMcpServer {
         return this.createLink(request);
       case 'atomos-structura/get-schema':
         return this.getSchema(request);
+      case 'atomos-structura/sync-state':
+        return this.syncState(request);
       default:
         return {
           error: { code: -32601, message: 'Method not found' },
@@ -66,7 +86,7 @@ export class VbsMcpServer {
   private createEntity(request: McpRequest): McpResponse {
     const entity = request.params as Entity;
     this.entities.set(entity.id, entity);
-    
+    this.emit({ entities: Array.from(this.entities.values()), links: Array.from(this.links.values()) });
     return {
       result: { success: true, entity },
       id: request.id
@@ -101,7 +121,7 @@ export class VbsMcpServer {
     }
     
     this.entities.set(entity.id, entity);
-    
+    this.emit({ entities: Array.from(this.entities.values()), links: Array.from(this.links.values()) });
     return {
       result: { success: true, entity },
       id: request.id
@@ -119,7 +139,7 @@ export class VbsMcpServer {
     }
     
     this.entities.delete(entityId);
-    
+    this.emit({ entities: Array.from(this.entities.values()), links: Array.from(this.links.values()) });
     return {
       result: { success: true },
       id: request.id
@@ -129,7 +149,7 @@ export class VbsMcpServer {
   private createLink(request: McpRequest): McpResponse {
     const link = request.params as LinkProps;
     this.links.set(link.id, link);
-    
+    this.emit({ entities: Array.from(this.entities.values()), links: Array.from(this.links.values()) });
     return {
       result: { success: true, link },
       id: request.id
@@ -153,6 +173,16 @@ export class VbsMcpServer {
       },
       id: request.id
     };
+  }
+
+  private syncState(request: McpRequest): McpResponse {
+    const { entities = [], links = [] } = request.params as { entities?: Entity[]; links?: LinkProps[] };
+    this.entities.clear();
+    this.links.clear();
+    entities.forEach(e => this.entities.set(e.id, e));
+    links.forEach(l => this.links.set(l.id, l));
+    // sync-state does NOT emit SSE — it comes from the browser, avoid loop
+    return { result: { success: true }, id: request.id };
   }
   
   private async readBody(req: IncomingMessage): Promise<string> {

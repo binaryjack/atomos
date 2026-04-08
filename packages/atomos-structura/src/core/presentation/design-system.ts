@@ -51,7 +51,7 @@ export const injectDesignSystemTokens = () => {
       
       /* Sizing - Technical, sharp edges! */
       --vbs-radius: 2px;
-      --vbs-control-height: 28px;  /* Compact height for node canvas */
+      --vbs-control-height: calc(var(--vbs-entity-props-font-size, 12px) + 16px);  /* Adaptive compact height */
 
       /* Entity style tokens */
       --vbs-entity-name-font-family: ${DEFAULT_ENTITY_STYLE.nameFontFamily};

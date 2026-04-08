@@ -4,6 +4,7 @@ import { createVisualEditorTree } from './create-settings-tree.js'
 import { createShapesEditor } from './create-shapes-editor.js'
 import { createAppearanceTab } from './create-appearance-tab.js'
 import { ICON_LIBRARY } from './icon-library.js'
+import { createExportPluginsTab } from '../../features/export/create-export-plugins-tab.js'
 import type { AppSettings, SettingsPageProps, SettingsPageResult } from './types/settings-page.types.js'
 
 export const createSettingsPage = function(props: SettingsPageProps): SettingsPageResult {
@@ -86,7 +87,8 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
     { id: 'appearance', label: 'Appearance', icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01' },
     { id: 'toolbox', label: 'Toolbox Configuration', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
     { id: 'shapes', label: 'Shapes Repository', icon: 'M4 5a2 2 0 012-2h4a2 2 0 012 2v2H6V5zm0 6h16v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8zm2-2a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2H6z' },
-    { id: 'icons', label: 'Icon Library', icon: 'M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm4 3a2 2 0 11-4 0 2 2 0 014 0zm0 6a2 2 0 11-4 0 2 2 0 014 0zm6-6a2 2 0 11-4 0 2 2 0 014 0zm0 6a2 2 0 11-4 0 2 2 0 014 0z' }
+    { id: 'icons', label: 'Icon Library', icon: 'M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm4 3a2 2 0 11-4 0 2 2 0 014 0zm0 6a2 2 0 11-4 0 2 2 0 014 0zm6-6a2 2 0 11-4 0 2 2 0 014 0zm0 6a2 2 0 11-4 0 2 2 0 014 0z' },
+    { id: 'exports', label: 'Export Plugins', icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4' }
   ];
 
   navItems.forEach(item => {
@@ -424,6 +426,12 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   iconsPane.appendChild(gridContainer);
   iconsPanel.appendChild(iconsPane);
   vbsTabs.appendChild(iconsPanel);
+
+  // -- Pane 6: Export Plugins --
+  const exportsPanel = document.createElement('vbs-tab-panel');
+  exportsPanel.setAttribute('slot', 'panel');
+  exportsPanel.appendChild(createExportPluginsTab(props.getKernel));
+  vbsTabs.appendChild(exportsPanel);
 
   // Dirty state tracker
   const markDirty = () => {

@@ -41,10 +41,19 @@ export type ReduxAction =
   | { type: 'viewport-updated'; viewport: ViewportState }
   | { type: 'settings-updated'; settings: AppSettings }
   | { type: 'settings-toggled'; is_open: boolean }
-  | { type: 'state-loaded'; state: ReduxState };
+  | { type: 'state-loaded'; state: ReduxState }
+  | { type: 'schema-created'; id: string; name: string }
+  | { type: 'schema-renamed'; id: string; name: string }
+  | { type: 'schema-deleted'; id: string }
+  | { type: 'schema-activated'; id: string };
 
 export interface ReduxStore {
   readonly get_state: () => ReduxState;
   readonly dispatch: (action: ReduxAction) => void;
   readonly subscribe: (listener: (state: ReduxState) => void) => () => void;
+  readonly undo: () => void;
+  readonly redo: () => void;
+  readonly can_undo: () => boolean;
+  readonly can_redo: () => boolean;
+  readonly reconcile: (fn: () => void) => void;
 }

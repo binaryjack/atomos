@@ -15,73 +15,10 @@ export const createKernelAdapter = (kernel: SchemaGraphKernel, entityManager: En
     let syncingToUI = false;
     let syncingToKernel = false;
 
-    // 1. Kernel (AST) -> UI (EntityManager)
-    const unsubscribeKernel = kernel.subscribe(() => {
-        if (syncingToKernel) return; // Prevent infinite event loops
-        syncingToUI = true;
-
-        const { entities, links } = kernel.getSnapshot();
-
-        // 1A. Sync Entities
-        for (const [id, entity] of Object.entries(entities)) {
-            const existingUI = entityManager.getEntity(id);
-
-            if (!existingUI) {
-                // If it exists in Kernel but not UI, create it
-                entityManager.createEntity(
-                    id,
-                    entity.name,
-                    entity.position,
-                    entity.dimensions || { width: 250, height: 150 },
-                    // optional metadata for shapes
-                );
-                
-                // Set properties initially
-                if (entity.properties && entity.properties.length > 0) {
-                   entityManager.updateEntityProperties(id, entity.properties);
-                }
-            } else {
-                // Diff properties
-                const xDiff = existingUI.position.x !== entity.position.x;
-                const yDiff = existingUI.position.y !== entity.position.y;
-                
-                if (xDiff || yDiff) {
-                    entityManager.moveEntity(id, entity.position);
-                }
-
-                if (existingUI.name !== entity.name) {
-                    entityManager.updateEntityName(id, entity.name);
-                }
-            }
-        }
-
-        // 1B. Sync Links
-        for (const [id, link] of Object.entries(links)) {
-            const existingUI = entityManager.getLink(id);
-            if (!existingUI) {
-                entityManager.createLink(
-                    id,
-                    link.leftAnchorId || "right-1", // defaulting
-                    link.rightAnchorId || "left-1", // defaulting
-                    link.leftEntityId,
-                    link.rightEntityId
-                );
-            }
-        }
-
-        // 1C. Garbage Collection (Deletions)
-        const uiEntities = entityManager.getAllEntities();
-        for (const uiEnt of uiEntities) {
-            if (!entities[uiEnt.id]) entityManager.removeEntity(uiEnt.id);
-        }
-
-        const uiLinks = entityManager.getAllLinks();
-        for (const uiLink of uiLinks) {
-            if (!links[uiLink.id]) entityManager.removeLink(uiLink.id);
-        }
-
-        syncingToUI = false;
-    });
+    // Kernel→UI sync is intentionally disabled: Redux is the source of truth.
+    // Enabling it causes cross-schema entity/link contamination because the kernel
+    // is schema-agnostic and its garbage-collection writes from one schema into another.
+    const unsubscribeKernel = () => {};
 
     // 2. UI (EntityManager) -> Kernel (AST)
     const unsubscribeUI = entityManager.onApplicationEvent?.((event: any) => {
@@ -118,26 +55,25 @@ export const createKernelAdapter = (kernel: SchemaGraphKernel, entityManager: En
                 const sourceId = event.link.sourceEntityId;
                 const targetId = event.link.targetEntityId;
 
-                // Validate the connection through our new AST rules
-                if (kernel.canConnect(sourceId, targetId)) {
-                    kernel.addLink({
-                        id: event.link.id,
-                        leftEntityId: sourceId,
-                        rightEntityId: targetId,
-                        leftAnchorId: event.link.sourceAnchorId,
-                        rightAnchorId: event.link.targetAnchorId,
-                        leftCardinality: event.link.sourceCardinality as Cardinality || '1',
-                        rightCardinality: event.link.targetCardinality as Cardinality || '1',
-                        renderType: event.link.renderType as RenderType || 'bezier'
-                    });
-                } else {
-                    console.warn(`Kernel Rejected Link: ${sourceId} -> ${targetId}`);
-                    // The rule validation failed! Revert the UI line immediately.
-                    
-                    // We temporally unlock syncingToUI so the revert reaches the canvas 
-                    syncingToKernel = false; 
-                    entityManager.removeLink(event.link.id);
-                    syncingToKernel = true;
+                // Only add to kernel when both endpoints are explicitly tracked.
+                // Skipping unknown entities avoids deleting Redux data for links
+                // that belong to schemas not currently synced to the kernel.
+                const { entities: kernelEntities } = kernel.getSnapshot();
+                if (kernelEntities[sourceId] && kernelEntities[targetId]) {
+                    if (kernel.canConnect(sourceId, targetId)) {
+                        kernel.addLink({
+                            id: event.link.id,
+                            leftEntityId: sourceId,
+                            rightEntityId: targetId,
+                            leftAnchorId: event.link.sourceAnchorId,
+                            rightAnchorId: event.link.targetAnchorId,
+                            leftCardinality: event.link.sourceCardinality as Cardinality || '1',
+                            rightCardinality: event.link.targetCardinality as Cardinality || '1',
+                            renderType: event.link.renderType as RenderType || 'bezier'
+                        });
+                    } else {
+                        console.warn(`Kernel Rejected Link: ${sourceId} -> ${targetId}`);
+                    }
                 }
                 break;
             case 'LinkRemoved':

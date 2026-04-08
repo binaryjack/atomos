@@ -29,7 +29,7 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
     `background:${bgColor}`,
     'border-bottom:1px solid var(--vbs-border, #27272a)',
     'flex-shrink:0',
-    'min-height:36px',
+    'min-height:calc(var(--vbs-entity-name-font-size, 14px) + 20px)',
     'cursor:grab',
   ].join(';');
 
@@ -49,7 +49,7 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
   cleanups.push(editableLabel.cleanup.destroy);
 
   // Settings button
-  const settingsIcon = createIcon({ name: 'settings', size: 14, color: contrast.mutedColor });
+  const settingsIcon = createIcon({ name: 'settings', size: 'var(--vbs-entity-name-font-size, 14px)', color: contrast.mutedColor });
   const settingsBtn = document.createElement('button');
   settingsBtn.type = 'button';
   settingsBtn.style.cssText = 'flex-shrink:0;background:none;border:none;cursor:pointer;padding:2px;display:flex;border-radius: var(--vbs-radius, 2px);';
@@ -65,7 +65,7 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
   });
 
   // Delete button
-  const deleteIcon = createIcon({ name: 'delete', size: 14, color: 'var(--vbs-danger, #ef4444)' });
+  const deleteIcon = createIcon({ name: 'delete', size: 'var(--vbs-entity-name-font-size, 14px)', color: 'var(--vbs-danger, #ef4444)' });
   const deleteBtn = document.createElement('button');
   deleteBtn.type = 'button';
   deleteBtn.style.cssText = 'flex-shrink:0;background:none;border:none;cursor:pointer;padding:2px;display:flex;border-radius: var(--vbs-radius, 2px);';

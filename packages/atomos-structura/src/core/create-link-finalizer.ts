@@ -178,7 +178,7 @@ export const createLinkFinalizer = function(
 
   const adapter = getCanvasAdapter();
   const unsubAdapter = adapter.onEntityChanged((e) => {
-    if (e.type === 'LinkPropertiesUpdated' || e.type === 'LinkCreated') {
+    if (e.type === 'LinkPropertiesUpdated' || e.type === 'LinkCreated' || e.type === 'EntityNameUpdated') {
       linkLabelFOs.forEach((fo, id) => updateLinkLabel(id, fo));
     }
   });
