@@ -345,7 +345,7 @@ export const create_redux_store = function(): ReduxStore {
         history_future.length = 0;
       }
       persist();
-      listeners.forEach(listener => listener(current_state));
+      listeners.forEach(listener => { try { listener(current_state); } catch (err) { console.error('[Redux] listener error:', err); } });
     }
   };
 
@@ -355,7 +355,7 @@ export const create_redux_store = function(): ReduxStore {
     history_future.push(current_state);
     current_state = prev;
     persist();
-    listeners.forEach(listener => listener(current_state));
+    listeners.forEach(listener => { try { listener(current_state); } catch (err) { console.error('[Redux] listener error:', err); } });
   };
 
   const redo = function(): void {
@@ -364,7 +364,7 @@ export const create_redux_store = function(): ReduxStore {
     history_past.push(current_state);
     current_state = next;
     persist();
-    listeners.forEach(listener => listener(current_state));
+    listeners.forEach(listener => { try { listener(current_state); } catch (err) { console.error('[Redux] listener error:', err); } });
   };
 
   const can_undo = function(): boolean { return history_past.length > 0; };
