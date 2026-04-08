@@ -3,13 +3,16 @@ export interface TreeItem {
     label: string;
     children?: TreeItem[];
     expanded?: boolean;
+    checked?: boolean;
 }
 
 export interface TreeViewProps {
     items: TreeItem[];
     selectedId?: string | null;
+    checkable?: boolean;
     onSelect?: (id: string) => void;
     onToggle?: (id: string, expanded: boolean) => void;
+    onCheck?: (id: string, checked: boolean) => void;
 }
 
 export interface TreeViewResult {
@@ -35,6 +38,20 @@ export function createTreeView(props: TreeViewProps): TreeViewResult {
             header.className = `tree-item-header flex items-center px-2 py-1 rounded cursor-pointer select-none hover:bg-slate-700/50 ${currentSelectedId === item.id ? 'bg-indigo-600/20 text-indigo-300' : ''}`;
             header.style.paddingLeft = `${level * 12 + 8}px`;
             
+            if (props.checkable) {
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.checked = !!item.checked;
+                cb.title = 'Link for multi-edit';
+                cb.className = 'mr-1.5 cursor-pointer flex-shrink-0 accent-indigo-500';
+                cb.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    props.onCheck?.(item.id, (e.target as HTMLInputElement).checked);
+                });
+                cb.addEventListener('click', (e) => e.stopPropagation());
+                header.appendChild(cb);
+            }
+
             const chevronWrap = document.createElement('div');
             chevronWrap.className = 'w-4 h-4 flex items-center justify-center mr-1';
             

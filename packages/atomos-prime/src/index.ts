@@ -63,6 +63,9 @@ export type { RangeSliderProps, RangeSliderResult } from './features/slider/crea
 export { createTreeView } from './features/tree-view/create-tree-view.js'
 export type { TreeItem, TreeViewProps, TreeViewResult } from './features/tree-view/create-tree-view.js'
 
+export { createMenuBar } from './features/menu-bar/create-menu-bar.js'
+export type { MenuBarProps, MenuBarResult, MenuDefinition, MenuItemDefinition } from './features/menu-bar/types/menu-bar.types.js'
+
 // Edge and Anchor components
 export { createAnchor, type AnchorProps, type AnchorResult } from './features/anchor/create-anchor.js'
 
