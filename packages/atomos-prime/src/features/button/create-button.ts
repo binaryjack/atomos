@@ -21,7 +21,11 @@ export const createButton = function(props: ButtonProps): ButtonResult {
     primary: 'vbs-btn-primary',
     secondary: 'vbs-btn-secondary',
     outline: 'vbs-btn-secondary',
-    ghost: 'vbs-btn-ghost',   
+    ghost: 'vbs-btn-ghost',
+    danger: 'vbs-btn-danger',
+    soft: 'vbs-btn-soft',
+  };
+  
   const sizeClasses = {
     sm: isIconOnly ? 'p-1' : 'px-2 min-h-[24px] text-[11px]',
     md: isIconOnly ? 'p-1.5' : 'px-3 min-h-[var(--vbs-control-height,28px)] text-[13px]',
