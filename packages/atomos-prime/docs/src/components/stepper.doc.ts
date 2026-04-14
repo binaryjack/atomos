@@ -1,4 +1,4 @@
-import { defineAtpStepper } from '../../../src/features/stepper/atp-stepper/atp-stepper.js'
+﻿import { defineAtpStepper } from '../../../src/features/stepper/atp-stepper/atp-stepper.js'
 import { createAtpStep } from '../../../src/features/stepper/create-atp-step.js'
 import { createAtpStepperTab } from '../../../src/features/stepper/create-atp-stepper-tab.js'
 import type { DocDefinition } from '../types.js'
@@ -63,7 +63,7 @@ export const stepperDoc: DocDefinition<StepperState> = {
     };
   },
   renderCode: (state) => {
-    return `import { defineAtpStepper, createAtpStep, createAtpStepperTab } from '@atomos/prime';
+    return `import { defineAtpStepper, createAtpStep, createAtpStepperTab } from '@atomos-web/prime';
 
 // Only needed once per application to define the Web Components
 defineAtpStepper();

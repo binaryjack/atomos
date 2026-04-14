@@ -113,6 +113,9 @@ export const createWorkspaceApi = function(store: ReduxStore): WorkspaceApi {
     },
 
     createSchema: (name: string) => {
+      if (store.get_state().workspace.config?.allow_multiple_schemas === false) {
+        throw new Error('Multi-schema disabled by workspace config');
+      }
       const id = `schema-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       store.dispatch({ type: 'schema-created', id, name });
       return id;

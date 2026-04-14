@@ -1,4 +1,4 @@
-import { createIcon } from '../../../src/index.js'
+﻿import { createIcon } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface IconState {
@@ -43,7 +43,7 @@ export const iconDoc: DocDefinition<IconState> = {
     });
   },
   renderCode: (state: IconState) => {
-    return `import { createIcon } from '@atomos/prime';
+    return `import { createIcon } from '@atomos-web/prime';
 
 const { element, cleanup } = createIcon({
   name: '${state.name}',

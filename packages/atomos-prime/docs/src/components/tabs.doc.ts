@@ -1,4 +1,4 @@
-import { VbsTab, VbsTabPanel, VbsTabs } from '../../../src/components/tabs/index.js'
+﻿import { VbsTab, VbsTabPanel, VbsTabs } from '../../../src/components/tabs/index.js'
 import type { DocDefinition } from '../types.js'
 
 if (!customElements.get('vbs-tabs')) customElements.define('vbs-tabs', VbsTabs);
@@ -74,7 +74,7 @@ export const tabsDoc: DocDefinition<TabsState> = {
     };
   },
   renderCode: (state) => {
-    return `import { VbsTabs, VbsTab, VbsTabPanel } from '@atomos/prime';
+    return `import { VbsTabs, VbsTab, VbsTabPanel } from '@atomos-web/prime';
 
 // Only needed once per application
 if (!customElements.get('vbs-tabs')) customElements.define('vbs-tabs', VbsTabs);

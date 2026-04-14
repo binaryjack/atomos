@@ -1,4 +1,4 @@
-import type { RenderType } from '@atomos/structura-core'
+﻿import type { RenderType } from '@atomos-web/structura-core'
 import type { EdgePosition } from '../../features/edge/types/edge-position.types.js'
 
 export interface LinkResult {

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Battle tests — VbsMcpServer
  * 
  * Exercises all RPC methods via the public handleRequest() endpoint
@@ -7,8 +7,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { EventEmitter } from 'events';
 import type { IncomingMessage, ServerResponse } from 'http';
-import { VbsMcpServer } from '@atomos/structura-mcp';
-import type { Entity, LinkProps } from '@atomos/structura-core';
+import { VbsMcpServer } from '@atomos-web/structura-mcp';
+import type { Entity, LinkProps } from '@atomos-web/structura-core';
 
 // ── Test helper ────────────────────────────────────────────────────────────
 let _id = 0;

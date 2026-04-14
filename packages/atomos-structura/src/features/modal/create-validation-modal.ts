@@ -1,11 +1,11 @@
-import type { IFormular, IObjectShape, IValidationOptions } from '@binaryjack/formular.dev';
+﻿import type { IFormular, IObjectShape, IValidationOptions } from '@binaryjack/formular.dev';
 import { createForm, f } from '@binaryjack/formular.dev';
-import type { DataType } from '@atomos/structura-core';
-import { createButton } from '@atomos/prime';
-import { createFormularCheckbox } from '@atomos/prime';
-import { createFormularInput } from '@atomos/prime';
+import type { DataType } from '@atomos-web/structura-core';
+import { createButton } from '@atomos-web/prime';
+import { createFormularCheckbox } from '@atomos-web/prime';
+import { createFormularInput } from '@atomos-web/prime';
 
-import type { AtpModal } from '@atomos/prime';
+import type { AtpModal } from '@atomos-web/prime';
 
 export interface ValidationModalProps {
   readonly propertyKey: string;

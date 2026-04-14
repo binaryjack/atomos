@@ -1,4 +1,4 @@
-import type { Entity, LinkProps, SettingsProps } from '@atomos/structura-core';
+﻿import type { Entity, LinkProps, SettingsProps } from '@atomos-web/structura-core';
 
 export interface SchemaBuilderState {
   readonly entities: Map<string, Entity>;

@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 import { createServer } from 'http';
-import { VbsMcpServer } from './mcp-server.js';
+import { createVbsMcpServer } from './mcp-server.js';
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3001;
 
-const server = new VbsMcpServer();
+const server = createVbsMcpServer();
 
 const httpServer = createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

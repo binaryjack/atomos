@@ -1,6 +1,6 @@
-import { createLocalStoragePersistence, readLocalStorage } from './create-local-storage-persistence.js';
-import { createSignal } from '@atomos/prime';
-import type { Signal } from '@atomos/prime';
+﻿import { createLocalStoragePersistence, readLocalStorage } from './create-local-storage-persistence.js';
+import { createSignal } from '@atomos-web/prime';
+import type { Signal } from '@atomos-web/prime';
 
 export const CANVAS_SIZE = 4000;
 export const ZOOM_MIN = 0.1;

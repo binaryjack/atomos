@@ -1,4 +1,4 @@
-import type { Signal } from '@atomos/prime';
+﻿import type { Signal } from '@atomos-web/prime';
 
 /**
  * Unified persistence layer with synchronous writes and comprehensive error handling.

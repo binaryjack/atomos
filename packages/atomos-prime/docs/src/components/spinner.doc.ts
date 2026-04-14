@@ -1,4 +1,4 @@
-import { createSpinner } from '../../../src/index.js'
+﻿import { createSpinner } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface SpinnerState {
@@ -26,7 +26,7 @@ export const spinnerDoc: DocDefinition<SpinnerState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createSpinner } from '@atomos/prime';
+    return `import { createSpinner } from '@atomos-web/prime';
 
 const { element } = createSpinner({
   size: '${state.size}',

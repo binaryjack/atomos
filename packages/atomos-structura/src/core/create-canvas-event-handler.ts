@@ -1,4 +1,4 @@
-import type { EdgePosition } from '../features/edge/types/edge-position.types.js';
+﻿import type { EdgePosition } from '../features/edge/types/edge-position.types.js';
 import { getCanvasAdapter } from './adapters/canvas-adapter.js';
 import { testEdgeHit } from './create-edge-hit-tester.js';
 import type { LinkDrawController } from './create-link-draw-controller.js';
@@ -12,7 +12,7 @@ import type { EntityInstance } from './types/entity-instance.types.js';
 import type { EntitySpawnFactory } from './types/entity-spawn-factory.types.js';
 import type { GlobalConfig } from './types/global-config.types.js';
 import type { InteractiveBehaviorManager } from './types/interactive-behavior-manager.types.js';
-import type { Signal } from '@atomos/prime';
+import type { Signal } from '@atomos-web/prime';
 import type { WorkspaceManager } from './types/workspace-manager.types.js';
 import type { WorkspaceState } from './types/workspace-state.types.js';
 

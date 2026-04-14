@@ -1,4 +1,4 @@
-import { createInput } from '../../../src/index.js'
+﻿import { createInput } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface InputState {
@@ -39,7 +39,7 @@ export const inputDoc: DocDefinition<InputState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createInput } from '@atomos/prime';
+    return `import { createInput } from '@atomos-web/prime';
 
 const { element, cleanup } = createInput({
   type: '${state.type}',

@@ -6,8 +6,8 @@
  * - Clean architecture compatibility
  */
 
-import type { Signal } from '@atomos/prime'
-import { createSignal } from '@atomos/prime'
+import type { Signal } from '@atomos-web/prime'
+import { createSignal } from '@atomos-web/prime'
 import type { EdgePosition } from '../features/edge/types/edge.types.js'
 import type { InteractiveBehaviorManager } from './interactive-behavior-manager.js'
 import { createInteractiveBehaviorManager } from './interactive-behavior-manager.js'

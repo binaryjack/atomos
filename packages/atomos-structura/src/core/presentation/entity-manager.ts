@@ -1,8 +1,8 @@
-/**
+﻿/**
  * Presentation Layer - Clean Facade for UI Components
  * Provides simple interface hiding architectural complexity
  */
-import type { Property } from '@atomos/structura-core'
+import type { Property } from '@atomos-web/structura-core'
 import { getGeneralSettings } from '../adapters/toolbox-config-manager.js'
 import type { ApplicationEvent } from '../application/entity-service.js'
 import { createEntityApplicationService } from '../application/entity-service.js'

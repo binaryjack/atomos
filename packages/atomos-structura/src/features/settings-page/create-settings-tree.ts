@@ -1,5 +1,5 @@
-import type { ToolboxConfiguration, ToolboxItem, Toolset } from '@atomos/prime'
-import { createAccordion, createButton } from '@atomos/prime'
+﻿import type { ToolboxConfiguration, ToolboxItem, Toolset } from '@atomos-web/prime'
+import { createAccordion, createButton } from '@atomos-web/prime'
 import { f } from '@binaryjack/formular.dev'
 
 import type { CustomShape } from './types/settings-page.types.js'

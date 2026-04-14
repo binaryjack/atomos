@@ -1,4 +1,4 @@
-import type { EntityShape } from '@atomos/structura-core'
+﻿import type { EntityShape } from '@atomos-web/structura-core'
 import type { EdgePosition } from '../../features/edge/types/edge.types.js'
 
 export interface Box {

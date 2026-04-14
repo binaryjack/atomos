@@ -1,4 +1,4 @@
-import type { Entity, LinkProps } from '@atomos/structura-core';
+﻿import type { Entity, LinkProps } from '@atomos-web/structura-core';
 
 export interface SchemaModel {
   readonly id: string;

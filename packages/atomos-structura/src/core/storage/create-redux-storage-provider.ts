@@ -1,4 +1,4 @@
-import type { Entity } from '@atomos/structura-core';
+﻿import type { Entity } from '@atomos-web/structura-core';
 import type { IStorageProvider } from './types/storage-provider.types.js';
 import type { SchemaStore } from '../create-schema-store.js';
 

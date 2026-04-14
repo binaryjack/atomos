@@ -1,4 +1,4 @@
-import { createSkeleton } from '../../../src/index.js'
+﻿import { createSkeleton } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface SkeletonState {
@@ -34,7 +34,7 @@ export const skeletonDoc: DocDefinition<SkeletonState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createSkeleton } from '@atomos/prime';
+    return `import { createSkeleton } from '@atomos-web/prime';
 
 const { element, cleanup } = createSkeleton({
   variant: '${state.variant}',

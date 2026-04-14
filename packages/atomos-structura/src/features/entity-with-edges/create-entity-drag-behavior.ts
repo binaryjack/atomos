@@ -1,4 +1,4 @@
-import type { Signal } from '@atomos/prime'
+﻿import type { Signal } from '@atomos-web/prime'
 import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js'
 import { calculateSnappedPosition } from '../alignment/create-alignment-guides.js'
 

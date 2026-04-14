@@ -1,4 +1,4 @@
-import { createCircularProgress } from '../../../src/index.js'
+﻿import { createCircularProgress } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface CircularProgressState {
@@ -38,7 +38,7 @@ export const circularProgressDoc: DocDefinition<CircularProgressState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createCircularProgress } from '@atomos/prime';
+    return `import { createCircularProgress } from '@atomos-web/prime';
 
 const { element, cleanup } = createCircularProgress({
   value: ${state.value},

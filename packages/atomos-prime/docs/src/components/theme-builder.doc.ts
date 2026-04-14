@@ -1,4 +1,4 @@
-import { createBadge, createButton, createCircularProgress, createInput, createProgressBar, createToggle } from '../../../src/index.js'
+﻿import { createBadge, createButton, createCircularProgress, createInput, createProgressBar, createToggle } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface ThemeBuilderState {
@@ -15,7 +15,7 @@ export const themeBuilderDoc: DocDefinition<ThemeBuilderState> = {
   id: 'theme-builder',
   category: 'General / Setup',
   title: 'CSS Theme Builder',
-  description: 'Adjust global CSS Custom Properties (--vbs-*) to instantly theme all @atomos/prime components.',
+  description: 'Adjust global CSS Custom Properties (--vbs-*) to instantly theme all @atomos-web/prime components.',
   defaultState: {
     primaryScale: '#3b82f6',     // blue-500
     bgPanel: '#111111',          // default panel
@@ -128,7 +128,7 @@ export const themeBuilderDoc: DocDefinition<ThemeBuilderState> = {
   --vbs-radius: ${state.borderRadius}px;
 }
 
-/* Simply defining these properties affects all \\n   @atomos/prime components imported in the module */
+/* Simply defining these properties affects all \\n   @atomos-web/prime components imported in the module */
 `;
   }
 };

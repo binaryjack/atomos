@@ -1,12 +1,12 @@
-import type { EntityWithEdgesProps, EntityWithEdgesResult } from './types/entity-with-edges.types.js';
+﻿import type { EntityWithEdgesProps, EntityWithEdgesResult } from './types/entity-with-edges.types.js';
 export type { EntityWithEdgesProps, EntityWithEdgesResult };
-import { createCard } from '@atomos/prime';
-import { createTypography } from '@atomos/prime';
-import { createButton } from '@atomos/prime';
-import { createInput } from '@atomos/prime';
-import { createIcon } from '@atomos/prime';
+import { createCard } from '@atomos-web/prime';
+import { createTypography } from '@atomos-web/prime';
+import { createButton } from '@atomos-web/prime';
+import { createInput } from '@atomos-web/prime';
+import { createIcon } from '@atomos-web/prime';
 import { createEdge } from '../edge/create-edge.js';
-import { createSignal } from '@atomos/prime';
+import { createSignal } from '@atomos-web/prime';
 
 export const createEntityWithEdges = function(props: EntityWithEdgesProps): EntityWithEdgesResult {
   const container = document.createElementNS('http://www.w3.org/2000/svg', 'g');

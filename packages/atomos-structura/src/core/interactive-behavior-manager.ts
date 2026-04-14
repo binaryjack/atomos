@@ -1,5 +1,5 @@
-import { createSignal } from '@atomos/prime';
-import type { Signal } from '@atomos/prime';
+﻿import { createSignal } from '@atomos-web/prime';
+import type { Signal } from '@atomos-web/prime';
 import type { LinkCreationState } from './types/link-creation-state.types.js';
 import type { EntityState } from './types/entity-state.types.js';
 import type { InteractionContext } from './types/interaction-context.types.js';

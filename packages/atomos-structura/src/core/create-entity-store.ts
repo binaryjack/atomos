@@ -1,5 +1,5 @@
-import type { Signal } from '@atomos/prime';
-import type { Entity, Property } from '@atomos/structura-core';
+﻿import type { Signal } from '@atomos-web/prime';
+import type { Entity, Property } from '@atomos-web/structura-core';
 import { registry } from './create-signal-registry.js';
 import { entityKey } from './registry-keys.js';
 

@@ -1,7 +1,7 @@
-import { computeContrastColor } from '@atomos/prime';
-import type { Signal } from '@atomos/prime';
-import { createEditableLabel } from '@atomos/prime';
-import { createIcon } from '@atomos/prime';
+﻿import { computeContrastColor } from '@atomos-web/prime';
+import type { Signal } from '@atomos-web/prime';
+import { createEditableLabel } from '@atomos-web/prime';
+import { createIcon } from '@atomos-web/prime';
 
 export interface EntityHeaderProps {
   readonly label: Signal<string>;

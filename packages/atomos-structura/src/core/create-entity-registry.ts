@@ -1,5 +1,5 @@
-import { createSignal } from '@atomos/prime';
-import type { Signal } from '@atomos/prime';
+﻿import { createSignal } from '@atomos-web/prime';
+import type { Signal } from '@atomos-web/prime';
 import type { EntityInstance } from './types/entity-instance.types.js';
 import type { WorkspaceState } from './types/workspace-state.types.js';
 

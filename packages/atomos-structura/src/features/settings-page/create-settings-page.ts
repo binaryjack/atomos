@@ -1,4 +1,4 @@
-import { createButton } from '@atomos/prime'
+﻿import { createButton } from '@atomos-web/prime'
 import { defaultToolboxConfig } from '../../core/default-toolbox.config.js'
 import { createVisualEditorTree } from './create-settings-tree.js'
 import { createShapesEditor } from './create-shapes-editor.js'

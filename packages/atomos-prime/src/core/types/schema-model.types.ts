@@ -1,4 +1,4 @@
-import type { Entity, LinkProps } from '@atomos/structura-core';
+﻿import type { Entity, LinkProps } from '@atomos-web/structura-core';
 import type { EntityCanvasState } from './entity-canvas-state.types.js';
 
 export interface SchemaModel {

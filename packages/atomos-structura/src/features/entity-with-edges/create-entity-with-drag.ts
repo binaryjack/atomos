@@ -1,6 +1,6 @@
-import type { EntityWithEdgesProps, EntityWithEdgesResult } from './types/entity-with-edges.types.js';
+﻿import type { EntityWithEdgesProps, EntityWithEdgesResult } from './types/entity-with-edges.types.js';
 import { createInteractiveBehaviorManager } from '../../core/interactive-behavior-manager.js';
-import { createSignal } from '@atomos/prime';
+import { createSignal } from '@atomos-web/prime';
 
 export interface DragState {
   readonly isDragging: boolean;

@@ -1,19 +1,19 @@
-import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
+﻿import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
 import { f } from '@binaryjack/formular.dev'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
 import { getToolboxConfig } from '../../core/adapters/toolbox-config-manager.js'
 import { createFormularManager } from '../../core/create-formular-manager.js'
-import { createSignal } from '@atomos/prime'
-import { computeContrastColor } from '@atomos/prime'
-import { createButton } from '@atomos/prime'
+import { createSignal } from '@atomos-web/prime'
+import { computeContrastColor } from '@atomos-web/prime'
+import { createButton } from '@atomos-web/prime'
 import { createEntityPropertyRow } from '../entity-with-edges/create-entity-property-row.js'
-import { createFormularDropdown } from '@atomos/prime'
-import { createFormularInput } from '@atomos/prime'
-import { createFormularTextarea } from '@atomos/prime'
+import { createFormularDropdown } from '@atomos-web/prime'
+import { createFormularInput } from '@atomos-web/prime'
+import { createFormularTextarea } from '@atomos-web/prime'
 
 import type { ModalOptions } from './types/modal-options.types.js'
 import type { ModalResult } from './types/modal-result.types.js'
-import type { AtpModal } from '@atomos/prime'
+import type { AtpModal } from '@atomos-web/prime'
 
 export const createEntitySettingsModal = function(entityId: string): AtpModal {
   const adapter = getCanvasAdapter();

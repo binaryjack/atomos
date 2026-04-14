@@ -1,6 +1,6 @@
-import { getGlobalReduxStore } from './create-redux-store.js';
+﻿import { getGlobalReduxStore } from './create-redux-store.js';
 import type { ReduxState } from '../types/redux-state.types.js';
-import type { Entity, Property } from '@atomos/structura-core';
+import type { Entity, Property } from '@atomos-web/structura-core';
 
 /**
  * Generic selector creator.

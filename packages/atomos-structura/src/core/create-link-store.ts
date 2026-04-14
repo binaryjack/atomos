@@ -1,5 +1,5 @@
-import type { Signal } from '@atomos/prime';
-import type { LinkProps } from '@atomos/structura-core';
+﻿import type { Signal } from '@atomos-web/prime';
+import type { LinkProps } from '@atomos-web/structura-core';
 import { registry } from './create-signal-registry.js';
 import { linkKey } from './registry-keys.js';
 

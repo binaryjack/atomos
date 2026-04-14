@@ -1,4 +1,4 @@
-import { createEditableLabel, createSignal } from '../../../src/index.js'
+﻿import { createEditableLabel, createSignal } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface EditableLabelState {
@@ -28,7 +28,7 @@ export const editableLabelDoc: DocDefinition<EditableLabelState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createEditableLabel, createSignal } from '@atomos/prime';
+    return `import { createEditableLabel, createSignal } from '@atomos-web/prime';
 
 // Reactive local state
 const valueSignal = createSignal('Live File Name.txt');

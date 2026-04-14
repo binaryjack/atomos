@@ -1,10 +1,10 @@
-import { createButton } from '@atomos/prime'
-import type { RenderType } from '@atomos/structura-core'
+﻿import { createButton } from '@atomos-web/prime'
+import type { RenderType } from '@atomos-web/structura-core'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
 import { applyAppearanceTokens, DEFAULT_LINK_STYLE } from '../../core/presentation/design-system.js'
 import { getAppearanceSettings, setAppearanceSettings } from '../../core/adapters/toolbox-config-manager.js'
 
-import type { AtpModal } from '@atomos/prime'
+import type { AtpModal } from '@atomos-web/prime'
 
 const modalCache = new Map<string, AtpModal>();
 

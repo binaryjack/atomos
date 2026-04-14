@@ -1,4 +1,4 @@
-﻿import { createSignal } from '@atomos/prime'
+﻿import { createSignal } from '@atomos-web/prime'
 import type { EntityInstance } from '../../core/types/entity-instance.types.js'
 import { createEdge } from '../edge/create-edge.js'
 import type { EdgePosition } from '../edge/types/edge-position.types.js'

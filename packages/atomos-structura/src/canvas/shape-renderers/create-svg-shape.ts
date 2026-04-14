@@ -1,4 +1,4 @@
-import type { EntityShape } from '@atomos/structura-core'
+﻿import type { EntityShape } from '@atomos-web/structura-core'
 import { getCustomShapes } from '../../core/adapters/toolbox-config-manager.js'
 import { applyCommonStyles } from './apply-common-styles.js'
 import { createChevron } from './create-chevron.js'

@@ -1,7 +1,7 @@
-import type { DomainEntity, DomainLink } from '../core/domain/entity-aggregate.js'
+﻿import type { DomainEntity, DomainLink } from '../core/domain/entity-aggregate.js'
 import type { EntityManager } from '../core/presentation/entity-manager.js'
 
-import type { Cardinality, RenderType } from '@atomos/structura-core'
+import type { Cardinality, RenderType } from '@atomos-web/structura-core'
 import type { SchemaGraphKernel } from '../core/create-schema-graph-kernel.js'
 
 /**

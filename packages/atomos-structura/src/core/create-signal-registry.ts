@@ -1,5 +1,5 @@
-import { createSignal } from '@atomos/prime';
-import type { Signal } from '@atomos/prime';
+﻿import { createSignal } from '@atomos-web/prime';
+import type { Signal } from '@atomos-web/prime';
 
 export interface SignalRegistry {
   readonly getOrCreate: <T>(key: object, init: T) => Signal<T>;

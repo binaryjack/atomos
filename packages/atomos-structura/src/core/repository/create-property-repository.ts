@@ -1,8 +1,8 @@
-import type { Property, Entity } from '@atomos/structura-core';
+﻿import type { Property, Entity } from '@atomos-web/structura-core';
 import type { IRepository } from './types/repository.types.js';
-import type { Signal } from '@atomos/prime';
+import type { Signal } from '@atomos-web/prime';
 import type { IStorageProvider } from '../storage/types/storage-provider.types.js';
-import { createProperty } from '@atomos/structura-core';
+import { createProperty } from '@atomos-web/structura-core';
 
 export interface PropertyRepositoryConfig {
   readonly entityId: string;

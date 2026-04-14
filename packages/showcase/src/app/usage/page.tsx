@@ -1,4 +1,4 @@
-export default function UsagePage() {
+﻿export default function UsagePage() {
   return (
     <div className="flex flex-col gap-10 max-w-3xl">
       <header className="border-b border-slate-800 pb-8">
@@ -12,9 +12,9 @@ export default function UsagePage() {
           Atomos Structura is distributed as a suite of decoupled packages depending on your needs.
         </p>
         <pre className="bg-slate-950 p-4 rounded-xl border border-slate-800 overflow-hidden text-sm text-slate-300 font-mono leading-relaxed">
-{`pnpm add @atomos/structura
-pnpm add @atomos/structura-core
-pnpm add @atomos/prime-style`}
+{`pnpm add @atomos-web/structura
+pnpm add @atomos-web/structura-core
+pnpm add @atomos-web/prime-style`}
         </pre>
       </section>
 
@@ -24,11 +24,11 @@ pnpm add @atomos/prime-style`}
           To render the canvas inside your DOM, simply call the <code>createCanvasPage()</code> factory and attach its element to your container. You also need to boot the schema kernel for core entity interactions.
         </p>
         <pre className="bg-slate-950 p-5 rounded-xl border border-slate-800 overflow-hidden text-sm text-slate-300 font-mono leading-relaxed mt-4">
-{`import '@atomos/prime-style/dist/styles.css';
-import { createCanvasPage } from '@atomos/structura/dist/preview/create-canvas-page.js';
-import { getEntityManager } from '@atomos/structura/dist/core/presentation/entity-manager.js';
-import { createSchemaGraphKernel } from '@atomos/structura/dist/core/create-schema-graph-kernel.js';
-import { createKernelAdapter } from '@atomos/structura/dist/adapters/create-kernel-adapter.js';
+{`import '@atomos-web/prime-style/dist/styles.css';
+import { createCanvasPage } from '@atomos-web/structura/dist/preview/create-canvas-page.js';
+import { getEntityManager } from '@atomos-web/structura/dist/core/presentation/entity-manager.js';
+import { createSchemaGraphKernel } from '@atomos-web/structura/dist/core/create-schema-graph-kernel.js';
+import { createKernelAdapter } from '@atomos-web/structura/dist/adapters/create-kernel-adapter.js';
 
 export function mountCanvas(containerDiv) {
   // 1. Create the UI page

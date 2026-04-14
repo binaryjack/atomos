@@ -1,7 +1,7 @@
-import type { Entity } from '@atomos/structura-core';
+﻿import type { Entity } from '@atomos-web/structura-core';
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js';
 import { createLegacyEntityStoreBridge, createLegacyStorageProviderBridge } from '../../core/adapters/legacy-property-bridge.js';
-import { createSignal } from '@atomos/prime';
+import { createSignal } from '@atomos-web/prime';
 import { ENTITY_DEFAULT_HEIGHT, ENTITY_DEFAULT_WIDTH } from '../../core/entity-defaults.js';
 import type { EntityInstance } from '../../core/types/entity-instance.types.js';
 import type { EntitySpawnFactory } from '../../core/types/entity-spawn-factory.types.js';

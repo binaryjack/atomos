@@ -1,8 +1,8 @@
-/**
+﻿/**
  * Application Layer - Use Cases & Commands  
  * Orchestrates domain logic with clean command/query separation
  */
-import type { Property } from '@atomos/structura-core'
+import type { Property } from '@atomos-web/structura-core'
 import type { DomainEntity, DomainLink, EntityDimensions, EntityPosition, EntityRepository, LinkRepository } from '../domain/entity-aggregate.js'
 import { createEntityAggregate, createLinkAggregate, moveEntity, resizeEntity, updateEntityMetadata, updateEntityName, updateEntityProperties, updateLinkEndpoints, updateLinkProperties } from '../domain/entity-aggregate.js'
 

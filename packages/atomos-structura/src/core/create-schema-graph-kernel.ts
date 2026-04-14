@@ -1,4 +1,4 @@
-import type { Entity, LinkProps, Property } from '@atomos/structura-core';
+﻿import type { Entity, LinkProps, Property } from '@atomos-web/structura-core';
 
 export interface SchemaGraphState {
     readonly entities: Record<string, Entity>;

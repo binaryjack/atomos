@@ -1,4 +1,4 @@
-import type { Entity, LinkProps } from '@atomos/structura-core'
+﻿import type { Entity, LinkProps, WorkspaceConfig } from '@atomos-web/structura-core'
 import type { AppSettings } from '../features/settings-page/types/settings-page.types.js'
 
 export interface SchemaModel {
@@ -27,6 +27,7 @@ export interface WorkspaceState {
   readonly version: string;
   readonly last_modified: string;
   readonly settings?: AppSettings;
+  readonly config?: WorkspaceConfig;
   readonly canvases: Record<string, CanvasModel>;
   readonly active_canvas_id: string;
 }

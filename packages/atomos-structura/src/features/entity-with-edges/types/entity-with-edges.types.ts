@@ -1,5 +1,5 @@
-import type { Signal } from '@atomos/prime';
-import type { Property } from '@atomos/structura-core';
+﻿import type { Signal } from '@atomos-web/prime';
+import type { Property } from '@atomos-web/structura-core';
 import type { EdgePosition } from '../../edge/types/edge.types.js';
 
 export interface AnchorConfig {

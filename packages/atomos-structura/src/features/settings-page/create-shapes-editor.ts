@@ -1,4 +1,4 @@
-import { createAccordion, createButton } from '@atomos/prime'
+﻿import { createAccordion, createButton } from '@atomos-web/prime'
 import type { CustomShape } from './types/settings-page.types.js'
 
 export interface ShapesEditorProps {

@@ -1,6 +1,6 @@
-import { getGlobalReduxStore } from '../core/create-redux-store.js';
+﻿import { getGlobalReduxStore } from '../core/create-redux-store.js';
 // Side-effect import: registers vbs-tab and vbs-tabs as custom elements
-import '@atomos/prime';
+import '@atomos-web/prime';
 
 const TAB_H = 36;
 
@@ -29,7 +29,8 @@ export const createSchemaTabs = function(): SchemaTabsResult {
   tabsEl.setAttribute('variant', 'canvas');
   bar.appendChild(tabsEl);
 
-  // + button — outside vbs-tabs so it doesn't participate in tab navigation
+  // + button — hidden when allow_multiple_schemas is disabled
+  const isMultiSchemaAllowed = store.get_state().workspace.config?.allow_multiple_schemas !== false;
   const addBtn = document.createElement('button');
   addBtn.type = 'button';
   addBtn.title = 'New schema';
@@ -50,7 +51,9 @@ export const createSchemaTabs = function(): SchemaTabsResult {
     const name = `Schema ${Object.keys(canvas?.schemas ?? {}).length + 1}`;
     store.dispatch({ type: 'schema-created', id, name });
   });
-  bar.appendChild(addBtn);
+  if (isMultiSchemaAllowed) {
+    bar.appendChild(addBtn);
+  }
 
   // ── Inline rename helper ──────────────────────────────────────────────────
   const startRename = (tab: HTMLElement, labelSpan: HTMLElement, id: string, current: string): void => {

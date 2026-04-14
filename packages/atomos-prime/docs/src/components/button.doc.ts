@@ -1,4 +1,4 @@
-import { createButton } from '../../../src/index.js'
+﻿import { createButton } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface ButtonState {
@@ -42,7 +42,7 @@ export const buttonDoc: DocDefinition<ButtonState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createButton } from '@atomos/prime';
+    return `import { createButton } from '@atomos-web/prime';
 
 const { element, cleanup } = createButton({
   children: '${state.children}',

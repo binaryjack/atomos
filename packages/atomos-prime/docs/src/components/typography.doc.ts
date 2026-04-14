@@ -1,4 +1,4 @@
-import { createTypography } from '../../../src/index.js'
+﻿import { createTypography } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface TypographyState {
@@ -26,7 +26,7 @@ export const typographyDoc: DocDefinition<TypographyState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createTypography } from '@atomos/prime';
+    return `import { createTypography } from '@atomos-web/prime';
 
 const { element, cleanup } = createTypography({
   children: '${state.children}',

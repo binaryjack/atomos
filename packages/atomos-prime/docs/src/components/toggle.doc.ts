@@ -1,4 +1,4 @@
-import { createToggle } from '../../../src/index.js'
+﻿import { createToggle } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface ToggleState {
@@ -43,7 +43,7 @@ export const toggleDoc: DocDefinition<ToggleState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createToggle } from '@atomos/prime';
+    return `import { createToggle } from '@atomos-web/prime';
 
 const { element, getChecked, cleanup } = createToggle({
   checked: ${state.checked},

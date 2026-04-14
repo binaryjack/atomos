@@ -1,5 +1,41 @@
-import type { IncomingMessage, ServerResponse } from 'http';
-import type { Entity, LinkProps } from '@atomos/structura-core';
+﻿import type { IncomingMessage, ServerResponse } from 'http';
+import type { Entity, LinkProps, WorkspaceConfig } from '@atomos-web/structura-core';
+
+// Local mirror of Redux state shape (avoids circular dep on @atomos-web/structura)
+
+interface SchemaModel {
+  readonly id: string;
+  readonly name: string;
+  entities: Entity[];
+  links: LinkProps[];
+}
+
+interface CanvasModel {
+  readonly id: string;
+  readonly name: string;
+  schemas: Record<string, SchemaModel>;
+  active_schema_id: string;
+  readonly viewport: { pan: { x: number; y: number }; zoom: number };
+  readonly appearance_override?: Record<string, unknown>;
+}
+
+interface WorkspaceState {
+  readonly name: string;
+  readonly version: string;
+  last_modified: string;
+  settings?: Record<string, unknown>;
+  config?: WorkspaceConfig;
+  canvases: Record<string, CanvasModel>;
+  active_canvas_id: string;
+}
+
+/** Full workspace state mirroring Redux shape -- round-trippable with the browser store. */
+export interface McpWorkspaceState {
+  workspace: WorkspaceState;
+  is_settings_open?: boolean;
+}
+
+// Public request/response types
 
 export interface McpRequest {
   readonly method: string;
@@ -16,376 +52,481 @@ export interface McpResponse {
   readonly id: string;
 }
 
-/** Minimal schema record kept in the MCP server. */
-interface McpSchema {
-  id: string;
-  name: string;
-  entities: Entity[];
-  links: LinkProps[];
-}
-
-/** Payload emitted via the `change` SSE event (entity/link mutation on active schema). */
+/** Payload emitted via the `change` SSE event. */
 export interface McpChangePayload {
-  entities: Entity[];
-  links: LinkProps[];
+  readonly entities: Entity[];
+  readonly links: LinkProps[];
 }
 
-/** Payload emitted via the `workspace` SSE event (schema/settings mutations). */
+type McpWorkspaceEventType =
+  | 'settings-updated'
+  | 'schema-created'
+  | 'schema-renamed'
+  | 'schema-deleted'
+  | 'schema-activated'
+  | 'state-loaded'
+  | 'canvas-created'
+  | 'canvas-renamed'
+  | 'canvas-deleted'
+  | 'canvas-activated';
+
+/** Payload emitted via the `workspace` SSE event. */
 export interface McpWorkspacePayload {
-  type: 'settings-updated' | 'schema-created' | 'schema-renamed' | 'schema-deleted' | 'schema-activated' | 'state-loaded'
-    | 'canvas-created' | 'canvas-renamed' | 'canvas-deleted' | 'canvas-activated';
-  settings?: Record<string, unknown>;
-  schema?: { id: string; name: string };
-  id?: string;
-  name?: string;
-  state?: unknown;
+  readonly type: McpWorkspaceEventType;
+  readonly settings?: Record<string, unknown>;
+  readonly id?: string;
+  readonly name?: string;
+  readonly state?: McpWorkspaceState;
 }
 
-export class VbsMcpServer {
-  /** Active-schema entity/link cache (for backward-compat `get-schema` / existing tools). */
-  private entities: Map<string, Entity> = new Map();
-  private links: Map<string, LinkProps> = new Map();
-  /** Full multi-schema store. */
-  private schemas: Map<string, McpSchema> = new Map();
-  private activeSchemaId = 'schema-default';
-  private settings: Record<string, unknown> = {};
-  private sseClients: Set<ServerResponse> = new Set();
+export interface McpServerConfig {
+  readonly initialConfig?: WorkspaceConfig;
+}
 
-  handleSSE(req: IncomingMessage, res: ServerResponse): void {
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.writeHead(200);
-    res.write(':ok\n\n');
-    this.sseClients.add(res);
-    req.on('close', () => this.sseClients.delete(res));
-  }
+// Default-state helpers
 
-  private emit(data: McpChangePayload): void {
-    const payload = `event: change\ndata: ${JSON.stringify(data)}\n\n`;
-    this.sseClients.forEach(res => {
-      try { res.write(payload); } catch { this.sseClients.delete(res); }
-    });
-  }
+const DEFAULT_CANVAS_ID = 'canvas-default';
+const DEFAULT_SCHEMA_ID = 'schema-default';
 
-  private emitWorkspace(data: McpWorkspacePayload): void {
-    const payload = `event: workspace\ndata: ${JSON.stringify(data)}\n\n`;
-    this.sseClients.forEach(res => {
-      try { res.write(payload); } catch { this.sseClients.delete(res); }
-    });
-  }
-  
-  async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
-    try {
-      if (req.method !== 'POST') {
-        this.sendError(res, 405, 'Method not allowed', '');
-        return;
-      }
-      
-      const body = await this.readBody(req);
-      const mcpRequest: McpRequest = JSON.parse(body);
-      
-      const response = await this.processRequest(mcpRequest);
-      
-      res.setHeader('Content-Type', 'application/json');
-      res.writeHead(200);
-      res.end(JSON.stringify(response));
-      
-    } catch (error) {
-      this.sendError(res, 500, error instanceof Error ? error.message : 'Internal error', '');
-    }
-  }
-  
-  private async processRequest(request: McpRequest): Promise<McpResponse> {
-    switch (request.method) {
-      // ── Entity / Link (active schema) ────────────────────────────────────
-      case 'atomos-structura/create-entity':
-        return this.createEntity(request);
-      case 'atomos-structura/get-entity':
-        return this.getEntity(request);
-      case 'atomos-structura/update-entity':
-        return this.updateEntity(request);
-      case 'atomos-structura/delete-entity':
-        return this.deleteEntity(request);
-      case 'atomos-structura/create-link':
-        return this.createLink(request);
-      case 'atomos-structura/get-schema':
-        return this.getSchema(request);
-      case 'atomos-structura/sync-state':
-        return this.syncState(request);
-      // ── Settings ─────────────────────────────────────────────────────────
-      case 'atomos-structura/get-settings':
-        return this.getSettings(request);
-      case 'atomos-structura/update-settings':
-        return this.updateSettings(request);
-      // ── Multi-schema ──────────────────────────────────────────────────────
-      case 'atomos-structura/list-schemas':
-        return this.listSchemas(request);
-      case 'atomos-structura/create-schema':
-        return this.createSchemaTab(request);
-      case 'atomos-structura/rename-schema':
-        return this.renameSchema(request);
-      case 'atomos-structura/delete-schema':
-        return this.deleteSchemaTab(request);
-      case 'atomos-structura/activate-schema':
-        return this.activateSchema(request);
-      // ── Workspace persistence ─────────────────────────────────────────────
-      case 'atomos-structura/get-workspace':
-        return this.getWorkspace(request);
-      case 'atomos-structura/load-workspace':
-        return this.loadWorkspace(request);
-      default:
-        return {
-          error: { code: -32601, message: 'Method not found' },
-          id: request.id
-        };
-    }
-  }
+const make_default_schema = (id = DEFAULT_SCHEMA_ID, name = 'Default Schema'): SchemaModel => ({
+  id, name, entities: [], links: [],
+});
 
-  // ── Internal helpers ──────────────────────────────────────────────────────
+const make_default_canvas = (id = DEFAULT_CANVAS_ID, name = 'Canvas 1'): CanvasModel => ({
+  id,
+  name,
+  schemas: { [DEFAULT_SCHEMA_ID]: make_default_schema() },
+  active_schema_id: DEFAULT_SCHEMA_ID,
+  viewport: { pan: { x: 0, y: 0 }, zoom: 1 },
+});
 
-  private ensureActiveSchema(): McpSchema {
-    let schema = this.schemas.get(this.activeSchemaId);
-    if (!schema) {
-      schema = { id: this.activeSchemaId, name: 'Default', entities: [], links: [] };
-      this.schemas.set(this.activeSchemaId, schema);
-    }
-    return schema;
-  }
+const make_initial_state = (cfg?: WorkspaceConfig): McpWorkspaceState => ({
+  workspace: {
+    name: 'Untitled Workspace',
+    version: '1',
+    last_modified: new Date().toISOString(),
+    ...(cfg ? { config: cfg } : {}),
+    canvases: { [DEFAULT_CANVAS_ID]: make_default_canvas() },
+    active_canvas_id: DEFAULT_CANVAS_ID,
+  },
+});
 
-  private flushActiveSchemaCache(): void {
-    const schema = this.ensureActiveSchema();
-    schema.entities = Array.from(this.entities.values());
-    schema.links = Array.from(this.links.values());
-  }
+// Internal state accessors
 
-  private loadActiveSchemaCache(): void {
-    const schema = this.schemas.get(this.activeSchemaId);
-    this.entities.clear();
-    this.links.clear();
-    schema?.entities.forEach(e => this.entities.set(e.id, e));
-    schema?.links.forEach(l => this.links.set(l.id, l));
-  }
+const get_active_canvas = (state: McpWorkspaceState): CanvasModel | undefined =>
+  state.workspace.canvases[state.workspace.active_canvas_id];
 
-  private emitActiveChange(): void {
-    this.flushActiveSchemaCache();
-    this.emit({ entities: Array.from(this.entities.values()), links: Array.from(this.links.values()) });
-  }
+const get_active_schema = (state: McpWorkspaceState): SchemaModel | undefined => {
+  const canvas = get_active_canvas(state);
+  return canvas ? canvas.schemas[canvas.active_schema_id] : undefined;
+};
 
-  // ── Entity / Link ─────────────────────────────────────────────────────────
-
-  private createEntity(request: McpRequest): McpResponse {
-    const entity = request.params as Entity;
-    this.entities.set(entity.id, entity);
-    this.emitActiveChange();
-    return { result: { success: true, entity }, id: request.id };
-  }
-
-  private getEntity(request: McpRequest): McpResponse {
-    const { entityId } = request.params as { entityId: string };
-    const entity = this.entities.get(entityId);
-    if (!entity) return { error: { code: 404, message: 'Entity not found' }, id: request.id };
-    return { result: { entity }, id: request.id };
-  }
-
-  private updateEntity(request: McpRequest): McpResponse {
-    const entity = request.params as Entity;
-    if (!this.entities.has(entity.id)) return { error: { code: 404, message: 'Entity not found' }, id: request.id };
-    this.entities.set(entity.id, entity);
-    this.emitActiveChange();
-    return { result: { success: true, entity }, id: request.id };
-  }
-
-  private deleteEntity(request: McpRequest): McpResponse {
-    const { entityId } = request.params as { entityId: string };
-    if (!this.entities.has(entityId)) return { error: { code: 404, message: 'Entity not found' }, id: request.id };
-    this.entities.delete(entityId);
-    // cascade: remove links referencing this entity
-    this.links.forEach((_l, id) => {
-      const l = this.links.get(id);
-      if (l && (l.leftEntityId === entityId || l.rightEntityId === entityId)) this.links.delete(id);
-    });
-    this.emitActiveChange();
-    return { result: { success: true }, id: request.id };
-  }
-
-  private createLink(request: McpRequest): McpResponse {
-    const link = request.params as LinkProps;
-    this.links.set(link.id, link);
-    this.emitActiveChange();
-    return { result: { success: true, link }, id: request.id };
-  }
-
-  private getSchema(request: McpRequest): McpResponse {
-    const { schemaId } = ((request.params ?? {}) as { schemaId?: string });
-    if (schemaId && schemaId !== this.activeSchemaId) {
-      const schema = this.schemas.get(schemaId);
-      if (!schema) return { error: { code: 404, message: 'Schema not found' }, id: request.id };
-      return { result: { schema: { ...schema, metadata: { version: '1.0.0' } } }, id: request.id };
-    }
-    return {
-      result: {
-        schema: {
-          id: this.activeSchemaId,
-          entities: Array.from(this.entities.values()),
-          links: Array.from(this.links.values()),
-          metadata: { createdAt: Date.now(), version: '1.0.0' }
-        }
-      },
-      id: request.id
-    };
-  }
-
-  private syncState(request: McpRequest): McpResponse {
-    const { entities = [], links = [], settings } = request.params as {
-      entities?: Entity[];
-      links?: LinkProps[];
-      settings?: Record<string, unknown>;
-    };
-    this.entities.clear();
-    this.links.clear();
-    entities.forEach(e => this.entities.set(e.id, e));
-    links.forEach(l => this.links.set(l.id, l));
-    this.flushActiveSchemaCache();
-    if (settings) this.settings = settings;
-    // sync-state does NOT emit SSE — it comes from the browser, avoid loop
-    return { result: { success: true }, id: request.id };
-  }
-
-  // ── Settings ──────────────────────────────────────────────────────────────
-
-  private getSettings(request: McpRequest): McpResponse {
-    return { result: { settings: this.settings }, id: request.id };
-  }
-
-  private updateSettings(request: McpRequest): McpResponse {
-    const { settings } = request.params as { settings: Record<string, unknown> };
-    this.settings = { ...this.settings, ...settings };
-    this.emitWorkspace({ type: 'settings-updated', settings: this.settings });
-    return { result: { success: true, settings: this.settings }, id: request.id };
-  }
-
-  // ── Multi-schema ──────────────────────────────────────────────────────────
-
-  private listSchemas(request: McpRequest): McpResponse {
-    const list = Array.from(this.schemas.values()).map(s => ({
-      id: s.id,
-      name: s.name,
-      entityCount: s.entities.length,
-      linkCount: s.links.length,
-      active: s.id === this.activeSchemaId,
-    }));
-    return { result: { schemas: list, active_schema_id: this.activeSchemaId }, id: request.id };
-  }
-
-  private createSchemaTab(request: McpRequest): McpResponse {
-    const { id, name } = request.params as { id?: string; name: string };
-    const schemaId = id ?? `schema-${Date.now()}`;
-    if (this.schemas.has(schemaId)) return { error: { code: 409, message: 'Schema id already exists' }, id: request.id };
-    this.schemas.set(schemaId, { id: schemaId, name, entities: [], links: [] });
-    this.emitWorkspace({ type: 'schema-created', id: schemaId, name });
-    return { result: { success: true, id: schemaId, name }, id: request.id };
-  }
-
-  private renameSchema(request: McpRequest): McpResponse {
-    const { id, name } = request.params as { id: string; name: string };
-    const schema = this.schemas.get(id);
-    if (!schema) return { error: { code: 404, message: 'Schema not found' }, id: request.id };
-    schema.name = name;
-    this.emitWorkspace({ type: 'schema-renamed', id, name });
-    return { result: { success: true }, id: request.id };
-  }
-
-  private deleteSchemaTab(request: McpRequest): McpResponse {
-    const { id } = request.params as { id: string };
-    if (!this.schemas.has(id)) return { error: { code: 404, message: 'Schema not found' }, id: request.id };
-    if (id === this.activeSchemaId) return { error: { code: 400, message: 'Cannot delete the active schema' }, id: request.id };
-    this.schemas.delete(id);
-    this.emitWorkspace({ type: 'schema-deleted', id });
-    return { result: { success: true }, id: request.id };
-  }
-
-  private activateSchema(request: McpRequest): McpResponse {
-    const { id } = request.params as { id: string };
-    if (!this.schemas.has(id)) return { error: { code: 404, message: 'Schema not found' }, id: request.id };
-    this.flushActiveSchemaCache();
-    this.activeSchemaId = id;
-    this.loadActiveSchemaCache();
-    this.emitWorkspace({ type: 'schema-activated', id });
-    return { result: { success: true, id }, id: request.id };
-  }
-
-  // ── Workspace persistence ─────────────────────────────────────────────────
-
-  private getWorkspace(request: McpRequest): McpResponse {
-    this.flushActiveSchemaCache();
-    return {
-      result: {
-        workspace: {
-          active_schema_id: this.activeSchemaId,
-          schemas: Array.from(this.schemas.values()),
-          settings: this.settings,
-        },
-      },
-      id: request.id,
-    };
-  }
-
-  private loadWorkspace(request: McpRequest): McpResponse {
-    const { workspace } = request.params as {
-      workspace: {
-        active_schema_id?: string;
-        schemas?: McpSchema[];
-        settings?: Record<string, unknown>;
-      };
-    };
-    this.schemas.clear();
-    (workspace.schemas ?? []).forEach(s => this.schemas.set(s.id, { ...s }));
-    this.activeSchemaId = workspace.active_schema_id ?? 'schema-default';
-    if (workspace.settings) this.settings = workspace.settings;
-    this.loadActiveSchemaCache();
-    // Emit a state-loaded event with proper Redux WorkspaceState shape
-    const schemasRecord: Record<string, object> = {};
-    this.schemas.forEach((s, id) => { schemasRecord[id] = { ...s }; });
-    this.emitWorkspace({
-      type: 'state-loaded',
-      state: {
-        workspace: {
-          name: 'Untitled Workspace',
-          version: '1',
-          last_modified: new Date().toISOString(),
-          settings: this.settings,
-          canvases: {
-            'canvas-default': {
-              id: 'canvas-default',
-              name: 'Canvas 1',
-              schemas: schemasRecord,
-              active_schema_id: this.activeSchemaId,
-              viewport: { pan: { x: 0, y: 0 }, zoom: 1 },
-            },
+const update_active_schema = (
+  state: McpWorkspaceState,
+  fn: (schema: SchemaModel) => SchemaModel,
+): McpWorkspaceState => {
+  const canvas = get_active_canvas(state);
+  if (!canvas) return state;
+  const schema = canvas.schemas[canvas.active_schema_id];
+  if (!schema) return state;
+  return {
+    ...state,
+    workspace: {
+      ...state.workspace,
+      last_modified: new Date().toISOString(),
+      canvases: {
+        ...state.workspace.canvases,
+        [state.workspace.active_canvas_id]: {
+          ...canvas,
+          schemas: {
+            ...canvas.schemas,
+            [canvas.active_schema_id]: fn(schema),
           },
-          active_canvas_id: 'canvas-default',
         },
       },
-    });
-    return { result: { success: true }, id: request.id };
-  }
+    },
+  };
+};
 
-  // ── HTTP helpers ──────────────────────────────────────────────────────────
+const emit_sse = (clients: Set<ServerResponse>, event: string, data: unknown): void => {
+  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  clients.forEach(res => {
+    try { res.write(payload); } catch { clients.delete(res); }
+  });
+};
 
-  private async readBody(req: IncomingMessage): Promise<string> {
-    return new Promise((resolve, reject) => {
-      let body = '';
-      req.on('data', chunk => body += chunk.toString());
-      req.on('end', () => resolve(body));
-      req.on('error', reject);
-    });
-  }
+// Prototype constructor
 
-  private sendError(res: ServerResponse, code: number, message: string, id: string): void {
-    res.setHeader('Content-Type', 'application/json');
-    res.writeHead(code);
-    res.end(JSON.stringify({ error: { code, message }, id }));
-  }
+interface VbsMcpServerInstance {
+  _state: McpWorkspaceState;
+  _clients: Set<ServerResponse>;
 }
 
+export interface VbsMcpServer {
+  handleSSE(req: IncomingMessage, res: ServerResponse): void;
+  handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void>;
+}
+
+export function VbsMcpServer(this: VbsMcpServerInstance, cfg?: McpServerConfig): void {
+  Object.defineProperty(this, '_state', {
+    enumerable: false,
+    writable: true,
+    value: make_initial_state(cfg?.initialConfig),
+  });
+  Object.defineProperty(this, '_clients', {
+    enumerable: false,
+    writable: true,
+    value: new Set<ServerResponse>(),
+  });
+}
+
+// SSE handler
+
+VbsMcpServer.prototype.handleSSE = function(
+  this: VbsMcpServerInstance,
+  req: IncomingMessage,
+  res: ServerResponse,
+): void {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.writeHead(200);
+  res.write(':ok\n\n');
+  this._clients.add(res);
+  req.on('close', () => this._clients.delete(res));
+};
+
+// HTTP handler
+
+VbsMcpServer.prototype.handleRequest = async function(
+  this: VbsMcpServerInstance,
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  try {
+    if (req.method !== 'POST') {
+      res.setHeader('Content-Type', 'application/json');
+      res.writeHead(405);
+      res.end(JSON.stringify({ error: { code: 405, message: 'Method not allowed' }, id: '' }));
+      return;
+    }
+    const body = await read_body(req);
+    const request = JSON.parse(body) as McpRequest;
+    const response = process_request(this, request);
+    res.setHeader('Content-Type', 'application/json');
+    res.writeHead(200);
+    res.end(JSON.stringify(response));
+  } catch (error) {
+    res.setHeader('Content-Type', 'application/json');
+    res.writeHead(500);
+    res.end(JSON.stringify({
+      error: { code: 500, message: error instanceof Error ? error.message : 'Internal error' },
+      id: '',
+    }));
+  }
+};
+
+// Request router
+
+const process_request = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  switch (req.method) {
+    case 'atomos-structura/create-entity':   return handle_create_entity(srv, req);
+    case 'atomos-structura/get-entity':      return handle_get_entity(srv, req);
+    case 'atomos-structura/update-entity':   return handle_update_entity(srv, req);
+    case 'atomos-structura/delete-entity':   return handle_delete_entity(srv, req);
+    case 'atomos-structura/create-link':     return handle_create_link(srv, req);
+    case 'atomos-structura/get-schema':      return handle_get_schema(srv, req);
+    case 'atomos-structura/sync-state':      return handle_sync_state(srv, req);
+    case 'atomos-structura/get-settings':    return handle_get_settings(srv, req);
+    case 'atomos-structura/update-settings': return handle_update_settings(srv, req);
+    case 'atomos-structura/list-schemas':    return handle_list_schemas(srv, req);
+    case 'atomos-structura/create-schema':   return handle_create_schema(srv, req);
+    case 'atomos-structura/rename-schema':   return handle_rename_schema(srv, req);
+    case 'atomos-structura/delete-schema':   return handle_delete_schema(srv, req);
+    case 'atomos-structura/activate-schema': return handle_activate_schema(srv, req);
+    case 'atomos-structura/get-workspace':   return handle_get_workspace(srv, req);
+    case 'atomos-structura/load-workspace':  return handle_load_workspace(srv, req);
+    default: return { error: { code: -32601, message: 'Method not found' }, id: req.id };
+  }
+};
+
+// Entity handlers
+
+const handle_create_entity = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const entity = req.params as Entity;
+  srv._state = update_active_schema(srv._state, s => ({
+    ...s, entities: [...s.entities.filter(e => e.id !== entity.id), entity],
+  }));
+  const schema = get_active_schema(srv._state);
+  emit_sse(srv._clients, 'change', { entities: schema?.entities ?? [], links: schema?.links ?? [] });
+  return { result: { success: true, entity }, id: req.id };
+};
+
+const handle_get_entity = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const { entityId } = req.params as { entityId: string };
+  const entity = get_active_schema(srv._state)?.entities.find(e => e.id === entityId);
+  if (!entity) return { error: { code: 404, message: 'Entity not found' }, id: req.id };
+  return { result: { entity }, id: req.id };
+};
+
+const handle_update_entity = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const entity = req.params as Entity;
+  const schema = get_active_schema(srv._state);
+  if (!schema?.entities.some(e => e.id === entity.id))
+    return { error: { code: 404, message: 'Entity not found' }, id: req.id };
+  srv._state = update_active_schema(srv._state, s => ({
+    ...s, entities: s.entities.map(e => e.id === entity.id ? entity : e),
+  }));
+  const updated = get_active_schema(srv._state);
+  emit_sse(srv._clients, 'change', { entities: updated?.entities ?? [], links: updated?.links ?? [] });
+  return { result: { success: true, entity }, id: req.id };
+};
+
+const handle_delete_entity = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const { entityId } = req.params as { entityId: string };
+  const schema = get_active_schema(srv._state);
+  if (!schema?.entities.some(e => e.id === entityId))
+    return { error: { code: 404, message: 'Entity not found' }, id: req.id };
+  srv._state = update_active_schema(srv._state, s => ({
+    ...s,
+    entities: s.entities.filter(e => e.id !== entityId),
+    links: s.links.filter(l => l.leftEntityId !== entityId && l.rightEntityId !== entityId),
+  }));
+  const updated = get_active_schema(srv._state);
+  emit_sse(srv._clients, 'change', { entities: updated?.entities ?? [], links: updated?.links ?? [] });
+  return { result: { success: true }, id: req.id };
+};
+
+const handle_create_link = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const link = req.params as LinkProps;
+  srv._state = update_active_schema(srv._state, s => ({
+    ...s, links: [...s.links.filter(l => l.id !== link.id), link],
+  }));
+  const schema = get_active_schema(srv._state);
+  emit_sse(srv._clients, 'change', { entities: schema?.entities ?? [], links: schema?.links ?? [] });
+  return { result: { success: true, link }, id: req.id };
+};
+
+const handle_get_schema = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const { schemaId } = ((req.params ?? {}) as { schemaId?: string });
+  const canvas = get_active_canvas(srv._state);
+  if (!canvas) return { error: { code: 404, message: 'No active canvas' }, id: req.id };
+  if (schemaId && schemaId !== canvas.active_schema_id) {
+    const schema = canvas.schemas[schemaId];
+    if (!schema) return { error: { code: 404, message: 'Schema not found' }, id: req.id };
+    return { result: { schema: { ...schema, metadata: { version: '1.0.0' } } }, id: req.id };
+  }
+  const schema = get_active_schema(srv._state);
+  return { result: { schema: { ...schema, metadata: { createdAt: Date.now(), version: '1.0.0' } } }, id: req.id };
+};
+
+const handle_sync_state = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const { entities = [], links = [], settings } = req.params as {
+    entities?: Entity[];
+    links?: LinkProps[];
+    settings?: Record<string, unknown>;
+  };
+  srv._state = update_active_schema(srv._state, s => ({ ...s, entities: [...entities], links: [...links] }));
+  if (settings !== undefined) {
+    srv._state = {
+      ...srv._state,
+      workspace: { ...srv._state.workspace, settings, last_modified: new Date().toISOString() },
+    };
+  }
+  // sync-state originates from the browser -- do NOT emit SSE to avoid a feedback loop
+  return { result: { success: true }, id: req.id };
+};
+
+// Settings handlers
+
+const handle_get_settings = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse =>
+  ({ result: { settings: srv._state.workspace.settings ?? {} }, id: req.id });
+
+const handle_update_settings = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const { settings } = req.params as { settings: Record<string, unknown> };
+  const merged = { ...(srv._state.workspace.settings ?? {}), ...settings };
+  srv._state = {
+    ...srv._state,
+    workspace: { ...srv._state.workspace, settings: merged, last_modified: new Date().toISOString() },
+  };
+  emit_sse(srv._clients, 'workspace', { type: 'settings-updated', settings: merged });
+  return { result: { success: true, settings: merged }, id: req.id };
+};
+
+// Schema handlers
+
+const handle_list_schemas = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const canvas = get_active_canvas(srv._state);
+  if (!canvas) return { result: { schemas: [], active_schema_id: '' }, id: req.id };
+  const schemas = Object.values(canvas.schemas).map(s => ({
+    id: s.id,
+    name: s.name,
+    entityCount: s.entities.length,
+    linkCount: s.links.length,
+    active: s.id === canvas.active_schema_id,
+  }));
+  return { result: { schemas, active_schema_id: canvas.active_schema_id }, id: req.id };
+};
+
+const handle_create_schema = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const canvas = get_active_canvas(srv._state);
+  if (
+    srv._state.workspace.config?.allow_multiple_schemas === false &&
+    canvas &&
+    Object.keys(canvas.schemas).length >= 1
+  ) return { error: { code: 403, message: 'Multi-schema disabled' }, id: req.id };
+  const { id, name } = req.params as { id?: string; name: string };
+  const schemaId = id ?? `schema-${Date.now()}`;
+  if (canvas?.schemas[schemaId]) return { error: { code: 409, message: 'Schema id already exists' }, id: req.id };
+  const canvasId = srv._state.workspace.active_canvas_id;
+  srv._state = {
+    ...srv._state,
+    workspace: {
+      ...srv._state.workspace,
+      last_modified: new Date().toISOString(),
+      canvases: {
+        ...srv._state.workspace.canvases,
+        [canvasId]: {
+          ...canvas!,
+          schemas: { ...canvas!.schemas, [schemaId]: make_default_schema(schemaId, name) },
+          active_schema_id: schemaId,
+        },
+      },
+    },
+  };
+  emit_sse(srv._clients, 'workspace', { type: 'schema-created', id: schemaId, name });
+  return { result: { success: true, id: schemaId, name }, id: req.id };
+};
+
+const handle_rename_schema = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const { id, name } = req.params as { id: string; name: string };
+  const canvas = get_active_canvas(srv._state);
+  if (!canvas?.schemas[id]) return { error: { code: 404, message: 'Schema not found' }, id: req.id };
+  const canvasId = srv._state.workspace.active_canvas_id;
+  srv._state = {
+    ...srv._state,
+    workspace: {
+      ...srv._state.workspace,
+      last_modified: new Date().toISOString(),
+      canvases: {
+        ...srv._state.workspace.canvases,
+        [canvasId]: {
+          ...canvas,
+          schemas: { ...canvas.schemas, [id]: { ...canvas.schemas[id]!, name } },
+        },
+      },
+    },
+  };
+  emit_sse(srv._clients, 'workspace', { type: 'schema-renamed', id, name });
+  return { result: { success: true }, id: req.id };
+};
+
+const handle_delete_schema = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const { id } = req.params as { id: string };
+  const canvas = get_active_canvas(srv._state);
+  if (!canvas?.schemas[id]) return { error: { code: 404, message: 'Schema not found' }, id: req.id };
+  if (id === canvas.active_schema_id)
+    return { error: { code: 400, message: 'Cannot delete the active schema' }, id: req.id };
+  const { [id]: _removed, ...remaining } = canvas.schemas;
+  const canvasId = srv._state.workspace.active_canvas_id;
+  srv._state = {
+    ...srv._state,
+    workspace: {
+      ...srv._state.workspace,
+      last_modified: new Date().toISOString(),
+      canvases: {
+        ...srv._state.workspace.canvases,
+        [canvasId]: { ...canvas, schemas: remaining },
+      },
+    },
+  };
+  emit_sse(srv._clients, 'workspace', { type: 'schema-deleted', id });
+  return { result: { success: true }, id: req.id };
+};
+
+const handle_activate_schema = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const { id } = req.params as { id: string };
+  const canvas = get_active_canvas(srv._state);
+  if (!canvas?.schemas[id]) return { error: { code: 404, message: 'Schema not found' }, id: req.id };
+  const canvasId = srv._state.workspace.active_canvas_id;
+  srv._state = {
+    ...srv._state,
+    workspace: {
+      ...srv._state.workspace,
+      canvases: {
+        ...srv._state.workspace.canvases,
+        [canvasId]: { ...canvas, active_schema_id: id },
+      },
+    },
+  };
+  emit_sse(srv._clients, 'workspace', { type: 'schema-activated', id });
+  return { result: { success: true, id }, id: req.id };
+};
+
+// Workspace persistence handlers
+
+const handle_get_workspace = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => ({
+  result: { workspace: srv._state },
+  id: req.id,
+});
+
+interface LegacyWorkspacePayload {
+  active_schema_id?: string;
+  schemas?: Array<{ id: string; name: string; entities: Entity[]; links: LinkProps[] }>;
+  settings?: unknown;
+}
+
+const is_legacy_payload = (w: unknown): w is LegacyWorkspacePayload =>
+  typeof w === 'object' && w !== null && !('workspace' in w);
+
+const handle_load_workspace = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const { workspace } = req.params as { workspace: McpWorkspaceState | LegacyWorkspacePayload };
+  const runtimeConfig = srv._state.workspace.config;
+  if (is_legacy_payload(workspace)) {
+    const schemasRecord: Record<string, SchemaModel> = {};
+    (workspace.schemas ?? []).forEach(s => { schemasRecord[s.id] = { ...s }; });
+    const activeSchemaId = workspace.active_schema_id ?? DEFAULT_SCHEMA_ID;
+    const baseCanvas = make_default_canvas();
+    const rebuilt: McpWorkspaceState = {
+      workspace: {
+        name: 'Untitled Workspace',
+        version: '1',
+        last_modified: new Date().toISOString(),
+        ...(workspace.settings !== undefined ? { settings: workspace.settings as Record<string, unknown> } : {}),
+        canvases: {
+          [DEFAULT_CANVAS_ID]: {
+            ...baseCanvas,
+            schemas: Object.keys(schemasRecord).length > 0 ? schemasRecord : baseCanvas.schemas,
+            active_schema_id: activeSchemaId,
+          },
+        },
+        active_canvas_id: DEFAULT_CANVAS_ID,
+      },
+    };
+    srv._state = runtimeConfig
+      ? { ...rebuilt, workspace: { ...rebuilt.workspace, config: runtimeConfig } }
+      : rebuilt;
+  } else {
+    srv._state = runtimeConfig
+      ? { ...workspace, workspace: { ...workspace.workspace, config: runtimeConfig } }
+      : workspace;
+  }
+  emit_sse(srv._clients, 'workspace', { type: 'state-loaded', state: srv._state });
+  return { result: { success: true }, id: req.id };
+};
+
+// HTTP utility
+
+const read_body = (req: IncomingMessage): Promise<string> =>
+  new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', (chunk: Buffer) => { body += chunk.toString(); });
+    req.on('end', () => resolve(body));
+    req.on('error', reject);
+  });
+
+/** Factory wrapper for VbsMcpServer (avoids `new` construct signature issues with prototype pattern). */
+export const createVbsMcpServer = (cfg?: McpServerConfig): VbsMcpServer => {
+  type Ctor = new (cfg?: McpServerConfig) => VbsMcpServer;
+  return new (VbsMcpServer as unknown as Ctor)(cfg);
+};

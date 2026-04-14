@@ -1,4 +1,4 @@
-import { createCard, createTypography } from '../../../src/index.js'
+﻿import { createCard, createTypography } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface CardState {
@@ -51,7 +51,7 @@ export const cardDoc: DocDefinition<CardState> = {
     };
   },
   renderCode: (state) => {
-    return `import { createCard, createTypography } from '@atomos/prime';
+    return `import { createCard, createTypography } from '@atomos-web/prime';
 
 const textNode = createTypography({ 
   variant: 'p', 

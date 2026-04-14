@@ -1,5 +1,5 @@
-import type { SchemaGraphKernel } from '../core/create-schema-graph-kernel.js';
-import type { Property } from '@atomos/structura-core';
+﻿import type { SchemaGraphKernel } from '../core/create-schema-graph-kernel.js';
+import type { Property } from '@atomos-web/structura-core';
 
 const mapTypeToPrisma = (dataType: string): string => {
   switch (dataType) {

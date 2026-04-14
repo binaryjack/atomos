@@ -1,7 +1,11 @@
-{
-  "name": "@atomos/structura",
+﻿{
+  "name": "@atomos-web/structura",
   "version": "1.0.0",
+  "license": "MIT",
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -21,10 +25,10 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@atomos/prime": "workspace:*",
-    "@atomos/prime-style": "workspace:*",
-    "@atomos/structura-core": "workspace:*",
-    "@atomos/structura-mcp": "workspace:*",
+    "@atomos-web/prime": "workspace:*",
+    "@atomos-web/prime-style": "workspace:*",
+    "@atomos-web/structura-core": "workspace:*",
+    "@atomos-web/structura-mcp": "workspace:*",
     "@binaryjack/formular.dev": "workspace:^"
   },
   "devDependencies": {

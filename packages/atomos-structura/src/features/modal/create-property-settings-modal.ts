@@ -1,19 +1,19 @@
-import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
+﻿import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
 import { f } from '@binaryjack/formular.dev'
-import type { DataType, Property } from '@atomos/structura-core'
-import { COMPONENT_TYPES, DATA_TYPES } from '@atomos/structura-core'
+import type { DataType, Property } from '@atomos-web/structura-core'
+import { COMPONENT_TYPES, DATA_TYPES } from '@atomos-web/structura-core'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
 import { createFormularManager } from '../../core/create-formular-manager.js'
 import { selectEntityById, selectPropertyByKey } from '../../core/selectors.js'
-import { createButton } from '@atomos/prime'
-import { createFormularDropdown } from '@atomos/prime'
-import { createFormularInput } from '@atomos/prime'
+import { createButton } from '@atomos-web/prime'
+import { createFormularDropdown } from '@atomos-web/prime'
+import { createFormularInput } from '@atomos-web/prime'
 import { createValidationBadge } from './create-validation-badge.js'
 import { createValidationModal } from './create-validation-modal.js'
 
 import type { ModalOptions } from './types/modal-options.types.js'
 import type { ModalResult } from './types/modal-result.types.js'
-import type { AtpModal } from '@atomos/prime'
+import type { AtpModal } from '@atomos-web/prime'
 
 export interface PropertySettingsModalProps {
   readonly entityId: string;

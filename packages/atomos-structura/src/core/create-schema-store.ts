@@ -1,4 +1,4 @@
-import type { Entity, LinkProps } from '@atomos/structura-core';
+﻿import type { Entity, LinkProps } from '@atomos-web/structura-core';
 import { createEntityStore } from './create-entity-store.js';
 import { createLinkStore } from './create-link-store.js';
 import { registry } from './create-signal-registry.js';
@@ -6,7 +6,7 @@ import { ENTITY_DEFAULT_HEIGHT, ENTITY_DEFAULT_WIDTH } from './entity-defaults.j
 import { schemaKey } from './registry-keys.js';
 import type { EntityCanvasState } from './types/entity-canvas-state.types.js';
 import type { SchemaModel } from './types/schema-model.types.js';
-import type { Signal } from '@atomos/prime';
+import type { Signal } from '@atomos-web/prime';
 
 // Module-level dedup: prevents double-subscribing when createSchemaStore is called
 // multiple times for the same schema (registry.getOrCreate is idempotent).

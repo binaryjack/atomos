@@ -1,4 +1,4 @@
-import { AtpModal, defineAtpModal } from '../../../src/features/modal/atp-modal/atp-modal.js'
+﻿import { AtpModal, defineAtpModal } from '../../../src/features/modal/atp-modal/atp-modal.js'
 import { createButton } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
@@ -90,7 +90,7 @@ export const modalDoc: DocDefinition<ModalState> = {
     };
   },
   renderCode: (state) => {
-    return `import { defineAtpModal, AtpModal } from '@atomos/prime';
+    return `import { defineAtpModal, AtpModal } from '@atomos-web/prime';
 
 // Ensure the custom element is registered
 defineAtpModal();

@@ -1,7 +1,7 @@
-import type { Entity, EntityShape } from '@atomos/structura-core';
+﻿import type { Entity, EntityShape } from '@atomos-web/structura-core';
 import { createSVGShape } from '../../canvas/shape-renderers/create-svg-shape.js';
-import { computeContrastColor } from '@atomos/prime';
-import type { Signal } from '@atomos/prime';
+import { computeContrastColor } from '@atomos-web/prime';
+import type { Signal } from '@atomos-web/prime';
 
 export interface CompactEntityContentResult {
   readonly rootElement: SVGElement;

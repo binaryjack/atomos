@@ -1,4 +1,4 @@
-import { createTextarea } from '../../../src/index.js'
+﻿import { createTextarea } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface TextareaState {
@@ -39,7 +39,7 @@ export const textareaDoc: DocDefinition<TextareaState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createTextarea } from '@atomos/prime';
+    return `import { createTextarea } from '@atomos-web/prime';
 
 const { element, cleanup } = createTextarea({
   value: '${state.value}',

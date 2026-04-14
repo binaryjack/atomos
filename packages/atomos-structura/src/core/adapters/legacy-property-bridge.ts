@@ -1,14 +1,14 @@
-/**
+﻿/**
  * Legacy Property Bridge
  * Connects existing property UI components to clean architecture
  */
-import type { Entity, Property } from '@atomos/structura-core';
-import { createProperty } from '@atomos/structura-core';
+import type { Entity, Property } from '@atomos-web/structura-core';
+import { createProperty } from '@atomos-web/structura-core';
 import type { EntityStore } from '../create-entity-store.js';
-import { createSignal } from '@atomos/prime';
+import { createSignal } from '@atomos-web/prime';
 import type { IRepository } from '../repository/types/repository.types.js';
 import type { IStorageProvider } from '../storage/types/storage-provider.types.js';
-import type { Signal } from '@atomos/prime';
+import type { Signal } from '@atomos-web/prime';
 import { getCanvasAdapter } from './canvas-adapter.js';
 
 /**

@@ -1,4 +1,4 @@
-import type { ToolboxConfiguration } from '@atomos/prime';
+﻿import type { ToolboxConfiguration } from '@atomos-web/prime';
 
 export const defaultToolboxConfig: ToolboxConfiguration = {
   toolsets: [

@@ -1,4 +1,4 @@
-import type { DAGExport } from '../application/dag-service.js';
+﻿import type { DAGExport } from '../application/dag-service.js';
 import type { DAGObserver } from './dag-observer.js';
 
 // We define minimal React types manually to avoid creating an active
@@ -20,7 +20,7 @@ export interface DAGReactHookAdapter {
  * Example usage in a React Host App:
  * ```tsx
  * import { useSyncExternalStore } from 'react';
- * import { createReactDAGHook } from '@atomos/prime';
+ * import { createReactDAGHook } from '@atomos-web/prime';
  * 
  * const { useDAG } = createReactDAGHook(dagObserver, useSyncExternalStore);
  * 

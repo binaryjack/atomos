@@ -1,4 +1,4 @@
-import { getGlobalReduxStore } from '../create-redux-store.js';
+﻿import { getGlobalReduxStore } from '../create-redux-store.js';
 import type { ReduxState, ReduxAction } from '../../types/redux-state.types.js';
 
 export type StructuraSelector<T> = (state: ReduxState) => T;
@@ -10,7 +10,7 @@ export type StructuraSelector<T> = (state: ReduxState) => T;
  * @example
  * ```tsx
  * import { useSyncExternalStore } from 'react';
- * import { structuraStoreAdapter } from '@atomos/structura/adapters';
+ * import { structuraStoreAdapter } from '@atomos-web/structura/adapters';
  * 
  * const useStructuraState = <T>(selector: (state: ReduxState) => T) => {
  *   return useSyncExternalStore(

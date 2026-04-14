@@ -1,6 +1,6 @@
-import type { Signal } from '@atomos/prime'
-import { createSignal } from '@atomos/prime'
-import type { RenderType } from '@atomos/structura-core'
+﻿import type { Signal } from '@atomos-web/prime'
+import { createSignal } from '@atomos-web/prime'
+import type { RenderType } from '@atomos-web/structura-core'
 import type { EdgePosition } from '../features/edge/types/edge.types.js'
 import { bezierPath, linearPath, orthogonalPath } from './bezier.js'
 

@@ -1,4 +1,4 @@
-import { getCanvasAdapter } from '../core/adapters/canvas-adapter.js'
+﻿import { getCanvasAdapter } from '../core/adapters/canvas-adapter.js'
 import { createDAGObserver } from '../core/adapters/dag-observer.js'
 import { getCustomShapes, getGeneralSettings, getToolboxConfig, setCustomShapes, setGeneralSettings, setToolboxConfig, getAppearanceSettings, setAppearanceSettings } from '../core/adapters/toolbox-config-manager.js'
 import { applyAppearanceTokens } from '../core/presentation/design-system.js'
@@ -19,6 +19,7 @@ import { createValidationOverlay } from '../features/validation-overlay/create-v
 import { copyEntity, pasteEntity } from '../core/clipboard.js'
 import { createMcpSync } from '../features/mcp-sync/create-mcp-sync.js'
 import { createRubberBand } from '../features/rubber-band/create-rubber-band.js'
+import type { WorkspaceConfig } from '@atomos-web/structura-core'
 import { createShortcutsPanel } from '../features/shortcuts/create-shortcuts-panel.js'
 import { registerExportPlugin } from '../features/export/create-export-registry.js'
 import { sqlDdlPlugin } from '../features/export/plugins/sql-ddl.plugin.js'
@@ -34,7 +35,9 @@ registerExportPlugin(typescriptPlugin);
 registerExportPlugin(jsonSchemaPlugin);
 registerExportPlugin(mermaidPlugin);
 
-export const createCanvasPage = function() {
+export const createCanvasPage = function(config?: WorkspaceConfig) {
+  // Seed the global store with the runtime config before any subsystem uses it
+  getGlobalReduxStore(config);
   const cleanups: Array<() => void> = [];
 
   // Root — fills full viewport
@@ -313,6 +316,7 @@ export const createCanvasPage = function() {
     viewport,
     entityManager: getEntityManager(),
     onSettings: () => {
+      if (config?.headless) return;
       const store = getGlobalReduxStore();
       const st = store.get_state();
       store.dispatch({ type: 'settings-toggled', is_open: !st.is_settings_open });
@@ -628,6 +632,7 @@ export const createCanvasPage = function() {
   cleanups.push(() => document.removeEventListener('keydown', onKeyDown));
 
   // ── Schema Panel (right side, collapsible treeview) ──────────────────────
+  if (!config?.headless) {
   const dagObserver = createDAGObserver(getEntityManager());
 
   const schemaPanel = createSchemaPanel({
@@ -646,6 +651,7 @@ export const createCanvasPage = function() {
     schemaPanel.cleanup.destroy();
     dagObserver.cleanup();
   });
+  }
 
   return {
     element: root,

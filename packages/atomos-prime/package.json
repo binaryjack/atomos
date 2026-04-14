@@ -1,7 +1,11 @@
-{
-  "name": "@atomos/prime",
+﻿{
+  "name": "@atomos-web/prime",
   "version": "1.0.0",
+  "license": "MIT",
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -22,8 +26,8 @@
   },
   "dependencies": {
     "@binaryjack/formular.dev": "workspace:*",
-    "@atomos/structura-core": "workspace:*",
-    "@atomos/prime-style": "workspace:*"
+    "@atomos-web/structura-core": "workspace:*",
+    "@atomos-web/prime-style": "workspace:*"
   },
   "devDependencies": {
     "@vitest/ui": "^4.1.2",

@@ -1,4 +1,4 @@
-import { createBadge } from '../../../src/index.js'
+﻿import { createBadge } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface BadgeState {
@@ -30,7 +30,7 @@ export const badgeDoc: DocDefinition<BadgeState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createBadge } from '@atomos/prime';
+    return `import { createBadge } from '@atomos-web/prime';
 
 const { element, cleanup } = createBadge({
   text: '${state.text}',

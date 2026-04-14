@@ -1,5 +1,5 @@
-import type { EntityShape } from '@atomos/structura-core'
-import type { Signal } from '@atomos/prime'
+﻿import type { EntityShape } from '@atomos-web/structura-core'
+import type { Signal } from '@atomos-web/prime'
 
 export type EdgePosition = 'top' | 'bottom' | 'left' | 'right';
 export type EdgeState = 'default' | 'hover' | 'active' | 'connected';

@@ -1,5 +1,5 @@
-import type { SchemaGraphKernel } from '../core/create-schema-graph-kernel.js';
-import type { Property } from '@atomos/structura-core';
+﻿import type { SchemaGraphKernel } from '../core/create-schema-graph-kernel.js';
+import type { Property } from '@atomos-web/structura-core';
 
 /** Wrap any identifier in square brackets so kebab-case, spaces, and reserved words are valid. */
 const q = (identifier: string): string => `[${identifier.replace(/]/g, ']]')}]`;

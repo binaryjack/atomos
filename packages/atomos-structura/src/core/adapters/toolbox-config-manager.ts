@@ -1,4 +1,4 @@
-import type { ToolboxConfiguration } from '@atomos/prime'
+﻿import type { ToolboxConfiguration } from '@atomos-web/prime'
 import type { AppSettings, CustomShape } from '../../features/settings-page/types/settings-page.types.js'
 import { defaultShapes, defaultToolboxConfig } from '../default-toolbox.config.js'
 

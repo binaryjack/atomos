@@ -1,4 +1,4 @@
-import { DATA_TYPES } from '@atomos/structura-core'
+﻿import { DATA_TYPES } from '@atomos-web/structura-core'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
 import type { DAGObserver } from '../../core/adapters/dag-observer.js'
 import type { DAGExport } from '../../core/application/dag-service.js'

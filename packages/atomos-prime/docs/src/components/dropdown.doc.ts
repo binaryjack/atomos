@@ -1,4 +1,4 @@
-import { createDropdown } from '../../../src/index.js'
+﻿import { createDropdown } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface DropdownState {
@@ -37,7 +37,7 @@ export const dropdownDoc: DocDefinition<DropdownState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createDropdown } from '@atomos/prime';
+    return `import { createDropdown } from '@atomos-web/prime';
 
 const { element, cleanup } = createDropdown({
   placeholder: '${state.placeholder}',

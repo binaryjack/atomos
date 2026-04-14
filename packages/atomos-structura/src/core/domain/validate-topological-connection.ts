@@ -1,4 +1,4 @@
-import type { TopologicalRules } from '@atomos/structura-core';
+﻿import type { TopologicalRules } from '@atomos-web/structura-core';
 
 export interface TopologicalEntity {
   readonly id: string;

@@ -1,4 +1,4 @@
-import { createCheckbox } from '../../../src/index.js'
+﻿import { createCheckbox } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface CheckboxState {
@@ -27,7 +27,7 @@ export const checkboxDoc: DocDefinition<CheckboxState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createCheckbox } from '@atomos/prime';
+    return `import { createCheckbox } from '@atomos-web/prime';
 
 const { element, input, cleanup } = createCheckbox({
   checked: ${state.checked},

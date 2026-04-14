@@ -1,8 +1,8 @@
-import type { ComponentType, DataType } from '@atomos/structura-core';
-import type { Signal } from '@atomos/prime';
-import { createDropdown } from '@atomos/prime';
-import { createEditableLabel } from '@atomos/prime';
-import { createIcon } from '@atomos/prime';
+﻿import type { ComponentType, DataType } from '@atomos-web/structura-core';
+import type { Signal } from '@atomos-web/prime';
+import { createDropdown } from '@atomos-web/prime';
+import { createEditableLabel } from '@atomos-web/prime';
+import { createIcon } from '@atomos-web/prime';
 
 export interface EntityPropertyRowProps {
   readonly id: string;

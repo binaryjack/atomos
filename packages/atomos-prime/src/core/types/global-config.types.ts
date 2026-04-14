@@ -1,4 +1,4 @@
-import type { DataType, TopologicalRules } from '@atomos/structura-core';
+﻿import type { DataType, TopologicalRules } from '@atomos-web/structura-core';
 
 export interface GlobalConfig {
   readonly dataTypes: readonly DataType[];

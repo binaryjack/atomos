@@ -1,9 +1,9 @@
-import type { EdgePosition } from '../../features/edge/types/edge-position.types.js'
+﻿import type { EdgePosition } from '../../features/edge/types/edge-position.types.js'
 import type { LinkProps } from './link-props.types.js'
 import type { LinkResult } from './link-result.types.js'
 import type { Signal } from './signal.types.js'
 
-import type { RenderType } from '@atomos/structura-core'
+import type { RenderType } from '@atomos-web/structura-core'
 
 export interface LinkManager {
   readonly links: Signal<Map<string, LinkResult>>;

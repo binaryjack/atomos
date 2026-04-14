@@ -1,5 +1,5 @@
-import { computeContrastColor } from '@atomos/prime';
-import { createIcon } from '@atomos/prime';
+﻿import { computeContrastColor } from '@atomos-web/prime';
+import { createIcon } from '@atomos-web/prime';
 
 export interface EntityFooterProps {
   readonly onAddProperty: () => void;

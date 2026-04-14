@@ -1,4 +1,4 @@
-import { createAccordion, createTypography } from '../../../src/index.js'
+﻿import { createAccordion, createTypography } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface AccordionState {
@@ -48,7 +48,7 @@ export const accordionDoc: DocDefinition<AccordionState> = {
     };
   },
   renderCode: (state) => {
-    return `import { createAccordion, createTypography } from '@atomos/prime';
+    return `import { createAccordion, createTypography } from '@atomos-web/prime';
 
 const textNode = createTypography({ 
   variant: 'p', 

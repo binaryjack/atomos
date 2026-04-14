@@ -1,4 +1,4 @@
-import { createDatePicker, DateFormatsEnum } from '../../../src/index.js'
+﻿import { createDatePicker, DateFormatsEnum } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface DatePickerState {
@@ -60,7 +60,7 @@ export const datePickerDoc: DocDefinition<DatePickerState> = {
     };
   },
   renderCode: (state) => {
-    return `import { createDatePicker, DateFormatsEnum } from '@atomos/prime';
+    return `import { createDatePicker, DateFormatsEnum } from '@atomos-web/prime';
 
 const { element, cleanup } = createDatePicker({
   placeholder: '${state.placeholder}',

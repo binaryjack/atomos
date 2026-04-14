@@ -1,4 +1,4 @@
-import { createProgressBar } from '../../../src/index.js'
+﻿import { createProgressBar } from '../../../src/index.js'
 import type { DocDefinition } from '../types.js'
 
 export interface ProgressBarState {
@@ -42,7 +42,7 @@ export const progressBarDoc: DocDefinition<ProgressBarState> = {
     return { element: parent, cleanup: comp.cleanup };
   },
   renderCode: (state) => {
-    return `import { createProgressBar } from '@atomos/prime';
+    return `import { createProgressBar } from '@atomos-web/prime';
 
 const { element, cleanup } = createProgressBar({
   value: ${state.value},

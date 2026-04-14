@@ -1,7 +1,11 @@
-{
-  "name": "@atomos/prime-style",
+﻿{
+  "name": "@atomos-web/prime-style",
   "version": "1.0.0",
+  "license": "MIT",
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

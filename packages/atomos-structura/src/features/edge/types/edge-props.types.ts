@@ -1,4 +1,4 @@
-import type { Signal } from '@atomos/prime';
+﻿import type { Signal } from '@atomos-web/prime';
 import type { EdgePosition } from './edge-position.types.js';
 import type { EdgeState } from './edge-state.types.js';
 

@@ -1,4 +1,4 @@
-import '../../../atomos-prime-style/dist/styles.css'
+﻿import '../../../atomos-prime-style/dist/styles.css'
 import { createSignal } from '../../src/index.js'
 import { COMPONENT_REGISTRY, getDocById } from './registry.js'
 
@@ -11,7 +11,7 @@ const sidebar = document.createElement('div');
 sidebar.style.cssText = 'width:260px;background:var(--vbs-bg-sidebar, #020617);border-right:1px solid var(--vbs-border, #1e293b);padding:1.5rem;display:flex;flex-direction:column;gap:1.5rem;overflow-y:auto;';
 sidebar.innerHTML = `
   <div>
-    <h1 style="font-size:1.25rem;font-weight:bold;margin:0 0 0.5rem 0;color:#c084fc;">@atomos/prime</h1>
+    <h1 style="font-size:1.25rem;font-weight:bold;margin:0 0 0.5rem 0;color:#c084fc;">@atomos-web/prime</h1>
     <p style="font-size:0.875rem;color:#94a3b8;margin:0;">Component Sandbox</p>
   </div>
 `;
