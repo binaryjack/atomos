@@ -1,5 +1,5 @@
 ﻿import type { IncomingMessage, ServerResponse } from 'http';
-import type { Entity, LinkProps, WorkspaceConfig } from '@atomos-web/structura-core';
+import type { Entity, LinkProps, WorkspaceConfig, WorkspaceMenuConfig } from '@atomos-web/structura-core';
 
 // Local mirror of Redux state shape (avoids circular dep on @atomos-web/structura)
 
@@ -15,7 +15,7 @@ interface CanvasModel {
   readonly name: string;
   schemas: Record<string, SchemaModel>;
   active_schema_id: string;
-  readonly viewport: { pan: { x: number; y: number }; zoom: number };
+  viewport: { pan: { x: number; y: number }; zoom: number };
   readonly appearance_override?: Record<string, unknown>;
 }
 
@@ -33,6 +33,8 @@ interface WorkspaceState {
 export interface McpWorkspaceState {
   workspace: WorkspaceState;
   is_settings_open?: boolean;
+  /** Resolved menu config, updated via sync-state from the browser. */
+  menu_config?: WorkspaceMenuConfig;
 }
 
 // Public request/response types
@@ -81,6 +83,10 @@ export interface McpWorkspacePayload {
 
 export interface McpServerConfig {
   readonly initialConfig?: WorkspaceConfig;
+  /** Called when the MCP `session/close` tool is invoked. */
+  readonly onSessionClose?: () => void;
+  /** Called when the MCP `session/clear-memory` tool is invoked. */
+  readonly onClearMemory?: () => void;
 }
 
 // Default-state helpers
@@ -160,6 +166,7 @@ const emit_sse = (clients: Set<ServerResponse>, event: string, data: unknown): v
 interface VbsMcpServerInstance {
   _state: McpWorkspaceState;
   _clients: Set<ServerResponse>;
+  _cfg: McpServerConfig;
 }
 
 export interface VbsMcpServer {
@@ -177,6 +184,11 @@ export function VbsMcpServer(this: VbsMcpServerInstance, cfg?: McpServerConfig):
     enumerable: false,
     writable: true,
     value: new Set<ServerResponse>(),
+  });
+  Object.defineProperty(this, '_cfg', {
+    enumerable: false,
+    writable: false,
+    value: cfg ?? {},
   });
 }
 
@@ -246,6 +258,13 @@ const process_request = (srv: VbsMcpServerInstance, req: McpRequest): McpRespons
     case 'atomos-structura/activate-schema': return handle_activate_schema(srv, req);
     case 'atomos-structura/get-workspace':   return handle_get_workspace(srv, req);
     case 'atomos-structura/load-workspace':  return handle_load_workspace(srv, req);
+    case 'atomos-structura/viewport/get':       return handle_viewport_get(srv, req);
+    case 'atomos-structura/viewport/set-zoom':  return handle_viewport_set_zoom(srv, req);
+    case 'atomos-structura/viewport/set-pan':   return handle_viewport_set_pan(srv, req);
+    case 'atomos-structura/viewport/center':    return handle_viewport_center(srv, req);
+    case 'atomos-structura/viewport/fit-to-screen': return handle_viewport_fit(srv, req);
+    case 'atomos-structura/session/close':        return handle_session_close(srv, req);
+    case 'atomos-structura/session/clear-memory': return handle_session_clear_memory(srv, req);
     default: return { error: { code: -32601, message: 'Method not found' }, id: req.id };
   }
 };
@@ -321,10 +340,11 @@ const handle_get_schema = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
 };
 
 const handle_sync_state = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
-  const { entities = [], links = [], settings } = req.params as {
+  const { entities = [], links = [], settings, menu_config } = req.params as {
     entities?: Entity[];
     links?: LinkProps[];
     settings?: Record<string, unknown>;
+    menu_config?: WorkspaceMenuConfig;
   };
   srv._state = update_active_schema(srv._state, s => ({ ...s, entities: [...entities], links: [...links] }));
   if (settings !== undefined) {
@@ -332,6 +352,10 @@ const handle_sync_state = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
       ...srv._state,
       workspace: { ...srv._state.workspace, settings, last_modified: new Date().toISOString() },
     };
+  }
+  if (menu_config !== undefined) {
+    srv._state = { ...srv._state, menu_config };
+    emit_sse(srv._clients, 'menu-config', menu_config);
   }
   // sync-state originates from the browser -- do NOT emit SSE to avoid a feedback loop
   return { result: { success: true }, id: req.id };
@@ -524,6 +548,153 @@ const read_body = (req: IncomingMessage): Promise<string> =>
     req.on('end', () => resolve(body));
     req.on('error', reject);
   });
+
+// Viewport handlers
+
+const ZOOM_MIN = 0.1;
+const ZOOM_MAX = 4;
+
+const handle_viewport_get = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const canvas = get_active_canvas(srv._state);
+  if (!canvas) return { error: { code: 404, message: 'No active canvas' }, id: req.id };
+  return { result: { viewport: canvas.viewport }, id: req.id };
+};
+
+const handle_viewport_set_zoom = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  if (srv._state.workspace.config?.menu?.zoom?.available === false)
+    return { error: { code: 403, message: 'Feature not available' }, id: req.id };
+  const { level } = req.params as { level: number };
+  const clamped = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, level));
+  const canvas = get_active_canvas(srv._state);
+  if (!canvas) return { error: { code: 404, message: 'No active canvas' }, id: req.id };
+  const canvasId = srv._state.workspace.active_canvas_id;
+  srv._state = {
+    ...srv._state,
+    workspace: {
+      ...srv._state.workspace,
+      canvases: {
+        ...srv._state.workspace.canvases,
+        [canvasId]: { ...canvas, viewport: { ...canvas.viewport, zoom: clamped } },
+      },
+    },
+  };
+  emit_sse(srv._clients, 'viewport-updated', { viewport: srv._state.workspace.canvases[canvasId]!.viewport });
+  return { result: { success: true, zoom: clamped }, id: req.id };
+};
+
+const handle_viewport_set_pan = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const { x, y } = req.params as { x: number; y: number };
+  const canvas = get_active_canvas(srv._state);
+  if (!canvas) return { error: { code: 404, message: 'No active canvas' }, id: req.id };
+  const canvasId = srv._state.workspace.active_canvas_id;
+  srv._state = {
+    ...srv._state,
+    workspace: {
+      ...srv._state.workspace,
+      canvases: {
+        ...srv._state.workspace.canvases,
+        [canvasId]: { ...canvas, viewport: { ...canvas.viewport, pan: { x, y } } },
+      },
+    },
+  };
+  emit_sse(srv._clients, 'viewport-updated', { viewport: srv._state.workspace.canvases[canvasId]!.viewport });
+  return { result: { success: true, pan: { x, y } }, id: req.id };
+};
+
+const handle_viewport_center = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  if (srv._state.workspace.config?.menu?.center_on_screen?.available === false)
+    return { error: { code: 403, message: 'Feature not available' }, id: req.id };
+  const { width = 800, height = 600 } = (req.params ?? {}) as { width?: number; height?: number };
+  const canvas = get_active_canvas(srv._state);
+  if (!canvas) return { error: { code: 404, message: 'No active canvas' }, id: req.id };
+  const schema = canvas.schemas[canvas.active_schema_id];
+  if (!schema || schema.entities.length === 0)
+    return { result: { success: true, skipped: true }, id: req.id };
+  const { zoom } = canvas.viewport;
+  let sumX = 0, sumY = 0;
+  schema.entities.forEach(e => {
+    sumX += e.position.x + (e.dimensions?.width ?? 0) / 2;
+    sumY += e.position.y + (e.dimensions?.height ?? 0) / 2;
+  });
+  const cx = sumX / schema.entities.length;
+  const cy = sumY / schema.entities.length;
+  const pan = { x: width / 2 - cx * zoom, y: height / 2 - cy * zoom };
+  const canvasId = srv._state.workspace.active_canvas_id;
+  srv._state = {
+    ...srv._state,
+    workspace: {
+      ...srv._state.workspace,
+      canvases: {
+        ...srv._state.workspace.canvases,
+        [canvasId]: { ...canvas, viewport: { zoom, pan } },
+      },
+    },
+  };
+  emit_sse(srv._clients, 'viewport-updated', { viewport: { zoom, pan } });
+  return { result: { success: true, viewport: { zoom, pan } }, id: req.id };
+};
+
+const handle_viewport_fit = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  if (srv._state.workspace.config?.menu?.fit_to_screen?.available === false)
+    return { error: { code: 403, message: 'Feature not available' }, id: req.id };
+  const { width = 800, height = 600, padding = 100 } =
+    (req.params ?? {}) as { width?: number; height?: number; padding?: number };
+  const canvas = get_active_canvas(srv._state);
+  if (!canvas) return { error: { code: 404, message: 'No active canvas' }, id: req.id };
+  const schema = canvas.schemas[canvas.active_schema_id];
+  if (!schema || schema.entities.length === 0)
+    return { result: { success: true, skipped: true }, id: req.id };
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  schema.entities.forEach(e => {
+    const w = e.dimensions?.width ?? 0;
+    const h = e.dimensions?.height ?? 0;
+    minX = Math.min(minX, e.position.x);
+    minY = Math.min(minY, e.position.y);
+    maxX = Math.max(maxX, e.position.x + w);
+    maxY = Math.max(maxY, e.position.y + h);
+  });
+  const boxW = Math.max(maxX - minX, 1);
+  const boxH = Math.max(maxY - minY, 1);
+  const zoom = Math.min(
+    Math.min((width - padding * 2) / boxW, (height - padding * 2) / boxH),
+    2,
+  );
+  const cx = minX + boxW / 2;
+  const cy = minY + boxH / 2;
+  const pan = { x: width / 2 - cx * zoom, y: height / 2 - cy * zoom };
+  const canvasId = srv._state.workspace.active_canvas_id;
+  srv._state = {
+    ...srv._state,
+    workspace: {
+      ...srv._state.workspace,
+      canvases: {
+        ...srv._state.workspace.canvases,
+        [canvasId]: { ...canvas, viewport: { zoom, pan } },
+      },
+    },
+  };
+  emit_sse(srv._clients, 'viewport-updated', { viewport: { zoom, pan } });
+  return { result: { success: true, viewport: { zoom, pan } }, id: req.id };
+};
+
+// Session handlers
+
+const handle_session_close = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  srv._cfg.onSessionClose?.();
+  srv._clients.forEach(r => { try { r.end(); } catch { /* ignore */ } });
+  srv._clients.clear();
+  return { result: { success: true }, id: req.id };
+};
+
+const handle_session_clear_memory = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  srv._cfg.onClearMemory?.();
+  const runtimeConfig = srv._state.workspace.config;
+  srv._state = runtimeConfig
+    ? { ...make_initial_state(runtimeConfig) }
+    : make_initial_state();
+  emit_sse(srv._clients, 'state-reset', { success: true });
+  return { result: { success: true }, id: req.id };
+};
 
 /** Factory wrapper for VbsMcpServer (avoids `new` construct signature issues with prototype pattern). */
 export const createVbsMcpServer = (cfg?: McpServerConfig): VbsMcpServer => {

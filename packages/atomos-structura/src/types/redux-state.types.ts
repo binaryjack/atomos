@@ -59,7 +59,8 @@ export type ReduxAction =
   | { type: 'canvas-deleted'; id: string }
   | { type: 'canvas-activated'; id: string }
   | { type: 'canvas-appearance-updated'; canvas_id: string; appearance: AppSettings['appearance'] }
-  | { type: 'state-loaded'; state: ReduxState };
+  | { type: 'state-loaded'; state: ReduxState }
+  | { type: 'state-reset' };
 
 export interface ReduxStore {
   readonly get_state: () => ReduxState;

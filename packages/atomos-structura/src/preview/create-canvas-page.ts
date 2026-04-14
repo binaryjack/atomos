@@ -312,7 +312,7 @@ export const createCanvasPage = function(config?: WorkspaceConfig) {
   cleanups.push(entitySearch.cleanup.destroy);
 
   // Mount Floating Toolbar
-  const { bottomBar, topBurger } = createCanvasToolbar({
+  const { bottomBar, topBurger, destroy: destroyToolbar } = createCanvasToolbar({
     viewport,
     entityManager: getEntityManager(),
     onSettings: () => {
@@ -332,6 +332,7 @@ export const createCanvasPage = function(config?: WorkspaceConfig) {
     },
     getSnapshot: () => canvasWrap.querySelector('svg') as SVGSVGElement,
   });
+  cleanups.push(destroyToolbar);
   canvasWrap.appendChild(bottomBar);
   
   // Inject topBurger before schemaTabs element

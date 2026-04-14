@@ -11,6 +11,7 @@ export type { Property } from './types/property.types.js';
 export type { SettingsProps } from './types/settings.types.js';
 export type { ConnectionConstraint, TopologicalRules } from './types/topology.types.js';
 export type { WorkspaceConfig } from './types/workspace-config.types.js';
+export type { MenuItemConfig, WorkspaceMenuConfig } from './types/menu-config.types.js';
 
 // Schemas (f.object definitions — one per model)
 export { anchorSchema, baseEntitySchema, edgeSchema, entitySchema, linkSchema, settingsSchema } from './schemas/index.js';

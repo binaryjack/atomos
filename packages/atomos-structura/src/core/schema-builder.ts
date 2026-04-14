@@ -2,9 +2,11 @@
 import { create_redux_store } from './create-redux-store.js';
 import { createWorkspaceApi } from './create-workspace-api.js';
 import { createSchemaGraphKernel } from './create-schema-graph-kernel.js';
+import { createMenuControl } from './create-menu-control.js';
 import type { WorkspaceApi } from './create-workspace-api.js';
 import type { ReduxStore } from '../types/redux-state.types.js';
 import type { SchemaGraphKernel } from './create-schema-graph-kernel.js';
+import type { MenuControl } from '../types/menu-control.types.js';
 
 export interface SchemaBuilderProps {
   readonly config?: WorkspaceConfig;
@@ -17,6 +19,8 @@ export interface SchemaBuilder {
   readonly store: ReduxStore;
   readonly workspaceApi: WorkspaceApi;
   readonly kernel: SchemaGraphKernel;
+  /** Runtime control of toolbar item availability and values. */
+  readonly menuControl: MenuControl;
   addEntity(entity: Entity): void;
   removeEntity(entityId: string): void;
   updateEntity(entity: Entity): void;
@@ -30,11 +34,22 @@ export interface SchemaBuilder {
    * Returns a cleanup function.
    */
   mountUI(container: HTMLElement): () => void;
+  /**
+   * Tear down the session: unsubscribe all listeners, wipe mounted UI (if any),
+   * and remove all `vbe2:*` keys from localStorage.
+   */
+  close(): void;
+  /**
+   * Reset in-memory Redux state to its initial value and remove all `vbe2:*`
+   * keys from localStorage. The session remains usable after this call.
+   */
+  clearMemory(): void;
 }
 
 export const createSchemaBuilder = function(props: SchemaBuilderProps = {}): SchemaBuilder {
   const store = create_redux_store(props.config);
   const workspaceApi = createWorkspaceApi(store);
+  const menuControl = createMenuControl(props.config?.menu);
 
   // Keep kernel in sync with the active schema in Redux
   const kernel = createSchemaGraphKernel();
@@ -64,6 +79,19 @@ export const createSchemaBuilder = function(props: SchemaBuilderProps = {}): Sch
   // Initial sync
   sync_kernel();
 
+  // Track mounted UI cleanup (set by mountUI)
+  let mounted_cleanup: (() => void) | null = null;
+
+  const wipe_local_storage = (): void => {
+    if (typeof localStorage === 'undefined') return;
+    const keys_to_remove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith('vbe2:')) keys_to_remove.push(key);
+    }
+    keys_to_remove.forEach(key => localStorage.removeItem(key));
+  };
+
   const get_active_schema_id = (): string => {
     const st = store.get_state();
     const canvas = st.workspace.canvases[st.workspace.active_canvas_id];
@@ -74,6 +102,7 @@ export const createSchemaBuilder = function(props: SchemaBuilderProps = {}): Sch
     store,
     workspaceApi,
     kernel,
+    menuControl,
 
     addEntity(entity: Entity): void {
       store.dispatch({ type: 'entity-added', schema_id: get_active_schema_id(), entity });
@@ -106,14 +135,28 @@ export const createSchemaBuilder = function(props: SchemaBuilderProps = {}): Sch
     mountUI(container: HTMLElement): () => void {
       if (props.config?.headless) return () => { /* no-op */ };
       // Lazy import to avoid pulling DOM dependencies when headless
-      return import('./create-canvas-page-bridge.js').then(m => {
-        return m.mountCanvasPage(container, props.config);
-      }) as unknown as () => void;
+      const cleanup_promise = import('./create-canvas-page-bridge.js').then(m => {
+        const cleanup = m.mountCanvasPage(container, props.config);
+        mounted_cleanup = cleanup;
+        return cleanup;
+      });
+      return () => { void cleanup_promise.then(fn => fn()); };
+    },
+
+    close(): void {
+      unsub();
+      if (mounted_cleanup) {
+        mounted_cleanup();
+        mounted_cleanup = null;
+      }
+      wipe_local_storage();
+    },
+
+    clearMemory(): void {
+      store.dispatch({ type: 'state-reset' });
+      wipe_local_storage();
     },
   };
-
-  // Cleanup on store GC is not automatic; expose unsub via store
-  void unsub; // will be GC-collected with store
 
   return builder;
 };

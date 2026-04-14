@@ -334,6 +334,199 @@ describe('createWorkspaceApi', () => {
     expect(list).toHaveLength(1);
     expect(list[0]?.id).toBe('canvas-default');
   });
+});
+
+// ── state-reset tests ──────────────────────────────────────────────────────
+
+describe('create_redux_store — state-reset', () => {
+  beforeEach(() => {
+    (localStorage as ReturnType<typeof makeLocalStorage>).clear();
+  });
+
+  it('resets entities to empty', () => {
+    const store = create_redux_store();
+    store.dispatch({ type: 'entity-added', schema_id: 'schema-default', entity: makeEntity('e1') });
+    store.dispatch({ type: 'entity-added', schema_id: 'schema-default', entity: makeEntity('e2') });
+    store.dispatch({ type: 'state-reset' });
+    expect(getActiveCanvas(store)?.schemas['schema-default']?.entities).toHaveLength(0);
+  });
+
+  it('resets viewport to default values', () => {
+    const store = create_redux_store();
+    store.dispatch({ type: 'viewport-updated', viewport: { pan: { x: 500, y: 300 }, zoom: 2.5 } });
+    store.dispatch({ type: 'state-reset' });
+    const vp = getActiveCanvas(store)?.viewport;
+    expect(vp?.zoom).toBe(1);
+    expect(vp?.pan).toEqual({ x: 0, y: 0 });
+  });
+
+  it('preserves the original WorkspaceConfig after reset', () => {
+    const store = create_redux_store({ headless: true, allow_multiple_schemas: false });
+    store.dispatch({ type: 'entity-added', schema_id: 'schema-default', entity: makeEntity('e1') });
+    store.dispatch({ type: 'state-reset' });
+    expect(store.get_state().workspace.config?.headless).toBe(true);
+    expect(store.get_state().workspace.config?.allow_multiple_schemas).toBe(false);
+  });
+
+  it('does NOT push state-reset to undo history', () => {
+    const store = create_redux_store();
+    store.dispatch({ type: 'entity-added', schema_id: 'schema-default', entity: makeEntity('e1') });
+    store.undo(); // pop the entity-added
+    store.dispatch({ type: 'entity-added', schema_id: 'schema-default', entity: makeEntity('e2') });
+    store.dispatch({ type: 'state-reset' });
+    // undo history only contains entity-added, NOT state-reset
+    // After undo the entities from state-reset should NOT come back
+    store.undo();
+    const entities = getActiveCanvas(store)?.schemas['schema-default']?.entities ?? [];
+    expect(entities.some(e => e.id === 'e2')).toBe(false);
+  });
+
+  it('resets custom schemas added by the user', () => {
+    const store = create_redux_store();
+    store.dispatch({ type: 'schema-created', id: 'schema-custom', name: 'Custom' });
+    store.dispatch({ type: 'state-reset' });
+    expect(getActiveCanvas(store)?.schemas['schema-custom']).toBeUndefined();
+    expect(getActiveCanvas(store)?.schemas['schema-default']).toBeDefined();
+  });
+
+  it('notifies subscribers when state-reset fires', () => {
+    const store = create_redux_store();
+    const spy = vi.fn();
+    store.subscribe(spy);
+    store.dispatch({ type: 'state-reset' });
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ── WorkspaceApi continued — viewport and canvas methods ──────────────────
+
+describe('createWorkspaceApi — viewport and canvas', () => {
+  beforeEach(() => {
+    (localStorage as ReturnType<typeof makeLocalStorage>).clear();
+  });
+
+  // ── WorkspaceApi — viewport methods ───────────────────────────────────────
+
+  describe('createWorkspaceApi — viewport', () => {
+    beforeEach(() => {
+      (localStorage as ReturnType<typeof makeLocalStorage>).clear();
+    });
+
+  const makePositionedEntity = (id: string, x: number, y: number): Entity => ({
+    id,
+    name: id,
+    properties: [],
+    position: { x, y },
+    dimensions: { width: 100, height: 50 },
+    edges: [],
+  });
+
+  it('getViewport() returns initial values of zoom=1 and pan={0,0}', () => {
+    const api = createWorkspaceApi(create_redux_store());
+    const vp = api.getViewport();
+    expect(vp.zoom).toBe(1);
+    expect(vp.pan).toEqual({ x: 0, y: 0 });
+  });
+
+  it('setZoom() updates zoom in Redux state', () => {
+    const store = create_redux_store();
+    const api = createWorkspaceApi(store);
+    api.setZoom(2);
+    expect(getActiveCanvas(store)?.viewport.zoom).toBe(2);
+  });
+
+  it('setZoom() clamps below ZOOM_MIN (0.1)', () => {
+    const store = create_redux_store();
+    const api = createWorkspaceApi(store);
+    api.setZoom(0.0001);
+    expect(getActiveCanvas(store)?.viewport.zoom).toBe(0.1);
+  });
+
+  it('setZoom() clamps above ZOOM_MAX (4)', () => {
+    const store = create_redux_store();
+    const api = createWorkspaceApi(store);
+    api.setZoom(99);
+    expect(getActiveCanvas(store)?.viewport.zoom).toBe(4);
+  });
+
+  it('setZoom() preserves existing pan values', () => {
+    const store = create_redux_store();
+    const api = createWorkspaceApi(store);
+    api.setViewport({ zoom: 1, pan: { x: 200, y: 150 } });
+    api.setZoom(1.5);
+    expect(getActiveCanvas(store)?.viewport.pan).toEqual({ x: 200, y: 150 });
+  });
+
+  it('setViewport() sets exact zoom and pan', () => {
+    const store = create_redux_store();
+    const api = createWorkspaceApi(store);
+    api.setViewport({ zoom: 1.8, pan: { x: 100, y: 50 } });
+    const vp = getActiveCanvas(store)?.viewport;
+    expect(vp?.zoom).toBe(1.8);
+    expect(vp?.pan).toEqual({ x: 100, y: 50 });
+  });
+
+  it('centerOnScreen() pans viewport so centroid is centered at 800x600', () => {
+    const store = create_redux_store();
+    const api = createWorkspaceApi(store);
+    // Two entities at (0,0) and (200,100) → centroid = (150,75) (incl dimensions/2)
+    store.dispatch({ type: 'entity-added', schema_id: 'schema-default', entity: makePositionedEntity('e1', 0, 0) });
+    store.dispatch({ type: 'entity-added', schema_id: 'schema-default', entity: makePositionedEntity('e2', 200, 100) });
+    api.centerOnScreen({ width: 800, height: 600 });
+    const vp = getActiveCanvas(store)?.viewport;
+    // centroid.x = (0+50 + 200+50)/2 = 150; panX = 400 - 150*zoom(1)
+    expect(vp?.pan.x).toBeCloseTo(400 - 150, 1);
+    expect(vp?.pan.y).toBeCloseTo(300 - 75, 1);
+  });
+
+  it('centerOnScreen() is a no-op when there are no entities', () => {
+    const store = create_redux_store();
+    const api = createWorkspaceApi(store);
+    api.centerOnScreen();
+    const vp = getActiveCanvas(store)?.viewport;
+    expect(vp?.pan).toEqual({ x: 0, y: 0 }); // unchanged
+  });
+
+  it('fitToScreen() produces zoom ≤ 2 and updates pan', () => {
+    const store = create_redux_store();
+    const api = createWorkspaceApi(store);
+    // Two far-apart entities
+    store.dispatch({ type: 'entity-added', schema_id: 'schema-default', entity: makePositionedEntity('e1', 0, 0) });
+    store.dispatch({ type: 'entity-added', schema_id: 'schema-default', entity: makePositionedEntity('e2', 600, 400) });
+    api.fitToScreen({ width: 800, height: 600, padding: 50 });
+    const vp = getActiveCanvas(store)?.viewport;
+    expect(vp?.zoom).toBeLessThanOrEqual(2);
+    expect(typeof vp?.pan.x).toBe('number');
+    expect(typeof vp?.pan.y).toBe('number');
+  });
+
+  it('fitToScreen() caps zoom at 2 even for very small content', () => {
+    const store = create_redux_store();
+    const api = createWorkspaceApi(store);
+    // Tiny entity surrounded by huge screen → zoom would be > 2 without cap
+    store.dispatch({
+      type: 'entity-added', schema_id: 'schema-default',
+      entity: { id: 'e1', name: 'e1', properties: [], position: { x: 100, y: 100 }, dimensions: { width: 10, height: 10 }, edges: [] },
+    });
+    api.fitToScreen({ width: 8000, height: 6000, padding: 10 });
+    expect(getActiveCanvas(store)?.viewport.zoom).toBe(2);
+  });
+
+  it('fitToScreen() is a no-op when there are no entities', () => {
+    const store = create_redux_store();
+    const api = createWorkspaceApi(store);
+    api.fitToScreen();
+    const vp = getActiveCanvas(store)?.viewport;
+    expect(vp?.pan).toEqual({ x: 0, y: 0 });
+    expect(vp?.zoom).toBe(1);
+  });
+
+    it('getViewport() reflects changes after setZoom()', () => {
+      const api = createWorkspaceApi(create_redux_store());
+      api.setZoom(1.25);
+      expect(api.getViewport().zoom).toBe(1.25);
+    });
+  });
 
   it('createCanvas() creates and activates new canvas', () => {
     const api = createWorkspaceApi(create_redux_store());

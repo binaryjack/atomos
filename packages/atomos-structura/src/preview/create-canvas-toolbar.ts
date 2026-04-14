@@ -6,6 +6,8 @@ import type { SchemaGraphKernel } from '../core/create-schema-graph-kernel.js';
 import type { ReduxState } from '../types/redux-state.types.js';
 import { createCanvasSnapshot } from '../features/export/create-canvas-snapshot.js';
 import { getExportPlugins } from '../features/export/create-export-registry.js';
+import type { MenuControl } from '../types/menu-control.types.js';
+import type { WorkspaceMenuConfig } from '@atomos-web/structura-core';
 
 export interface CanvasToolbarConfig {
   readonly viewport: CanvasViewport;
@@ -13,9 +15,11 @@ export interface CanvasToolbarConfig {
   readonly onSettings: () => void;
   readonly getKernel: () => SchemaGraphKernel;
   readonly getSnapshot: () => SVGSVGElement;
+  /** Optional runtime menu control for toolbar item visibility / values. */
+  readonly menuControl?: MenuControl;
 }
 
-export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bottomBar: HTMLElement, topBurger: HTMLElement } {
+export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bottomBar: HTMLElement; topBurger: HTMLElement; destroy: () => void } {
   const { viewport, entityManager } = config;
 
   const toolbar = document.createElement('div');
@@ -421,5 +425,53 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
   toolbar.appendChild(zoomLabel);
   toolbar.appendChild(zoomInBtn);
 
-  return { bottomBar: toolbar, topBurger };
+  // ── MenuControl integration ─────────────────────────────────────────────────
+  type ButtonMap = Partial<Record<keyof WorkspaceMenuConfig, HTMLElement | HTMLElement[]>>;
+
+  const button_map: ButtonMap = {
+    zoom_out: zoomOutBtn,
+    zoom_in: zoomInBtn,
+    center_on_screen: centerBtn,
+    fit_to_screen: fitBtn,
+    auto_layout: autoLayoutBtn,
+    optimize_connections: optimizeConnectionsBtn,
+    export: [exportBtn, schemaExportWrap],
+    import: importBtn,
+    save_workspace: saveWorkspaceBtn,
+    load_workspace: loadWorkspaceBtn,
+    export_svg: [exportSvgBtn, exportPngBtn],
+  };
+
+  const apply_menu_config = (cfg: WorkspaceMenuConfig): void => {
+    (Object.keys(button_map) as Array<keyof WorkspaceMenuConfig>).forEach(key => {
+      const item = cfg[key];
+      if (item === undefined) return; // not configured → keep default (visible)
+      const visible = item.available !== false;
+      const els = button_map[key];
+      const display_value = visible ? '' : 'none';
+      if (Array.isArray(els)) {
+        els.forEach(el => { el.style.display = display_value; });
+      } else if (els) {
+        els.style.display = display_value;
+      }
+    });
+    // Apply initial zoom value if provided
+    const zoom_item = cfg.zoom;
+    if (zoom_item?.value !== undefined) {
+      viewport.zoomTo(zoom_item.value);
+    }
+  };
+
+  let unsub_menu: (() => void) | null = null;
+
+  if (config.menuControl) {
+    apply_menu_config(config.menuControl.getConfig());
+    unsub_menu = config.menuControl.subscribe(apply_menu_config);
+  }
+
+  return {
+    bottomBar: toolbar,
+    topBurger,
+    destroy: () => { if (unsub_menu) unsub_menu(); },
+  };
 };

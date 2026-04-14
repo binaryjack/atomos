@@ -1,6 +1,6 @@
 ﻿{
-  "name": "@atomos-web/structura-mcp",
-  "version": "1.1.0",
+  "name": "@atomos-web/structura",
+  "version": "1.0.0",
   "license": "MIT",
   "type": "module",
   "publishConfig": {
@@ -8,30 +8,32 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": {
-    "vbs-mcp": "./dist/server.js"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./*": "./*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsc -p tsconfig.build.json --watch",
-    "start": "node dist/server.js",
+    "serve": "vite",
     "test": "vitest",
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@atomos-web/structura-core": "workspace:*"
+    "@atomos-web/prime": "workspace:*",
+    "@atomos-web/prime-style": "workspace:*",
+    "@atomos-web/structura-core": "workspace:*",
+    "@atomos-web/structura-mcp": "workspace:*",
+    "@binaryjack/formular.dev": "workspace:^"
   },
   "devDependencies": {
     "typescript": "^5.3.0",
-    "vitest": "^1.0.0",
-    "@types/node": "^20.0.0"
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0"
   }
 }

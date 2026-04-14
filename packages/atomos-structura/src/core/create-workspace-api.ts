@@ -1,5 +1,8 @@
 import type { AppSettings } from '../features/settings-page/types/settings-page.types.js';
-import type { ReduxState, ReduxStore } from '../types/redux-state.types.js';
+import type { ReduxState, ReduxStore, ViewportState } from '../types/redux-state.types.js';
+
+const ZOOM_MIN = 0.1;
+const ZOOM_MAX = 4;
 
 export interface WorkspaceSchemaInfo {
   readonly id: string;
@@ -55,6 +58,26 @@ export interface WorkspaceApi {
 
   /** Subscribe to state changes. Returns an unsubscribe function. */
   subscribe(listener: (state: ReduxState) => void): () => void;
+
+  // ── Viewport API ──────────────────────────────────────────────────────
+
+  /** Current viewport (zoom + pan) of the active canvas. */
+  getViewport(): ViewportState;
+  /** Set zoom level; clamped to [0.1, 4]. */
+  setZoom(level: number): void;
+  /** Replace the entire viewport state. */
+  setViewport(viewport: ViewportState): void;
+  /**
+   * Pan so that the centroid of all entities is centred on the given screen
+   * dimensions (defaults to 800×600 when not provided). Pure Redux — no DOM.
+   */
+  centerOnScreen(opts?: { width?: number; height?: number }): void;
+  /**
+   * Compute a zoom+pan from the entities' bounding box so that all nodes fit
+   * within the given screen dimensions (defaults to 800×600) with padding.
+   * Zoom is capped at 2×.
+   */
+  fitToScreen(opts?: { width?: number; height?: number; padding?: number }): void;
 }
 
 const getActiveCanvas = (store: ReduxStore) => {
@@ -130,6 +153,75 @@ export const createWorkspaceApi = function(store: ReduxStore): WorkspaceApi {
     getActiveSchemaId: () => getActiveCanvas(store)?.active_schema_id ?? '',
 
     subscribe: (listener) => store.subscribe(listener),
+
+    getViewport: () => {
+      const canvas = getActiveCanvas(store);
+      return canvas?.viewport ?? { pan: { x: 0, y: 0 }, zoom: 1 };
+    },
+
+    setZoom: (level: number) => {
+      const clamped = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, level));
+      const canvas = getActiveCanvas(store);
+      const pan = canvas?.viewport.pan ?? { x: 0, y: 0 };
+      store.dispatch({ type: 'viewport-updated', viewport: { pan, zoom: clamped } });
+    },
+
+    setViewport: (viewport: ViewportState) => {
+      store.dispatch({ type: 'viewport-updated', viewport });
+    },
+
+    centerOnScreen: (opts?: { width?: number; height?: number }) => {
+      const canvas = getActiveCanvas(store);
+      if (!canvas) return;
+      const schema = canvas.schemas[canvas.active_schema_id];
+      if (!schema || schema.entities.length === 0) return;
+      const { zoom } = canvas.viewport;
+      const screenW = opts?.width ?? 800;
+      const screenH = opts?.height ?? 600;
+      let sumX = 0;
+      let sumY = 0;
+      schema.entities.forEach(e => {
+        sumX += e.position.x + (e.dimensions?.width ?? 0) / 2;
+        sumY += e.position.y + (e.dimensions?.height ?? 0) / 2;
+      });
+      const cx = sumX / schema.entities.length;
+      const cy = sumY / schema.entities.length;
+      store.dispatch({
+        type: 'viewport-updated',
+        viewport: { zoom, pan: { x: screenW / 2 - cx * zoom, y: screenH / 2 - cy * zoom } },
+      });
+    },
+
+    fitToScreen: (opts?: { width?: number; height?: number; padding?: number }) => {
+      const canvas = getActiveCanvas(store);
+      if (!canvas) return;
+      const schema = canvas.schemas[canvas.active_schema_id];
+      if (!schema || schema.entities.length === 0) return;
+      const screenW = opts?.width ?? 800;
+      const screenH = opts?.height ?? 600;
+      const padding = opts?.padding ?? 100;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      schema.entities.forEach(e => {
+        const w = e.dimensions?.width ?? 0;
+        const h = e.dimensions?.height ?? 0;
+        minX = Math.min(minX, e.position.x);
+        minY = Math.min(minY, e.position.y);
+        maxX = Math.max(maxX, e.position.x + w);
+        maxY = Math.max(maxY, e.position.y + h);
+      });
+      const boxW = Math.max(maxX - minX, 1);
+      const boxH = Math.max(maxY - minY, 1);
+      const newZoom = Math.min(
+        Math.min((screenW - padding * 2) / boxW, (screenH - padding * 2) / boxH),
+        2,
+      );
+      const cx = minX + boxW / 2;
+      const cy = minY + boxH / 2;
+      store.dispatch({
+        type: 'viewport-updated',
+        viewport: { zoom: newZoom, pan: { x: screenW / 2 - cx * newZoom, y: screenH / 2 - cy * newZoom } },
+      });
+    },
   };
 
   return api;

@@ -296,6 +296,10 @@ const reduce_state = function(state: ReduxState, action: ReduxAction): ReduxStat
       return action.state;
     }
 
+    case 'state-reset': {
+      return make_initial_state(state.workspace.config);
+    }
+
     default:
       return state;
   }
@@ -308,7 +312,7 @@ export const create_redux_store = function(config?: WorkspaceConfig): ReduxStore
   // Undo/redo history — never persisted, only lives in memory
   const HISTORY_LIMIT = 50;
   const SKIP_HISTORY = new Set<ReduxAction['type']>([
-    'viewport-updated', 'settings-toggled', 'settings-updated', 'state-loaded',
+    'viewport-updated', 'settings-toggled', 'settings-updated', 'state-loaded', 'state-reset',
     'canvas-activated', // switching canvases is not undoable
   ]);
   const history_past: ReduxState[] = [];

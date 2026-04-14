@@ -1,7 +1,14 @@
 ﻿# @atomos-web/structura
 
-Visual schema designer for TypeScript projects.  
-Build, edit, and export data-model schemas — headlessly via API or with a full interactive canvas UI.
+**Visual schema designer for TypeScript projects** — Build, edit, and export data-model schemas headlessly via API or with a full interactive canvas UI.
+
+## ✨ New Features
+
+- 🎛️ **Fine-Grained Menu Control** — Runtime enable/disable of zoom, center, export, etc.
+- 🖼️ **Advanced Viewport API** — Programmatic zoom, pan, center-on-screen, fit-to-screen
+- 🔄 **Session Lifecycle** — Clean memory wipe, graceful session termination
+- 🤖 **Enhanced MCP Integration** — 20+ tools for AI agents with availability guards
+- 📊 **Multi-Schema Workspaces** — Create and switch between multiple diagrams
 
 ## Install
 
@@ -11,42 +18,110 @@ pnpm add @atomos-web/structura
 npm i @atomos-web/structura
 ```
 
-> **Peer packages** — `@atomos-web/structura-core` is a direct dependency and installed automatically.
+> **Peer packages** — `@atomos-web/structura-core` is installed automatically.
 
 ---
 
-## Quick start — headless API
+## 🎯 Headless API — Complete Control
 
-```ts
+### Basic Schema Creation
+```typescript
 import { createSchemaBuilder } from '@atomos-web/structura';
 
 const builder = createSchemaBuilder({
-  config: { headless: true, allow_multiple_schemas: false },
+  config: { 
+    headless: true,
+    allow_multiple_schemas: true,
+    menu: {
+      zoom: { available: true, value: 1.0 },
+      center_on_screen: { available: true },
+      fit_to_screen: { available: true },
+      export: { available: true }
+    }
+  }
 });
 
-// Add entities
+// Create entities with rich properties
 builder.addEntity({
   id: 'user',
-  name: 'User',
+  name: 'User', 
   properties: [
-    { id: 'p1', name: 'id',    dataType: 'UUID',    nullable: false },
-    { id: 'p2', name: 'email', dataType: 'VARCHAR', nullable: false },
+    { name: 'id', dataType: 'UUID', nullable: false },
+    { name: 'email', dataType: 'VARCHAR(255)', nullable: false },
+    { name: 'created_at', dataType: 'TIMESTAMP', nullable: false }
   ],
+  position: { x: 100, y: 50 },
+  dimensions: { width: 140, height: 100 }
 });
 
-// Save / restore
-const json = builder.save();
-const builder2 = createSchemaBuilder({ config: { headless: true } });
-builder2.load(json);
+// Create relationships  
+builder.addRelationship({
+  leftEntityId: 'user',
+  rightEntityId: 'order', 
+  leftCardinality: '1',
+  rightCardinality: '*',
+  renderType: 'bezier'
+});
+```
+
+### Advanced Viewport Control
+```typescript
+// Get current viewport state
+const viewport = builder.api.getViewport();
+console.log(viewport); // { zoom: 1, pan: { x: 0, y: 0 } }
+
+// Programmatic zoom (clamped 0.1x to 4x)
+builder.api.setZoom(2.5);
+
+// Manual positioning
+builder.api.setViewport({ zoom: 1.5, pan: { x: 100, y: 50 } });
+
+// Smart auto-layout
+builder.api.centerOnScreen({ width: 1200, height: 800 });
+builder.api.fitToScreen({ width: 1200, height: 800, padding: 100 });
+```
+
+### Menu Control System
+```typescript
+// Runtime menu configuration
+builder.menuControl.setAvailable('zoom_in', false);  // Disable zoom in
+builder.menuControl.setAvailable('export', true);    // Enable export
+builder.menuControl.setValue('zoom', 1.5);           // Set zoom value
+
+// Subscribe to menu changes
+builder.menuControl.subscribe((config) => {
+  console.log('Menu updated:', config.zoom?.available);
+});
+```
+
+### Session Lifecycle
+```typescript
+// Clear all data while preserving config
+builder.clearMemory(); // Wipes entities + localStorage
+
+// Graceful shutdown
+builder.close(); // Stops subscribers + cleans up
+```
+
+### Multi-Schema Support
+```typescript
+// Create additional schemas
+const schemaId = builder.api.createSchema('E-commerce');
+builder.api.activateSchema(schemaId);
+
+// List all schemas
+const schemas = builder.api.listSchemas();
+schemas.forEach(s => console.log(`${s.name}: ${s.entityCount} entities`));
 ```
 
 ---
 
-## Quick start — canvas UI
+## 🎨 Canvas UI — Visual Editor
 
-```ts
+```typescript
 import { createSchemaBuilder } from '@atomos-web/structura';
 
+// Full visual interface with drag-and-drop
 const builder = createSchemaBuilder();
 const container = document.getElementById('canvas')!;
 

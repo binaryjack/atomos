@@ -11,4 +11,6 @@ export type { ReduxState, ReduxAction, ReduxStore, SchemaModel, ViewportState, C
 export { createWorkspaceApi, type WorkspaceApi, type WorkspaceSchemaInfo, type WorkspaceCanvasInfo } from './core/create-workspace-api.js';
 export type { AppSettings, EntityStyleSettings, LinkStyleSettings, CustomShape } from './features/settings-page/types/settings-page.types.js';
 export { createMcpSync, type McpSyncResult } from './features/mcp-sync/create-mcp-sync.js';
-export type { WorkspaceConfig } from '@atomos-web/structura-core';
+export type { WorkspaceConfig, MenuItemConfig, WorkspaceMenuConfig } from '@atomos-web/structura-core';
+export { createMenuControl } from './core/create-menu-control.js';
+export type { MenuControl } from './types/menu-control.types.js';
