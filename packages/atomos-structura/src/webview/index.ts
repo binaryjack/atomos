@@ -43,7 +43,7 @@ export interface WebviewApp {
  * import { initializeStructuraWebview } from '@atomos-web/structura/webview'
  *
  * const app = await initializeStructuraWebview({
- *   mcpServerUrl: 'http://localhost:3001',
+ *   mcpServerUrl: 'http://localhost:9743',
  *   containerId: 'app',
  * })
  *

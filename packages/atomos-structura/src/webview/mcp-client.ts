@@ -2,7 +2,7 @@ import type { ReduxStore } from '../types/redux-state.types.js'
 import { createMcpSync } from '../features/mcp-sync/create-mcp-sync.js'
 
 export interface McpClientConfig {
-  /** MCP server base URL, e.g. http://localhost:3001 */
+  /** MCP server base URL, e.g. http://localhost:9743 */
   mcpServerUrl: string
   /** Redux store to sync into */
   store: ReduxStore

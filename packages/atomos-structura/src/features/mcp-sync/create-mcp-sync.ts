@@ -17,7 +17,7 @@ interface McpWorkspaceEvent {
 
 export const createMcpSync = (
   store: ReduxStore,
-  mcpUrl = 'http://localhost:3001',
+  mcpUrl = 'http://localhost:9743',
 ): McpSyncResult => {
   let es: EventSource | null = null;
   let syncing = false;

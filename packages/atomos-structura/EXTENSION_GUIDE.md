@@ -139,11 +139,11 @@ let mcpServer: Awaited<ReturnType<typeof startMcpServer>> | null = null
 
 export async function activate(context: vscode.ExtensionContext) {
   // Start the MCP server on a free port in the extension host process
-  mcpServer = await startMcpServer({ port: 3001 })
+  mcpServer = await startMcpServer({ port: 9743 })
 
   context.subscriptions.push(
     vscode.commands.registerCommand('myExt.openCanvas', () => {
-      openCanvasPanel(context, 'http://localhost:3001')
+      openCanvasPanel(context, 'http://localhost:9743')
     }),
     { dispose: () => mcpServer?.stop() }
   )
@@ -169,7 +169,7 @@ function buildHtml(
     ? `mcpServerUrl: '${mcpServerUrl}',`
     : '// mcpServerUrl not configured'
 
-  return html.replace("// mcpServerUrl: 'http://localhost:3001',", mcpLine)
+  return html.replace("// mcpServerUrl: 'http://localhost:9743',", mcpLine)
 }
 ```
 
@@ -202,7 +202,7 @@ connect-src http://localhost:* ws://localhost:*;
 ```
 
 - `'unsafe-inline'` on `style-src` is required for Structura's runtime-injected CSS custom properties.
-- `connect-src localhost:*` allows SSE connections to any local port. Narrow this to the exact MCP port in production (`http://localhost:3001`).
+- `connect-src localhost:*` allows SSE connections to any local port. Narrow this to the exact MCP port in production (`http://localhost:9743`).
 
 ---
 

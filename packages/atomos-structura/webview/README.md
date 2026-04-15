@@ -127,10 +127,10 @@ If your extension starts an MCP server via `@atomos-web/structura-mcp`, pass its
 ```ts
 import { startMcpServer } from '@atomos-web/structura-mcp'
 
-const server = await startMcpServer({ port: 3001 })
+const server = await startMcpServer({ port: 9743 })
 
 const app = await initializeStructuraWebview({
-  mcpServerUrl: 'http://localhost:3001',
+  mcpServerUrl: 'http://localhost:9743',
 })
 ```
 

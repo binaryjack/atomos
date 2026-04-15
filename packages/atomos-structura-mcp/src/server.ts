@@ -3,7 +3,7 @@
 import { createServer } from 'http';
 import { createVbsMcpServer } from './mcp-server.js';
 
-const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3001;
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 9743;
 
 const server = createVbsMcpServer();
 
