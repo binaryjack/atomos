@@ -156,7 +156,7 @@ export function deactivate() {
 
 ### Update `buildHtml` to pass the MCP URL
 
-The `template.html` passes `mcpServerUrl` via an inline variable. Update the `<script>` block or interpolate it before sending:
+The `template.html` contains a commented-out `mcpServerUrl` placeholder. Interpolate it before sending the HTML to the webview:
 
 ```ts
 function buildHtml(
@@ -164,12 +164,33 @@ function buildHtml(
   extensionUri: vscode.Uri,
   mcpServerUrl?: string
 ): string {
-  // ... (same as before, then):
-  const mcpLine = mcpServerUrl
-    ? `mcpServerUrl: '${mcpServerUrl}',`
-    : '// mcpServerUrl not configured'
+  const nonce = getNonce()
 
-  return html.replace("// mcpServerUrl: 'http://localhost:9743',", mcpLine)
+  const scriptUri = webview.asWebviewUri(
+    vscode.Uri.joinPath(
+      extensionUri,
+      'node_modules', '@atomos-web', 'structura', 'dist', 'webview', 'index.js'
+    )
+  )
+
+  const templatePath = vscode.Uri.joinPath(
+    extensionUri,
+    'node_modules', '@atomos-web', 'structura', 'webview', 'template.html'
+  )
+
+  let html = fs.readFileSync(templatePath.fsPath, 'utf8')
+    .replaceAll('${webview.cspSource}', webview.cspSource)
+    .replaceAll('${nonce}', nonce)
+    .replaceAll('${scriptUri}', scriptUri.toString())
+
+  if (mcpServerUrl) {
+    html = html.replace(
+      "// mcpServerUrl: 'http://localhost:9743',  // ← uncomment to enable MCP sync",
+      `mcpServerUrl: '${mcpServerUrl}',`
+    )
+  }
+
+  return html
 }
 ```
 

@@ -1,8 +1,5 @@
 import type { WorkspaceConfig } from '@atomos-web/structura-core'
-import { injectDesignSystemTokens } from '../core/presentation/design-system.js'
-import { getGlobalReduxStore } from '../core/create-redux-store.js'
 import { createCanvasPage } from '../preview/create-canvas-page.js'
-import { createMcpClient, type McpClient } from './mcp-client.js'
 
 export interface WebviewInitConfig {
   /**
@@ -62,26 +59,15 @@ export const initializeStructuraWebview = async (
     'Make sure the element exists in the HTML before calling initializeStructuraWebview().'
   )
 
-  // 1. Design system tokens (--vbs-* CSS custom properties)
-  injectDesignSystemTokens()
-
-  // 2. Redux store — seeded with optional workspace config
-  const store = getGlobalReduxStore(config?.workspaceConfig)
-
-  // 3. Full canvas UI
-  const page = createCanvasPage(config?.workspaceConfig)
+  // createCanvasPage handles injectDesignSystemTokens, getGlobalReduxStore,
+  // and the MCP SSE connection internally — passing mcpServerUrl routes all
+  // three through a single code path and prevents a double SSE connection.
+  const page = createCanvasPage(config?.workspaceConfig, config?.mcpServerUrl)
   container.appendChild(page.element)
-
-  // 4. MCP bridge (optional)
-  let mcp: McpClient | null = null
-  if (config?.mcpServerUrl) {
-    mcp = createMcpClient({ mcpServerUrl: config.mcpServerUrl, store })
-  }
 
   return {
     element: page.element,
     disconnect: async () => {
-      mcp?.disconnect()
       page.cleanup.destroy()
     },
   }

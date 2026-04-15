@@ -35,7 +35,7 @@ registerExportPlugin(typescriptPlugin);
 registerExportPlugin(jsonSchemaPlugin);
 registerExportPlugin(mermaidPlugin);
 
-export const createCanvasPage = function(config?: WorkspaceConfig) {
+export const createCanvasPage = function(config?: WorkspaceConfig, mcpServerUrl?: string) {
   // Seed the global store with the runtime config before any subsystem uses it
   getGlobalReduxStore(config);
   
@@ -369,7 +369,7 @@ export const createCanvasPage = function(config?: WorkspaceConfig) {
 
   // MCP live sync (silent if server is not running)
   try {
-    const mcpSync = createMcpSync(store);
+    const mcpSync = createMcpSync(store, mcpServerUrl);
     cleanups.push(mcpSync.cleanup);
   } catch { /* noop */ }
 
