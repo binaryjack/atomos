@@ -1,5 +1,24 @@
 ﻿import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import { readFileSync, writeFileSync } from 'fs';
+import { glob } from 'glob';
+
+// Strip UTF-8 BOM from output files for universal compatibility
+function stripBomPlugin() {
+  return {
+    name: 'strip-bom',
+    apply: 'build',
+    writeBundle: async () => {
+      const files = await glob('dist/**/*.{js,cjs,mjs}', { nodir: true })
+      for (const file of files) {
+        let content = readFileSync(file, 'utf8')
+        if (content.charCodeAt(0) === 0xFEFF) {
+          writeFileSync(file, content.slice(1), 'utf8')
+        }
+      }
+    }
+  }
+}
 
 export default defineConfig({
   root: '.',
@@ -8,6 +27,9 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true
   },
+  plugins: [
+    stripBomPlugin()
+  ],
   server: {
     port: 4000,
     open: '/canvas.html',
