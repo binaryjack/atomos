@@ -1,0 +1,40 @@
+/* Base shape primitives */
+.svg-shape-base {
+  stroke: var(--vbs-primary);
+  stroke-width: 1;
+  transition: all 0.2s ease-in-out;
+}
+
+.svg-entity-rect {
+  @apply svg-shape-base;
+  fill: var(--shape-custom-fill, var(--vbs-bg-panel));
+  rx: 7;
+}
+
+/* Base interactive elements */
+.svg-interactive-base {
+  pointer-events: all;
+  cursor: pointer;
+}
+
+/* Rig editor elements (NON-HOT-PATH ONLY) */
+.rig-vertex-dot {
+  r: 4;
+  fill: theme('colors.emerald.200');
+  stroke: theme('colors.amber.800');
+  stroke-width: 1;
+}
+
+.rig-selection-ring {
+  fill: none;
+  stroke: theme('colors.blue.500');
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.rig-selection-ring--active {
+  opacity: 1;
+}
