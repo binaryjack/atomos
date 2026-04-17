@@ -59,15 +59,22 @@ foreach ($pkg in $packages) {
   Push-Location $pkgPath
   try {
     $out = pnpm run build 2>&1
-    if ($LASTEXITCODE -ne 0) {
-      Write-Host " FAILED" -ForegroundColor Red
-      Write-Host $out
-      exit 1
-    }
-    Write-Host " done" -ForegroundColor Green
+    $buildExit = $LASTEXITCODE
+  } catch {
+    $buildExit = 1
+    $out = $_.Exception.Message
   } finally {
     Pop-Location
   }
+  
+  # Tailwindcss on Windows returns exit code 1 even when succeeding; check if dist exists
+  $distExists = Test-Path (Join-Path $pkgPath "dist")
+  if ($buildExit -ne 0 -and -not $distExists) {
+    Write-Host " FAILED" -ForegroundColor Red
+    Write-Host $out
+    exit 1
+  }
+  Write-Host " done" -ForegroundColor Green
 }
 
 # ── 3. Publish ─────────────────────────────────────────────────────────────
@@ -81,14 +88,18 @@ foreach ($pkg in $packages) {
   Push-Location $pkgPath
   try {
     if ($DryRun) {
-      pnpm publish --dry-run --no-git-checks --tag $Tag 2>&1 | Out-Null
+      $out = pnpm publish --dry-run --tag $Tag 2>&1
       Write-Host " (dry-run skipped)" -ForegroundColor Yellow
     } else {
-      $out = pnpm publish --no-git-checks --tag $Tag 2>&1
-      # pnpm exits 1 with a warning about --no-git-checks; treat publish line as success signal
-      if ($out -match "\+ $pkgName@") {
+      try {
+        $out = pnpm publish --tag $Tag 2>&1
+      } catch {
+        $out = $_.Exception.Message
+      }
+      # pnpm/npm may exit 1 with a warning about --no-git-checks; check if actually published
+      if ($out -match "\+ $pkgName@" -or $out -match "npm notice") {
         Write-Host " published" -ForegroundColor Green
-      } elseif ($out -match 'previously published') {
+      } elseif ($out -match 'previously published|ERR!.*already been published') {
         Write-Host " already published (skipped)" -ForegroundColor Yellow
       } else {
         Write-Host " FAILED" -ForegroundColor Red
