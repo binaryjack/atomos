@@ -6,11 +6,18 @@ let CUSTOM_PLUGINS_KEY = 'vbe2:export-custom-plugins';
 const builtins = new Map<string, ExportPlugin>();
 
 /**
- * Initialize the export registry with an instanceId for multi-instance isolation.
- * Call this once during initialization before any other registry functions.
+ * Initialize the export registry with an instanceId (REQUIRED).
+ * MUST be called before registering or retrieving custom plugins.
+ * Throws if instanceId is empty or missing.
  */
-export const initExportRegistry = (instanceId?: string): void => {
-  CUSTOM_PLUGINS_KEY = `${instanceId ? `${instanceId}:` : ''}vbe2:export-custom-plugins`;
+export const initExportRegistry = (instanceId: string): void => {
+  if (!instanceId || instanceId.trim().length === 0) {
+    throw new Error(
+      'initExportRegistry(instanceId) requires a non-empty instanceId. '
+      + 'v2.0.0 breaks backward compatibility to enforce proper isolation.'
+    )
+  }
+  CUSTOM_PLUGINS_KEY = `${instanceId}:vbe2:export-custom-plugins`
 };
 
 export const registerExportPlugin = (plugin: ExportPlugin): void => {

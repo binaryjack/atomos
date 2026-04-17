@@ -322,7 +322,15 @@ const reduce_state = function(state: ReduxState, action: ReduxAction): ReduxStat
   }
 };
 
-export const create_redux_store = function(config?: WorkspaceConfig, instanceId?: string): ReduxStore {
+export const create_redux_store = function(options: { instanceId: string; config?: WorkspaceConfig }): ReduxStore {
+  // BREAKING v2.0.0: instanceId is now REQUIRED
+  const { instanceId, config } = options
+  if (!instanceId || instanceId.trim().length === 0) {
+    throw new Error(
+      'create_redux_store({ instanceId, config? }) requires a non-empty instanceId. ' +
+      'v2.0.0 breaks backward compatibility: instanceId is now mandatory for isolation guarantee.'
+    )
+  }
   let current_state = make_initial_state(config);
   const listeners = new Set<(state: ReduxState) => void>();
 
@@ -464,20 +472,12 @@ export const create_redux_store = function(config?: WorkspaceConfig, instanceId?
 // ── Global store (legacy, for backward compatibility) ──────────────────────
 let globalReduxStore: ReduxStore | null = null;
 
-/** @deprecated Use createInstanceReduxStore instead for proper multi-instance isolation. */
+/** @deprecated v2.0.0: Use getInstanceReduxStore(instanceId) instead. Global store no longer supported. */
 export const getGlobalReduxStore = function(config?: WorkspaceConfig, instanceId?: string): ReduxStore {
-  // If an instanceId is provided, use per-instance caching
-  if (instanceId) {
-    if (!instanceStores.has(instanceId)) {
-      instanceStores.set(instanceId, create_redux_store(config, instanceId));
-    }
-    return instanceStores.get(instanceId)!;
-  }
-  // Otherwise use the true global singleton (backward compat)
-  if (!globalReduxStore) {
-    globalReduxStore = create_redux_store(config);
-  }
-  return globalReduxStore;
+  throw new Error(
+    'getGlobalReduxStore() has been removed in v2.0.0 for true multi-instance isolation. '
+    + 'Use createInstanceReduxStore(config, instanceId) or getInstanceReduxStore(instanceId) instead.'
+  )
 };
 
 /** Reset the global store — only for testing. */
@@ -489,15 +489,31 @@ export const resetGlobalReduxStore = function(): void {
 const instanceStores = new Map<string, ReduxStore>();
 
 export const createInstanceReduxStore = function(config?: WorkspaceConfig, instanceId?: string): ReduxStore {
-  return create_redux_store(config, instanceId);
+  if (!instanceId || instanceId.trim().length === 0) {
+    throw new Error('createInstanceReduxStore requires a non-empty instanceId')
+  }
+  return create_redux_store(config ? { instanceId, config } : { instanceId });
 };
 
 export const storeInstanceReduxStore = function(instanceId: string, store: ReduxStore): void {
   instanceStores.set(instanceId, store);
 };
 
-export const getInstanceReduxStore = function(instanceId: string): ReduxStore | undefined {
-  return instanceStores.get(instanceId);
+/**
+ * Get or create a Redis store for a specific instance.
+ * REQUIRED: instanceId must be provided. Throws if missing.
+ */
+export const getInstanceReduxStore = function(instanceId: string, config?: WorkspaceConfig): ReduxStore {
+  if (!instanceId || instanceId.trim().length === 0) {
+    throw new Error(
+      'getInstanceReduxStore(instanceId, config) requires a non-empty instanceId. '
+      + 'This is a breaking change in v2.0.0 to ensure true isolation.'
+    )
+  }
+  if (!instanceStores.has(instanceId)) {
+    instanceStores.set(instanceId, create_redux_store(config ? { instanceId, config } : { instanceId }))
+  }
+  return instanceStores.get(instanceId)!
 };
 
 export const destroyInstanceReduxStore = function(instanceId: string): void {

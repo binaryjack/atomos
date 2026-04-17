@@ -3,7 +3,7 @@ import { createDAGObserver } from '../core/adapters/dag-observer.js'
 import { getCustomShapes, getGeneralSettings, getToolboxConfig, setCustomShapes, setGeneralSettings, setToolboxConfig, getAppearanceSettings, setAppearanceSettings, initToolboxConfigManager } from '../core/adapters/toolbox-config-manager.js'
 import { applyAppearanceTokens, injectDesignSystemTokens } from '../core/presentation/design-system.js'
 import { createCanvasViewport } from '../core/create-canvas-viewport.js'
-import { getGlobalReduxStore } from '../core/create-redux-store.js'
+import { getInstanceReduxStore } from '../core/create-redux-store.js'
 import { createWorkspaceManager } from '../core/create-workspace-manager.js'
 import { getEntityManager } from '../core/presentation/entity-manager.js'
 import { createInteractiveEntityDemo } from '../features/entity-with-edges/create-interactive-entity-demo.js'
@@ -35,14 +35,21 @@ registerExportPlugin(typescriptPlugin);
 registerExportPlugin(jsonSchemaPlugin);
 registerExportPlugin(mermaidPlugin);
 
-export const createCanvasPage = function(config?: WorkspaceConfig, mcpServerUrl?: string, instanceId?: string) {
-  // Initialize per-instance storage managers with the instanceId for isolation
-  initToolboxConfigManager(instanceId);
-  initExportRegistry(instanceId);
+export const createCanvasPage = function(instanceId: string, config?: WorkspaceConfig, mcpServerUrl?: string) {
+  // BREAKING v2.0.0: instanceId is REQUIRED
+  if (!instanceId || instanceId.trim().length === 0) {
+    throw new Error(
+      'createCanvasPage(instanceId, config?, mcpServerUrl?) requires a non-empty instanceId. '
+      + 'v2.0.0 breaks backward compatibility: instanceId is now mandatory.'
+    )
+  }
 
-  // Seed the global store with the runtime config before any subsystem uses it
-  // If instanceId is provided, this creates/retrieves a per-instance Redux store
-  getGlobalReduxStore(config, instanceId);
+  // Initialize per-instance storage managers with the instanceId for isolation
+  initToolboxConfigManager(instanceId)
+  initExportRegistry(instanceId)
+
+  // Seed the per-instance store with the runtime config before any subsystem uses it
+  getInstanceReduxStore(instanceId, config)
   
   // Inject design system CSS variables
   injectDesignSystemTokens();
@@ -326,12 +333,12 @@ export const createCanvasPage = function(config?: WorkspaceConfig, mcpServerUrl?
     entityManager: getEntityManager(),
     onSettings: () => {
       if (config?.headless) return;
-      const store = getGlobalReduxStore();
+      const store = getInstanceReduxStore(instanceId);
       const st = store.get_state();
       store.dispatch({ type: 'settings-toggled', is_open: !st.is_settings_open });
     },
     getKernel: () => {
-      const reduxStore = getGlobalReduxStore();
+      const reduxStore = getInstanceReduxStore(instanceId);
       const st = reduxStore.get_state();
       const canvas = st.workspace.canvases[st.workspace.active_canvas_id];
       const schema = canvas?.schemas[canvas?.active_schema_id ?? ''];
@@ -350,7 +357,7 @@ export const createCanvasPage = function(config?: WorkspaceConfig, mcpServerUrl?
   topBurger.style.marginLeft = '8px';
 
   // Validation overlay
-  const store = getGlobalReduxStore();
+  const store = getInstanceReduxStore(instanceId);
   const validator = createSchemaValidator(store);
   const validationOverlay = createValidationOverlay(validator, viewport, getEntityManager(), canvasWrap);
   cleanups.push(validationOverlay.cleanup.destroy);

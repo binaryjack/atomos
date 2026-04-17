@@ -1,7 +1,14 @@
 import type { CanvasState, Store } from '../types/store.types.js'
 
-export const createPersistence = function(store: Store, instanceId?: string) {
-  const STORAGE_KEY = `${instanceId ? `${instanceId}:` : ''}vbs-canvas-state`;
+export const createPersistence = function(store: Store, instanceId: string) {
+  // BREAKING v2.0.0: instanceId is now REQUIRED
+  if (!instanceId || instanceId.trim().length === 0) {
+    throw new Error(
+      'createPersistence(store, instanceId) requires a non-empty instanceId. ' +
+      'v2.0.0 breaks backward compatibility: instanceId is now mandatory for isolation.'
+    )
+  }
+  const STORAGE_KEY = `${instanceId}:vbs-canvas-state`;
 
   const saveState = function(state: CanvasState) {
     try {

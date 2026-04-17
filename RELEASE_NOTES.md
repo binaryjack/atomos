@@ -4,18 +4,32 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased]
+## [2.0.0] — 2026-04-17
+
+### ⚠️ BREAKING CHANGES
+
+**`instanceId` is now REQUIRED everywhere** (no auto-generation fallback).
+
+- `initializeStructuraWebview({ instanceId: 'unique-id', ... })` — `instanceId` is mandatory
+- `createSchemaBuilder({ instanceId: 'unique-id', ... })` — `instanceId` is mandatory (in props object, not optional)
+- `createCanvasPage(config, mcpUrl, instanceId)` — `instanceId` is now a required positional parameter
+- `create_redux_store(config, instanceId)` — `instanceId` is required (throws if missing)
+- `getInstanceReduxStore(instanceId, config)` — Use this instead of deprecated `getGlobalReduxStore` (now throws)
+- `initToolboxConfigManager(instanceId)` — `instanceId` is required (throws if missing)
+- `initExportRegistry(instanceId)` — `instanceId` is required (throws if missing)
+- `createPersistence(store, instanceId)` — `instanceId` is required (throws if missing)
+
+**Type system enforces `instanceId`:** Attempting to omit `instanceId` now results in TypeScript compilation errors.
+
+**Rationale:** The v1.2.x fallback to auto-generation created accidental safety issues where developers could deploy instances without proper isolation. Requiring explicit `instanceId` ensures all multi-instance scenarios are explicit and verifiable.
 
 ### Fixed
 
-- **[CRITICAL] LocalStorage State Collision in Shared Origins** — When multiple Structura instances run in the same browser origin (e.g., multiple VS Code webview panels in a single extension), they were colliding in localStorage due to hardcoded keys. Fixed by:
-  - Updating `create-redux-store.ts` to use `${instanceId}:vbe2:redux-state` instead of hardcoded `vbe2:redux-state`
-  - Updating `create-persistence.ts` to accept `instanceId` and namespace the canvas viewport key
-  - Updating `toolbox-config-manager.ts` to accept `instanceId` and namespace all 4 config keys (`atomos_toolbox_config`, `atomos_custom_shapes`, `atomos_general_settings`, `atomos_appearance_settings`)
-  - Updating `create-export-registry.ts` to accept `instanceId` and namespace the custom plugins key
-  - Ensuring `schema-builder.close()` only clears keys belonging to its own instance (now filters by `${instanceId}:vbe2:*` prefix)
-  - Threading `instanceId` parameter through `createCanvasPage()` and all dependent initialization functions
-  - **Breaking Change**: Functions now require `instanceId` parameter. If omitted, a random UUID is auto-generated.
+- **[CRITICAL] LocalStorage State Collision in Shared Origins** — When multiple Structura instances run in the same browser origin (e.g., multiple VS Code webview panels in a single extension), they were colliding in localStorage due to hardcoded keys. **v2.0.0 enforces this fix as mandatory:**
+  - All storage keys are now strictly namespaced: `${instanceId}:vbe2:*`, `${instanceId}:vbs-*`, `${instanceId}:atomos_*`
+  - `getGlobalReduxStore()` removed entirely (deprecated function now throws)
+  - All persistence functions throw if `instanceId` is missing or empty
+  - No fallback behavior — every instance must have an explicit, non-empty `instanceId`
   - See [Bug Report: LocalStorage State Collision](#multi-instance-isolation-bug-details) below.
 
 ### Added
@@ -126,34 +140,50 @@ export const someFunction = function(config: SomeConfig, instanceId?: string) {
 }
 ```
 
-### Migration Guide for Consumers
+### Migration Guide for v2.0.0
 
 **If you're using the headless API:**
 
 ```typescript
-// v1.2.1 and earlier (no isolation)
+// v1.2.x (optional instanceId)
 const builder = createSchemaBuilder();
 
-// v1.2.2+ (full isolation)
+// v2.0.0+ (REQUIRED instanceId)
 const builder = createSchemaBuilder({
-  instanceId: 'my-app-instance-1'  // REQUIRED for multi-instance safety
+  instanceId: 'my-app-instance-1'  // MANDATORY — no auto-generation
 });
 ```
 
 **If you're embedding in VS Code extensions:**
 
 ```typescript
-// Ensure you pass instanceId to initializeStructuraWebview
+// v1.2.x (optional instanceId, auto-generates if missing)
 const app = await initializeStructuraWebview({
   containerId: 'app',
-  instanceId: 'schema-editor-1',  // Unique per panel
+  // instanceId omitted — falls back to UUID
+  mcpServerUrl: '...'
+});
+
+// v2.0.0+ (REQUIRED instanceId)
+const app = await initializeStructuraWebview({
+  containerId: 'app',
+  instanceId: 'schema-editor-1',  // MANDATORY — must be unique per panel
   mcpServerUrl: '...'
 });
 ```
 
-**If instanceId is not provided:**
+**Throwing if `instanceId` is missing:**
 
-Structura auto-generates one (`instance-${randomId}-${timestamp}`), but this is **not recommended for production**. Always provide explicit `instanceId` for:
-- Deterministic behavior in tests
-- Predictable localStorage key structure
-- Debugging multi-instance issues
+```typescript
+// v2.0.0 throws for all of these:
+initializeStructuraWebview({});  // ❌ throws: "instanceId is REQUIRED"
+createSchemaBuilder({});  // ❌ throws: "instanceId is required"
+create_redux_store(config, undefined);  // ❌ throws: "instanceId must be non-empty"
+getInstanceReduxStore('');  // ❌ throws: "requires a non-empty instanceId"
+```
+
+**Key Points:**
+- Type system now enforces `instanceId: string` (non-optional) at compile time
+- Runtime validation throws with clear error messages if `instanceId` is empty or missing
+- No fallback behavior — every instance is explicit
+- Deterministic and testable: same `instanceId` always produces same localStorage namespace

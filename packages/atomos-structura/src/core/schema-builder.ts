@@ -13,8 +13,12 @@ export interface SchemaBuilderProps {
   /** If provided, SchemaBuilder connects to MCP server at this URL. */
   readonly mcpUrl?: string;
   readonly onStateChange?: (store: ReduxStore) => void;
-  /** Unique instance ID for localStorage isolation in multi-instance scenarios. Auto-generated if omitted. */
-  readonly instanceId?: string;
+  /**
+   * REQUIRED: Unique instance ID for localStorage isolation in multi-instance scenarios.
+   * v2.0.0 breaks backward compatibility: instanceId is now mandatory (no auto-generation).
+   * Examples: 'schema-editor-1', 'canvas-panel-a', etc.
+   */
+  readonly instanceId: string;
 }
 
 export interface SchemaBuilder {
@@ -48,9 +52,16 @@ export interface SchemaBuilder {
   clearMemory(): void;
 }
 
-export const createSchemaBuilder = function(props: SchemaBuilderProps = {}): SchemaBuilder {
-  const instanceId = props.instanceId;
-  const store = create_redux_store(props.config, instanceId);
+export const createSchemaBuilder = function(props: SchemaBuilderProps): SchemaBuilder {
+  // BREAKING v2.0.0: instanceId is now REQUIRED
+  if (!props.instanceId || props.instanceId.trim().length === 0) {
+    throw new Error(
+      'createSchemaBuilder(props) requires props.instanceId to be a non-empty string. ' +
+      'v2.0.0 breaks backward compatibility: instanceId is now mandatory for proper isolation.'
+    )
+  }
+  const instanceId = props.instanceId
+  const store = create_redux_store(props.config ? { instanceId, config: props.config } : { instanceId });
   const workspaceApi = createWorkspaceApi(store);
   const menuControl = createMenuControl(props.config?.menu);
 
@@ -140,7 +151,7 @@ export const createSchemaBuilder = function(props: SchemaBuilderProps = {}): Sch
       if (props.config?.headless) return () => { /* no-op */ };
       // Lazy import to avoid pulling DOM dependencies when headless
       const cleanup_promise = import('./create-canvas-page-bridge.js').then(m => {
-        const cleanup = m.mountCanvasPage(container, props.config);
+        const cleanup = m.mountCanvasPage(props.instanceId, container, props.config);
         mounted_cleanup = cleanup;
         return cleanup;
       });
