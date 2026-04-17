@@ -97,9 +97,9 @@ foreach ($pkg in $packages) {
         $out = $_.Exception.Message
       }
       # pnpm/npm may exit 1 with a warning about --no-git-checks; check if actually published
-      if ($out -match "\+ $pkgName@" -or $out -match "npm notice") {
+      if ($out -match "\+ $pkgName@" -or ($out -match "npm notice" -and $out -match "version:")) {
         Write-Host " published" -ForegroundColor Green
-      } elseif ($out -match 'previously published|ERR!.*already been published') {
+      } elseif ($out -match 'You cannot publish over|previously published|already.*published') {
         Write-Host " already published (skipped)" -ForegroundColor Yellow
       } else {
         Write-Host " FAILED" -ForegroundColor Red
