@@ -6,8 +6,10 @@
  */
 export const createLocalStoragePersistence = function<T>(
   key: string,
-  signal: Signal<T>
+  signal: Signal<T>,
+  instanceId?: string
 ): { destroy: () => void } {
+  const namespacedKey = instanceId ? `${instanceId}:${key}` : key;
   let isWriting = false;
   let pendingWrite: T | null = null;
 
@@ -20,16 +22,16 @@ export const createLocalStoragePersistence = function<T>(
     
     try {
       const serialized = JSON.stringify(valueToWrite);
-      localStorage.setItem(key, serialized);
-      console.log(`[persistence] ✓ Saved ${key} (${serialized.length} chars)`);
+      localStorage.setItem(namespacedKey, serialized);
+      console.log(`[persistence] ✓ Saved ${namespacedKey} (${serialized.length} chars)`);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'QuotaExceededError') {
-        console.error(`[persistence] ✗ localStorage quota exceeded for ${key}`);
-        handleQuotaExceeded(key);
+        console.error(`[persistence] ✗ localStorage quota exceeded for ${namespacedKey}`);
+        handleQuotaExceeded(namespacedKey);
       } else if (err instanceof TypeError) {
-        console.error(`[persistence] ✗ JSON serialization failed for ${key}:`, err);
+        console.error(`[persistence] ✗ JSON serialization failed for ${namespacedKey}:`, err);
       } else {
-        console.error(`[persistence] ✗ Write failed for ${key}:`, err);
+        console.error(`[persistence] ✗ Write failed for ${namespacedKey}:`, err);
       }
     } finally {
       isWriting = false;
@@ -117,27 +119,29 @@ const handleQuotaExceeded = (currentKey: string): void => {
 };
 
 /**
- * Read from localStorage with comprehensive error handling and data validation
+ * Read from localStorage with comprehensive error handling and data validation.
+ * @param instanceId - Instance ID for multi-webview isolation (optional, prepended to key)
  */
-export const readLocalStorage = <T>(key: string, validator?: (data: unknown) => data is T): T | undefined => {
+export const readLocalStorage = <T>(key: string, validator?: (data: unknown) => data is T, instanceId?: string): T | undefined => {
+  const namespacedKey = instanceId ? `${instanceId}:${key}` : key;
   try {
-    const raw = localStorage.getItem(key);
+    const raw = localStorage.getItem(namespacedKey);
     if (!raw) return undefined;
     
     const parsed = JSON.parse(raw);
     
     // Optional validation
     if (validator && !validator(parsed)) {
-      console.warn(`[persistence] Invalid data format in ${key}, ignoring`);
-      localStorage.removeItem(key); // Clear corrupt data
+      console.warn(`[persistence] Invalid data format in ${namespacedKey}, ignoring`);
+      localStorage.removeItem(namespacedKey); // Clear corrupt data
       return undefined;
     }
     
     return parsed as T;
   } catch (err) {
     if (err instanceof SyntaxError) {
-      console.error(`[persistence] Corrupt JSON in ${key}, clearing:`, err);
-      localStorage.removeItem(key); // Clear corrupt data
+      console.error(`[persistence] Corrupt JSON in ${namespacedKey}, clearing:`, err);
+      localStorage.removeItem(namespacedKey); // Clear corrupt data
     } else {
       console.error(`[persistence] Read failed for ${key}:`, err);
     }

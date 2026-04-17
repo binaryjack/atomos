@@ -16,6 +16,12 @@ export interface WebviewInitConfig {
    */
   containerId?: string
   /**
+   * Unique instance ID for this webview (auto-generated if omitted).
+   * Used to namespace localStorage keys and prevent collisions between multiple instances.
+   * REQUIRED for multi-instance isolation.
+   */
+  instanceId?: string
+  /**
    * Optional workspace configuration forwarded to the canvas store.
    */
   workspaceConfig?: WorkspaceConfig
@@ -36,20 +42,26 @@ export interface WebviewApp {
   readonly disconnect: () => Promise<void>
 }
 
+const generateInstanceId = (): string => {
+  return `instance-${Math.random().toString(36).slice(2, 9)}-${Date.now()}`
+}
+
 /**
  * Zero-config entry point for VS Code extension webviews.
  *
  * #### What it does:
- * 1. Injects Structura design system CSS tokens
- * 2. Initialises the Redux store
+ * 1. Injects Structura design system CSS tokens (scoped to container)
+ * 2. Initialises a per-instance Redux store (not global)
  * 3. Creates and mounts the full canvas UI
  * 4. Connects the MCP bridge (if `mcpServerUrl` is provided)
+ * 5. Handles multi-instance isolation via instanceId
  *
  * #### Usage
  * ```ts
  * import { initializeStructuraWebview } from '@atomos-web/structura/webview'
  *
  * const app = await initializeStructuraWebview({
+ *   instanceId: 'webview-1', // RECOMMENDED: provide unique ID for isolation
  *   mcpServerUrl: 'http://localhost:9743',
  *   containerId: 'app',
  * })
@@ -62,6 +74,7 @@ export const initializeStructuraWebview = async (
   config?: WebviewInitConfig,
 ): Promise<WebviewApp> => {
   const containerId = config?.containerId ?? 'app'
+  const instanceId = config?.instanceId ?? generateInstanceId()
 
   const container = document.getElementById(containerId)
   if (!container) throw new Error(
@@ -74,9 +87,9 @@ export const initializeStructuraWebview = async (
   const resolvedMcpUrl = config?.mcpServerUrl || undefined
   const resolvedSchemaId = config?.schemaId || undefined
 
-  // createCanvasPage handles injectDesignSystemTokens, getGlobalReduxStore,
+  // createCanvasPage handles injectDesignSystemTokens, store initialization,
   // and the MCP SSE connection internally — passing mcpServerUrl routes all
-  // three through a single code path and prevents a double SSE connection.
+  // through a single code path and prevents a double SSE connection.
   const page = createCanvasPage(config?.workspaceConfig, resolvedMcpUrl)
 
   // If a specific schema ID was provided (e.g. pre-provisioned by Extension Host),

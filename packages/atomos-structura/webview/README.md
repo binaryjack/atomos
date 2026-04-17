@@ -86,8 +86,10 @@ function getNonce(): string {
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `containerId` | `string` | `'app'` | ID of the mount point element |
+| `instanceId` | `string` | auto-generated | Unique identifier for this panel instance. When provided, ensures storage keys and design tokens are isolated (v1.2.0+). |
 | `mcpServerUrl` | `string` | — | MCP server base URL. Enables bidirectional sync when set. |
 | `workspaceConfig` | `WorkspaceConfig` | — | Initial workspace schema / settings forwarded to the Redux store. |
+| `schemaId` | `string` | — | Pre-activate a specific schema once the panel is initialized. |
 
 **Returns:** `Promise<WebviewApp>`
 

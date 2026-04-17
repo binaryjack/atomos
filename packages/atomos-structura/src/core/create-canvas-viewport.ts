@@ -26,17 +26,17 @@ export interface CanvasViewport {
   readonly cleanup: () => void;
 }
 
-export const createCanvasViewport = function(container: HTMLElement, svgElement?: SVGSVGElement): CanvasViewport {
+export const createCanvasViewport = function(container: HTMLElement, svgElement?: SVGSVGElement, instanceId?: string): CanvasViewport {
   const cleanups: Array<() => void> = [];
 
-  // Load saved viewport state from localStorage
-  const savedState = readLocalStorage<ViewportState>('vbe2:canvas-viewport');
+  // Load saved viewport state from localStorage (namespaced by instanceId if provided)
+  const savedState = readLocalStorage<ViewportState>('vbe2:canvas-viewport', undefined, instanceId);
   const initialState: ViewportState = savedState ?? { pan: { x: 0, y: 0 }, zoom: 1 };
   
   const state = createSignal<ViewportState>(initialState);
   
-  // Persist viewport changes
-  const persistence = createLocalStoragePersistence('vbe2:canvas-viewport', state);
+  // Persist viewport changes (namespaced by instanceId)
+  const persistence = createLocalStoragePersistence('vbe2:canvas-viewport', state, instanceId);
   cleanups.push(persistence.destroy);
 
   const transform = (): string => {

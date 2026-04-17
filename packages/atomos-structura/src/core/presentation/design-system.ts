@@ -22,12 +22,24 @@ export const DEFAULT_LINK_STYLE: LinkStyleSettings = {
   selectedThickness: 3,
 }
 
-export const injectDesignSystemTokens = () => {
-  let style = document.getElementById('vbs-design-system') as HTMLStyleElement | null;
-  if (!style) {
+export const injectDesignSystemTokens = (container?: HTMLElement) => {
+  const targetParent = container ?? document.head;
+  let styleId = `vbs-design-system${container ? `-${Math.random().toString(36).slice(2, 9)}` : ''}`;
+  let style = targetParent.querySelector(`style#vbs-design-system`) as HTMLStyleElement | null;
+  
+  // If looking in container and not found, create new one specifically for this container
+  if (!style && container) {
     style = document.createElement('style');
-    style.id = 'vbs-design-system';
-    document.head.appendChild(style);
+    style.id = styleId;
+    container.appendChild(style);
+  } else if (!style) {
+    // Looking in head, create or reuse
+    style = document.getElementById('vbs-design-system') as HTMLStyleElement | null;
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'vbs-design-system';
+      document.head.appendChild(style);
+    }
   }
   style.innerHTML = `
     :root {

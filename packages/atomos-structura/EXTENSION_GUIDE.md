@@ -218,6 +218,98 @@ The MCP server keeps schema state keyed by `schema_id`.  All entity/link tool ca
 
 ---
 
+## Multi-Instance Isolation with `instanceId`
+
+**v1.2.0+** — When running multiple Structura panels simultaneously (e.g. side-by-side schema editors), each must have a unique `instanceId` to ensure complete storage and state isolation.
+
+### What gets isolated?
+
+- **localStorage keys** — Prefixed with `${instanceId}:` to prevent collision
+- **Design system tokens** — Scoped to the panel's container
+- **Redux store** — Per-instance (future: currently uses global with namespaced persistence)
+- **Canvas adapters** — Instance-scoped registration
+
+### Automatic vs. explicit
+
+If you **do not** provide `instanceId`, Structura auto-generates one:
+
+```ts
+// Auto-generated instanceId (random UUID + timestamp)
+const app = await initializeStructuraWebview({
+  containerId: 'app',
+  mcpServerUrl: 'http://localhost:9743',
+})
+```
+
+If you **do** want deterministic IDs (e.g. for testing), provide one:
+
+```ts
+// Deterministic instanceId
+const app1 = await initializeStructuraWebview({
+  instanceId: 'schema-editor-1',
+  containerId: 'app1',
+})
+
+const app2 = await initializeStructuraWebview({
+  instanceId: 'schema-editor-2',
+  containerId: 'app2',
+})
+```
+
+### Extension example
+
+```ts
+// canvas-panel.ts
+function buildHtml(
+  webview: vscode.Webview,
+  extensionUri: vscode.Uri,
+  mcpServerUrl?: string,
+  schemaId?: string,
+  instanceId?: string,  // ← Add this parameter
+): string {
+  const nonce = getNonce()
+  const scriptUri = webview.asWebviewUri(...)
+  const templatePath = vscode.Uri.joinPath(...)
+
+  return fs.readFileSync(templatePath.fsPath, 'utf8')
+    .replaceAll('${webview.cspSource}', webview.cspSource)
+    .replaceAll('${nonce}', nonce)
+    .replaceAll('${scriptUri}', scriptUri.toString())
+    .replaceAll('${mcpUrl}', mcpServerUrl ?? '')
+    .replaceAll('${schemaId}', schemaId ?? '')
+    .replaceAll('${instanceId}', instanceId ?? '')  // ← Add this line
+}
+
+export function openCanvasPanel(
+  context: vscode.ExtensionContext,
+  mcpServerUrl?: string,
+  schemaId?: string,
+  instanceId?: string,  // ← Add this parameter
+) {
+  const panel = vscode.window.createWebviewPanel(...)
+  panel.webview.html = buildHtml(panel.webview, context.extensionUri, mcpServerUrl, schemaId, instanceId)
+}
+```
+
+### Template injection
+
+Update your `template.html` to pass `instanceId`:
+
+```html
+<script nonce="${nonce}">
+  StructuraWebview.initializeStructuraWebview({
+    containerId: 'app',
+    mcpServerUrl: '${mcpUrl}',
+    schemaId: '${schemaId}',
+    instanceId: '${instanceId}',  // ← Add this
+  }).catch(err => console.error('[Structura] init failed', err))
+</script>
+```
+
+When `instanceId` is omitted from the config, it is auto-generated. You only need to provide it if you want deterministic IDs or testing predictability.
+
+---
+
 ## Single-bundle IIFE (recommended for VSIX packaging)
 
 By default the webview entry point is an ES module (`dist/webview/index.js`) which requires `<script type="module">`.  For VS Code extensions packaged as VSIX files — where the webview's script path must match a single `localResourceRoots` URI — a self-contained **IIFE** bundle is more reliable.

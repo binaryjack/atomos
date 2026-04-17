@@ -458,6 +458,7 @@ export const create_redux_store = function(config?: WorkspaceConfig): ReduxStore
   return { get_state, dispatch, subscribe, undo, redo, can_undo, can_redo, reconcile, addDispatchHook };
 };
 
+// ── Global store (legacy, for backward compatibility) ──────────────────────
 let globalReduxStore: ReduxStore | null = null;
 
 export const getGlobalReduxStore = function(config?: WorkspaceConfig): ReduxStore {
@@ -470,4 +471,23 @@ export const getGlobalReduxStore = function(config?: WorkspaceConfig): ReduxStor
 /** Reset the global store — only for testing. */
 export const resetGlobalReduxStore = function(): void {
   globalReduxStore = null;
+};
+
+// ── Per-instance store (NEW: for webview isolation) ────────────────────────
+const instanceStores = new Map<string, ReduxStore>();
+
+export const createInstanceReduxStore = function(config?: WorkspaceConfig): ReduxStore {
+  return create_redux_store(config);
+};
+
+export const storeInstanceReduxStore = function(instanceId: string, store: ReduxStore): void {
+  instanceStores.set(instanceId, store);
+};
+
+export const getInstanceReduxStore = function(instanceId: string): ReduxStore | undefined {
+  return instanceStores.get(instanceId);
+};
+
+export const destroyInstanceReduxStore = function(instanceId: string): void {
+  instanceStores.delete(instanceId);
 };
