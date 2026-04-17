@@ -2,9 +2,8 @@
 
 **Visual schema designer for TypeScript projects** — Build, edit, and export data-model schemas headlessly via API or with a full interactive canvas UI.
 
-## ✨ New in v1.2.0
+## ✨ New Features
 
-- 🔐 **Multi-Instance Isolation** — Run multiple schema editors simultaneously with `instanceId`; storage keys and design tokens are fully isolated
 - 🎛️ **Fine-Grained Menu Control** — Runtime enable/disable of zoom, center, export, etc.
 - 🖼️ **Advanced Viewport API** — Programmatic zoom, pan, center-on-screen, fit-to-screen
 - 🔄 **Session Lifecycle** — Clean memory wipe, graceful session termination

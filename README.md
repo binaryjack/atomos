@@ -9,7 +9,6 @@
 - 🎨 **Visual Canvas** — Interactive drag-and-drop schema builder  
 - 🔗 **Rich Relationships** — 1:1, 1:*, *:*, self-referencing with cardinality
 - 📱 **Multi-Schema Support** — Multiple diagrams in one workspace
-- 🔐 **Multi-Instance Isolation** — Run multiple editor panels simultaneously with complete storage/state isolation (v1.2.0+)
 - 🎛️ **Fine-Grained Control** — Menu system, viewport management, session lifecycle
 - 💾 **Complete Persistence** — Save/load workspaces, localStorage integration
 - 🔧 **Zero Dependencies** — Pure TypeScript, Web Components, TypeScript-first

@@ -77,50 +77,7 @@ createServer((req, res) => {
 | `atomos-structura/create-link` | Create relationship between entities with cardinality |
 | `atomos-structura/get-schema` | Get all entities and links in active schema |
 
----
-
-## Targeting a specific schema
-
-All entity and link tools require an explicit `schema_id` parameter (introduced in v1.2.0).  
-`get-entity` falls back to the active schema when `schema_id` is omitted for backwards compatibility.
-
-```ts
-// Create a schema first and note the returned ID
-const { result: { id: schemaId } } = await fetch('http://localhost:9743', {
-  method: 'POST',
-  body: JSON.stringify({ method: 'atomos-structura/create-schema', params: { name: 'Orders' }, id: 1 }),
-}).then(r => r.json())
-
-// All subsequent calls must supply schema_id
-await fetch('http://localhost:9743', {
-  method: 'POST',
-  body: JSON.stringify({
-    method: 'atomos-structura/create-entity',
-    params: {
-      schema_id: schemaId,   // ← required
-      id: 'entity-order',
-      name: 'Order',
-      position: { x: 100, y: 100 },
-      dimensions: { width: 200, height: 60 },
-      properties: [],
-    },
-    id: 2,
-  }),
-}).then(r => r.json())
-```
-
-The `change` SSE event now includes `schema_id` in the payload so consumers can route updates to the correct canvas instance:
-
-```ts
-eventSource.addEventListener('change', (e) => {
-  const { schema_id, entities, links } = JSON.parse(e.data)
-  // Route to the canvas that owns schema_id
-  getCanvasAdapterFor(schema_id)?.updateEntities(entities)
-})
-```
-
----
-
+### **🆕 Viewport Control**
 | Tool | Purpose | Availability Guard |
 |------|---------|-------------------|
 | `atomos-structura/viewport/get` | Get current zoom and pan state | None |

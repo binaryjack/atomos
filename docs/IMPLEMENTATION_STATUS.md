@@ -4,25 +4,6 @@
 **Battle-tested: 157/162 tests passing** (97% success rate)  
 **Release Date: April 14, 2026**
 
----
-
-> **Architectural note (v1.2.0):** The previous implementation used a global
-> singleton canvas adapter and an implicit "active schema" in MCP handlers.
-> Both have been replaced:
-> - **Canvas adapter registry** — `getCanvasAdapterFor(schemaId)` keyed by
->   schema ID; the old `getCanvasAdapter()` is deprecated.
-> - **Explicit `schema_id` in MCP** — entity/link tools now require a
->   `schema_id` parameter; `get_entity` falls back to the active schema for
->   backwards compatibility.
-> - **`schema-create-auto` intent** — the tab bar dispatches a lightweight
->   intent action; the Redux store handles it in standalone mode; the canvas
->   page intercepts it and forwards to MCP when a server URL is configured.
-> - **Template injection tokens** — `template.html` now ships with
->   `${mcpUrl}` and `${schemaId}` tokens; consumers call `.replaceAll()`
->   rather than regex-patching the HTML.
-
----
-
 ## ✅ **Fully Implemented & Tested Features**
 
 ### 🎯 **Headless API - Complete Schema Creation**
