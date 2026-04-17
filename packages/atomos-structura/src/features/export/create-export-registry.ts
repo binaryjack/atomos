@@ -1,9 +1,17 @@
 import type { ExportPlugin, CustomExportPlugin } from './export-plugin.types.js';
 import type { SchemaGraphState } from '../../core/create-schema-graph-kernel.js';
 
-const CUSTOM_PLUGINS_KEY = 'vbe2:export-custom-plugins';
+let CUSTOM_PLUGINS_KEY = 'vbe2:export-custom-plugins';
 
 const builtins = new Map<string, ExportPlugin>();
+
+/**
+ * Initialize the export registry with an instanceId for multi-instance isolation.
+ * Call this once during initialization before any other registry functions.
+ */
+export const initExportRegistry = (instanceId?: string): void => {
+  CUSTOM_PLUGINS_KEY = `${instanceId ? `${instanceId}:` : ''}vbe2:export-custom-plugins`;
+};
 
 export const registerExportPlugin = (plugin: ExportPlugin): void => {
   builtins.set(plugin.id, plugin);

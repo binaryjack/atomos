@@ -1,6 +1,6 @@
 ﻿import { getCanvasAdapter } from '../core/adapters/canvas-adapter.js'
 import { createDAGObserver } from '../core/adapters/dag-observer.js'
-import { getCustomShapes, getGeneralSettings, getToolboxConfig, setCustomShapes, setGeneralSettings, setToolboxConfig, getAppearanceSettings, setAppearanceSettings } from '../core/adapters/toolbox-config-manager.js'
+import { getCustomShapes, getGeneralSettings, getToolboxConfig, setCustomShapes, setGeneralSettings, setToolboxConfig, getAppearanceSettings, setAppearanceSettings, initToolboxConfigManager } from '../core/adapters/toolbox-config-manager.js'
 import { applyAppearanceTokens, injectDesignSystemTokens } from '../core/presentation/design-system.js'
 import { createCanvasViewport } from '../core/create-canvas-viewport.js'
 import { getGlobalReduxStore } from '../core/create-redux-store.js'
@@ -21,7 +21,7 @@ import { createMcpSync } from '../features/mcp-sync/create-mcp-sync.js'
 import { createRubberBand } from '../features/rubber-band/create-rubber-band.js'
 import type { WorkspaceConfig } from '@atomos-web/structura-core'
 import { createShortcutsPanel } from '../features/shortcuts/create-shortcuts-panel.js'
-import { registerExportPlugin } from '../features/export/create-export-registry.js'
+import { registerExportPlugin, initExportRegistry } from '../features/export/create-export-registry.js'
 import { sqlDdlPlugin } from '../features/export/plugins/sql-ddl.plugin.js'
 import { prismaPlugin } from '../features/export/plugins/prisma.plugin.js'
 import { typescriptPlugin } from '../features/export/plugins/typescript.plugin.js'
@@ -35,9 +35,14 @@ registerExportPlugin(typescriptPlugin);
 registerExportPlugin(jsonSchemaPlugin);
 registerExportPlugin(mermaidPlugin);
 
-export const createCanvasPage = function(config?: WorkspaceConfig, mcpServerUrl?: string) {
+export const createCanvasPage = function(config?: WorkspaceConfig, mcpServerUrl?: string, instanceId?: string) {
+  // Initialize per-instance storage managers with the instanceId for isolation
+  initToolboxConfigManager(instanceId);
+  initExportRegistry(instanceId);
+
   // Seed the global store with the runtime config before any subsystem uses it
-  getGlobalReduxStore(config);
+  // If instanceId is provided, this creates/retrieves a per-instance Redux store
+  getGlobalReduxStore(config, instanceId);
   
   // Inject design system CSS variables
   injectDesignSystemTokens();

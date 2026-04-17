@@ -13,6 +13,8 @@ export interface SchemaBuilderProps {
   /** If provided, SchemaBuilder connects to MCP server at this URL. */
   readonly mcpUrl?: string;
   readonly onStateChange?: (store: ReduxStore) => void;
+  /** Unique instance ID for localStorage isolation in multi-instance scenarios. Auto-generated if omitted. */
+  readonly instanceId?: string;
 }
 
 export interface SchemaBuilder {
@@ -47,7 +49,8 @@ export interface SchemaBuilder {
 }
 
 export const createSchemaBuilder = function(props: SchemaBuilderProps = {}): SchemaBuilder {
-  const store = create_redux_store(props.config);
+  const instanceId = props.instanceId;
+  const store = create_redux_store(props.config, instanceId);
   const workspaceApi = createWorkspaceApi(store);
   const menuControl = createMenuControl(props.config?.menu);
 
@@ -85,9 +88,10 @@ export const createSchemaBuilder = function(props: SchemaBuilderProps = {}): Sch
   const wipe_local_storage = (): void => {
     if (typeof localStorage === 'undefined') return;
     const keys_to_remove: string[] = [];
+    const prefix = instanceId ? `${instanceId}:vbe2:` : 'vbe2:';
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key?.startsWith('vbe2:')) keys_to_remove.push(key);
+      if (key?.startsWith(prefix)) keys_to_remove.push(key);
     }
     keys_to_remove.forEach(key => localStorage.removeItem(key));
   };

@@ -2,10 +2,10 @@
 import type { AppSettings, CustomShape } from '../../features/settings-page/types/settings-page.types.js'
 import { defaultShapes, defaultToolboxConfig } from '../default-toolbox.config.js'
 
-const STORAGE_KEY_CONFIG = 'atomos_toolbox_config';
-const STORAGE_KEY_SHAPES = 'atomos_custom_shapes';
-const STORAGE_KEY_GENERAL = 'atomos_general_settings';
-const STORAGE_KEY_APPEARANCE = 'atomos_appearance_settings';
+let STORAGE_KEY_CONFIG = 'atomos_toolbox_config';
+let STORAGE_KEY_SHAPES = 'atomos_custom_shapes';
+let STORAGE_KEY_GENERAL = 'atomos_general_settings';
+let STORAGE_KEY_APPEARANCE = 'atomos_appearance_settings';
 
 let currentConfig: ToolboxConfiguration = defaultToolboxConfig;
 let currentShapes: CustomShape[] = JSON.parse(JSON.stringify(defaultShapes));
@@ -19,6 +19,55 @@ let currentGeneral: AppSettings['general'] = {
 };
 let currentAppearance: AppSettings['appearance'] = {};
 
+/**
+ * Initialize the toolbox config manager with an instanceId for multi-instance isolation.
+ * Call this once during initialization before any other toolbox-config functions.
+ * Re-calling this resets the in-memory state and loads from the new namespaced keys.
+ */
+export const initToolboxConfigManager = (instanceId?: string): void => {
+  const prefix = instanceId ? `${instanceId}:` : '';
+  STORAGE_KEY_CONFIG = `${prefix}atomos_toolbox_config`;
+  STORAGE_KEY_SHAPES = `${prefix}atomos_custom_shapes`;
+  STORAGE_KEY_GENERAL = `${prefix}atomos_general_settings`;
+  STORAGE_KEY_APPEARANCE = `${prefix}atomos_appearance_settings`;
+
+  // Reset in-memory state to defaults
+  currentConfig = defaultToolboxConfig;
+  currentShapes = JSON.parse(JSON.stringify(defaultShapes));
+  currentGeneral = {
+    gridSize: 20,
+    enableSnapping: true,
+    defaultLinkStyle: 'bezier',
+    gridPrimaryColor: '#334155',
+    gridSecondaryColor: '#1e293b',
+    canvasBackgroundColor: '#0f172a'
+  };
+  currentAppearance = {};
+
+  // Load from the new namespaced keys
+  try {
+    const storedConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
+    if (storedConfig) {
+      currentConfig = JSON.parse(storedConfig);
+    }
+    const storedShapes = localStorage.getItem(STORAGE_KEY_SHAPES);
+    if (storedShapes) {
+      currentShapes = JSON.parse(storedShapes);
+    }
+    const storedGeneral = localStorage.getItem(STORAGE_KEY_GENERAL);
+    if (storedGeneral) {
+      currentGeneral = { ...currentGeneral, ...JSON.parse(storedGeneral) };
+    }
+    const storedAppearance = localStorage.getItem(STORAGE_KEY_APPEARANCE);
+    if (storedAppearance) {
+      currentAppearance = JSON.parse(storedAppearance);
+    }
+  } catch (e) {
+    // Ignored
+  }
+};
+
+// Load from default (non-namespaced) keys on module init
 try {
   const storedConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
   if (storedConfig) {

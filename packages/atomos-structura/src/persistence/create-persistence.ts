@@ -1,7 +1,7 @@
 import type { CanvasState, Store } from '../types/store.types.js'
 
-export const createPersistence = function(store: Store) {
-  const STORAGE_KEY = 'vbs-canvas-state';
+export const createPersistence = function(store: Store, instanceId?: string) {
+  const STORAGE_KEY = `${instanceId ? `${instanceId}:` : ''}vbs-canvas-state`;
 
   const saveState = function(state: CanvasState) {
     try {

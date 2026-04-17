@@ -322,7 +322,7 @@ const reduce_state = function(state: ReduxState, action: ReduxAction): ReduxStat
   }
 };
 
-export const create_redux_store = function(config?: WorkspaceConfig): ReduxStore {
+export const create_redux_store = function(config?: WorkspaceConfig, instanceId?: string): ReduxStore {
   let current_state = make_initial_state(config);
   const listeners = new Set<(state: ReduxState) => void>();
 
@@ -339,26 +339,29 @@ export const create_redux_store = function(config?: WorkspaceConfig): ReduxStore
   // Reconciliation mode — dispatches inside reconcile() don't affect undo/redo history
   let is_reconciling = false;
 
+  const reduxStateKey = `${instanceId ? `${instanceId}:` : ''}vbe2:redux-state`;
+
   const persist = function(): void {
     const serialized = JSON.stringify(current_state);
     try {
-      localStorage.setItem('vbe2:redux-state', serialized);
+      localStorage.setItem(reduxStateKey, serialized);
     } catch (error) {
       if (error instanceof DOMException && error.name === 'QuotaExceededError') {
         const keysToRemove: string[] = [];
+        const prefix = instanceId ? `${instanceId}:vbe2:` : 'vbe2:';
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
-          if (key?.startsWith('vbe2:') && key !== 'vbe2:redux-state') keysToRemove.push(key);
+          if (key?.startsWith(prefix) && key !== reduxStateKey) keysToRemove.push(key);
         }
         keysToRemove.forEach(key => localStorage.removeItem(key));
-        try { localStorage.setItem('vbe2:redux-state', serialized); } catch { /* quota still full */ }
+        try { localStorage.setItem(reduxStateKey, serialized); } catch { /* quota still full */ }
       }
     }
   };
 
   const load = function(): void {
     try {
-      const raw = localStorage.getItem('vbe2:redux-state');
+      const raw = localStorage.getItem(reduxStateKey);
       if (raw) {
         const loaded_state = JSON.parse(raw) as ReduxState;
         current_state = loaded_state;
@@ -461,7 +464,16 @@ export const create_redux_store = function(config?: WorkspaceConfig): ReduxStore
 // ── Global store (legacy, for backward compatibility) ──────────────────────
 let globalReduxStore: ReduxStore | null = null;
 
-export const getGlobalReduxStore = function(config?: WorkspaceConfig): ReduxStore {
+/** @deprecated Use createInstanceReduxStore instead for proper multi-instance isolation. */
+export const getGlobalReduxStore = function(config?: WorkspaceConfig, instanceId?: string): ReduxStore {
+  // If an instanceId is provided, use per-instance caching
+  if (instanceId) {
+    if (!instanceStores.has(instanceId)) {
+      instanceStores.set(instanceId, create_redux_store(config, instanceId));
+    }
+    return instanceStores.get(instanceId)!;
+  }
+  // Otherwise use the true global singleton (backward compat)
   if (!globalReduxStore) {
     globalReduxStore = create_redux_store(config);
   }
@@ -476,8 +488,8 @@ export const resetGlobalReduxStore = function(): void {
 // ── Per-instance store (NEW: for webview isolation) ────────────────────────
 const instanceStores = new Map<string, ReduxStore>();
 
-export const createInstanceReduxStore = function(config?: WorkspaceConfig): ReduxStore {
-  return create_redux_store(config);
+export const createInstanceReduxStore = function(config?: WorkspaceConfig, instanceId?: string): ReduxStore {
+  return create_redux_store(config, instanceId);
 };
 
 export const storeInstanceReduxStore = function(instanceId: string, store: ReduxStore): void {

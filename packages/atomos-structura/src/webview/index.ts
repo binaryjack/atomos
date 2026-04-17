@@ -90,13 +90,14 @@ export const initializeStructuraWebview = async (
   // createCanvasPage handles injectDesignSystemTokens, store initialization,
   // and the MCP SSE connection internally — passing mcpServerUrl routes all
   // through a single code path and prevents a double SSE connection.
-  const page = createCanvasPage(config?.workspaceConfig, resolvedMcpUrl)
+  // Pass instanceId to ensure per-instance localStorage isolation.
+  const page = createCanvasPage(config?.workspaceConfig, resolvedMcpUrl, instanceId)
 
   // If a specific schema ID was provided (e.g. pre-provisioned by Extension Host),
   // activate it once the store is ready.
   if (resolvedSchemaId) {
     const { getGlobalReduxStore } = await import('../core/create-redux-store.js')
-    const store = getGlobalReduxStore()
+    const store = getGlobalReduxStore(undefined, instanceId)
     const canvas = store.get_state().workspace.canvases[store.get_state().workspace.active_canvas_id]
     if (canvas?.schemas[resolvedSchemaId]) {
       store.dispatch({ type: 'schema-activated', id: resolvedSchemaId })
