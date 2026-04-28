@@ -12,7 +12,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `initializeStructuraWebview({ instanceId: 'unique-id', ... })` — `instanceId` is mandatory
 - `createSchemaBuilder({ instanceId: 'unique-id', ... })` — `instanceId` is mandatory (in props object, not optional)
-- `createCanvasPage(config, mcpUrl, instanceId)` — `instanceId` is now a required positional parameter
+- `createCanvasPage(instanceId, config?, mcpUrl?)` — `instanceId` is now a required first positional parameter
 - `create_redux_store(config, instanceId)` — `instanceId` is required (throws if missing)
 - `getInstanceReduxStore(instanceId, config)` — Use this instead of deprecated `getGlobalReduxStore` (now throws)
 - `initToolboxConfigManager(instanceId)` — `instanceId` is required (throws if missing)

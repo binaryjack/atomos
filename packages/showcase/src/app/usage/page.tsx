@@ -21,7 +21,7 @@ pnpm add @atomos-web/prime-style`}
       <section>
         <h2 className="text-xl font-semibold text-blue-400 mb-4">2. Initialization & Bootstrapping</h2>
         <p className="text-slate-300 text-[15px] leading-7 mb-4">
-          To render the canvas inside your DOM, simply call the <code>createCanvasPage()</code> factory and attach its element to your container. You also need to boot the schema kernel for core entity interactions.
+          To render the canvas inside your DOM, simply call the <code>createCanvasPage('my-instance-id')</code> factory and attach its element to your container. You also need to boot the schema kernel for core entity interactions.
         </p>
         <pre className="bg-slate-950 p-5 rounded-xl border border-slate-800 overflow-hidden text-sm text-slate-300 font-mono leading-relaxed mt-4">
 {`import '@atomos-web/prime-style/dist/styles.css';
@@ -31,8 +31,8 @@ import { createSchemaGraphKernel } from '@atomos-web/structura/dist/core/create-
 import { createKernelAdapter } from '@atomos-web/structura/dist/adapters/create-kernel-adapter.js';
 
 export function mountCanvas(containerDiv) {
-  // 1. Create the UI page
-  const page = createCanvasPage();
+  // 1. Create the UI page (v2.0.0 requires an instanceId)
+  const page = createCanvasPage('my-unique-canvas-id');
   containerDiv.appendChild(page.element);
 
   // 2. Boot the headless schema AST kernel

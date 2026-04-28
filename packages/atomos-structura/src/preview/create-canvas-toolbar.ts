@@ -1,17 +1,18 @@
-import { autoLayoutDAG, autoRouteLinks, deserializeDAG, serializeDAG } from '../core/application/dag-service.js';
-import type { CanvasViewport } from '../core/create-canvas-viewport.js';
-import type { EntityManager } from '../core/presentation/entity-manager.js';
-import { getGlobalReduxStore } from '../core/create-redux-store.js';
-import type { SchemaGraphKernel } from '../core/create-schema-graph-kernel.js';
-import type { ReduxState } from '../types/redux-state.types.js';
-import { createAboutModal } from '../features/modal/create-about-modal.js';
-import { createCanvasSnapshot } from '../features/export/create-canvas-snapshot.js';
-import { getExportPlugins } from '../features/export/create-export-registry.js';
-import { PRESET_KEYS, loadPreset } from '../features/schema-panel/schema-presets.js';
-import type { MenuControl } from '../types/menu-control.types.js';
-import type { WorkspaceMenuConfig } from '@atomos-web/structura-core';
+import type { WorkspaceMenuConfig } from '@atomos-web/structura-core'
+import { autoLayoutDAG, autoRouteLinks, deserializeDAG, serializeDAG } from '../core/application/dag-service.js'
+import type { CanvasViewport } from '../core/create-canvas-viewport.js'
+import { getInstanceReduxStore } from '../core/create-redux-store.js'
+import type { SchemaGraphKernel } from '../core/create-schema-graph-kernel.js'
+import type { EntityManager } from '../core/presentation/entity-manager.js'
+import { createCanvasSnapshot } from '../features/export/create-canvas-snapshot.js'
+import { getExportPlugins } from '../features/export/create-export-registry.js'
+import { createAboutModal } from '../features/modal/create-about-modal.js'
+import { PRESET_KEYS, loadPreset } from '../features/schema-panel/schema-presets.js'
+import type { MenuControl } from '../types/menu-control.types.js'
+import type { ReduxState } from '../types/redux-state.types.js'
 
 export interface CanvasToolbarConfig {
+  readonly instanceId: string;
   readonly viewport: CanvasViewport;
   readonly entityManager: EntityManager;
   readonly onSettings: () => void;
@@ -352,7 +353,7 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
   );
 
   // -- Undo/Redo --
-  const store = getGlobalReduxStore();
+  const store = getInstanceReduxStore(config.instanceId);
 
   const setUndoRedoDisabled = (btn: HTMLButtonElement, disabled: boolean): void => {
     btn.disabled = disabled;

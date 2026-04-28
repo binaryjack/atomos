@@ -78,13 +78,14 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
 
     if (shape === 'box' || shape === 'rectangle' || !shape) {   
       const content = createEntityContent({
+        instanceId: props.instanceId,
         entityStore: props.entityStore,
         globalConfig: props.globalConfig,
         storageProvider: props.storageProvider,
         color: color,
         onDelete: () => props.workspace.unregisterEntity(props.id),
         onSettingsClick: () => {
-          const modal = createEntitySettingsModal(props.id);
+          const modal = createEntitySettingsModal(props.instanceId, props.id);
           document.body.appendChild(modal);
           modal.open().catch((err: any) => console.error(err));
         },
@@ -118,13 +119,14 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
             const rect = content.rootElement.getBoundingClientRect();
             
             createEntityDrawer(props.id, rect, {
+              instanceId: props.instanceId,
               entityStore: props.entityStore,
               globalConfig: props.globalConfig,
               storageProvider: props.storageProvider,
               color: color,
               onDelete: () => props.workspace.unregisterEntity(props.id),
               onSettingsClick: () => {
-                const modal = createEntitySettingsModal(props.id);
+                const modal = createEntitySettingsModal(props.instanceId, props.id);
                 document.body.appendChild(modal);
                 modal.open().catch((err: any) => console.error(err));
               },

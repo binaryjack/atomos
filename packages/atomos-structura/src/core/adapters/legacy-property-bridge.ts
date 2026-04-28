@@ -2,21 +2,21 @@
  * Legacy Property Bridge
  * Connects existing property UI components to clean architecture
  */
-import type { Entity, Property } from '@atomos-web/structura-core';
-import { createProperty } from '@atomos-web/structura-core';
-import type { EntityStore } from '../create-entity-store.js';
-import { createSignal } from '@atomos-web/prime';
-import type { IRepository } from '../repository/types/repository.types.js';
-import type { IStorageProvider } from '../storage/types/storage-provider.types.js';
-import type { Signal } from '@atomos-web/prime';
-import { getCanvasAdapter } from './canvas-adapter.js';
+import type { Signal } from '@atomos-web/prime'
+import { createSignal } from '@atomos-web/prime'
+import type { Entity, Property } from '@atomos-web/structura-core'
+import { createProperty } from '@atomos-web/structura-core'
+import type { EntityStore } from '../create-entity-store.js'
+import type { IRepository } from '../repository/types/repository.types.js'
+import type { IStorageProvider } from '../storage/types/storage-provider.types.js'
+import { getCanvasAdapter } from './canvas-adapter.js'
 
 /**
  * Legacy Entity Store Bridge
  * Adapts clean architecture to legacy signal-based entity store interface
  */
-export const createLegacyEntityStoreBridge = function(entityId: string): EntityStore {
-  const adapter = getCanvasAdapter();
+export const createLegacyEntityStoreBridge = function(entityId: string, instanceId: string): EntityStore {
+  const adapter = getCanvasAdapter(instanceId);
   
   // Get initial entity from clean architecture
   const initialEntity = adapter.getEntity(entityId);
@@ -110,11 +110,12 @@ export const createLegacyEntityStoreBridge = function(entityId: string): EntityS
  * Adapts clean architecture to legacy property repository interface
  */
 export const createLegacyPropertyRepositoryBridge = function(config: {
+  instanceId: string;
   entityId: string;
   entitySignal: Signal<Entity>;
   storageProvider: IStorageProvider<Entity>;
 }): IRepository<Property> {
-  const adapter = getCanvasAdapter();
+  const adapter = getCanvasAdapter(config.instanceId);
   
   const findById = async function(key: string): Promise<Property | undefined> {
     const entity = adapter.getEntity(config.entityId);
@@ -190,7 +191,7 @@ export const createLegacyPropertyRepositoryBridge = function(config: {
  * Legacy Storage Provider Bridge
  * Adapts clean architecture to legacy storage provider interface
  */
-export const createLegacyStorageProviderBridge = function<T>(): IStorageProvider<T> {
+export const createLegacyStorageProviderBridge = function<T>(instanceId: string): IStorageProvider<T> {
   console.log('[LegacyBridge] Created storage provider bridge - delegates to clean architecture persistence');
   
   return {
@@ -212,7 +213,7 @@ export const createLegacyStorageProviderBridge = function<T>(): IStorageProvider
     
     list: async function(): Promise<readonly string[]> {
       console.log('[LegacyStorageBridge] list() - delegating to clean architecture');
-      const adapter = getCanvasAdapter();
+      const adapter = getCanvasAdapter(instanceId);
       const entities = adapter.getAllEntities();
       return entities.map(e => e.id);
     },

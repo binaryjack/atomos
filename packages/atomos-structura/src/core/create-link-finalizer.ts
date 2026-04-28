@@ -152,6 +152,7 @@ export const createLinkFinalizer = function(
   linkManager: LinkManager,
   workspaceState: Signal<WorkspaceState>,
   contentRoot: SVGElement,
+  instanceId: string,
   onLinkCreated?: (link: { id: string; sourceAnchorId: string; targetAnchorId: string; leftEntityId: string; rightEntityId: string }, isReconnect?: boolean) => void,
   onLinkDeleted?: (linkId: string) => void
 ): LinkFinalizer {
@@ -161,7 +162,7 @@ export const createLinkFinalizer = function(
   let isEntityCascadeDeletion = false;
 
   const updateLinkLabel = (linkId: string, fo: SVGForeignObjectElement) => {
-    const adapter = getCanvasAdapter();
+    const adapter = getCanvasAdapter(instanceId);
     const link = adapter.getLink(linkId);
     const span = fo.querySelector('span');
     if (span && link) {
@@ -176,7 +177,7 @@ export const createLinkFinalizer = function(
     }
   };
 
-  const adapter = getCanvasAdapter();
+  const adapter = getCanvasAdapter(instanceId);
   const unsubAdapter = adapter.onEntityChanged((e) => {
     if (e.type === 'LinkPropertiesUpdated' || e.type === 'LinkCreated' || e.type === 'EntityNameUpdated') {
       linkLabelFOs.forEach((fo, id) => updateLinkLabel(id, fo));
@@ -254,7 +255,7 @@ export const createLinkFinalizer = function(
       const globalConfigSig = registry.get<GlobalConfig>(GLOBAL_KEY);
       const topologyRules = globalConfigSig?.value.topology;
       
-      const adapter = getCanvasAdapter();
+      const adapter = getCanvasAdapter(instanceId);
       const srcEntity = adapter.getEntity(srcEntityId);
       const dstEntity = adapter.getEntity(dstEntityId);
       
@@ -301,7 +302,7 @@ export const createLinkFinalizer = function(
 
     const fo = createLinkLabelFO(
       getMidpoint(initialRenderType, srcPos, srcEdge, dstAnchorPos, dstEdge),
-      () => { openLinkSettingsModal(linkId); },
+      () => { openLinkSettingsModal(instanceId, linkId); },
       () => removeLinkById(linkId)
     );
     contentRoot.appendChild(fo);

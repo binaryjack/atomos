@@ -1,21 +1,20 @@
-﻿import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
-import { f } from '@binaryjack/formular.dev'
+﻿import { createButton, createFormularDropdown, createFormularInput } from '@atomos-web/prime'
 import type { DataType, Property } from '@atomos-web/structura-core'
 import { COMPONENT_TYPES, DATA_TYPES } from '@atomos-web/structura-core'
+import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
+import { f } from '@binaryjack/formular.dev'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
 import { createFormularManager } from '../../core/create-formular-manager.js'
 import { selectEntityById, selectPropertyByKey } from '../../core/selectors.js'
-import { createButton } from '@atomos-web/prime'
-import { createFormularDropdown } from '@atomos-web/prime'
-import { createFormularInput } from '@atomos-web/prime'
 import { createValidationBadge } from './create-validation-badge.js'
 import { createValidationModal } from './create-validation-modal.js'
 
+import type { AtpModal } from '@atomos-web/prime'
 import type { ModalOptions } from './types/modal-options.types.js'
 import type { ModalResult } from './types/modal-result.types.js'
-import type { AtpModal } from '@atomos-web/prime'
 
 export interface PropertySettingsModalProps {
+  readonly instanceId: string;
   readonly entityId: string;
   readonly propertyKey: string;
 }
@@ -23,7 +22,7 @@ export interface PropertySettingsModalProps {
 export const createPropertySettingsModal = function(
   props: PropertySettingsModalProps
 ): AtpModal {
-  const initialProperty = selectPropertyByKey(props.entityId, props.propertyKey);
+  const initialProperty = selectPropertyByKey(props.instanceId, props.entityId, props.propertyKey);
   if (!initialProperty) throw new Error(`Property ${props.propertyKey} not found`);
 
   const modal = document.createElement('atp-modal') as AtpModal;
@@ -61,7 +60,7 @@ export const createPropertySettingsModal = function(
     console.log('[PROPERTY-MODAL] Initializing form with FormularManager, preserved data:', preservedData);
     
     try {
-      const liveProperty = selectPropertyByKey(props.entityId, props.propertyKey);
+      const liveProperty = selectPropertyByKey(props.instanceId, props.entityId, props.propertyKey);
       if (!liveProperty) throw new Error(`Property ${props.propertyKey} not found`);
 
       // Preserve value from live property unless user has already changed it
@@ -324,7 +323,7 @@ export const createPropertySettingsModal = function(
       console.log('[PROPERTY-MODAL-DEBUG] Final form data retrieved:', data);
 
       // Update via Clean Architecture Adapter
-      const entityToUpdate = selectEntityById(props.entityId);
+      const entityToUpdate = selectEntityById(props.instanceId, props.entityId);
       console.log('[PROPERTY-MODAL-DEBUG] Entity to update found?', !!entityToUpdate, entityToUpdate);
       
       if (entityToUpdate) {
@@ -348,7 +347,7 @@ export const createPropertySettingsModal = function(
         );
 
         console.log('[PROPERTY-MODAL-DEBUG] Dispatching updateEntityProperties to Clean Architecture. New props:', newProperties);
-        getCanvasAdapter().updateEntityProperties(props.entityId, newProperties as Property[]);
+        getCanvasAdapter(props.instanceId).updateEntityProperties(props.entityId, newProperties as Property[]);
       } else {
         console.warn('[PROPERTY-MODAL-DEBUG] Aborting. entityToUpdate not found for id:', props.entityId);
       }

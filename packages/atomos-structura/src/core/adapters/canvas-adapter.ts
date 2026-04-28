@@ -47,8 +47,8 @@ export interface CanvasAdapter {
   };
 }
 
-export const createCanvasAdapter = function(): CanvasAdapter {
-  const entityManager = getEntityManager();
+export const createCanvasAdapter = function(instanceId: string): CanvasAdapter {
+  const entityManager = getEntityManager(instanceId);
   const viewStore = createCanvasViewStore();
   
   // Entity Operations - Delegate to Domain Layer
@@ -215,31 +215,33 @@ export const createCanvasAdapter = function(): CanvasAdapter {
 // Use getCanvasAdapterFor(schemaId) in all application code.
 const adapterRegistry = new Map<string, CanvasAdapter>();
 
-/** Returns the adapter bound to the given schema ID, creating it on first access. */
-export const getCanvasAdapterFor = function(schemaId: string): CanvasAdapter {
-  let adapter = adapterRegistry.get(schemaId);
+/** Returns the adapter bound to the given instance and schema ID, creating it on first access. */
+export const getCanvasAdapterFor = function(instanceId: string, schemaId: string): CanvasAdapter {
+  const key = `${instanceId}:${schemaId}`;
+  let adapter = adapterRegistry.get(key);
   if (!adapter) {
-    adapter = createCanvasAdapter();
-    adapterRegistry.set(schemaId, adapter);
-    console.log(`🏗️ Canvas adapter created for schema: ${schemaId}`);
+    adapter = createCanvasAdapter(instanceId);
+    adapterRegistry.set(key, adapter);
+    console.log(`🏗️ Canvas adapter created for instance: ${instanceId}, schema: ${schemaId}`);
   }
   return adapter;
 };
 
 /** Releases the adapter for a schema (call when a schema tab is closed / schema deleted). */
-export const destroyCanvasAdapter = function(schemaId: string): void {
-  adapterRegistry.delete(schemaId);
-  console.log(`🗑️ Canvas adapter destroyed for schema: ${schemaId}`);
+export const destroyCanvasAdapter = function(instanceId: string, schemaId: string): void {
+  const key = `${instanceId}:${schemaId}`;
+  adapterRegistry.delete(key);
+  console.log(`🗑️ Canvas adapter destroyed for instance: ${instanceId}, schema: ${schemaId}`);
 };
 
 // Legacy singleton — kept for backward compatibility. Resolves to the 'default' slot.
-// Deprecated: prefer getCanvasAdapterFor(schemaId).
+// Deprecated: prefer getCanvasAdapterFor(instanceId, schemaId).
 let globalCanvasAdapter: CanvasAdapter | null = null;
 
-export const getCanvasAdapter = function(): CanvasAdapter {
+export const getCanvasAdapter = function(instanceId: string): CanvasAdapter {
   if (!globalCanvasAdapter) {
-    globalCanvasAdapter = createCanvasAdapter();
-    console.log('🏗️ Clean Architecture Canvas Adapter initialized');
+    globalCanvasAdapter = createCanvasAdapter(instanceId);
+    console.log(`🏗️ Clean Architecture Canvas Adapter initialized for instance ${instanceId}`);
   }
   return globalCanvasAdapter;
 };

@@ -1,19 +1,20 @@
-import { createCanvasEventHandler } from './create-canvas-event-handler.js';
-import { createCoordinateTransformer } from './create-coordinate-transformer.js';
-import { createEntityRegistry } from './create-entity-registry.js';
-import { createLinkDrawController } from './create-link-draw-controller.js';
-import { createLinkFinalizer } from './create-link-finalizer.js';
-import { createInteractiveBehaviorManager } from './interactive-behavior-manager.js';
-import { createLinkManager } from './link-manager.js';
-import { injectDesignSystemTokens } from './presentation/design-system.js';
-import type { EntitySpawnFactory } from './types/entity-spawn-factory.types.js';
-import type { WorkspaceManager } from './types/workspace-manager.types.js';
-import type { WorkspaceState } from './types/workspace-state.types.js';
-import { createAlignmentGuides, calculateAlignmentGuides, calculateSnappedPosition } from '../features/alignment/create-alignment-guides.js';
+import { calculateAlignmentGuides, createAlignmentGuides } from '../features/alignment/create-alignment-guides.js'
+import { createCanvasEventHandler } from './create-canvas-event-handler.js'
+import { createCoordinateTransformer } from './create-coordinate-transformer.js'
+import { createEntityRegistry } from './create-entity-registry.js'
+import { createLinkDrawController } from './create-link-draw-controller.js'
+import { createLinkFinalizer } from './create-link-finalizer.js'
+import { createInteractiveBehaviorManager } from './interactive-behavior-manager.js'
+import { createLinkManager } from './link-manager.js'
+import { injectDesignSystemTokens } from './presentation/design-system.js'
+import type { EntitySpawnFactory } from './types/entity-spawn-factory.types.js'
+import type { WorkspaceManager } from './types/workspace-manager.types.js'
+import type { WorkspaceState } from './types/workspace-state.types.js'
 
 export const createWorkspaceManager = function(
   svgContainer: SVGSVGElement,
-  contentRoot: SVGElement = svgContainer
+  contentRoot: SVGElement = svgContainer,
+  instanceId: string
 ): WorkspaceManager {
   injectDesignSystemTokens();
   const behaviorManager  = createInteractiveBehaviorManager();
@@ -33,7 +34,7 @@ export const createWorkspaceManager = function(
     console.log('[WORKSPACE-MANAGER] Alignment guides appended to content root');
   }
   
-  const linkFinalizer    = createLinkFinalizer(linkManager, registry.workspaceState, contentRoot, (link, isReconnect) => {
+  const linkFinalizer    = createLinkFinalizer(linkManager, registry.workspaceState, contentRoot, instanceId, (link, isReconnect) => {
     // Forward to workspace manager's onLinkCreated callback if set
     console.log('[WORKSPACE-MANAGER] Link created via finalizer:', link, { isReconnect });
     (manager as any).onLinkCreated?.(link, isReconnect);
@@ -63,6 +64,7 @@ export const createWorkspaceManager = function(
     getSpawnFactory:   () => spawnFactory,
     getManager:        () => manager,
     onWorkspaceStateUpdate: patchState,
+    instanceId,
   });
 
   manager = {

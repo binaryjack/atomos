@@ -1,34 +1,55 @@
-﻿import { getGlobalReduxStore } from '../create-redux-store.js';
-import type { ReduxState, ReduxAction } from '../../types/redux-state.types.js';
+﻿import type { ReduxAction, ReduxState } from '../../types/redux-state.types.js'
+import { getInstanceReduxStore } from '../create-redux-store.js'
 
 export type StructuraSelector<T> = (state: ReduxState) => T;
 
 /**
- * A headless API adapter that allows React components to subscribe
- * to the Vanilla TypeScript VBE (Structura) engine updates via useSyncExternalStore.
+ * A headless API adapter factory that allows React components to subscribe
+ * to a specific Vanilla TypeScript VBE (Structura) instance's engine updates.
  * 
  * @example
  * ```tsx
  * import { useSyncExternalStore } from 'react';
- * import { structuraStoreAdapter } from '@atomos-web/structura/adapters';
+ * import { createStructuraStoreAdapter } from '@atomos-web/structura/adapters';
  * 
- * const useStructuraState = <T>(selector: (state: ReduxState) => T) => {
+ * const useStructuraState = <T>(instanceId: string, selector: (state: ReduxState) => T) => {
+ *   const adapter = createStructuraStoreAdapter(instanceId);
  *   return useSyncExternalStore(
- *     structuraStoreAdapter.subscribe,
- *     () => selector(structuraStoreAdapter.getState())
+ *     adapter.subscribe,
+ *     () => selector(adapter.getState())
  *   );
  * };
  * ```
  */
+export const createStructuraStoreAdapter = (instanceId: string) => {
+  if (!instanceId) throw new Error('createStructuraStoreAdapter requires a non-empty instanceId.');
+  
+  return {
+    subscribe: (listener: () => void): (() => void) => {
+      const store = getInstanceReduxStore(instanceId);
+      return store.subscribe(listener);
+    },
+    getState: (): ReduxState => {
+      return getInstanceReduxStore(instanceId).get_state();
+    },
+    dispatch: (action: ReduxAction): void => {
+      getInstanceReduxStore(instanceId).dispatch(action);
+    }
+  };
+};
+
+/**
+ * @deprecated v2.0.0. Use createStructuraStoreAdapter(instanceId) instead. 
+ * This legacy adapter will be removed in a future version.
+ */
 export const structuraStoreAdapter = {
   subscribe: (listener: () => void): (() => void) => {
-    const store = getGlobalReduxStore();
-    return store.subscribe(listener);
+    throw new Error('structuraStoreAdapter is deprecated and non-functional. Use createStructuraStoreAdapter(instanceId).');
   },
   getState: (): ReduxState => {
-    return getGlobalReduxStore().get_state();
+    throw new Error('structuraStoreAdapter is deprecated and non-functional. Use createStructuraStoreAdapter(instanceId).');
   },
   dispatch: (action: ReduxAction): void => {
-    getGlobalReduxStore().dispatch(action);
+    throw new Error('structuraStoreAdapter is deprecated and non-functional. Use createStructuraStoreAdapter(instanceId).');
   }
 };

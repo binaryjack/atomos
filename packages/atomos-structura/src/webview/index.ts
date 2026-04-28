@@ -108,8 +108,8 @@ export const initializeStructuraWebview = async (config: WebviewInitConfig): Pro
   // If a specific schema ID was provided (e.g. pre-provisioned by Extension Host),
   // activate it once the store is ready.
   if (resolvedSchemaId) {
-    const { getGlobalReduxStore } = await import('../core/create-redux-store.js')
-    const store = getGlobalReduxStore(undefined, instanceId)
+    const {createInstanceReduxStore } = await import('../core/create-redux-store.js')
+    const store = createInstanceReduxStore(undefined, instanceId)
     const canvas = store.get_state().workspace.canvases[store.get_state().workspace.active_canvas_id]
     if (canvas?.schemas[resolvedSchemaId]) {
       store.dispatch({ type: 'schema-activated', id: resolvedSchemaId })

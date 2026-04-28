@@ -1,14 +1,14 @@
 ﻿import { createButton } from '@atomos-web/prime'
 import type { RenderType } from '@atomos-web/structura-core'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
-import { applyAppearanceTokens, DEFAULT_LINK_STYLE } from '../../core/presentation/design-system.js'
 import { getAppearanceSettings, setAppearanceSettings } from '../../core/adapters/toolbox-config-manager.js'
+import { applyAppearanceTokens, DEFAULT_LINK_STYLE } from '../../core/presentation/design-system.js'
 
 import type { AtpModal } from '@atomos-web/prime'
 
 const modalCache = new Map<string, AtpModal>();
 
-export const openLinkSettingsModal = function(linkId: string): void {
+export const openLinkSettingsModal = function(instanceId: string, linkId: string): void {
   // Always recreate the modal to get fresh link data
   let modal = modalCache.get(linkId);
   if (modal) {
@@ -16,7 +16,7 @@ export const openLinkSettingsModal = function(linkId: string): void {
     modalCache.delete(linkId);
   }
 
-  const canvasAdapter = getCanvasAdapter();
+  const canvasAdapter = getCanvasAdapter(instanceId);
   const link = canvasAdapter.getLink(linkId);
   if (!link) {
     console.error(`Link ${linkId} not found`);

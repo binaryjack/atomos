@@ -1,13 +1,13 @@
 ﻿"use client";
 
-import { useEffect, useRef } from "react";
-import { createCanvasPage } from "@atomos-web/structura/dist/preview/create-canvas-page.js";
-import { getEntityManager } from "@atomos-web/structura/dist/core/presentation/entity-manager.js";
-import { createSchemaGraphKernel } from "@atomos-web/structura/dist/core/create-schema-graph-kernel.js";
-import { createKernelAdapter } from "@atomos-web/structura/dist/adapters/create-kernel-adapter.js";
-import { loadPreset } from "../schema/presets";
+import { createKernelAdapter } from "@atomos-web/structura/dist/adapters/create-kernel-adapter.js"
+import { createSchemaGraphKernel } from "@atomos-web/structura/dist/core/create-schema-graph-kernel.js"
+import { getEntityManager } from "@atomos-web/structura/dist/core/presentation/entity-manager.js"
+import { createCanvasPage } from "@atomos-web/structura/dist/preview/create-canvas-page.js"
+import { useEffect, useRef } from "react"
+import { loadPreset } from "../schema/presets"
 
-import "@atomos-web/prime-style/dist/styles.css";
+import "@atomos-web/prime-style/dist/styles.css"
 
 export default function StructuraCanvas({ preset }: { preset?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -18,13 +18,13 @@ export default function StructuraCanvas({ preset }: { preset?: string }) {
     // Reset singleton redux state (if applicable, but creating page creates new element)
     // Actually the page is recreated but they might share the same underlying global redux tree
     // We can clear previous entities if preset is present to prevent layout overlap
-    const manager = getEntityManager();
+    const manager = getEntityManager('showcase-canvas');
     manager.getAllEntities().forEach(e => manager.removeEntity(e.id));
     manager.getAllLinks().forEach(l => manager.removeLink(l.id));
 
     try {
       console.log("Starting native React canvas with Kernel bridge");
-      const page = createCanvasPage();
+      const page = createCanvasPage('showcase-canvas');
       
       // Override strictly fixed positioning so it fits the container instead of taking over the full viewport
       page.element.style.position = "absolute";

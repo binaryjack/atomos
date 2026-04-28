@@ -1,16 +1,20 @@
-﻿import { getGlobalReduxStore } from './create-redux-store.js';
-import type { ReduxState } from '../types/redux-state.types.js';
-import type { Entity, Property } from '@atomos-web/structura-core';
+﻿import type { Entity, Property } from '@atomos-web/structura-core'
+import type { ReduxState } from '../types/redux-state.types.js'
+import { getInstanceReduxStore } from './create-redux-store.js'
 
 /**
  * Generic selector creator.
- * Encapsulates the global redux store read.
+ * Encapsulates the instance-specific redux store read.
+ * BREAKING v2.0.0: All selectors now require instanceId as the first parameter.
  */
 export const createSelector = <TArgs extends unknown[], TResult>(
   selectorFn: (state: ReduxState, ...args: TArgs) => TResult
 ) => {
-  return (...args: TArgs): TResult => {
-    const state = getGlobalReduxStore().get_state();
+  return (instanceId: string, ...args: TArgs): TResult => {
+    if (!instanceId) {
+      throw new Error('Structura selectors now require a non-empty instanceId as the first argument.');
+    }
+    const state = getInstanceReduxStore(instanceId).get_state();
     return selectorFn(state, ...args);
   };
 };

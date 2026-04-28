@@ -1,35 +1,36 @@
 ﻿/**
  * Infrastructure Layer - Repository Implementation
- * Handles persistence through the Global Redux Store
+ * Handles persistence through the Instance-specific Redux Store
  */
-import { getGlobalReduxStore } from '../create-redux-store.js'
+import { getInstanceReduxStore } from '../create-redux-store.js'
 import type { DomainEntity, DomainLink, EntityRepository, LinkRepository } from '../domain/entity-aggregate.js'
 
-/** Always routes to whichever schema is currently active in the active canvas. */
-const getSchemaId = (): string => {
-  const state = getGlobalReduxStore().get_state();
+/** Always routes to whichever schema is currently active in the active canvas for a given instance. */
+const getSchemaId = (instanceId: string): string => {
+  const state = getInstanceReduxStore(instanceId).get_state();
   const canvas = state.workspace.canvases[state.workspace.active_canvas_id];
   return canvas?.active_schema_id ?? 'schema-default';
 };
 
-const getActiveSchema = (schemaId: string) => {
-  const state = getGlobalReduxStore().get_state();
+const getActiveSchema = (instanceId: string, schemaId: string) => {
+  const state = getInstanceReduxStore(instanceId).get_state();
   const canvas = state.workspace.canvases[state.workspace.active_canvas_id];
   return canvas?.schemas[schemaId];
 };
 
-export const createPersistedEntityRepository = function(): EntityRepository {
-  const store = getGlobalReduxStore();
+export const createPersistedEntityRepository = function(instanceId: string): EntityRepository {
+  if (!instanceId) throw new Error('createPersistedEntityRepository requires an instanceId');
+  const store = getInstanceReduxStore(instanceId);
 
   const getById = function(id: string): DomainEntity | undefined {
-    const schema = getActiveSchema(getSchemaId());
+    const schema = getActiveSchema(instanceId, getSchemaId(instanceId));
     if (!schema) return undefined;
     return schema.entities.find((e) => e.id === id) as unknown as DomainEntity;
   };
 
   const save = function(entity: DomainEntity): void {
-    const schemaId = getSchemaId();
-    const schema = getActiveSchema(schemaId);
+    const schemaId = getSchemaId(instanceId);
+    const schema = getActiveSchema(instanceId, schemaId);
     const exists = schema?.entities.some((e) => e.id === entity.id);
 
     // Convert DomainEntity to Entity
@@ -55,11 +56,11 @@ export const createPersistedEntityRepository = function(): EntityRepository {
   };
 
   const remove = function(id: string): void {
-    store.dispatch({ type: 'entity-removed', schema_id: getSchemaId(), entity_id: id });
+    store.dispatch({ type: 'entity-removed', schema_id: getSchemaId(instanceId), entity_id: id });
   };
 
   const getAll = function(): readonly DomainEntity[] {
-    const schema = getActiveSchema(getSchemaId());
+    const schema = getActiveSchema(instanceId, getSchemaId(instanceId));
     if (!schema) return [];
     return schema.entities as unknown as DomainEntity[];
   };
@@ -67,11 +68,12 @@ export const createPersistedEntityRepository = function(): EntityRepository {
   return { getById, save, remove, getAll };
 };
 
-export const createPersistedLinkRepository = function(): LinkRepository {
-  const store = getGlobalReduxStore();
+export const createPersistedLinkRepository = function(instanceId: string): LinkRepository {
+  if (!instanceId) throw new Error('createPersistedLinkRepository requires an instanceId');
+  const store = getInstanceReduxStore(instanceId);
 
   const getById = function(id: string): DomainLink | undefined {
-    const schema = getActiveSchema(getSchemaId());
+    const schema = getActiveSchema(instanceId, getSchemaId(instanceId));
     if (!schema) return undefined;
 
     const link = schema.links.find((l: any) => l.id === id);
@@ -94,8 +96,8 @@ export const createPersistedLinkRepository = function(): LinkRepository {
   };
 
   const save = function(link: DomainLink): void {
-    const schemaId = getSchemaId();
-    const schema = getActiveSchema(schemaId);
+    const schemaId = getSchemaId(instanceId);
+    const schema = getActiveSchema(instanceId, schemaId);
     const exists = schema?.links.some((l) => l.id === link.id);
 
     if (exists) {
@@ -136,13 +138,13 @@ export const createPersistedLinkRepository = function(): LinkRepository {
   const remove = function(id: string): void {
     store.dispatch({
       type: 'link-removed',
-      schema_id: getSchemaId(),
+      schema_id: getSchemaId(instanceId),
       link_id: id
     });
   };
 
   const getAll = function(): readonly DomainLink[] {
-    const schema = getActiveSchema(getSchemaId());
+    const schema = getActiveSchema(instanceId, getSchemaId(instanceId));
     if (!schema) return [];
 
     return schema.links.map((l: any) => ({

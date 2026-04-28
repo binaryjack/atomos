@@ -1,6 +1,6 @@
-﻿import { getGlobalReduxStore } from '../core/create-redux-store.js';
+﻿import { createInstanceReduxStore } from '../core/create-redux-store.js'
 // Side-effect import: registers vbs-tab and vbs-tabs as custom elements
-import '@atomos-web/prime';
+import '@atomos-web/prime'
 
 const TAB_H = 36;
 
@@ -10,8 +10,8 @@ export interface SchemaTabsResult {
   readonly cleanup: { destroy: () => void };
 }
 
-export const createSchemaTabs = function(): SchemaTabsResult {
-  const store = getGlobalReduxStore();
+export const createSchemaTabs = function(instanceId: string): SchemaTabsResult {
+  const store = createInstanceReduxStore(undefined, instanceId);
   const cleanups: Array<() => void> = [];
 
   // Outer bar — full-width strip at top of canvas

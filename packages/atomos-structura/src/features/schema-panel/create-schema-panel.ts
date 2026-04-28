@@ -6,9 +6,9 @@ import type { CanvasViewport } from '../../core/create-canvas-viewport.js'
 import type { DomainEntity } from '../../core/domain/entity-aggregate.js'
 import type { InteractiveBehaviorManager } from '../../core/types/interactive-behavior-manager.types.js'
 import { createPropertySettingsModal } from '../modal/create-property-settings-modal.js'
-import { getEntityManager } from '../../core/presentation/entity-manager.js'
 
 export interface SchemaPanelProps {
+  readonly instanceId: string;
   readonly dagObserver: DAGObserver;
   readonly viewport: CanvasViewport;
   readonly behaviorManager: InteractiveBehaviorManager;
@@ -345,7 +345,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
         const newName = input.value.trim();
         editingEntityId = '';
         if (newName && newName !== entity.name) {
-          getCanvasAdapter().updateEntityMetadata(entity.id, { name: newName });
+          getCanvasAdapter(props.instanceId).updateEntityMetadata(entity.id, { name: newName });
         } else {
           renderTree();
         }
@@ -457,7 +457,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
         };
         gearBtn.addEventListener('click', (e: MouseEvent) => {
           e.stopPropagation();
-          const modal = createPropertySettingsModal({ entityId: entity.id, propertyKey: prop.key });
+          const modal = createPropertySettingsModal({ instanceId: props.instanceId, entityId: entity.id, propertyKey: prop.key });
           modal.open().catch(console.error);
         });
 
@@ -506,29 +506,42 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
           labelInput.focus();
           labelInput.select();
 
-          const commit = (): void => {
-            const newLabel = labelInput.value.trim() || (prop.label ?? prop.key);
-            const newType  = typeSelect.value;
-            editingPropKey = '';
-            const liveEntity = getCanvasAdapter().getEntity(entity.id);
-            if (!liveEntity) { renderTree(); return; }
-            const changed = newLabel !== (prop.label ?? prop.key) || newType !== prop.dataType;
-            if (changed) {
-              const newProps = (liveEntity.properties as any[]).map(p =>
-                p.key === prop.key ? { ...p, label: newLabel, dataType: newType } : p
-              );
-              getCanvasAdapter().updateEntityProperties(entity.id, newProps);
-            } else {
-              renderTree();
+          let committed = false;
+          const commitPropEdit = (): void => {
+            if (committed) return;
+            committed = true;
+            let changed = false;
+            let newLabel = prop.label;
+            let newDataType = prop.dataType;
+            
+            if (labelInput.value.trim() && labelInput.value.trim() !== prop.label) {
+              newLabel = labelInput.value.trim();
+              changed = true;
             }
+            if (typeSelect.value !== (prop.dataType ?? 'string')) {
+              newDataType = typeSelect.value as any;
+              changed = true;
+            }
+            
+            if (changed) {
+              const liveEntity = getCanvasAdapter(props.instanceId).getEntity(entity.id);
+              if (liveEntity) {
+                const newProps = liveEntity.properties.map((p: any) => 
+                  p.key === prop.key ? { ...p, label: newLabel, dataType: newDataType } : p
+                );
+                getCanvasAdapter(props.instanceId).updateEntityProperties(entity.id, newProps);
+              }
+            }
+            editingPropKey = '';
+            renderTree();
           };
 
           const onKey = (ke: KeyboardEvent): void => {
-            if (ke.key === 'Enter')  { ke.preventDefault(); commit(); }
+            if (ke.key === 'Enter')  { ke.preventDefault(); commitPropEdit(); }
             if (ke.key === 'Escape') { editingPropKey = ''; renderTree(); }
           };
           const onFocusOut = (fe: FocusEvent): void => {
-            if (!propRow.contains(fe.relatedTarget as Node | null)) commit();
+            if (!propRow.contains(fe.relatedTarget as Node | null)) commitPropEdit();
           };
 
           labelInput.addEventListener('keydown', onKey);

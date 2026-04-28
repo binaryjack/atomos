@@ -32,14 +32,14 @@
     import { createKernelAdapter } from '/atomos-structura/dist/adapters/create-kernel-adapter.js';
 
     console.log('🚀 Starting canvas with Kernel bridge');
-    const page = createCanvasPage();
+    const page = createCanvasPage('demo-canvas');
     document.getElementById('canvas-root').appendChild(page.element);
 
     // Boot the headless schema kernel
     const kernel = createSchemaGraphKernel();
 
     // Wire the kernel to the existing UI EntityManager (non-breaking bridge)
-    const bridge = createKernelAdapter(kernel, getEntityManager());
+    const bridge = createKernelAdapter(kernel, getEntityManager('demo-canvas'));
 
     // Expose for console / DevTools debugging
     window.__kernel = kernel;

@@ -1,32 +1,32 @@
-﻿import { getCanvasAdapter } from '../core/adapters/canvas-adapter.js'
+﻿import type { WorkspaceConfig } from '@atomos-web/structura-core'
+import { getCanvasAdapter } from '../core/adapters/canvas-adapter.js'
 import { createDAGObserver } from '../core/adapters/dag-observer.js'
-import { getCustomShapes, getGeneralSettings, getToolboxConfig, setCustomShapes, setGeneralSettings, setToolboxConfig, getAppearanceSettings, setAppearanceSettings, initToolboxConfigManager } from '../core/adapters/toolbox-config-manager.js'
-import { applyAppearanceTokens, injectDesignSystemTokens } from '../core/presentation/design-system.js'
-import { createCanvasViewport } from '../core/create-canvas-viewport.js'
-import { getInstanceReduxStore } from '../core/create-redux-store.js'
-import { createWorkspaceManager } from '../core/create-workspace-manager.js'
-import { getEntityManager } from '../core/presentation/entity-manager.js'
-import { createInteractiveEntityDemo } from '../features/entity-with-edges/create-interactive-entity-demo.js'
-import { createSchemaPanel } from '../features/schema-panel/index.js'
-import { createSettingsPage } from '../features/settings-page/create-settings-page.js'
-import { createCanvasToolbar } from './create-canvas-toolbar.js'
-import { createSchemaTabs } from './create-schema-tabs.js'
-import { createMinimap } from '../features/minimap/create-minimap.js'
-import { createEntitySearch } from '../features/search/create-entity-search.js'
-import { createSchemaGraphKernel } from '../core/create-schema-graph-kernel.js'
-import { createSchemaValidator } from '../core/validation/create-schema-validator.js'
-import { createValidationOverlay } from '../features/validation-overlay/create-validation-overlay.js'
+import { getAppearanceSettings, getCustomShapes, getGeneralSettings, getToolboxConfig, initToolboxConfigManager, setAppearanceSettings, setCustomShapes, setGeneralSettings, setToolboxConfig } from '../core/adapters/toolbox-config-manager.js'
 import { copyEntity, pasteEntity } from '../core/clipboard.js'
-import { createMcpSync } from '../features/mcp-sync/create-mcp-sync.js'
-import { createRubberBand } from '../features/rubber-band/create-rubber-band.js'
-import type { WorkspaceConfig } from '@atomos-web/structura-core'
-import { createShortcutsPanel } from '../features/shortcuts/create-shortcuts-panel.js'
-import { registerExportPlugin, initExportRegistry } from '../features/export/create-export-registry.js'
-import { sqlDdlPlugin } from '../features/export/plugins/sql-ddl.plugin.js'
-import { prismaPlugin } from '../features/export/plugins/prisma.plugin.js'
-import { typescriptPlugin } from '../features/export/plugins/typescript.plugin.js'
+import { createCanvasViewport } from '../core/create-canvas-viewport.js'
+import { createInstanceReduxStore } from '../core/create-redux-store.js'
+import { createSchemaGraphKernel } from '../core/create-schema-graph-kernel.js'
+import { createWorkspaceManager } from '../core/create-workspace-manager.js'
+import { applyAppearanceTokens, injectDesignSystemTokens } from '../core/presentation/design-system.js'
+import { getEntityManager } from '../core/presentation/entity-manager.js'
+import { createSchemaValidator } from '../core/validation/create-schema-validator.js'
+import { createInteractiveEntityDemo } from '../features/entity-with-edges/create-interactive-entity-demo.js'
+import { initExportRegistry, registerExportPlugin } from '../features/export/create-export-registry.js'
 import { jsonSchemaPlugin } from '../features/export/plugins/json-schema.plugin.js'
 import { mermaidPlugin } from '../features/export/plugins/mermaid.plugin.js'
+import { prismaPlugin } from '../features/export/plugins/prisma.plugin.js'
+import { sqlDdlPlugin } from '../features/export/plugins/sql-ddl.plugin.js'
+import { typescriptPlugin } from '../features/export/plugins/typescript.plugin.js'
+import { createMcpSync } from '../features/mcp-sync/create-mcp-sync.js'
+import { createMinimap } from '../features/minimap/create-minimap.js'
+import { createRubberBand } from '../features/rubber-band/create-rubber-band.js'
+import { createSchemaPanel } from '../features/schema-panel/index.js'
+import { createEntitySearch } from '../features/search/create-entity-search.js'
+import { createSettingsPage } from '../features/settings-page/create-settings-page.js'
+import { createShortcutsPanel } from '../features/shortcuts/create-shortcuts-panel.js'
+import { createValidationOverlay } from '../features/validation-overlay/create-validation-overlay.js'
+import { createCanvasToolbar } from './create-canvas-toolbar.js'
+import { createSchemaTabs } from './create-schema-tabs.js'
 
 // Register built-in export plugins once at module load
 registerExportPlugin(sqlDdlPlugin);
@@ -49,7 +49,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   initExportRegistry(instanceId)
 
   // Seed the per-instance store with the runtime config before any subsystem uses it
-  getInstanceReduxStore(instanceId, config)
+  createInstanceReduxStore( config, instanceId)
   
   // Inject design system CSS variables
   injectDesignSystemTokens();
@@ -61,7 +61,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   root.style.cssText = 'position:fixed;inset:0;overflow:hidden;background:var(--vbs-bg-input, #09090b);';
 
   // Schema tabs bar
-  const schemaTabs = createSchemaTabs();
+  const schemaTabs = createSchemaTabs(instanceId);
   root.appendChild(schemaTabs.element);
   cleanups.push(schemaTabs.cleanup.destroy);
   const TAB_H = schemaTabs.height;
@@ -144,7 +144,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   cleanups.push(viewport.cleanup);
 
   // Workspace
-  const workspace = createWorkspaceManager(svg, viewportGroup);
+  const workspace = createWorkspaceManager(svg, viewportGroup, instanceId);
   cleanups.push(workspace.cleanup.destroy);
 
   // Apply persisted appearance tokens AFTER design system is injected
@@ -192,7 +192,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
         const worldX = (screenW / 2 - v.pan.x) / v.zoom;
         const worldY = (screenH / 2 - v.pan.y) / v.zoom;
         const id = `entity-${Date.now()}`;
-        getEntityManager().createEntity(id, `New ${sh.name}`, { x: worldX - 100, y: worldY - 50 }, { width: 200, height: sh.shape === 'box' || sh.shape === 'rectangle' ? 100 : 180 }, { shape: sh.shape, color: sh.baseColor });
+        getEntityManager(instanceId).createEntity(id, `New ${sh.name}`, { x: worldX - 100, y: worldY - 50 }, { width: 200, height: sh.shape === 'box' || sh.shape === 'rectangle' ? 100 : 180 }, { shape: sh.shape, color: sh.baseColor });
       };
 
       btn.draggable = true;
@@ -251,7 +251,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
           const worldX = (screenW / 2 - v.pan.x) / v.zoom;
           const worldY = (screenH / 2 - v.pan.y) / v.zoom;
           const id = `entity-${Date.now()}`;
-          getEntityManager().createEntity(id, `New ${sh.name}`, { x: worldX - 100, y: worldY - 50 }, { width: 200, height: sh.shape === 'box' || sh.shape === 'rectangle' ? 100 : 180 }, { shape: sh.shape, color: sh.baseColor });
+          getEntityManager(instanceId).createEntity(id, `New ${sh.name}`, { x: worldX - 100, y: worldY - 50 }, { width: 200, height: sh.shape === 'box' || sh.shape === 'rectangle' ? 100 : 180 }, { shape: sh.shape, color: sh.baseColor });
           flyout.style.display = 'none';
         };
 
@@ -312,33 +312,34 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
         const metadata: any = { shape: shapeType };
         if (shapeColor) metadata.color = shapeColor;
         
-        getEntityManager().createEntity(id, `New ${shapeType}`, { x: worldX - 100, y: worldY - 50 }, { width: 200, height: shapeType === 'box' || shapeType === 'rectangle' ? 100 : 180 }, metadata);
+        getEntityManager(instanceId).createEntity(id, `New ${shapeType}`, { x: worldX - 100, y: worldY - 50 }, { width: 200, height: shapeType === 'box' || shapeType === 'rectangle' ? 100 : 180 }, metadata);
       }
     }
   };
 
-  createInteractiveEntityDemo(workspace);
+  createInteractiveEntityDemo(workspace, instanceId);
 
   // Minimap — anchored to the right edge of the shape palette
-  const minimap = createMinimap(getEntityManager(), viewport, canvasWrap, palette);
+  const minimap = createMinimap(getEntityManager(instanceId), viewport, canvasWrap, palette);
   cleanups.push(minimap.cleanup.destroy);
 
   // Entity search (Ctrl+K)
-  const entitySearch = createEntitySearch(getEntityManager(), viewport, canvasWrap);
+  const entitySearch = createEntitySearch(getEntityManager(instanceId), viewport, canvasWrap);
   cleanups.push(entitySearch.cleanup.destroy);
 
   // Mount Floating Toolbar
   const { bottomBar, topBurger, destroy: destroyToolbar } = createCanvasToolbar({
+    instanceId,
     viewport,
-    entityManager: getEntityManager(),
+    entityManager: getEntityManager(instanceId),
     onSettings: () => {
       if (config?.headless) return;
-      const store = getInstanceReduxStore(instanceId);
+      const store = createInstanceReduxStore(undefined, instanceId);
       const st = store.get_state();
       store.dispatch({ type: 'settings-toggled', is_open: !st.is_settings_open });
     },
     getKernel: () => {
-      const reduxStore = getInstanceReduxStore(instanceId);
+      const reduxStore = createInstanceReduxStore(undefined, instanceId);
       const st = reduxStore.get_state();
       const canvas = st.workspace.canvases[st.workspace.active_canvas_id];
       const schema = canvas?.schemas[canvas?.active_schema_id ?? ''];
@@ -357,14 +358,14 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   topBurger.style.marginLeft = '8px';
 
   // Validation overlay
-  const store = getInstanceReduxStore(instanceId);
+  const store = createInstanceReduxStore(undefined, instanceId);
   const validator = createSchemaValidator(store);
-  const validationOverlay = createValidationOverlay(validator, viewport, getEntityManager(), canvasWrap);
+  const validationOverlay = createValidationOverlay(validator, viewport, getEntityManager(instanceId), canvasWrap);
   cleanups.push(validationOverlay.cleanup.destroy);
   cleanups.push(validator.cleanup);
 
   // Rubber-band multi-select
-  const rubberBand = createRubberBand(svg, viewportGroup, viewport, getEntityManager());
+  const rubberBand = createRubberBand(svg, viewportGroup, viewport, getEntityManager(instanceId));
   cleanups.push(rubberBand.cleanup.destroy);
   // Visual selection feedback — highlight matched entities with a blue glow
   cleanups.push(rubberBand.subscribe(ids => {
@@ -471,7 +472,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
       //    Uses reannounceEntity to fire EntityCreated without any Redux write,
       //    avoiding data corruption (no overwriting properties with empty values).
       const missing = reduxEntities.filter(re => !workspace.workspaceState.value.entities.has(re.id));
-      missing.forEach(re => getEntityManager().reannounceEntity(re.id));
+      missing.forEach(re => getEntityManager(instanceId).reannounceEntity(re.id));
 
       // 4. Re-announce links that are in Redux but missing from DOM (tab switch / undo).
       const missingLinks = reduxLinks.filter(rl => {
@@ -488,7 +489,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
         }
         return false;
       });
-      missingLinks.forEach(rl => getEntityManager().reannounceLink(rl.id));
+      missingLinks.forEach(rl => getEntityManager(instanceId).reannounceLink(rl.id));
 
       // 5. Always refresh the minimap after reconcile so switching to an empty
       //    schema clears stale thumbnails (no EntityCreated events fire otherwise).
@@ -584,7 +585,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
           applyAppearanceTokens(settings.appearance?.entity, settings.appearance?.link);
           applyGridSettings();
           
-          const adapter = getCanvasAdapter();
+          const adapter = getCanvasAdapter(instanceId);
           const allLinks = adapter.getAllLinks() || [];
           allLinks.forEach((link: any) => {
             if (!link.renderType || link.renderType === 'bezier' || link.renderType === 'orthogonal' || link.renderType === 'linear') {
@@ -644,27 +645,27 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
       const multiIds = rubberBand.getSelectedIds();
       const entityId = multiIds.size > 0
         ? multiIds.values().next().value as string
-        : (getCanvasAdapter().getSelectedEntityId() ?? undefined);
+        : (getCanvasAdapter(instanceId).getSelectedEntityId() ?? undefined);
       if (entityId) {
-        const entity = getEntityManager().getEntity(entityId);
+        const entity = getEntityManager(instanceId).getEntity(entityId);
         if (entity) copyEntity(entity);
       }
     } else if (e.ctrlKey && e.key === 'v') {
       e.preventDefault();
-      pasteEntity(getEntityManager());
+      pasteEntity(getEntityManager(instanceId));
     } else if (e.key === 'Delete' || e.key === 'Backspace') {
       const multiIds = rubberBand.getSelectedIds();
       if (multiIds.size > 0) {
         e.preventDefault();
         const count = multiIds.size;
         if (count === 1 || window.confirm(`Delete ${count} entities?`)) {
-          multiIds.forEach(id => getEntityManager().removeEntity(id));
+          multiIds.forEach(id => getEntityManager(instanceId).removeEntity(id));
         }
       } else {
-        const selectedId = getCanvasAdapter().getSelectedEntityId();
+        const selectedId = getCanvasAdapter(instanceId).getSelectedEntityId();
         if (selectedId) {
           e.preventDefault();
-          getEntityManager().removeEntity(selectedId);
+          getEntityManager(instanceId).removeEntity(selectedId);
         }
       }
     } else if (e.shiftKey && e.key === '?') {
@@ -677,9 +678,10 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
 
   // ── Schema Panel (right side, collapsible treeview) ──────────────────────
   if (!config?.headless) {
-  const dagObserver = createDAGObserver(getEntityManager());
+  const dagObserver = createDAGObserver(getEntityManager(instanceId));
 
   const schemaPanel = createSchemaPanel({
+    instanceId,
     dagObserver,
     viewport,
     behaviorManager: workspace.behaviorManager,

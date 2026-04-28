@@ -16,6 +16,7 @@ const ROW_H    = 30;
 const MIN_BODY_ROWS = 2;
 
 export interface EntityContentProps {
+  readonly instanceId: string;
   readonly entityStore: EntityStore;
   readonly globalConfig: Signal<GlobalConfig>;
   readonly storageProvider: IStorageProvider<Entity>;
@@ -152,6 +153,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
           onLabelChange: (v) => {
             propLabelSignal.set(v);
             const repository = createLegacyPropertyRepositoryBridge({
+              instanceId: props.instanceId,
               entityId: store.signal.value.id,
               entitySignal: store.signal,
               storageProvider: props.storageProvider
@@ -161,6 +163,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
           onDataTypeChange: (v) => {
             propTypeSignal.set(v);
             const repository = createLegacyPropertyRepositoryBridge({
+              instanceId: props.instanceId,
               entityId: store.signal.value.id,
               entitySignal: store.signal,
               storageProvider: props.storageProvider
@@ -170,6 +173,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
           onComponentTypeChange: (v) => {
             propComponentTypeSignal.set(v);
             const repository = createLegacyPropertyRepositoryBridge({
+              instanceId: props.instanceId,
               entityId: store.signal.value.id,
               entitySignal: store.signal,
               storageProvider: props.storageProvider
@@ -179,6 +183,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
           onValueChange: (v) => {
             propValueSignal.set(v);
             const repository = createLegacyPropertyRepositoryBridge({
+              instanceId: props.instanceId,
               entityId: store.signal.value.id,
               entitySignal: store.signal,
               storageProvider: props.storageProvider
@@ -187,6 +192,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
           },
           onSettingsClick: () => {
             const propModal = createPropertySettingsModal({
+              instanceId: props.instanceId,
               entityId: store.signal.value.id,
               propertyKey: prop.key,
             });
@@ -195,6 +201,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
           onDeleteClick: async () => {
             console.log(`[ENTITY-CONTENT] Deleting property ${prop.key} via clean architecture bridge...`);
             const repository = createLegacyPropertyRepositoryBridge({
+              instanceId: props.instanceId,
               entityId: store.signal.value.id,
               entitySignal: store.signal,
               storageProvider: props.storageProvider
@@ -245,6 +252,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
     onAddProperty: async () => {
       console.log('[ENTITY-CONTENT] Adding new property via clean architecture bridge...');
       const repository = createLegacyPropertyRepositoryBridge({
+        instanceId: props.instanceId,
         entityId: store.signal.value.id,
         entitySignal: store.signal,
         storageProvider: props.storageProvider

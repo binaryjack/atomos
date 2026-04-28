@@ -1,12 +1,12 @@
-﻿import type { Entity, WorkspaceConfig } from '@atomos-web/structura-core';
-import { create_redux_store } from './create-redux-store.js';
-import { createWorkspaceApi } from './create-workspace-api.js';
-import { createSchemaGraphKernel } from './create-schema-graph-kernel.js';
-import { createMenuControl } from './create-menu-control.js';
-import type { WorkspaceApi } from './create-workspace-api.js';
-import type { ReduxStore } from '../types/redux-state.types.js';
-import type { SchemaGraphKernel } from './create-schema-graph-kernel.js';
-import type { MenuControl } from '../types/menu-control.types.js';
+﻿import type { Entity, WorkspaceConfig } from '@atomos-web/structura-core'
+import type { MenuControl } from '../types/menu-control.types.js'
+import type { ReduxStore } from '../types/redux-state.types.js'
+import { createMenuControl } from './create-menu-control.js'
+import { create_redux_store } from './create-redux-store.js'
+import type { SchemaGraphKernel } from './create-schema-graph-kernel.js'
+import { createSchemaGraphKernel } from './create-schema-graph-kernel.js'
+import type { WorkspaceApi } from './create-workspace-api.js'
+import { createWorkspaceApi } from './create-workspace-api.js'
 
 export interface SchemaBuilderProps {
   readonly config?: WorkspaceConfig;
@@ -61,6 +61,7 @@ export const createSchemaBuilder = function(props: SchemaBuilderProps): SchemaBu
     )
   }
   const instanceId = props.instanceId
+  console.log('-----createSchemaBuilder -', instanceId)
   const store = create_redux_store(props.config ? { instanceId, config: props.config } : { instanceId });
   const workspaceApi = createWorkspaceApi(store);
   const menuControl = createMenuControl(props.config?.menu);

@@ -1,14 +1,14 @@
-﻿import type { Entity } from '@atomos-web/structura-core';
-import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js';
-import { createLegacyEntityStoreBridge, createLegacyStorageProviderBridge } from '../../core/adapters/legacy-property-bridge.js';
-import { createSignal } from '@atomos-web/prime';
-import { ENTITY_DEFAULT_HEIGHT, ENTITY_DEFAULT_WIDTH } from '../../core/entity-defaults.js';
-import type { EntityInstance } from '../../core/types/entity-instance.types.js';
-import type { EntitySpawnFactory } from '../../core/types/entity-spawn-factory.types.js';
-import { DEFAULT_GLOBAL_CONFIG } from '../../core/types/global-config.types.js';
-import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js';
-import { createDemoEntity } from './create-demo-entity.js';
-import { getGlobalReduxStore } from '../../core/create-redux-store.js';
+﻿import { createSignal } from '@atomos-web/prime'
+import type { Entity } from '@atomos-web/structura-core'
+import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
+import { createLegacyEntityStoreBridge, createLegacyStorageProviderBridge } from '../../core/adapters/legacy-property-bridge.js'
+import { getInstanceReduxStore } from '../../core/create-redux-store.js'
+import { ENTITY_DEFAULT_HEIGHT, ENTITY_DEFAULT_WIDTH } from '../../core/entity-defaults.js'
+import type { EntityInstance } from '../../core/types/entity-instance.types.js'
+import type { EntitySpawnFactory } from '../../core/types/entity-spawn-factory.types.js'
+import { DEFAULT_GLOBAL_CONFIG } from '../../core/types/global-config.types.js'
+import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js'
+import { createDemoEntity } from './create-demo-entity.js'
 
 const makeEntityProps = (id: string, name: string, x: number, y: number, width?: number, height?: number, properties?: any[]): Entity => ({
   id,
@@ -40,7 +40,8 @@ const spawnEntity = (
   entityProps: Entity & { shape?: string, color?: string | undefined },
   workspace: WorkspaceManager,
   globalConfigSignal: any, // Legacy parameter kept for compatibility
-  adapter: ReturnType<typeof getCanvasAdapter>
+  adapter: ReturnType<typeof getCanvasAdapter>,
+  instanceId: string
 ): EntityInstance => {
   console.log(`[CANVAS-PAGE] ?? Spawning entity ${entityProps.id} through CLEAN ARCHITECTURE - No cascading stores!`);
   
@@ -133,10 +134,11 @@ const spawnEntity = (
   });
   
   // Legacy compatibility bridge - connects clean architecture to existing property UI
-  const storageProvider = createLegacyStorageProviderBridge<Entity>();
-  const entityStore = createLegacyEntityStoreBridge(entityProps.id);
+  const storageProvider = createLegacyStorageProviderBridge<Entity>(instanceId);
+  const entityStore = createLegacyEntityStoreBridge(entityProps.id, instanceId);
   
   const entity = createDemoEntity({
+    instanceId,
     id: entityProps.id,
     shape: entityProps.shape as any,
     color: entityProps.color,
@@ -152,11 +154,11 @@ const spawnEntity = (
   return entity.instance;
 };
 
-export const createInteractiveEntityDemo = function(workspace: WorkspaceManager) {
+export const createInteractiveEntityDemo = function(workspace: WorkspaceManager, instanceId: string) {
   console.log('?? [CANVAS-PAGE] ?? MAIN CANVAS PAGE WORKING! Clean architecture active - NO RUNTIME ERRORS!');
   
   // Get clean architecture adapter - Single source of truth
-  const canvasAdapter = getCanvasAdapter();
+  const canvasAdapter = getCanvasAdapter(instanceId);
   
   // Clean event handling - No cascading subscriptions
   canvasAdapter.onEntityChanged(event => {
@@ -168,7 +170,7 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
         if (!exists) {
           // Only spawn if this entity belongs to the currently active schema.
           // Prevents cross-tab contamination when reannounceEntity fires events.
-          const reduxState = getGlobalReduxStore().get_state();
+          const reduxState = getInstanceReduxStore(instanceId).get_state();
           const activeCanvas = reduxState.workspace.canvases[reduxState.workspace.active_canvas_id];
           const activeSchema = activeCanvas?.schemas[activeCanvas?.active_schema_id ?? ''];
           const entityInActiveSchema = activeSchema?.entities.some((e: { id: string }) => e.id === event.entity.id);
@@ -178,7 +180,7 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
           const ep: Entity & { shape?: string, color?: string | undefined } = makeEntityProps(domainEntity.id, domainEntity.name, domainEntity.position.x, domainEntity.position.y, domainEntity.dimensions.width, domainEntity.dimensions.height, domainEntity.properties as any[]);
           ep.shape = domainEntity.shape as any;
           ep.color = domainEntity.color;
-          const instance = spawnEntity(ep, workspace, { value: DEFAULT_GLOBAL_CONFIG }, canvasAdapter);
+          const instance = spawnEntity(ep, workspace, { value: DEFAULT_GLOBAL_CONFIG }, canvasAdapter, instanceId);
           workspace.registerEntity(instance);
         }
         break;
@@ -274,7 +276,7 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
     const preRegistered = ws.workspaceState.value.entities.get(id);
     if (preRegistered) return preRegistered;
     console.log(`[CANVAS-PAGE] ? New entity spawned at (${pos.x}, ${pos.y}) through clean architecture`);
-    return spawnEntity(ep, ws, { value: DEFAULT_GLOBAL_CONFIG }, canvasAdapter);
+    return spawnEntity(ep, ws, { value: DEFAULT_GLOBAL_CONFIG }, canvasAdapter, instanceId);
   };
   workspace.setEntitySpawnFactory(factory);
 
@@ -285,7 +287,7 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager)
     ep.color = domainEntity.color;
     console.log(`[CANVAS-PAGE] ?? Rendering entity ${domainEntity.id} at (${domainEntity.position.x}, ${domainEntity.position.y})`);
     
-    const instance = spawnEntity(ep, workspace, { value: DEFAULT_GLOBAL_CONFIG }, canvasAdapter);
+    const instance = spawnEntity(ep, workspace, { value: DEFAULT_GLOBAL_CONFIG }, canvasAdapter, instanceId);
     workspace.registerEntity(instance);
   });
   

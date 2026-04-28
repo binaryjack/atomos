@@ -63,10 +63,11 @@ declare global {
   }
 }
 
-export const createEntityManager = function(): EntityManager {
+export const createEntityManager = function(instanceId: string): EntityManager {
+  if (!instanceId) throw new Error('createEntityManager requires a non-empty instanceId');
   // Wire up clean architecture layers
-  const repository = createPersistedEntityRepository();
-  const linkRepository = createPersistedLinkRepository();
+  const repository = createPersistedEntityRepository(instanceId);
+  const linkRepository = createPersistedLinkRepository(instanceId);
   const eventBus = createEventBus(); 
   const applicationService = createEntityApplicationService(repository, linkRepository, eventBus);
   
@@ -233,7 +234,7 @@ export const createEntityManager = function(): EntityManager {
   const connectDevTools = function(): void {
     if (typeof window !== 'undefined' && window.__REDUX_DEVTOOLS_EXTENSION__) {
       devToolsConnection = window.__REDUX_DEVTOOLS_EXTENSION__.connect({
-        name: 'VBE2 Entity Manager',
+        name: `VBE2 Entity Manager [${instanceId}]`,
         trace: true,
         traceLimit: 25
       });
@@ -244,7 +245,7 @@ export const createEntityManager = function(): EntityManager {
         links: getAllLinks()
       };
       devToolsConnection.init(initialState);
-      console.log('🔧 Redux DevTools connected to EntityManager');
+      console.log(`🔧 Redux DevTools connected to EntityManager for instance ${instanceId}`);
       
       // Subscribe to events and send to DevTools
       eventUnsubscribe = eventBus.subscribe((event: ApplicationEvent) => {
@@ -292,13 +293,15 @@ export const createEntityManager = function(): EntityManager {
   };
 };
 
-// Singleton Pattern for Global Access
-let globalEntityManager: EntityManager | null = null;
+// Per-instance Pattern for Multi-Canvas Support
+const entityManagers = new Map<string, EntityManager>();
 
-export const getEntityManager = function(): EntityManager {
-  if (!globalEntityManager) {
-    globalEntityManager = createEntityManager();
-    globalEntityManager.connectDevTools();
+export const getEntityManager = function(instanceId: string): EntityManager {
+  if (!instanceId) throw new Error('getEntityManager requires a non-empty instanceId');
+  if (!entityManagers.has(instanceId)) {
+    const newManager = createEntityManager(instanceId);
+    newManager.connectDevTools();
+    entityManagers.set(instanceId, newManager);
   }
-  return globalEntityManager;
+  return entityManagers.get(instanceId)!;
 };
