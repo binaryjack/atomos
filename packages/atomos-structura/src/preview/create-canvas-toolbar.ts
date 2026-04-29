@@ -71,19 +71,52 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
   };
 
   const centerToSchema = () => {
+    console.log('[TOOLBAR-LOG] centerToSchema requested');
     const box = getBoundingBox();
-    if (!box) return;
+    if (!box) {
+      console.log('[TOOLBAR-LOG] getBoundingBox returned null');
+      return;
+    }
+    
+    // Extreme fallback protection
+    if (!Number.isFinite(box.minX) || !Number.isFinite(box.minY) || !Number.isFinite(box.width) || !Number.isFinite(box.height)) {
+      console.error('[TOOLBAR-LOG] CRITICAL: getBoundingBox returned NaN/Infinity box!', box);
+      return;
+    }
+
+    console.log('[TOOLBAR-LOG] getBoundingBox returned:', box);
+    
     const { zoom } = viewport.state.value;
+    const currentZoom = Number.isFinite(zoom) ? zoom : 1;
     const screenW = toolbar.parentElement?.clientWidth || window.innerWidth;
     const screenH = (toolbar.parentElement?.clientHeight || window.innerHeight) - 40; // Nav height
-    const targetPanX = (screenW / 2) - ((box.minX + box.width / 2) * zoom);
-    const targetPanY = (screenH / 2) - ((box.minY + box.height / 2) * zoom);
-    viewport.panTo(targetPanX, targetPanY);
+    const targetPanX = (screenW / 2) - ((box.minX + box.width / 2) * currentZoom);
+    const targetPanY = (screenH / 2) - ((box.minY + box.height / 2) * currentZoom);
+    
+    console.log(`[TOOLBAR-LOG] centerToSchema targetPanX:${targetPanX} targetPanY:${targetPanY} currentZoom:${currentZoom}`);
+    
+    viewport.panTo(
+      Number.isFinite(targetPanX) ? targetPanX : 0, 
+      Number.isFinite(targetPanY) ? targetPanY : 0
+    );
   };
 
   const fitToScreen = () => {
+    console.log('[TOOLBAR-LOG] fitToScreen requested');
     const box = getBoundingBox();
-    if (!box) return;
+    if (!box) {
+      console.log('[TOOLBAR-LOG] getBoundingBox returned null');
+      return;
+    }
+    
+    // Extreme fallback protection
+    if (!Number.isFinite(box.minX) || !Number.isFinite(box.minY) || !Number.isFinite(box.width) || !Number.isFinite(box.height)) {
+      console.error('[TOOLBAR-LOG] CRITICAL: getBoundingBox returned NaN/Infinity box!', box);
+      return;
+    }
+
+    console.log('[TOOLBAR-LOG] getBoundingBox returned:', box);
+    
     const screenW = toolbar.parentElement?.clientWidth || window.innerWidth;
     const screenH = (toolbar.parentElement?.clientHeight || window.innerHeight) - 40;
     const padding = 100;
@@ -91,12 +124,20 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
     const zoomY = (screenH - padding * 2) / Math.max(box.height, 1);
     const newZoom = Math.min(Math.min(zoomX, zoomY), 2); // Cap at 2x max
     
-    viewport.zoomTo(newZoom);
+    console.log(`[TOOLBAR-LOG] fitToScreen zoomX:${zoomX} zoomY:${zoomY} calculated newZoom:${newZoom}`);
+    
+    viewport.zoomTo(Number.isFinite(newZoom) ? newZoom : 1);
     
     // Recalculate pan with new zoom
     const targetPanX = (screenW / 2) - ((box.minX + box.width / 2) * newZoom);
     const targetPanY = (screenH / 2) - ((box.minY + box.height / 2) * newZoom);
-    viewport.panTo(targetPanX, targetPanY);
+    
+    console.log(`[TOOLBAR-LOG] fitToScreen targetPanX:${targetPanX} targetPanY:${targetPanY}`);
+    
+    viewport.panTo(
+      Number.isFinite(targetPanX) ? targetPanX : 0, 
+      Number.isFinite(targetPanY) ? targetPanY : 0
+    );
   };
 
   // 2. Build Buttons

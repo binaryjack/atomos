@@ -30,9 +30,9 @@ export interface CanvasAdapter {
   readonly getAllLinks: () => readonly any[];
   
   // View Operations (UI State)
-  readonly setViewport: (zoom?: number, panX?: number, panY?: number) => void;
+  readonly setViewport: (viewport: Partial<{ zoom: number; pan: { x: number; y: number } }>) => void;
   readonly selectEntity: (entityId: string | null) => void;
-  readonly getViewport: () => { zoom: number; panX: number; panY: number };
+  readonly getViewport: () => { zoom: number; pan: { x: number; y: number } };
   readonly getSelectedEntityId: () => string | null;
   
   // Event Subscriptions
@@ -42,7 +42,7 @@ export interface CanvasAdapter {
   // Canvas State for Existing Components
   readonly getCanvasState: () => {
     entities: Record<string, any>;
-    viewport: { zoom: number; panX: number; panY: number };
+    viewport: { zoom: number; pan: { x: number; y: number } };
     selectedEntityId: string | null;
   };
 }
@@ -132,12 +132,7 @@ export const createCanvasAdapter = function(instanceId: string): CanvasAdapter {
   };
   
   // View Operations - Delegate to View Layer
-  const setViewport = function(zoom?: number, panX?: number, panY?: number): void {
-    const viewport: any = {};
-    if (zoom !== undefined) viewport.zoom = zoom;
-    if (panX !== undefined) viewport.panX = panX;
-    if (panY !== undefined) viewport.panY = panY;
-    
+  const setViewport = function(viewport: Partial<{ zoom: number; pan: { x: number; y: number } }>): void {
     viewStore.dispatch({ type: 'SetViewport', viewport });
   };
   

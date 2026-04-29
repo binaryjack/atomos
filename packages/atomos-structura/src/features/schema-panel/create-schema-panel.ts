@@ -567,13 +567,23 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
   let flashTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const focusEntityOnCanvas = (entity: DomainEntity): void => {
+    console.log('[SCHEMA-PANEL-LOG] focusEntityOnCanvas requested for entity:', entity.id);
     const rect  = props.canvasContainer.getBoundingClientRect();
-    const zoom  = props.viewport.state.value.zoom;
+    const currentZoom = Number.isFinite(props.viewport.state.value.zoom) ? props.viewport.state.value.zoom : 1;
     const cx    = entity.position.x + entity.dimensions.width  / 2;
     const cy    = entity.position.y + entity.dimensions.height / 2;
     const viewW = rect.width  - (isCollapsed ? PANEL_COLLAPSED_W : panelWidth);
     const viewH = rect.height;
-    props.viewport.panTo(viewW / 2 - cx * zoom, viewH / 2 - cy * zoom);
+    
+    const targetPanX = viewW / 2 - cx * currentZoom;
+    const targetPanY = viewH / 2 - cy * currentZoom;
+    
+    console.log(`[SCHEMA-PANEL-LOG] focusEntityOnCanvas center cx:${cx} cy:${cy} | targetPanX:${targetPanX} targetPanY:${targetPanY}`);
+    
+    props.viewport.panTo(
+      Number.isFinite(targetPanX) ? targetPanX : 0, 
+      Number.isFinite(targetPanY) ? targetPanY : 0
+    );
 
     // ── Flash ring animation ──────────────────────────────────────────────
     ensureFlashStyles();

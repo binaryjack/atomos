@@ -49,7 +49,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   initExportRegistry(instanceId)
 
   // Seed the per-instance store with the runtime config before any subsystem uses it
-  createInstanceReduxStore( config, instanceId)
+  const store = createInstanceReduxStore(config, instanceId)
   
   // Inject design system CSS variables
   injectDesignSystemTokens();
@@ -130,17 +130,41 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
 
   canvasWrap.appendChild(svg);
 
+  // Initialize Viewport with Redux state
+  const initialCanvasState = store.get_state().workspace.canvases[store.get_state().workspace.active_canvas_id];
+  let initialViewport = initialCanvasState?.viewport;
+  
+  // Migration logic for old state loaded from Redux
+  if (initialViewport && !(initialViewport as any).pan && typeof (initialViewport as any).panX === 'number') {
+    initialViewport = {
+      zoom: Number.isFinite(initialViewport.zoom) ? initialViewport.zoom : 1,
+      pan: { 
+        x: (initialViewport as any).panX, 
+        y: (initialViewport as any).panY 
+      }
+    };
+    // Let Redux know we migrated it
+    setTimeout(() => store.dispatch({ type: 'viewport-updated', viewport: initialViewport as any }), 0);
+  } else if (!initialViewport || !initialViewport.pan || !Number.isFinite(initialViewport.pan.x)) {
+    initialViewport = { zoom: 1, pan: { x: 0, y: 0 } };
+  }
+
   // Viewport (zoom/pan) — attached to canvasWrap
-  const viewport = createCanvasViewport(canvasWrap, svg);
-  cleanups.push(viewport.state.subscribe((vs) => {
-    viewportGroup.setAttribute('transform', viewport.transform());
-    smallGrid.setAttribute('patternTransform', viewport.transform());
-    largeGrid.setAttribute('patternTransform', viewport.transform());
+  const viewport = createCanvasViewport(canvasWrap, svg, initialViewport as any, (vs) => {
     store.dispatch({ type: 'viewport-updated', viewport: vs });
-  }));
-  viewportGroup.setAttribute('transform', viewport.transform());
-  smallGrid.setAttribute('patternTransform', viewport.transform());
-  largeGrid.setAttribute('patternTransform', viewport.transform());
+  });
+
+  // Function to apply viewport visually
+  const applyViewport = () => {
+    const t = viewport.transform();
+    console.log('[CANVAS-PAGE-LOG] applyViewport applying transform:', t);
+    viewportGroup.setAttribute('transform', t);
+    smallGrid.setAttribute('patternTransform', t);
+    largeGrid.setAttribute('patternTransform', t);
+  };
+
+  cleanups.push(viewport.state.subscribe(applyViewport));
+  applyViewport();
   cleanups.push(viewport.cleanup);
 
   // Workspace
@@ -185,12 +209,18 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
       btn.onmouseover = () => { btn.style.background = 'var(--vbs-bg-panel, #111111)'; btn.style.color = '#f8fafc'; };
       btn.onmouseout = () => { btn.style.background = 'transparent'; btn.style.color = 'var(--vbs-text-secondary, #a1a1aa)'; };
       
-      btn.onclick = () => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
         const v = viewport.state.value;
         const screenW = window.innerWidth;
         const screenH = window.innerHeight;
-        const worldX = (screenW / 2 - v.pan.x) / v.zoom;
-        const worldY = (screenH / 2 - v.pan.y) / v.zoom;
+        // Fix: Use Math.max and Number.isFinite to ensure valid coordinates
+        const safePanX = Number.isFinite(v.pan.x) ? v.pan.x : 0;
+        const safePanY = Number.isFinite(v.pan.y) ? v.pan.y : 0;
+        const safeZoom = (Number.isFinite(v.zoom) && v.zoom > 0) ? v.zoom : 1;
+        
+        const worldX = (screenW / 2 - safePanX) / safeZoom;
+        const worldY = (screenH / 2 - safePanY) / safeZoom;
         const id = `entity-${Date.now()}`;
         getEntityManager(instanceId).createEntity(id, `New ${sh.name}`, { x: worldX - 100, y: worldY - 50 }, { width: 200, height: sh.shape === 'box' || sh.shape === 'rectangle' ? 100 : 180 }, { shape: sh.shape, color: sh.baseColor });
       };
@@ -248,8 +278,13 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
           const v = viewport.state.value;
           const screenW = window.innerWidth;
           const screenH = window.innerHeight;
-          const worldX = (screenW / 2 - v.pan.x) / v.zoom;
-          const worldY = (screenH / 2 - v.pan.y) / v.zoom;
+          // Fix: Use Math.max and Number.isFinite to ensure valid coordinates
+          const safePanX = Number.isFinite(v.pan.x) ? v.pan.x : 0;
+          const safePanY = Number.isFinite(v.pan.y) ? v.pan.y : 0;
+          const safeZoom = (Number.isFinite(v.zoom) && v.zoom > 0) ? v.zoom : 1;
+          
+          const worldX = (screenW / 2 - safePanX) / safeZoom;
+          const worldY = (screenH / 2 - safePanY) / safeZoom;
           const id = `entity-${Date.now()}`;
           getEntityManager(instanceId).createEntity(id, `New ${sh.name}`, { x: worldX - 100, y: worldY - 50 }, { width: 200, height: sh.shape === 'box' || sh.shape === 'rectangle' ? 100 : 180 }, { shape: sh.shape, color: sh.baseColor });
           flyout.style.display = 'none';
@@ -305,8 +340,13 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
         // World coordinates
-        const worldX = (mx - v.pan.x) / v.zoom;
-        const worldY = (my - v.pan.y) / v.zoom;
+        // Fix: Use Math.max and Number.isFinite to ensure valid coordinates
+        const safePanX = Number.isFinite(v.pan.x) ? v.pan.x : 0;
+        const safePanY = Number.isFinite(v.pan.y) ? v.pan.y : 0;
+        const safeZoom = (Number.isFinite(v.zoom) && v.zoom > 0) ? v.zoom : 1;
+        
+        const worldX = (mx - safePanX) / safeZoom;
+        const worldY = (my - safePanY) / safeZoom;
         
         const id = `entity-${Date.now()}`;
         const metadata: any = { shape: shapeType };
@@ -334,13 +374,11 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
     entityManager: getEntityManager(instanceId),
     onSettings: () => {
       if (config?.headless) return;
-      const store = createInstanceReduxStore(undefined, instanceId);
       const st = store.get_state();
       store.dispatch({ type: 'settings-toggled', is_open: !st.is_settings_open });
     },
     getKernel: () => {
-      const reduxStore = createInstanceReduxStore(undefined, instanceId);
-      const st = reduxStore.get_state();
+      const st = store.get_state();
       const canvas = st.workspace.canvases[st.workspace.active_canvas_id];
       const schema = canvas?.schemas[canvas?.active_schema_id ?? ''];
       const entities = Object.fromEntries((schema?.entities ?? []).map(e => [e.id, e]));
@@ -358,7 +396,6 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   topBurger.style.marginLeft = '8px';
 
   // Validation overlay
-  const store = createInstanceReduxStore(undefined, instanceId);
   const validator = createSchemaValidator(store);
   const validationOverlay = createValidationOverlay(validator, viewport, getEntityManager(instanceId), canvasWrap);
   cleanups.push(validationOverlay.cleanup.destroy);
@@ -421,6 +458,23 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
     reconciling = true;
     try {
       const canvas = state.workspace.canvases[state.workspace.active_canvas_id];
+
+      // Sync viewport state to local component
+      if (canvas && canvas.viewport) {
+        const curVp = viewport.state.value;
+        const newVp = canvas.viewport;
+        if (curVp.zoom !== newVp.zoom || curVp.pan.x !== newVp.pan.x || curVp.pan.y !== newVp.pan.y) {
+          console.log(`[CANVAS-PAGE-LOG] runReconcile calling setExternalState. newVp:`, JSON.stringify(newVp));
+          viewport.setExternalState({
+            zoom: Number.isFinite(newVp.zoom) ? newVp.zoom : 1,
+            pan: {
+              x: Number.isFinite(newVp.pan?.x) ? newVp.pan.x : 0,
+              y: Number.isFinite(newVp.pan?.y) ? newVp.pan.y : 0
+            }
+          });
+        }
+      }
+
       const schema = canvas?.schemas[canvas?.active_schema_id ?? ''];
       const reduxEntities = schema?.entities ?? [];
       const reduxEntityMap = new Map(reduxEntities.map(e => [e.id, e]));
@@ -506,12 +560,13 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
       prevCanvasId = canvasId;
       const newCanvas = state.workspace.canvases[canvasId];
       if (newCanvas) {
-        viewport.panTo(newCanvas.viewport.pan.x, newCanvas.viewport.pan.y);
-        viewport.zoomTo(newCanvas.viewport.zoom);
+        // Redux already has the right viewport, the reconciliation loop
+        // will pick it up and setExternalState.
         const appearance = newCanvas.appearance_override ?? getAppearanceSettings();
         applyAppearanceTokens(appearance?.entity, appearance?.link);
       }
     }
+    console.log('[CANVAS-PAGE-LOG] runReconcile called from Redux subscription');
     runReconcile(state);
   });
   // Trigger immediately so persisted entities/links appear on page load without

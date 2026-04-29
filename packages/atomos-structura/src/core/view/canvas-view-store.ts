@@ -5,8 +5,7 @@
 
 export interface ViewportState {
   readonly zoom: number;
-  readonly panX: number; 
-  readonly panY: number;
+  readonly pan: { x: number; y: number };
 }
 
 export interface SelectionState {
@@ -82,7 +81,7 @@ export interface CanvasViewStore {
 
 export const createCanvasViewStore = function(): CanvasViewStore {
   const initialState: CanvasViewState = {
-    viewport: { zoom: 1, panX: 0, panY: 0 },
+    viewport: { zoom: 1, pan: { x: 0, y: 0 } },
     selection: { selectedEntityId: null, multiSelection: [] },
     isDragging: false,
     isPanning: false

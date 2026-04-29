@@ -1,6 +1,5 @@
-﻿import { createLocalStoragePersistence, readLocalStorage } from './create-local-storage-persistence.js';
-import { createSignal } from '@atomos-web/prime';
-import type { Signal } from '@atomos-web/prime';
+﻿import type { Signal } from '@atomos-web/prime'
+import { createSignal } from '@atomos-web/prime'
 
 export const CANVAS_SIZE = 4000;
 export const ZOOM_MIN = 0.1;
@@ -21,48 +20,102 @@ export interface CanvasViewport {
   readonly zoomTo: (zoom: number, originX?: number, originY?: number) => void;
   readonly zoomBy: (delta: number, originX?: number, originY?: number) => void;
   readonly reset: () => void;
+  readonly setExternalState: (state: ViewportState) => void;
   /** Convert screen (clientX/Y) coords to canvas (world) coords */
   readonly screenToCanvas: (clientX: number, clientY: number, containerRect: DOMRect) => { x: number; y: number };
   readonly cleanup: () => void;
 }
 
-export const createCanvasViewport = function(container: HTMLElement, svgElement?: SVGSVGElement, instanceId?: string): CanvasViewport {
-  const cleanups: Array<() => void> = [];
+/**
+ * Validate that viewport state is structurally correct and contains valid numbers.
+ * Prevents NaN propagation from corrupt localStorage.
+ */
+const isValidViewportState = (data: any): data is ViewportState => {
+  return (
+    data &&
+    typeof data.zoom === 'number' &&
+    Number.isFinite(data.zoom) &&
+    data.pan !== null &&
+    typeof data.pan === 'object' &&
+    typeof data.pan.x === 'number' &&
+    Number.isFinite(data.pan.x) &&
+    typeof data.pan.y === 'number' &&
+    Number.isFinite(data.pan.y)
+  );
+};
 
-  // Load saved viewport state from localStorage (namespaced by instanceId if provided)
-  const savedState = readLocalStorage<ViewportState>('vbe2:canvas-viewport', undefined, instanceId);
-  const initialState: ViewportState = savedState ?? { pan: { x: 0, y: 0 }, zoom: 1 };
+export const createCanvasViewport = function(
+  container: HTMLElement, 
+  svgElement: SVGSVGElement | undefined, 
+  initialState: ViewportState,
+  onChange?: (state: ViewportState) => void
+): CanvasViewport {
+  const cleanups: Array<() => void> = [];
   
   const state = createSignal<ViewportState>(initialState);
-  
-  // Persist viewport changes (namespaced by instanceId)
-  const persistence = createLocalStoragePersistence('vbe2:canvas-viewport', state, instanceId);
-  cleanups.push(persistence.destroy);
+
+  // Helper to update state and trigger onChange
+  const updateState = (newState: ViewportState) => {
+    // Clone objects so that the Signal detects a strict equality mismatch
+    const stateClone = { zoom: newState.zoom, pan: { x: newState.pan.x, y: newState.pan.y } };
+    console.log('[VIEWPORT-LOG] updateState called with:', JSON.stringify(stateClone));
+    state.set(stateClone);
+    if (onChange) onChange(stateClone);
+  };
 
   const transform = (): string => {
     const { pan, zoom } = state.value;
-    return `translate(${pan.x},${pan.y}) scale(${zoom})`;
+    const safePanX = (pan && Number.isFinite(pan.x)) ? pan.x : 0;
+    const safePanY = (pan && Number.isFinite(pan.y)) ? pan.y : 0;
+    const safeZoom = Number.isFinite(zoom) ? zoom : 1;
+    const t = `translate(${safePanX},${safePanY}) scale(${safeZoom})`;
+    console.log(`[VIEWPORT-LOG] transform generated: ${t} from state:`, JSON.stringify({ pan, zoom }));
+    return t;
   };
 
   const clampZoom = (z: number) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
 
   const panBy = (dx: number, dy: number) => {
     const { pan, zoom } = state.value;
-    state.set({ pan: { x: pan.x + dx, y: pan.y + dy }, zoom });
+    console.log(`[VIEWPORT-LOG] panBy dx:${dx}, dy:${dy}`);
+    updateState({ pan: { x: pan.x + dx, y: pan.y + dy }, zoom });
   };
 
   const panTo = (x: number, y: number) => {
-    state.set({ ...state.value, pan: { x, y } });
+    console.log(`[VIEWPORT-LOG] panTo requested x:${x}, y:${y}`);
+    const { zoom } = state.value;
+    let safeX = Number.isFinite(x) ? x : 0;
+    let safeY = Number.isFinite(y) ? y : 0;
+    // Prevent flying off into space
+    if (safeX < -20000 || safeX > 20000) safeX = 0;
+    if (safeY < -20000 || safeY > 20000) safeY = 0;
+    
+    updateState({
+      zoom,
+      pan: { x: safeX, y: safeY }
+    });
   };
 
   const zoomTo = (zoom: number, originX = 0, originY = 0) => {
+    console.log(`[VIEWPORT-LOG] zoomTo requested zoom:${zoom}, originX:${originX}, originY:${originY}`);
     const { pan, zoom: oldZoom } = state.value;
     const newZoom = clampZoom(zoom);
-    // Adjust pan so the zoom origin stays fixed on screen
-    const scale = newZoom / oldZoom;
-    const newPanX = originX - scale * (originX - pan.x);
-    const newPanY = originY - scale * (originY - pan.y);
-    state.set({ pan: { x: newPanX, y: newPanY }, zoom: newZoom });
+
+    // Ensure pan and oldZoom are valid before calculating
+    const currentPan = (pan && Number.isFinite(pan.x) && Number.isFinite(pan.y)) ? pan : { x: 0, y: 0 };
+    const currentZoom = Number.isFinite(oldZoom) ? oldZoom : 1;
+
+    const scale = newZoom / currentZoom;
+    let newPanX = originX - scale * (originX - currentPan.x);
+    let newPanY = originY - scale * (originY - currentPan.y);
+
+    if (!Number.isFinite(newPanX) || newPanX < -20000 || newPanX > 20000) newPanX = 0;
+    if (!Number.isFinite(newPanY) || newPanY < -20000 || newPanY > 20000) newPanY = 0;
+
+    updateState({
+      pan: { x: newPanX, y: newPanY },
+      zoom: newZoom
+    });
   };
 
   const zoomBy = (delta: number, originX = 0, originY = 0) => {
@@ -70,7 +123,15 @@ export const createCanvasViewport = function(container: HTMLElement, svgElement?
   };
 
   const reset = () => {
-    state.set({ pan: { x: 0, y: 0 }, zoom: 1 });
+    console.log('[VIEWPORT-LOG] reset requested');
+    updateState({ pan: { x: 0, y: 0 }, zoom: 1 });
+  };
+
+  const setExternalState = (newState: ViewportState) => {
+    // Clone objects so that the Signal detects a strict equality mismatch
+    const stateClone = { zoom: newState.zoom, pan: { x: newState.pan.x, y: newState.pan.y } };
+    console.log('[VIEWPORT-LOG] setExternalState called with:', JSON.stringify(stateClone));
+    state.set(stateClone);
   };
 
   const screenToCanvas = (clientX: number, clientY: number, rect: DOMRect): { x: number; y: number } => {
@@ -107,7 +168,8 @@ export const createCanvasViewport = function(container: HTMLElement, svgElement?
       e.preventDefault();
       panning = true;
       panStart = { x: e.clientX, y: e.clientY };
-      panOrigin = { ...state.value.pan };
+      const currentPan = state.value.pan || { x: 0, y: 0 };
+      panOrigin = { x: currentPan.x, y: currentPan.y };
     }
   };
 
@@ -115,7 +177,17 @@ export const createCanvasViewport = function(container: HTMLElement, svgElement?
     if (!panning) return;
     const dx = e.clientX - panStart.x;
     const dy = e.clientY - panStart.y;
-    state.set({ pan: { x: panOrigin.x + dx, y: panOrigin.y + dy }, zoom: state.value.zoom });
+    // Safety check: ensure zoom is a finite number
+    const zoom = Number.isFinite(state.value.zoom) ? state.value.zoom : 1;
+    let newX = panOrigin.x + dx;
+    let newY = panOrigin.y + dy;
+    
+    console.log(`[VIEWPORT-LOG] onMouseMove (drag) dx:${dx} dy:${dy} | result newX:${newX} newY:${newY}`);
+    
+    if (newX < -20000 || newX > 20000) newX = panOrigin.x;
+    if (newY < -20000 || newY > 20000) newY = panOrigin.y;
+    
+    updateState({ pan: { x: newX, y: newY }, zoom });
   };
 
   const onMouseUp = () => {
@@ -142,6 +214,7 @@ export const createCanvasViewport = function(container: HTMLElement, svgElement?
     zoomTo,
     zoomBy,
     reset,
+    setExternalState,
     screenToCanvas,
     cleanup: () => {
       cleanups.forEach(fn => fn());

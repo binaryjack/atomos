@@ -372,6 +372,54 @@ export const create_redux_store = function(options: { instanceId: string; config
       const raw = localStorage.getItem(reduxStateKey);
       if (raw) {
         const loaded_state = JSON.parse(raw) as ReduxState;
+        
+        // --- DEEP COERCION MIGRATION ---
+        // Legacy data often stored numbers as strings, causing catastrophic
+        // string concatenation during math (e.g. pan calculation jumping to infinity).
+        if (loaded_state.workspace?.canvases) {
+          Object.values(loaded_state.workspace.canvases).forEach(canvas => {
+            // Coerce Viewport
+            if (canvas.viewport) {
+              const vp = canvas.viewport as any;
+              let z = Number(vp.zoom);
+              if (!Number.isFinite(z) || z <= 0) z = 1;
+              let px = Number(vp.pan?.x ?? vp.panX) || 0;
+              let py = Number(vp.pan?.y ?? vp.panY) || 0;
+              
+              // Clamp extreme viewport pan
+              if (px < -20000 || px > 20000) px = 0;
+              if (py < -20000 || py > 20000) py = 0;
+
+              (canvas as any).viewport = {
+                zoom: z,
+                pan: { x: px, y: py }
+              };
+            }
+            // Coerce Entities
+            if (canvas.schemas) {
+              Object.values(canvas.schemas).forEach(schema => {
+                if (Array.isArray(schema.entities)) {
+                  schema.entities.forEach(entity => {
+                    if (entity.position) {
+                      let ex = Number(entity.position.x) || 0;
+                      let ey = Number(entity.position.y) || 0;
+                      // Clamp extreme entity positions caused by legacy string bugs
+                      if (ex < -10000 || ex > 10000) ex = 0;
+                      if (ey < -10000 || ey > 10000) ey = 0;
+                      (entity as any).position.x = ex;
+                      (entity as any).position.y = ey;
+                    }
+                    if (entity.dimensions) {
+                      (entity as any).dimensions.width = Number(entity.dimensions.width) || 200;
+                      (entity as any).dimensions.height = Number(entity.dimensions.height) || 100;
+                    }
+                  });
+                }
+              });
+            }
+          });
+        }
+        
         current_state = loaded_state;
       }
     } catch (error) {
@@ -383,6 +431,7 @@ export const create_redux_store = function(options: { instanceId: string; config
       current_state = make_initial_state(config);
       return;
     }
+    
     // Runtime config always wins over persisted config
     if (config !== undefined) {
       current_state = { ...current_state, workspace: { ...current_state.workspace, config } };
@@ -492,7 +541,14 @@ export const createInstanceReduxStore = function(config?: WorkspaceConfig, insta
   if (!instanceId || instanceId.trim().length === 0) {
     throw new Error('createInstanceReduxStore requires a non-empty instanceId')
   }
-  return create_redux_store(config ? { instanceId, config } : { instanceId });
+  
+  // Return existing if available
+  const existing = instanceStores.get(instanceId);
+  if (existing) return existing;
+
+  const store = create_redux_store(config ? { instanceId, config } : { instanceId });
+  instanceStores.set(instanceId, store);
+  return store;
 };
 
 export const storeInstanceReduxStore = function(instanceId: string, store: ReduxStore): void {

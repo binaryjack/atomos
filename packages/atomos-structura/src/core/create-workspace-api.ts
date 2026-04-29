@@ -1,5 +1,5 @@
-import type { AppSettings } from '../features/settings-page/types/settings-page.types.js';
-import type { ReduxState, ReduxStore, ViewportState } from '../types/redux-state.types.js';
+import type { AppSettings } from '../features/settings-page/types/settings-page.types.js'
+import type { ReduxState, ReduxStore, ViewportState } from '../types/redux-state.types.js'
 
 const ZOOM_MIN = 0.1;
 const ZOOM_MAX = 4;
@@ -171,11 +171,17 @@ export const createWorkspaceApi = function(store: ReduxStore): WorkspaceApi {
     },
 
     centerOnScreen: (opts?: { width?: number; height?: number }) => {
+      console.log('[WORKSPACE-API-LOG] centerOnScreen requested');
       const canvas = getActiveCanvas(store);
       if (!canvas) return;
       const schema = canvas.schemas[canvas.active_schema_id];
       if (!schema || schema.entities.length === 0) return;
-      const { zoom } = canvas.viewport;
+      
+      // Use finite zoom or default to 1
+      const currentZoom = (canvas.viewport && Number.isFinite(canvas.viewport.zoom)) 
+        ? canvas.viewport.zoom 
+        : 1;
+        
       const screenW = opts?.width ?? 800;
       const screenH = opts?.height ?? 600;
       let sumX = 0;
@@ -186,13 +192,26 @@ export const createWorkspaceApi = function(store: ReduxStore): WorkspaceApi {
       });
       const cx = sumX / schema.entities.length;
       const cy = sumY / schema.entities.length;
+      
+      const panX = screenW / 2 - cx * currentZoom;
+      const panY = screenH / 2 - cy * currentZoom;
+      
+      console.log(`[WORKSPACE-API-LOG] centerOnScreen center cx:${cx} cy:${cy} | panX:${panX} panY:${panY}`);
+      
       store.dispatch({
         type: 'viewport-updated',
-        viewport: { zoom, pan: { x: screenW / 2 - cx * zoom, y: screenH / 2 - cy * zoom } },
+        viewport: { 
+          zoom: currentZoom, 
+          pan: { 
+            x: Number.isFinite(panX) ? panX : 0, 
+            y: Number.isFinite(panY) ? panY : 0 
+          } 
+        },
       });
     },
 
     fitToScreen: (opts?: { width?: number; height?: number; padding?: number }) => {
+      console.log('[WORKSPACE-API-LOG] fitToScreen requested');
       const canvas = getActiveCanvas(store);
       if (!canvas) return;
       const schema = canvas.schemas[canvas.active_schema_id];
@@ -217,9 +236,21 @@ export const createWorkspaceApi = function(store: ReduxStore): WorkspaceApi {
       );
       const cx = minX + boxW / 2;
       const cy = minY + boxH / 2;
+      
+      const panX = screenW / 2 - cx * newZoom;
+      const panY = screenH / 2 - cy * newZoom;
+      
+      console.log(`[WORKSPACE-API-LOG] fitToScreen boxW:${boxW} boxH:${boxH} | newZoom:${newZoom} panX:${panX} panY:${panY}`);
+      
       store.dispatch({
         type: 'viewport-updated',
-        viewport: { zoom: newZoom, pan: { x: screenW / 2 - cx * newZoom, y: screenH / 2 - cy * newZoom } },
+        viewport: { 
+          zoom: Number.isFinite(newZoom) ? newZoom : 1, 
+          pan: { 
+            x: Number.isFinite(panX) ? panX : 0, 
+            y: Number.isFinite(panY) ? panY : 0 
+          } 
+        },
       });
     },
   };
