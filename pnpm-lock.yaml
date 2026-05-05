@@ -147,9 +147,6 @@ importers:
       '@types/node':
         specifier: ^20.19.30
         version: 20.19.37
-      glob:
-        specifier: ^10.0.0
-        version: 10.5.0
       jest:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@20.19.37)
