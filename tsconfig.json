@@ -24,12 +24,12 @@
     "sourceMap": true,
     "composite": true,
     "paths": {
-      "@atomos/prime": ["packages/atomos-prime/src/index.ts"],
-      "@atomos/prime-style": ["packages/atomos-prime-style/src/index.ts"],
-      "@atomos/structura": ["packages/atomos-structura/src/index.ts"],
+      "@atomos/prime": ["./packages/atomos-prime/src/index.ts"],
+      "@atomos/prime-style": ["./packages/atomos-prime-style/src/index.ts"],
+      "@atomos/structura": ["./packages/atomos-structura/src/index.ts"],
       "@atomos/structura-core": ["packages/atomos-structura-core/src/index.ts"],
-      "@atomos/structura-mcp": ["packages/atomos-structura-mcp/src/index.ts"],
-      "@binaryjack/formular.dev": ["packages/formular-dev/src/index.ts", "packages/formular-dev/dist/types/index.d.ts"]
+      "@atomos/structura-mcp": ["./packages/atomos-structura-mcp/src/index.ts"],
+      "@binaryjack/formular.dev": ["./packages/formular-dev/src/index.ts", "./packages/formular-dev/dist/types/index.d.ts"]
     },
   },
   "include": ["./packages/*/src/**/*"],
