@@ -1,6 +1,0 @@
-1:"$Sreact.fragment"
-2:I[7084,["/doc/_next/static/chunks/0zvehf9fbc5er.js"],"ViewportBoundary"]
-3:I[7084,["/doc/_next/static/chunks/0zvehf9fbc5er.js"],"MetadataBoundary"]
-4:"$Sreact.suspense"
-5:I[89821,["/doc/_next/static/chunks/0zvehf9fbc5er.js"],"IconMark"]
-0:{"rsc":["$","$1","h",{"children":[null,["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Atomos Structura | Documentation & Showcase"}],["$","meta","1",{"name":"description","content":"Detailed codebase ISO documentation, Headless API, and MCP integration for Atomos Structura"}],["$","link","2",{"rel":"icon","href":"/doc/favicon.ico?favicon.0x3dzn~oxb6tn.ico","sizes":"256x256","type":"image/x-icon"}],["$","$L5","3",{}]]}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"QtuGknxbnZpsWTZz1Iwme"}
