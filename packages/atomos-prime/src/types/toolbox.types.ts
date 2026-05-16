@@ -1,3 +1,5 @@
+import type { Property } from '@atomos-web/structura-core';
+
 export interface ToolboxItem {
   id: string;
   name: string;      
@@ -6,7 +8,7 @@ export interface ToolboxItem {
   description?: string; 
   icon: string;      
   action?: string;   
-  properties?: any[];
+  properties?: Property[];
 }
 
 export interface Toolset {

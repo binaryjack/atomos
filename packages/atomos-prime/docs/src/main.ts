@@ -1,6 +1,6 @@
-﻿import '../../../atomos-prime-style/dist/styles.css'
-import { createSignal } from '../../src/index.js'
-import { COMPONENT_REGISTRY, getDocById } from './registry.js'
+﻿import '../../../atomos-prime-style/dist/styles.css';
+import { createSignal } from '../../src/index.js';
+import { COMPONENT_REGISTRY, getDocById } from './registry.js';
 
 // Build the shell layout
 const root = document.getElementById('docs-root')!;
@@ -121,7 +121,7 @@ mainContent.appendChild(sandboxViewport);
 // The Router State Manager
 let currentCleanup: (() => void) | null = null;
 let currentSignalUnsub: (() => void) | null = null;
-const activeStateSignal = createSignal<any>({});
+const activeStateSignal = createSignal<Record<string, unknown>>({});
 
 const loadComponent = (id: string) => {
   if (currentCleanup) currentCleanup();

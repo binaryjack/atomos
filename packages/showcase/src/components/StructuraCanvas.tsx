@@ -1,13 +1,13 @@
 ﻿"use client";
 
-import { createKernelAdapter } from "@atomos-web/structura/dist/adapters/create-kernel-adapter.js"
-import { createSchemaGraphKernel } from "@atomos-web/structura/dist/core/create-schema-graph-kernel.js"
-import { getEntityManager } from "@atomos-web/structura/dist/core/presentation/entity-manager.js"
-import { createCanvasPage } from "@atomos-web/structura/dist/preview/create-canvas-page.js"
-import { useEffect, useRef } from "react"
-import { loadPreset } from "../schema/presets"
+import { createKernelAdapter } from "@atomos-web/structura/dist/adapters/create-kernel-adapter.js";
+import { createSchemaGraphKernel } from "@atomos-web/structura/dist/core/create-schema-graph-kernel.js";
+import { getEntityManager } from "@atomos-web/structura/dist/core/presentation/entity-manager.js";
+import { createCanvasPage } from "@atomos-web/structura/dist/preview/create-canvas-page.js";
+import { useEffect, useRef } from "react";
+import { load_preset } from "../schema/presets";
 
-import "@atomos-web/prime-style/dist/styles.css"
+import "@atomos-web/prime-style/dist/styles.css";
 
 export default function StructuraCanvas({ preset }: { preset?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -44,13 +44,14 @@ export default function StructuraCanvas({ preset }: { preset?: string }) {
           manager.getAllEntities().forEach(e => manager.removeEntity(e.id));
           manager.getAllLinks().forEach(l => manager.removeLink(l.id));
 
-          loadPreset(kernel, manager, preset);
+          load_preset(kernel, manager, preset);
         }, 500);
       }
 
       // Expose globally for sandbox parity with iframe variant
-      (window as any).__kernel = kernel;
-      (window as any).__bridge = bridge;
+      const win = window as Window & { __kernel?: unknown; __bridge?: unknown };
+      win.__kernel = kernel;
+      win.__bridge = bridge;
 
       return () => {
         try {

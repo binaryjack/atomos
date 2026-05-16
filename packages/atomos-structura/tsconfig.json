@@ -6,12 +6,12 @@
     "rootDir": "./src",
     "noEmit": false
   },
-  "include": ["src/**/*"],
-  "exclude": ["src/**/*.test.ts", "dist"],
+  "include": ["./src/**/*"],
+  "exclude": ["./src/**/*.test.ts", "./dist"],
   "references": [
-    { "path": "../atomos-structura-core" },
-    { "path": "../atomos-prime-style" },
-    { "path": "../atomos-prime" },
-    { "path": "../atomos-structura-mcp" }
+    { "path": "./../atomos-structura-core" },
+    { "path": "./../atomos-prime-style" },
+    { "path": "./../atomos-prime" },
+    { "path": "./../atomos-structura-mcp" }
   ]
 }

@@ -1,5 +1,8 @@
-export const loadPreset = (kernel: any, entityManager: any, preset: string) => {
-  const presets: Record<string, any> = {
+import type { SchemaGraphKernel } from "@atomos-web/structura/dist/core/create-schema-graph-kernel.js";
+import type { EntityManager } from "@atomos-web/structura/dist/core/presentation/entity-manager.js";
+
+export const load_preset = (kernel: SchemaGraphKernel, entity_manager: EntityManager, preset: string) => {
+  const presets: Record<string, { entities: any[]; links: any[] }> = {
     'mvc': {
       entities: [
         { id: 'mvc-view', name: 'View (UI)', nodeType: 'box', position: { x: 100, y: 100 } },
