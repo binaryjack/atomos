@@ -1,5 +1,8 @@
-﻿import type { IncomingMessage, ServerResponse } from 'http';
-import type { Entity, LinkProps, WorkspaceConfig, WorkspaceMenuConfig } from '@atomos-web/structura-core';
+﻿import type { Entity, LinkProps, WorkspaceConfig, WorkspaceMenuConfig } from '@atomos-web/structura-core';
+import chokidar, { type FSWatcher } from 'chokidar';
+import dagre from 'dagre';
+import fs from 'fs';
+import type { IncomingMessage, ServerResponse } from 'http';
 
 // Local mirror of Redux state shape (avoids circular dep on @atomos-web/structura)
 
@@ -27,6 +30,7 @@ interface WorkspaceState {
   config?: WorkspaceConfig;
   canvases: Record<string, CanvasModel>;
   active_canvas_id: string;
+  allowed_root_paths?: string[];
 }
 
 /** Full workspace state mirroring Redux shape -- round-trippable with the browser store. */
@@ -115,6 +119,7 @@ const make_initial_state = (cfg?: WorkspaceConfig): McpWorkspaceState => ({
     ...(cfg ? { config: cfg } : {}),
     canvases: { [DEFAULT_CANVAS_ID]: make_default_canvas() },
     active_canvas_id: DEFAULT_CANVAS_ID,
+    allowed_root_paths: [],
   },
 });
 
@@ -171,11 +176,14 @@ interface VbsMcpServerInstance {
   _state: McpWorkspaceState;
   _clients: Set<ServerResponse>;
   _cfg: McpServerConfig;
+  _watcher?: FSWatcher;
+  broadcast_event(event: string, data: unknown): void;
 }
 
 export interface VbsMcpServer {
   handleSSE(req: IncomingMessage, res: ServerResponse): void;
   handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void>;
+  broadcast_event(event: string, data: unknown): void;
 }
 
 export function VbsMcpServer(this: VbsMcpServerInstance, cfg?: McpServerConfig): void {
@@ -194,9 +202,22 @@ export function VbsMcpServer(this: VbsMcpServerInstance, cfg?: McpServerConfig):
     writable: false,
     value: cfg ?? {},
   });
+  Object.defineProperty(this, '_watcher', {
+    enumerable: false,
+    writable: true,
+    value: undefined,
+  });
 }
 
 // SSE handler
+
+VbsMcpServer.prototype.broadcast_event = function(
+  this: VbsMcpServerInstance,
+  event: string,
+  data: unknown,
+): void {
+  emit_sse(this._clients, event, data);
+};
 
 VbsMcpServer.prototype.handleSSE = function(
   this: VbsMcpServerInstance,
@@ -246,6 +267,7 @@ VbsMcpServer.prototype.handleRequest = async function(
 
 const process_request = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
   switch (req.method) {
+    case 'atomos-structura/initialize-workspace': return handle_initialize_workspace(srv, req);
     case 'atomos-structura/create-entity':   return handle_create_entity(srv, req);
     case 'atomos-structura/get-entity':      return handle_get_entity(srv, req);
     case 'atomos-structura/update-entity':   return handle_update_entity(srv, req);
@@ -262,6 +284,7 @@ const process_request = (srv: VbsMcpServerInstance, req: McpRequest): McpRespons
     case 'atomos-structura/activate-schema': return handle_activate_schema(srv, req);
     case 'atomos-structura/get-workspace':   return handle_get_workspace(srv, req);
     case 'atomos-structura/load-workspace':  return handle_load_workspace(srv, req);
+    case 'atomos-structura/report-progress': return handle_report_progress(srv, req);
     case 'atomos-structura/viewport/get':       return handle_viewport_get(srv, req);
     case 'atomos-structura/viewport/set-zoom':  return handle_viewport_set_zoom(srv, req);
     case 'atomos-structura/viewport/set-pan':   return handle_viewport_set_pan(srv, req);
@@ -314,6 +337,39 @@ const handle_update_entity = (srv: VbsMcpServerInstance, req: McpRequest): McpRe
   const updated = updatedCanvas?.schemas[schema_id];
   emit_sse(srv._clients, 'change', { schema_id, entities: updated?.entities ?? [], links: updated?.links ?? [] });
   return { result: { success: true, entity }, id: req.id };
+};
+
+const handle_report_progress = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const { schema_id, node_id, status, log_stream } = req.params as {
+    schema_id: string;
+    node_id: string;
+    status: string;
+    log_stream: string;
+  };
+
+  // Mise à jour de l'état mémoire
+  srv._state = update_schema_by_id(srv._state, schema_id, s => ({
+    ...s,
+    entities: s.entities.map((e: any) => e.id === node_id ? {
+      ...e,
+      props: { ...e.props, status, log_stream: (e.props.log_stream || "") + log_stream }
+    } : e)
+  }));
+
+  // Extraction de la chaîne accumulée pour diffusion SSE complète
+  const canvas = find_canvas_for_schema(srv._state, schema_id);
+  const schema = canvas?.schemas[schema_id];
+  const updatedEntity = schema?.entities.find(e => e.id === node_id) as any;
+
+  // Diffusion SSE immédiate vers le Canvas (Snapshot complet pour éviter les désynchronisations de deltas)
+  srv.broadcast_event('node-progress', { 
+    schema_id, 
+    node_id, 
+    status, 
+    log_stream: updatedEntity?.props.log_stream || "" 
+  });
+
+  return { result: { success: true }, id: req.id };
 };
 
 const handle_delete_entity = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
@@ -519,6 +575,21 @@ const handle_activate_schema = (srv: VbsMcpServerInstance, req: McpRequest): Mcp
   return { result: { success: true, id }, id: req.id };
 };
 
+// Workspace initialization handlers
+
+const handle_initialize_workspace = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const { rootPaths } = req.params as { rootPaths: string[] };
+  srv._state = {
+    ...srv._state,
+    workspace: {
+      ...srv._state.workspace,
+      allowed_root_paths: rootPaths || [],
+    },
+  };
+  console.log(`[MCP Server] Multi-root indexation activée pour :`, srv._state.workspace.allowed_root_paths);
+  return { result: { success: true }, id: req.id };
+};
+
 // Workspace persistence handlers
 
 const handle_get_workspace = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => ({
@@ -535,20 +606,134 @@ interface LegacyWorkspacePayload {
 const is_legacy_payload = (w: unknown): w is LegacyWorkspacePayload =>
   typeof w === 'object' && w !== null && !('workspace' in w);
 
+function isPathAllowed(filePath: string, allowedRoots: string[]): boolean {
+  if (!allowedRoots || allowedRoots.length === 0) return true; // Default to allow all if not set yet (v1 parity)
+  return allowedRoots.some(root => filePath.startsWith(root));
+}
+
+function hydraterPlanCodernic(payload: any): McpWorkspaceState {
+  // Si le payload contient déjà des canvases, c'est un format Atomos natif, on ne fait rien
+  if (payload.workspace && payload.workspace.canvases) {
+    return payload as McpWorkspaceState;
+  }
+
+  // Extraction des lanes (Format Codernic de dag_config.schema.json / dag-generator.ts)
+  const lanes = payload.lanes || [];
+
+  // Calcul du layout spatial via Dagre
+  const g = new dagre.graphlib.Graph();
+  g.setGraph({ rankdir: 'LR', nodesep: 60, edgesep: 20, ranksep: 100 });
+  g.setDefaultEdgeLabel(() => ({}));
+
+  lanes.forEach((lane: any) => {
+    g.setNode(lane.id, { width: 200, height: 100 });
+    if (lane.dependsOn) {
+      lane.dependsOn.forEach((depId: string) => g.setEdge(depId, lane.id));
+    }
+  });
+
+  dagre.layout(g);
+
+  // Construction des entités graphiques Atomos
+  const entities = lanes.map((lane: any) => {
+    const node = g.node(lane.id);
+    return {
+      id: lane.id,
+      type: 'implementation',
+      position: { x: node.x, y: node.y },
+      props: {
+        agentFile: lane.agentFile || "default-agent.agent.json",
+        prompt: lane.prompt || "",
+        active: lane.active ?? true,
+        status: 'pending',
+        log_stream: ""
+      }
+    };
+  });
+
+  const links = lanes.flatMap((lane: any) =>
+    (lane.dependsOn || []).map((depId: string) => ({
+      id: `link-${depId}-${lane.id}`,
+      source: depId,
+      target: lane.id,
+      type: 'default'
+    }))
+  );
+
+  // Hydratation complète du Redux Mirror d'Atomos
+  const schema_id = "codernic-execution-graph";
+  const canvas_id = "main-canvas";
+
+  return {
+    workspace: {
+      name: "Codernic Autonomous Plan",
+      version: "1.0.0",
+      last_modified: new Date().toISOString(),
+      active_canvas_id: canvas_id,
+      canvases: {
+        [canvas_id]: {
+          id: canvas_id,
+          name: "Execution Pipeline",
+          active_schema_id: schema_id,
+          viewport: { pan: { x: 100, y: 100 }, zoom: 1 },
+          schemas: {
+            [schema_id]: {
+              id: schema_id,
+              name: "Agent DAG",
+              entities,
+              links
+            }
+          }
+        }
+      }
+    }
+  };
+}
+
 const handle_load_workspace = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
-  const { workspace } = req.params as { workspace: McpWorkspaceState | LegacyWorkspacePayload };
+  const { workspace, filePath } = req.params as { workspace: any; filePath?: string };
+
+  if (filePath && !isPathAllowed(filePath, srv._state.workspace.allowed_root_paths || [])) {
+    return {
+      error: {
+        code: -32602,
+        message: `Access Denied: Le fichier ${filePath} est en dehors des racines du Workspace Multi-Root.`,
+      },
+      id: req.id,
+    };
+  }
+
+  const hydratedWorkspace = hydraterPlanCodernic(workspace);
   const runtimeConfig = srv._state.workspace.config;
-  if (is_legacy_payload(workspace)) {
+
+  if (filePath) {
+    if (srv._watcher) {
+      (srv._watcher as any).close();
+    }
+    srv._watcher = (chokidar.watch(filePath) as any).on('change', async () => {
+      try {
+        const fileContent = await fs.promises.readFile(filePath, 'utf-8');
+        const rawJson = JSON.parse(fileContent);
+        const hydratedState = hydraterPlanCodernic(rawJson);
+        (srv as any).broadcast_event('workspace-mutated', hydratedState);
+      } catch (err) {
+        console.error("Failed to broadcast file change to SSE:", err);
+      }
+    });
+  }
+
+  const processedWorkspace = hydratedWorkspace;
+  if (is_legacy_payload(processedWorkspace)) {
     const schemasRecord: Record<string, SchemaModel> = {};
-    (workspace.schemas ?? []).forEach(s => { schemasRecord[s.id] = { ...s }; });
-    const activeSchemaId = workspace.active_schema_id ?? DEFAULT_SCHEMA_ID;
+    (processedWorkspace.schemas ?? []).forEach(s => { schemasRecord[s.id] = { ...s }; });
+    const activeSchemaId = processedWorkspace.active_schema_id ?? DEFAULT_SCHEMA_ID;
     const baseCanvas = make_default_canvas();
     const rebuilt: McpWorkspaceState = {
       workspace: {
         name: 'Untitled Workspace',
         version: '1',
         last_modified: new Date().toISOString(),
-        ...(workspace.settings !== undefined ? { settings: workspace.settings as Record<string, unknown> } : {}),
+        ...(processedWorkspace.settings !== undefined ? { settings: processedWorkspace.settings as Record<string, unknown> } : {}),
         canvases: {
           [DEFAULT_CANVAS_ID]: {
             ...baseCanvas,
@@ -564,8 +749,8 @@ const handle_load_workspace = (srv: VbsMcpServerInstance, req: McpRequest): McpR
       : rebuilt;
   } else {
     srv._state = runtimeConfig
-      ? { ...workspace, workspace: { ...workspace.workspace, config: runtimeConfig } }
-      : workspace;
+      ? { ...processedWorkspace, workspace: { ...processedWorkspace.workspace, config: runtimeConfig } }
+      : processedWorkspace;
   }
   emit_sse(srv._clients, 'workspace', { type: 'state-loaded', state: srv._state });
   return { result: { success: true }, id: req.id };
@@ -576,7 +761,7 @@ const handle_load_workspace = (srv: VbsMcpServerInstance, req: McpRequest): McpR
 const read_body = (req: IncomingMessage): Promise<string> =>
   new Promise((resolve, reject) => {
     let body = '';
-    req.on('data', (chunk: Buffer) => { body += chunk.toString(); });
+    req.on('data', (chunk: any) => { body += chunk.toString(); });
     req.on('end', () => resolve(body));
     req.on('error', reject);
   });

@@ -122,6 +122,15 @@ importers:
       '@atomos-web/structura-core':
         specifier: workspace:*
         version: link:../atomos-structura-core
+      '@types/dagre':
+        specifier: ^0.7.54
+        version: 0.7.54
+      chokidar:
+        specifier: ^5.0.0
+        version: 5.0.0
+      dagre:
+        specifier: ^0.8.5
+        version: 0.8.5
     devDependencies:
       '@types/node':
         specifier: ^20.0.0
@@ -1511,6 +1520,9 @@ packages:
     resolution: {integrity: sha512-CfeLLD3+6vIWe2AO5hR63f1c8EbRzrp/j1ExubAwOTpwZFZvF3Nm9cOPQiUwzNmAUmZuhO0QVH98Qlujni6nPw==}
     deprecated: This is a stub types definition. cypress provides its own type definitions, so you do not need this installed.
 
+  '@types/dagre@0.7.54':
+    resolution: {integrity: sha512-QjcRY+adGbYvBFS7cwv5txhVIwX1XXIUswWl+kSQTbI6NjgZydrZkEKX/etzVd7i+bCsCb40Z/xlBY5eoFuvWQ==}
+
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
 
@@ -2249,6 +2261,10 @@ packages:
     resolution: {integrity: sha512-7VT13fmjotKpGipCW9JEQAusEPE+Ei8nl6/g4FBAmIm0GOOLMua9NDDo/DWp0ZAxCr3cPq5ZpBqmPAQgDda2Pw==}
     engines: {node: '>= 8.10.0'}
 
+  chokidar@5.0.0:
+    resolution: {integrity: sha512-TQMmc3w+5AxjpL8iIiwebF73dRDF4fBIieAqGn9RGCWaEVwQ6Fb2cGe31Yns0RRIzii5goJ1Y7xbMwo1TxMplw==}
+    engines: {node: '>= 20.19.0'}
+
   ci-info@3.9.0:
     resolution: {integrity: sha512-NIxF55hv4nSqQswkAeiOi1r83xy8JldOFDTWiug55KBu9Jnblncd2U6ViHmYgHf01TPZS77NJBhBMKdWj9HQMQ==}
     engines: {node: '>=8'}
@@ -2404,6 +2420,9 @@ packages:
     resolution: {integrity: sha512-hJ9sY++TUC/HlUzHVJpIrDyqKMjlhx5PTXl/A7eA91JNEtUWkJAqefQR5mo9AtLra/9+m+JJaMg2U5Qd0a74Fw==}
     engines: {node: ^20.1.0 || ^22.0.0 || >=24.0.0}
     hasBin: true
+
+  dagre@0.8.5:
+    resolution: {integrity: sha512-/aTqmnRta7x7MCCpExk7HQL2O4owCT2h8NT//9I1OQ9vt29Pa0BzSAkR5lwFUcQ7491yVi/3CXU9jQ5o0Mn2Sw==}
 
   damerau-levenshtein@1.0.8:
     resolution: {integrity: sha512-sdQSFB7+llfUcQHUQO3+B8ERRj0Oa4w9POWMI/puGtuf7gFywGmkaLCElnudfTiKZV+NvHqL0ifzdrI8Ro7ESA==}
@@ -3121,6 +3140,9 @@ packages:
 
   graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
+
+  graphlib@2.1.8:
+    resolution: {integrity: sha512-jcLLfkpoVGmH7/InMC/1hIvOPSUh38oJtGhvrOFGzioE1DZ+0YW16RgmOJhHiuWTvGiJQ9Z1Ik43JvkRPRvE+A==}
 
   handlebars@4.7.9:
     resolution: {integrity: sha512-4E71E0rpOaQuJR2A3xDZ+GM1HyWYv1clR58tC8emQNeQe3RH7MAzSbat+V0wG78LQBo6m6bzSG/L4pBuCsgnUQ==}
@@ -4379,6 +4401,10 @@ packages:
   readdirp@3.6.0:
     resolution: {integrity: sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==}
     engines: {node: '>=8.10.0'}
+
+  readdirp@5.0.0:
+    resolution: {integrity: sha512-9u/XQ1pvrQtYyMpZe7DXKv2p5CNvyVwzUB6uhLAnQwHMSgKMBR62lc7AHljaeteeHXn11XTAaLLUVZYVZyuRBQ==}
+    engines: {node: '>= 20.19.0'}
 
   reflect.getprototypeof@1.0.10:
     resolution: {integrity: sha512-00o4I+DVrefhv+nX0ulyi3biSHCPDe+yLv5o/p6d/UVlirijB8E16FtfwSAi4g3tcqrQ4lRAqQSoFEZJehYEcw==}
@@ -6565,6 +6591,8 @@ snapshots:
     dependencies:
       cypress: 15.13.0
 
+  '@types/dagre@0.7.54': {}
+
   '@types/deep-eql@4.0.2': {}
 
   '@types/estree@1.0.8': {}
@@ -7406,6 +7434,10 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
+  chokidar@5.0.0:
+    dependencies:
+      readdirp: 5.0.0
+
   ci-info@3.9.0: {}
 
   ci-info@4.4.0: {}
@@ -7576,6 +7608,11 @@ snapshots:
       tslib: 1.14.1
       untildify: 4.0.0
       yauzl: 2.10.0
+
+  dagre@0.8.5:
+    dependencies:
+      graphlib: 2.1.8
+      lodash: 4.17.23
 
   damerau-levenshtein@1.0.8: {}
 
@@ -8580,6 +8617,10 @@ snapshots:
   graceful-fs@4.2.11: {}
 
   graphemer@1.4.0: {}
+
+  graphlib@2.1.8:
+    dependencies:
+      lodash: 4.17.23
 
   handlebars@4.7.9:
     dependencies:
@@ -9985,6 +10026,8 @@ snapshots:
   readdirp@3.6.0:
     dependencies:
       picomatch: 2.3.2
+
+  readdirp@5.0.0: {}
 
   reflect.getprototypeof@1.0.10:
     dependencies:

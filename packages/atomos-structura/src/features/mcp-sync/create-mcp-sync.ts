@@ -1,6 +1,6 @@
 ﻿import type { Entity, LinkProps } from '@atomos-web/structura-core';
-import type { AppSettings } from '../settings-page/types/settings-page.types.js';
 import type { ReduxState, ReduxStore } from '../../types/redux-state.types.js';
+import type { AppSettings } from '../settings-page/types/settings-page.types.js';
 
 export interface McpSyncResult {
   readonly cleanup: () => void;
@@ -124,6 +124,33 @@ export const createMcpSync = (
     es.addEventListener('workspace', (e: MessageEvent) => {
       try {
         applyWorkspaceEvent(JSON.parse(e.data) as McpWorkspaceEvent);
+      } catch { /* ignore malformed events */ }
+    });
+    es.addEventListener('node-progress', (e: MessageEvent) => {
+      try {
+        const { schema_id, node_id, status, log_stream } = JSON.parse(e.data);
+        const st = store.get_state();
+        const activeCanvas = st.workspace.canvases[st.workspace.active_canvas_id];
+        
+        // Use the schema_id from the SSE payload if provided, otherwise fall back to active
+        const schemaIdToUse = schema_id ?? activeCanvas?.active_schema_id ?? '';
+        const schema = activeCanvas?.schemas[schemaIdToUse];
+        
+        const entity = schema?.entities.find(e => e.id === node_id);
+        if (entity) {
+          store.dispatch({
+            type: 'entity-updated',
+            schema_id: schemaIdToUse,
+            entity: {
+              ...entity,
+              props: { 
+                ...entity.props, 
+                status, 
+                log_stream: log_stream // Remplacement direct car le serveur gère l'accumulation
+              }
+            }
+          });
+        }
       } catch { /* ignore malformed events */ }
     });
     es.onerror = () => { /* MCP server may not be running — silent */ };
