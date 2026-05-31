@@ -1,4 +1,4 @@
-﻿import type { Entity, LinkProps } from '@atomos-web/structura-core';
+import type { Entity, LinkProps } from '@atomos-web/structura-core';
 import type { ReduxState, ReduxStore } from '../../types/redux-state.types.js';
 import type { AppSettings } from '../settings-page/types/settings-page.types.js';
 
@@ -143,11 +143,21 @@ export const createMcpSync = (
             schema_id: schemaIdToUse,
             entity: {
               ...entity,
-              props: { 
-                ...entity.props, 
-                status, 
-                log_stream: log_stream // Remplacement direct car le serveur gère l'accumulation
-              }
+              properties: (() => {
+                const keys = new Set(entity.properties.map(p => p.key));
+                const props = entity.properties.map(p => {
+                  if (p.key === 'status') return { ...p, value: status };
+                  if (p.key === 'log_stream') return { ...p, value: log_stream };
+                  return p;
+                });
+                if (!keys.has('status')) {
+                  props.push({ key: 'status', label: 'Status', value: status, dataType: 'string', componentType: 'input' });
+                }
+                if (!keys.has('log_stream')) {
+                  props.push({ key: 'log_stream', label: 'Log Stream', value: log_stream, dataType: 'string', componentType: 'textarea' });
+                }
+                return props;
+              })()
             }
           });
         }
