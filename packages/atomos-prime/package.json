@@ -1,5 +1,5 @@
 {
-  "name": "@atomos-web/prime",
+  "name": "@atomos/prime",
   "version": "2.0.0",
   "license": "MIT",
   "type": "module",
@@ -26,8 +26,8 @@
   },
   "dependencies": {
     "@binaryjack/formular.dev": "workspace:*",
-    "@atomos-web/structura-core": "workspace:*",
-    "@atomos-web/prime-style": "workspace:*"
+    "@atomos/structura-core": "workspace:*",
+    "@atomos/prime-style": "workspace:*"
   },
   "devDependencies": {
     "@vitest/ui": "^4.1.2",

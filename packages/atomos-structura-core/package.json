@@ -1,5 +1,5 @@
 {
-  "name": "@atomos-web/structura-core",
+  "name": "@atomos/structura-core",
   "version": "2.0.0",
   "license": "MIT",
   "type": "module",

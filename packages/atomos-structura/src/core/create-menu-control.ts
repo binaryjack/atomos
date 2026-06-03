@@ -1,4 +1,4 @@
-import type { MenuItemConfig, WorkspaceMenuConfig } from '@atomos-web/structura-core';
+import type { MenuItemConfig, WorkspaceMenuConfig } from '@atomos/structura-core';
 import type { MenuControl } from '../types/menu-control.types.js';
 
 export const createMenuControl = function(initial?: WorkspaceMenuConfig): MenuControl {

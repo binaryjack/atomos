@@ -34,7 +34,7 @@ export const skeletonDoc: DocDefinition<SkeletonState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createSkeleton } from '@atomos-web/prime';
+    return `import { createSkeleton } from '@atomos/prime';
 
 const { element, cleanup } = createSkeleton({
   variant: '${state.variant}',

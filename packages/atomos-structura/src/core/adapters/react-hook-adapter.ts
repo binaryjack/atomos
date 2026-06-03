@@ -20,7 +20,7 @@ export interface DAGReactHookAdapter {
  * Example usage in a React Host App:
  * ```tsx
  * import { useSyncExternalStore } from 'react';
- * import { createReactDAGHook } from '@atomos-web/prime';
+ * import { createReactDAGHook } from '@atomos/prime';
  * 
  * const { useDAG } = createReactDAGHook(dagObserver, useSyncExternalStore);
  * 

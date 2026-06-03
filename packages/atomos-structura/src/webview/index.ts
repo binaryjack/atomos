@@ -1,4 +1,4 @@
-import type { WorkspaceConfig } from '@atomos-web/structura-core'
+import type { WorkspaceConfig } from '@atomos/structura-core'
 import { createCanvasPage } from '../preview/create-canvas-page.js'
 
 export interface WebviewInitConfig {
@@ -63,7 +63,7 @@ const generateInstanceId = (): string => {
  *
  * #### Usage (v2.0.0+)
  * ```ts
- * import { initializeStructuraWebview } from '@atomos-web/structura/webview'
+ * import { initializeStructuraWebview } from '@atomos/structura/webview'
  *
  * const app = await initializeStructuraWebview({
  *   instanceId: 'webview-1',  // REQUIRED: unique identifier

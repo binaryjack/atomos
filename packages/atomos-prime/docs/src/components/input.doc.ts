@@ -39,7 +39,7 @@ export const inputDoc: DocDefinition<InputState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createInput } from '@atomos-web/prime';
+    return `import { createInput } from '@atomos/prime';
 
 const { element, cleanup } = createInput({
   type: '${state.type}',

@@ -63,7 +63,7 @@ export const stepperDoc: DocDefinition<StepperState> = {
     };
   },
   renderCode: (state) => {
-    return `import { defineAtpStepper, createAtpStep, createAtpStepperTab } from '@atomos-web/prime';
+    return `import { defineAtpStepper, createAtpStep, createAtpStepperTab } from '@atomos/prime';
 
 // Only needed once per application to define the Web Components
 defineAtpStepper();

@@ -1,4 +1,4 @@
-﻿import type { Entity, WorkspaceConfig } from '@atomos-web/structura-core'
+﻿import type { Entity, WorkspaceConfig } from '@atomos/structura-core'
 import type { MenuControl } from '../types/menu-control.types.js'
 import type { ReduxStore } from '../types/redux-state.types.js'
 import { createMenuControl } from './create-menu-control.js'

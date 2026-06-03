@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createSchemaBuilder } from '../src/core/schema-builder.js';
-import type { Entity } from '@atomos-web/structura-core';
+import type { Entity } from '@atomos/structura-core';
 
 // ── localStorage mock ──────────────────────────────────────────────────────
 const makeLocalStorage = () => {

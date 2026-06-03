@@ -37,7 +37,7 @@ export const dropdownDoc: DocDefinition<DropdownState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createDropdown } from '@atomos-web/prime';
+    return `import { createDropdown } from '@atomos/prime';
 
 const { element, cleanup } = createDropdown({
   placeholder: '${state.placeholder}',

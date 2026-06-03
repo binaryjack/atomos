@@ -1,6 +1,6 @@
 ﻿import type { EntityWithEdgesProps } from './types/entity-with-edges.types.js';
-import type { Property } from '@atomos-web/structura-core';
-import { createSignal } from '@atomos-web/prime';
+import type { Property } from '@atomos/structura-core';
+import { createSignal } from '@atomos/prime';
 
 export const createEntityDemo = (): HTMLElement => {
   const container = document.createElement('div');

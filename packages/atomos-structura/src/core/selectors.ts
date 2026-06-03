@@ -1,4 +1,4 @@
-﻿import type { Entity, Property } from '@atomos-web/structura-core'
+﻿import type { Entity, Property } from '@atomos/structura-core'
 import type { ReduxState } from '../types/redux-state.types.js'
 import { getInstanceReduxStore } from './create-redux-store.js'
 

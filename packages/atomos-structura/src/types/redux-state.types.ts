@@ -1,4 +1,4 @@
-﻿import type { Entity, LinkProps, WorkspaceConfig } from '@atomos-web/structura-core'
+﻿import type { Entity, LinkProps, WorkspaceConfig } from '@atomos/structura-core'
 import type { AppSettings } from '../features/settings-page/types/settings-page.types.js'
 
 export interface SchemaModel {

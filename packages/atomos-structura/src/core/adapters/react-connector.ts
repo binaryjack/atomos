@@ -10,7 +10,7 @@ export type StructuraSelector<T> = (state: ReduxState) => T;
  * @example
  * ```tsx
  * import { useSyncExternalStore } from 'react';
- * import { createStructuraStoreAdapter } from '@atomos-web/structura/adapters';
+ * import { createStructuraStoreAdapter } from '@atomos/structura/adapters';
  * 
  * const useStructuraState = <T>(instanceId: string, selector: (state: ReduxState) => T) => {
  *   const adapter = createStructuraStoreAdapter(instanceId);

@@ -1,5 +1,5 @@
-﻿import type { Signal } from '@atomos-web/prime'
-import { createSignal } from '@atomos-web/prime'
+﻿import type { Signal } from '@atomos/prime'
+import { createSignal } from '@atomos/prime'
 
 export const CANVAS_SIZE = 4000;
 export const ZOOM_MIN = 0.1;

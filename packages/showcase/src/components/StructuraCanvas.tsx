@@ -1,13 +1,13 @@
 ﻿"use client";
 
-import { createKernelAdapter } from "@atomos-web/structura/dist/adapters/create-kernel-adapter.js"
-import { createSchemaGraphKernel } from "@atomos-web/structura/dist/core/create-schema-graph-kernel.js"
-import { getEntityManager } from "@atomos-web/structura/dist/core/presentation/entity-manager.js"
-import { createCanvasPage } from "@atomos-web/structura/dist/preview/create-canvas-page.js"
+import { createKernelAdapter } from "@atomos/structura/dist/adapters/create-kernel-adapter.js"
+import { createSchemaGraphKernel } from "@atomos/structura/dist/core/create-schema-graph-kernel.js"
+import { getEntityManager } from "@atomos/structura/dist/core/presentation/entity-manager.js"
+import { createCanvasPage } from "@atomos/structura/dist/preview/create-canvas-page.js"
 import { useEffect, useRef } from "react"
 import { loadPreset } from "../schema/presets"
 
-import "@atomos-web/prime-style/dist/styles.css"
+import "@atomos/prime-style/dist/styles.css"
 
 export default function StructuraCanvas({ preset }: { preset?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);

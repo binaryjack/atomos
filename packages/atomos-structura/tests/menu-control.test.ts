@@ -6,7 +6,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { createMenuControl } from '../src/core/create-menu-control.js';
-import type { WorkspaceMenuConfig } from '@atomos-web/structura-core';
+import type { WorkspaceMenuConfig } from '@atomos/structura-core';
 
 // ── helpers ────────────────────────────────────────────────────────────────
 

@@ -6,7 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { create_redux_store } from '../src/core/create-redux-store.js';
 import { createWorkspaceApi } from '../src/core/create-workspace-api.js';
-import type { Entity } from '@atomos-web/structura-core';
+import type { Entity } from '@atomos/structura-core';
 import type { AppSettings } from '../src/features/settings-page/types/settings-page.types.js';
 
 // ── localStorage mock ──────────────────────────────────────────────────────

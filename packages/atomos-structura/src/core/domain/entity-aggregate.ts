@@ -2,7 +2,7 @@
  * Domain Layer - Entity Aggregate Root
  * Manages entity lifecycle and business rules in pure domain logic
  */
-import type { Property } from '@atomos-web/structura-core'
+import type { Property } from '@atomos/structura-core'
 
 export interface EntityPosition {
   readonly x: number;

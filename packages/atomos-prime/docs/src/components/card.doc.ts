@@ -51,7 +51,7 @@ export const cardDoc: DocDefinition<CardState> = {
     };
   },
   renderCode: (state) => {
-    return `import { createCard, createTypography } from '@atomos-web/prime';
+    return `import { createCard, createTypography } from '@atomos/prime';
 
 const textNode = createTypography({ 
   variant: 'p', 

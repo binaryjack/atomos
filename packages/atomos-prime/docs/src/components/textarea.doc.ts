@@ -39,7 +39,7 @@ export const textareaDoc: DocDefinition<TextareaState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createTextarea } from '@atomos-web/prime';
+    return `import { createTextarea } from '@atomos/prime';
 
 const { element, cleanup } = createTextarea({
   value: '${state.value}',

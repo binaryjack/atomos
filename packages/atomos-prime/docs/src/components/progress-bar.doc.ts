@@ -42,7 +42,7 @@ export const progressBarDoc: DocDefinition<ProgressBarState> = {
     return { element: parent, cleanup: comp.cleanup };
   },
   renderCode: (state) => {
-    return `import { createProgressBar } from '@atomos-web/prime';
+    return `import { createProgressBar } from '@atomos/prime';
 
 const { element, cleanup } = createProgressBar({
   value: ${state.value},

@@ -1,6 +1,6 @@
 ﻿import { createInstanceReduxStore } from '../core/create-redux-store.js'
 // Side-effect import: registers vbs-tab and vbs-tabs as custom elements
-import '@atomos-web/prime'
+import '@atomos/prime'
 
 const TAB_H = 36;
 

@@ -42,7 +42,7 @@ export const buttonDoc: DocDefinition<ButtonState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createButton } from '@atomos-web/prime';
+    return `import { createButton } from '@atomos/prime';
 
 const { element, cleanup } = createButton({
   children: '${state.children}',

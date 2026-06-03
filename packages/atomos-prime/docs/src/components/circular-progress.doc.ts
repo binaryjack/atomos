@@ -38,7 +38,7 @@ export const circularProgressDoc: DocDefinition<CircularProgressState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createCircularProgress } from '@atomos-web/prime';
+    return `import { createCircularProgress } from '@atomos/prime';
 
 const { element, cleanup } = createCircularProgress({
   value: ${state.value},

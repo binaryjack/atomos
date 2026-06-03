@@ -1,4 +1,4 @@
-﻿import type { WorkspaceConfig } from '@atomos-web/structura-core'
+﻿import type { WorkspaceConfig } from '@atomos/structura-core'
 import { getCanvasAdapter } from '../core/adapters/canvas-adapter.js'
 import { createDAGObserver } from '../core/adapters/dag-observer.js'
 import { getAppearanceSettings, getCustomShapes, getGeneralSettings, getToolboxConfig, initToolboxConfigManager, setAppearanceSettings, setCustomShapes, setGeneralSettings, setToolboxConfig } from '../core/adapters/toolbox-config-manager.js'

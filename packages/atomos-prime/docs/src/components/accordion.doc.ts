@@ -48,7 +48,7 @@ export const accordionDoc: DocDefinition<AccordionState> = {
     };
   },
   renderCode: (state) => {
-    return `import { createAccordion, createTypography } from '@atomos-web/prime';
+    return `import { createAccordion, createTypography } from '@atomos/prime';
 
 const textNode = createTypography({ 
   variant: 'p', 

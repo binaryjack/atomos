@@ -1,6 +1,6 @@
-﻿import { createButton, createFormularDropdown, createFormularInput } from '@atomos-web/prime'
-import type { DataType, Property } from '@atomos-web/structura-core'
-import { COMPONENT_TYPES, DATA_TYPES } from '@atomos-web/structura-core'
+﻿import { createButton, createFormularDropdown, createFormularInput } from '@atomos/prime'
+import type { DataType, Property } from '@atomos/structura-core'
+import { COMPONENT_TYPES, DATA_TYPES } from '@atomos/structura-core'
 import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
 import { f } from '@binaryjack/formular.dev'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
@@ -9,7 +9,7 @@ import { selectEntityById, selectPropertyByKey } from '../../core/selectors.js'
 import { createValidationBadge } from './create-validation-badge.js'
 import { createValidationModal } from './create-validation-modal.js'
 
-import type { AtpModal } from '@atomos-web/prime'
+import type { AtpModal } from '@atomos/prime'
 import type { ModalOptions } from './types/modal-options.types.js'
 import type { ModalResult } from './types/modal-result.types.js'
 

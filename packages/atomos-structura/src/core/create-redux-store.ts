@@ -1,4 +1,4 @@
-﻿import type { Cardinality, LinkProps, RenderType, WorkspaceConfig } from '@atomos-web/structura-core'
+﻿import type { Cardinality, LinkProps, RenderType, WorkspaceConfig } from '@atomos/structura-core'
 import type { CanvasModel, ReduxAction, ReduxState, ReduxStore, SchemaModel } from '../types/redux-state.types.js'
 
 const DEFAULT_CANVAS_ID = 'canvas-default';

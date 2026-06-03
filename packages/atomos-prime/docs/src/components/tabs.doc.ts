@@ -74,7 +74,7 @@ export const tabsDoc: DocDefinition<TabsState> = {
     };
   },
   renderCode: (state) => {
-    return `import { VbsTabs, VbsTab, VbsTabPanel } from '@atomos-web/prime';
+    return `import { VbsTabs, VbsTab, VbsTabPanel } from '@atomos/prime';
 
 // Only needed once per application
 if (!customElements.get('vbs-tabs')) customElements.define('vbs-tabs', VbsTabs);

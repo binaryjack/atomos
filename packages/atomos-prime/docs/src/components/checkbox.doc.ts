@@ -27,7 +27,7 @@ export const checkboxDoc: DocDefinition<CheckboxState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createCheckbox } from '@atomos-web/prime';
+    return `import { createCheckbox } from '@atomos/prime';
 
 const { element, input, cleanup } = createCheckbox({
   checked: ${state.checked},

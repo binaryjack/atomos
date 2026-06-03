@@ -1,4 +1,4 @@
-import type { WorkspaceMenuConfig } from '@atomos-web/structura-core'
+import type { WorkspaceMenuConfig } from '@atomos/structura-core'
 import { autoLayoutDAG, autoRouteLinks, deserializeDAG, serializeDAG } from '../core/application/dag-service.js'
 import type { CanvasViewport } from '../core/create-canvas-viewport.js'
 import { getInstanceReduxStore } from '../core/create-redux-store.js'

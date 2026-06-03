@@ -26,7 +26,7 @@ export const spinnerDoc: DocDefinition<SpinnerState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createSpinner } from '@atomos-web/prime';
+    return `import { createSpinner } from '@atomos/prime';
 
 const { element } = createSpinner({
   size: '${state.size}',

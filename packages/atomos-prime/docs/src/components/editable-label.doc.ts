@@ -28,7 +28,7 @@ export const editableLabelDoc: DocDefinition<EditableLabelState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createEditableLabel, createSignal } from '@atomos-web/prime';
+    return `import { createEditableLabel, createSignal } from '@atomos/prime';
 
 // Reactive local state
 const valueSignal = createSignal('Live File Name.txt');

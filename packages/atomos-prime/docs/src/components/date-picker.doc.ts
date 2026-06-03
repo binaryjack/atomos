@@ -60,7 +60,7 @@ export const datePickerDoc: DocDefinition<DatePickerState> = {
     };
   },
   renderCode: (state) => {
-    return `import { createDatePicker, DateFormatsEnum } from '@atomos-web/prime';
+    return `import { createDatePicker, DateFormatsEnum } from '@atomos/prime';
 
 const { element, cleanup } = createDatePicker({
   placeholder: '${state.placeholder}',

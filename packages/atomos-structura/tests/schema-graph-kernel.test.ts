@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { createSchemaGraphKernel } from '../src/core/create-schema-graph-kernel.js';
-import type { Entity, LinkProps, Property } from '@atomos-web/structura-core';
+import type { Entity, LinkProps, Property } from '@atomos/structura-core';
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 const prop = (key: string): Property => ({

@@ -43,7 +43,7 @@ export const toggleDoc: DocDefinition<ToggleState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createToggle } from '@atomos-web/prime';
+    return `import { createToggle } from '@atomos/prime';
 
 const { element, getChecked, cleanup } = createToggle({
   checked: ${state.checked},

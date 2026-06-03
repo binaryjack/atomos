@@ -1,7 +1,7 @@
-﻿import type { IncomingMessage, ServerResponse } from 'http';
-import type { Entity, LinkProps, WorkspaceConfig, WorkspaceMenuConfig } from '@atomos-web/structura-core';
+import type { IncomingMessage, ServerResponse } from 'http';
+import type { Entity, LinkProps, WorkspaceConfig, WorkspaceMenuConfig } from '@atomos/structura-core';
 
-// Local mirror of Redux state shape (avoids circular dep on @atomos-web/structura)
+// Local mirror of Redux state shape (avoids circular dep on @atomos/structura)
 
 interface SchemaModel {
   readonly id: string;

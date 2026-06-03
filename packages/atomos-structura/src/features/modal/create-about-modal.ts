@@ -29,7 +29,7 @@ export const createAboutModal = (container: HTMLElement): (() => void) => {
 
   const title = document.createElement('h2');
   title.style.cssText = 'margin:0 0 4px;font-size:18px;font-weight:600;letter-spacing:-0.01em;';
-  title.textContent = '@atomos-web/structura';
+  title.textContent = '@atomos/structura';
 
   const versionBadge = document.createElement('p');
   versionBadge.style.cssText = 'margin:0 0 16px;font-size:12px;font-family:monospace;color:var(--vbs-text-secondary,#a1a1aa);';
@@ -57,7 +57,7 @@ export const createAboutModal = (container: HTMLElement): (() => void) => {
     return a;
   };
 
-  links.appendChild(makeLink('Documentation', 'https://www.npmjs.com/package/@atomos-web/structura'));
+  links.appendChild(makeLink('Documentation', 'https://www.npmjs.com/package/@atomos/structura'));
 
   const closeBtn = document.createElement('button');
   closeBtn.textContent = 'Close';

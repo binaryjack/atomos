@@ -1,4 +1,4 @@
-﻿import type { Signal } from '@atomos-web/prime';
+﻿import type { Signal } from '@atomos/prime';
 
 export interface PropertyData {
   readonly key: string;

@@ -11,8 +11,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { EventEmitter } from 'events';
 import type { IncomingMessage, ServerResponse } from 'http';
-import { VbsMcpServer } from '@atomos-web/structura-mcp';
-import type { Entity, WorkspaceConfig } from '@atomos-web/structura-core';
+import { VbsMcpServer } from '@atomos/structura-mcp';
+import type { Entity, WorkspaceConfig } from '@atomos/structura-core';
 
 // ── helpers ────────────────────────────────────────────────────────────────
 

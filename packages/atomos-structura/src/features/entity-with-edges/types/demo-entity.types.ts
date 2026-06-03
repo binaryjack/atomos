@@ -1,5 +1,5 @@
-﻿import type { Signal } from '@atomos-web/prime'
-import type { Entity } from '@atomos-web/structura-core'
+﻿import type { Signal } from '@atomos/prime'
+import type { Entity } from '@atomos/structura-core'
 import type { EntityStore } from '../../../core/create-entity-store.js'
 import type { IStorageProvider } from '../../../core/storage/types/storage-provider.types.js'
 import type { EntityInstance } from '../../../core/types/entity-instance.types.js'

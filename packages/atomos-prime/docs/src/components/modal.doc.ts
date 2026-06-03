@@ -90,7 +90,7 @@ export const modalDoc: DocDefinition<ModalState> = {
     };
   },
   renderCode: (state) => {
-    return `import { defineAtpModal, AtpModal } from '@atomos-web/prime';
+    return `import { defineAtpModal, AtpModal } from '@atomos/prime';
 
 // Ensure the custom element is registered
 defineAtpModal();

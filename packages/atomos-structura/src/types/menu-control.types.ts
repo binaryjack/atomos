@@ -1,4 +1,4 @@
-import type { WorkspaceMenuConfig } from '@atomos-web/structura-core';
+import type { WorkspaceMenuConfig } from '@atomos/structura-core';
 
 export interface MenuControl {
   /**

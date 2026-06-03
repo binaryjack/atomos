@@ -26,7 +26,7 @@ export const typographyDoc: DocDefinition<TypographyState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createTypography } from '@atomos-web/prime';
+    return `import { createTypography } from '@atomos/prime';
 
 const { element, cleanup } = createTypography({
   children: '${state.children}',

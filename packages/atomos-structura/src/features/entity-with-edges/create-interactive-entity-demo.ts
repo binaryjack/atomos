@@ -1,5 +1,5 @@
-﻿import { createSignal } from '@atomos-web/prime'
-import type { Entity } from '@atomos-web/structura-core'
+﻿import { createSignal } from '@atomos/prime'
+import type { Entity } from '@atomos/structura-core'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
 import { createLegacyEntityStoreBridge, createLegacyStorageProviderBridge } from '../../core/adapters/legacy-property-bridge.js'
 import { getInstanceReduxStore } from '../../core/create-redux-store.js'

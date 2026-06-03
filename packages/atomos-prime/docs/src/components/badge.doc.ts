@@ -30,7 +30,7 @@ export const badgeDoc: DocDefinition<BadgeState> = {
     });
   },
   renderCode: (state) => {
-    return `import { createBadge } from '@atomos-web/prime';
+    return `import { createBadge } from '@atomos/prime';
 
 const { element, cleanup } = createBadge({
   text: '${state.text}',

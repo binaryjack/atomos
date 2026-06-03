@@ -1,4 +1,4 @@
-﻿import type { Signal } from '@atomos-web/prime'
+﻿import type { Signal } from '@atomos/prime'
 import type { EdgePosition } from '../features/edge/types/edge-position.types.js'
 import { getCanvasAdapter } from './adapters/canvas-adapter.js'
 import { testEdgeHit } from './create-edge-hit-tester.js'

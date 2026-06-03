@@ -43,7 +43,7 @@ export const iconDoc: DocDefinition<IconState> = {
     });
   },
   renderCode: (state: IconState) => {
-    return `import { createIcon } from '@atomos-web/prime';
+    return `import { createIcon } from '@atomos/prime';
 
 const { element, cleanup } = createIcon({
   name: '${state.name}',

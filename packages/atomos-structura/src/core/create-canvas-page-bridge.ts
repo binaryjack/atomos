@@ -1,4 +1,4 @@
-﻿import type { WorkspaceConfig } from '@atomos-web/structura-core';
+﻿import type { WorkspaceConfig } from '@atomos/structura-core';
 import { createCanvasPage } from '../preview/create-canvas-page.js';
 
 /**
