@@ -6,7 +6,26 @@ export interface DAGExport {
   readonly version: string;
   readonly nodes: readonly DomainEntity[];
   readonly edges: readonly DomainLink[];
+  readonly applyAfterLoad?: string[];
 }
+
+export const applySchemaCommands = async (entityManager: EntityManager, commands: string[]) => {
+  for (const cmd of commands) {
+    if (cmd === 'optimize-connections') {
+      autoRouteLinks(entityManager);
+      await new Promise(r => setTimeout(r, 50));
+    } else if (cmd === 'auto-layout') {
+      autoLayoutDAG(entityManager);
+      await new Promise(r => setTimeout(r, 50));
+    } else if (cmd === 'fit-to-screen') {
+      window.dispatchEvent(new CustomEvent(`vbs-command-fit-${entityManager.instanceId}`));
+      await new Promise(r => setTimeout(r, 50));
+    } else if (cmd === 'center-to-schema') {
+      window.dispatchEvent(new CustomEvent(`vbs-command-center-${entityManager.instanceId}`));
+      await new Promise(r => setTimeout(r, 50));
+    }
+  }
+};
 
 export const serializeDAG = function(entityManager: EntityManager): string {
   const exportData: DAGExport = {
@@ -56,7 +75,9 @@ export const deserializeDAG = function(
       });
     });
 
-    if (autoLayout) {
+    if (data.applyAfterLoad && Array.isArray(data.applyAfterLoad)) {
+      applySchemaCommands(entityManager, data.applyAfterLoad);
+    } else if (autoLayout) {
       autoLayoutDAG(entityManager);
     }
   } catch (error) {
@@ -130,10 +151,11 @@ export const autoLayoutDAG = function(entityManager: EntityManager): void {
 
   levels.forEach((levelNodes, levelIndex) => {
     const x = START_X + (levelIndex * HORIZONTAL_SPACING);
+    const stagger = (levelIndex % 2) * (VERTICAL_SPACING / 2);
     
-    // Center vertically based on number of nodes in level
+    // Center vertically based on number of nodes in level, with stagger to dodge connections
     const totalHeight = levelNodes.length * VERTICAL_SPACING;
-    const startY = Math.max(START_Y, (1000 - totalHeight) / 2); // Approximate centering
+    const startY = Math.max(START_Y, (1000 - totalHeight) / 2) + stagger;
 
     levelNodes.forEach((nodeId, nodeIndex) => {
       const y = startY + (nodeIndex * VERTICAL_SPACING);

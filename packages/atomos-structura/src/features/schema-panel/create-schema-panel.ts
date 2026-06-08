@@ -1,4 +1,4 @@
-﻿import { DATA_TYPES } from '@atomos-web/structura-core'
+import { DATA_TYPES } from '@atomos-web/structura-core'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
 import type { DAGObserver } from '../../core/adapters/dag-observer.js'
 import type { DAGExport } from '../../core/application/dag-service.js'
@@ -63,7 +63,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
   const expandedIds  = new Set<string>();
   let selectedId     = '';
   let panelWidth     = PANEL_DEFAULT_W;
-  let isCollapsed    = false;
+  let isCollapsed    = true;
   let searchQuery    = '';
   let currentDag: DAGExport | null = null;
   let editingEntityId = '';

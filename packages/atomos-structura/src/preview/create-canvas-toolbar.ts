@@ -509,7 +509,7 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
     (Object.keys(button_map) as Array<keyof WorkspaceMenuConfig>).forEach(key => {
       const item = cfg[key];
       if (item === undefined) return; // not configured → keep default (visible)
-      const visible = item.available !== false;
+      const visible = (item as any).available !== false;
       const els = button_map[key];
       const display_value = visible ? '' : 'none';
       if (Array.isArray(els)) {

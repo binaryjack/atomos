@@ -1,6 +1,8 @@
 import type { WorkspaceMenuConfig } from './menu-config.types.js';
 
 export interface WorkspaceConfig {
+  /** Freeze the graph. Short-circuits all drag, drop, and connection events. */
+  readonly readonly?: boolean;
   /** Suppress all UI panels (settings page, schema panel, toolbar settings button). */
   readonly headless?: boolean;
   /**
@@ -10,4 +12,8 @@ export interface WorkspaceConfig {
   readonly allow_multiple_schemas?: boolean;
   /** Fine-grained availability and value config for every canvas toolbar item. */
   readonly menu?: WorkspaceMenuConfig;
+  /**
+   * Hook for fetching options asynchronously for a property dropdown
+   */
+  readonly onLoadOptions?: (propertyKey: string, entityId: string) => Promise<{ label: string; value: unknown }[]>;
 }

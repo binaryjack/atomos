@@ -101,6 +101,29 @@ export const injectDesignSystemTokens = (container?: HTMLElement) => {
       stroke: ${DEFAULT_LINK_STYLE.color};
       stroke-width: ${DEFAULT_LINK_STYLE.thickness}px;
     }
+    
+    /* Sleek minimal scrollbars */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--vbs-border-hover, #3f3f46) transparent;
+    }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: transparent;
+      border-radius: 4px;
+    }
+    *:hover::-webkit-scrollbar-thumb {
+      background: var(--vbs-border-hover, #3f3f46);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--vbs-text-secondary, #a1a1aa) !important;
+    }
   `;
 };
 

@@ -1,4 +1,4 @@
-﻿import { createSignal } from '@atomos-web/prime';
+import { createSignal } from '@atomos-web/prime';
 import type { Signal } from '@atomos-web/prime';
 import type { LinkCreationState } from './types/link-creation-state.types.js';
 import type { EntityState } from './types/entity-state.types.js';
@@ -8,7 +8,7 @@ import type { InteractiveBehaviorManager } from './types/interactive-behavior-ma
 
 export type { LinkCreationState, EntityState, InteractionContext, BehaviorState, InteractiveBehaviorManager };
 
-export const createInteractiveBehaviorManager = function(): InteractiveBehaviorManager {
+export const createInteractiveBehaviorManager = function(options?: { isReadonly?: () => boolean }): InteractiveBehaviorManager {
   const cleanupFunctions: Array<() => void> = [];
   
   // Core behavior state
@@ -20,6 +20,7 @@ export const createInteractiveBehaviorManager = function(): InteractiveBehaviorM
 
   // Link creation workflow
   const startLinkCreation = (context: InteractionContext) => {
+    if (options?.isReadonly?.()) return;
     behaviorState.set({
       ...behaviorState.value,
       linkCreation: 'drawing',
@@ -51,6 +52,7 @@ export const createInteractiveBehaviorManager = function(): InteractiveBehaviorM
 
   // Entity interaction workflow  
   const selectEntity = (entityId: string) => {
+    if (options?.isReadonly?.()) return;
     behaviorState.set({
       ...behaviorState.value,
       entity: 'selected',
@@ -59,6 +61,7 @@ export const createInteractiveBehaviorManager = function(): InteractiveBehaviorM
   };
 
   const startEntityDrag = (entityId: string, position: { x: number; y: number }) => {
+    if (options?.isReadonly?.()) return;
     behaviorState.set({
       ...behaviorState.value,
       entity: 'dragging',
@@ -85,6 +88,7 @@ export const createInteractiveBehaviorManager = function(): InteractiveBehaviorM
   };
 
   const startEntityResize = (entityId: string, position: { x: number; y: number }) => {
+    if (options?.isReadonly?.()) return;
     behaviorState.set({
       ...behaviorState.value,
       entity: 'resizing',

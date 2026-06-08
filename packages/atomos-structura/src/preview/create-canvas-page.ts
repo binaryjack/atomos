@@ -1,4 +1,4 @@
-﻿import type { WorkspaceConfig } from '@atomos-web/structura-core'
+import type { WorkspaceConfig } from '@atomos-web/structura-core'
 import { getCanvasAdapter } from '../core/adapters/canvas-adapter.js'
 import { createDAGObserver } from '../core/adapters/dag-observer.js'
 import { getAppearanceSettings, getCustomShapes, getGeneralSettings, getToolboxConfig, initToolboxConfigManager, setAppearanceSettings, setCustomShapes, setGeneralSettings, setToolboxConfig } from '../core/adapters/toolbox-config-manager.js'
@@ -61,10 +61,14 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   root.style.cssText = 'position:fixed;inset:0;overflow:hidden;background:var(--vbs-bg-input, #09090b);';
 
   // Schema tabs bar
-  const schemaTabs = createSchemaTabs(instanceId);
-  root.appendChild(schemaTabs.element);
-  cleanups.push(schemaTabs.cleanup.destroy);
-  const TAB_H = schemaTabs.height;
+  let schemaTabs: any = null;
+  let TAB_H = 0;
+  if (config?.allow_multiple_schemas !== false) {
+    schemaTabs = createSchemaTabs(instanceId);
+    root.appendChild(schemaTabs.element);
+    cleanups.push(schemaTabs.cleanup.destroy);
+    TAB_H = schemaTabs.height;
+  }
 
   // Canvas container — full area below tab bar
   const canvasWrap = document.createElement('div');
@@ -168,7 +172,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   cleanups.push(viewport.cleanup);
 
   // Workspace
-  const workspace = createWorkspaceManager(svg, viewportGroup, instanceId);
+  const workspace = createWorkspaceManager(svg, viewportGroup, instanceId, () => store.get_state().workspace.config?.readonly ?? false);
   cleanups.push(workspace.cleanup.destroy);
 
   // Apply persisted appearance tokens AFTER design system is injected
@@ -390,10 +394,17 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   cleanups.push(destroyToolbar);
   canvasWrap.appendChild(bottomBar);
   
-  // Inject topBurger before schemaTabs element
-  schemaTabs.element.insertBefore(topBurger, schemaTabs.element.firstChild);
-  // Add margin to make sure it doesn't stick to the edge
-  topBurger.style.marginLeft = '8px';
+  // Inject topBurger before schemaTabs element, or absolutely positioned if no tabs
+  if (schemaTabs) {
+    schemaTabs.element.insertBefore(topBurger, schemaTabs.element.firstChild);
+    topBurger.style.marginLeft = '8px';
+  } else {
+    topBurger.style.position = 'absolute';
+    topBurger.style.top = '4px';
+    topBurger.style.left = '4px';
+    topBurger.style.zIndex = '50';
+    root.appendChild(topBurger);
+  }
 
   // Validation overlay
   const validator = createSchemaValidator(store);

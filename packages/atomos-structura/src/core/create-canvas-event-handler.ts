@@ -1,4 +1,4 @@
-﻿import type { Signal } from '@atomos-web/prime'
+import type { Signal } from '@atomos-web/prime'
 import type { EdgePosition } from '../features/edge/types/edge-position.types.js'
 import { getCanvasAdapter } from './adapters/canvas-adapter.js'
 import { testEdgeHit } from './create-edge-hit-tester.js'
@@ -34,6 +34,7 @@ export interface CanvasEventHandlerDeps {
   readonly getManager: () => WorkspaceManager;
   readonly onWorkspaceStateUpdate: (patch: Partial<WorkspaceState>) => void;
   readonly instanceId: string;
+  readonly isReadonly?: () => boolean;
 }
 
 export const createCanvasEventHandler = function(
@@ -46,6 +47,7 @@ export const createCanvasEventHandler = function(
   } = deps;
 
   const onCanvasMouseUp = (event: MouseEvent): void => {
+    if (deps.isReadonly?.()) return;
     if (!linkDrawController.isDrawing()) return;
     const srcPos = linkDrawController.getActiveTempLinkSourcePos();
     const srcAnchorId = linkDrawController.getActiveTempSrcAnchorId();
@@ -137,6 +139,7 @@ export const createCanvasEventHandler = function(
   };
 
   const onCanvasClick = (event: MouseEvent): void => {
+    if (deps.isReadonly?.()) return;
     if (behaviorManager.behaviorState.value.linkCreation === 'drawing') return;
     if ((event.target as Element) === svgContainer || (event.target as Element).tagName === 'svg') {
       behaviorManager.selectEntity('');

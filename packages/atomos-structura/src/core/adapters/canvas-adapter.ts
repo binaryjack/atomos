@@ -229,14 +229,17 @@ export const destroyCanvasAdapter = function(instanceId: string, schemaId: strin
   console.log(`🗑️ Canvas adapter destroyed for instance: ${instanceId}, schema: ${schemaId}`);
 };
 
-// Legacy singleton — kept for backward compatibility. Resolves to the 'default' slot.
-// Deprecated: prefer getCanvasAdapterFor(instanceId, schemaId).
-let globalCanvasAdapter: CanvasAdapter | null = null;
+// Legacy singleton structure changed to Map for proper instance isolation
+const canvasAdapters = new Map<string, CanvasAdapter>();
 
 export const getCanvasAdapter = function(instanceId: string): CanvasAdapter {
-  if (!globalCanvasAdapter) {
-    globalCanvasAdapter = createCanvasAdapter(instanceId);
+  if (!canvasAdapters.has(instanceId)) {
+    canvasAdapters.set(instanceId, createCanvasAdapter(instanceId));
     console.log(`🏗️ Clean Architecture Canvas Adapter initialized for instance ${instanceId}`);
   }
-  return globalCanvasAdapter;
+  return canvasAdapters.get(instanceId)!;
+};
+
+export const destroyLegacyCanvasAdapter = function(instanceId: string): void {
+  canvasAdapters.delete(instanceId);
 };

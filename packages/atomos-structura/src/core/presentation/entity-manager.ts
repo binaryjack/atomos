@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Presentation Layer - Clean Facade for UI Components
  * Provides simple interface hiding architectural complexity
  */
@@ -11,6 +11,7 @@ import { createEventBus, createPersistedEntityRepository, createPersistedLinkRep
 
 // Simplified UI Interface - Hide CQRS complexity  
 export interface EntityManager {
+  readonly instanceId: string;
   // Entity Commands (UI Actions)
   readonly createEntity: (id: string, name: string, position?: EntityPosition, dimensions?: EntityDimensions, metadata?: { shape?: string; color?: string; description?: string }) => void;
   readonly moveEntity: (entityId: string, position: EntityPosition) => void;
@@ -269,6 +270,7 @@ export const createEntityManager = function(instanceId: string): EntityManager {
   };
   
   return {
+    instanceId,
     createEntity,
     moveEntity, 
     resizeEntity,
@@ -304,4 +306,12 @@ export const getEntityManager = function(instanceId: string): EntityManager {
     entityManagers.set(instanceId, newManager);
   }
   return entityManagers.get(instanceId)!;
+};
+
+export const destroyEntityManager = function(instanceId: string): void {
+  const manager = entityManagers.get(instanceId);
+  if (manager) {
+    manager.cleanup();
+    entityManagers.delete(instanceId);
+  }
 };

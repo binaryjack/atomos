@@ -1,6 +1,7 @@
-﻿import type { Signal } from '@atomos-web/prime'
+import type { Signal } from '@atomos-web/prime'
 import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js'
 import { calculateSnappedPosition } from '../alignment/create-alignment-guides.js'
+import { getGeneralSettings } from '../../core/adapters/toolbox-config-manager.js'
 
 export interface EntityDragBehaviorResult {
   readonly cleanup: () => void;
@@ -87,16 +88,19 @@ export const createEntityDragBehavior = function(
         rawY = snappedPos.y;
       } else {
         // Grid snapping only when no alignment guides are active
-        const root = document.querySelector('.vbs-workspace, vbs-workspace') as HTMLElement || document.body;
-        let gridSize = 16;
-        if (root) {
-          const gridVar = getComputedStyle(root).getPropertyValue('--vbs-grid-size');
-          const parsed = parseInt(gridVar);
-          if (!isNaN(parsed) && parsed > 0) gridSize = parsed;
-        }
+        const { enableSnapping } = getGeneralSettings() || {};
+        if (enableSnapping) {
+          const root = document.querySelector('.vbs-workspace, vbs-workspace') as HTMLElement || document.body;
+          let gridSize = 16;
+          if (root) {
+            const gridVar = getComputedStyle(root).getPropertyValue('--vbs-grid-size');
+            const parsed = parseInt(gridVar);
+            if (!isNaN(parsed) && parsed > 0) gridSize = parsed;
+          }
 
-        rawX = Math.round(rawX / gridSize) * gridSize;
-        rawY = Math.round(rawY / gridSize) * gridSize;
+          rawX = Math.round(rawX / gridSize) * gridSize;
+          rawY = Math.round(rawY / gridSize) * gridSize;
+        }
       }
 
       position.set({ x: rawX, y: rawY });

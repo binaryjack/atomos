@@ -24,4 +24,6 @@ export interface WorkspaceMenuConfig {
   readonly save_workspace?: MenuItemConfig;
   readonly load_workspace?: MenuItemConfig;
   readonly export_svg?: MenuItemConfig;
+  /** Custom actions to add to the toolbar (emits onCustomAction) */
+  readonly customActions?: { id: string; label: string; icon?: string }[];
 }

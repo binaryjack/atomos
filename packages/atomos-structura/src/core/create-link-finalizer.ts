@@ -1,4 +1,4 @@
-﻿import type { Signal } from '@atomos-web/prime'
+import type { Signal } from '@atomos-web/prime'
 import type { EdgePosition } from '../features/edge/types/edge-position.types.js'
 import { openLinkSettingsModal } from '../features/modal/create-link-settings-modal.js'
 import { getCanvasAdapter } from './adapters/canvas-adapter.js'
@@ -51,6 +51,7 @@ export const computeAnchorWorldPos = (
 
 const LABEL_W = 240;
 const LABEL_H = 26;
+const KNOB_SIZE = 12;
 
 const createLinkLabelFO = (
   mid: { x: number; y: number },
@@ -58,40 +59,54 @@ const createLinkLabelFO = (
   onDelete: () => void
 ): SVGForeignObjectElement => {
   const fo = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+  // We set the FO size to the full label size, but offset it so the knob is centered
   fo.setAttribute('width',  LABEL_W.toString());
   fo.setAttribute('height', LABEL_H.toString());
   fo.setAttribute('x', (mid.x - LABEL_W / 2).toString());
   fo.setAttribute('y', (mid.y - LABEL_H / 2).toString());
   fo.style.overflow = 'visible';
-  fo.style.pointerEvents = 'all';
+  fo.style.pointerEvents = 'none'; // Only the inner container should capture pointer events
+
+  const container = document.createElement('div');
+  container.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+  container.style.cssText = [
+    'display:flex',
+    'align-items:center',
+    'justify-content:center',
+    'width:100%',
+    'height:100%',
+    'pointer-events:none',
+  ].join(';');
 
   const body = document.createElement('div');
-  body.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
   body.style.cssText = [
     'display:flex',
     'align-items:center',
     'gap:4px',
-    'padding:0 8px',
-    'height:100%',
+    'padding:0',
+    `width:${KNOB_SIZE}px`,
+    `height:${KNOB_SIZE}px`,
     'box-sizing:border-box',
-    'background:rgba(15,23,42,0.88)',
-    'border:1px solid var(--vbs-border, #27272a)',
-    'border-radius: var(--vbs-radius, 2px)',
+    'background:var(--vbs-primary, #3b82f6)',
+    'border:2px solid rgba(15,23,42,0.88)',
+    'border-radius:12px',
     'font-family:var(--vbs-entity-props-font-family, system-ui, sans-serif)',
     'font-size:var(--vbs-entity-props-font-size, 11px)',
     'color:var(--vbs-text-secondary, #a1a1aa)',
     'white-space:nowrap',
-    'cursor:default',
+    'cursor:pointer',
     'user-select:none',
-    'transition:border-color 0.15s',
+    'transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    'pointer-events:all',
+    'overflow:hidden',
   ].join(';');
 
   const labelSpan = document.createElement('span');
   labelSpan.textContent = 'Link';
-  labelSpan.style.cssText = 'flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;';
+  labelSpan.style.cssText = 'flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;display:none;padding-left:8px;';
 
   const actions = document.createElement('div');
-  actions.style.cssText = 'display:none;align-items:center;gap:3px;';
+  actions.style.cssText = 'display:none;align-items:center;gap:3px;padding-right:4px;';
 
   const mkBtn = (title: string, content: string, color: string, cb: () => void): HTMLButtonElement => {
     const btn = document.createElement('button');
@@ -122,17 +137,36 @@ const createLinkLabelFO = (
   actions.appendChild(deleteBtn);
   body.appendChild(labelSpan);
   body.appendChild(actions);
-  fo.appendChild(body);
+  container.appendChild(body);
+  fo.appendChild(container);
 
-  fo.addEventListener('mouseenter', () => {
-    actions.style.display = 'flex';
-    body.style.borderColor = 'var(--vbs-primary, #3b82f6)';
+  let hoverTimeout: any;
+
+  body.addEventListener('mouseenter', () => {
+    clearTimeout(hoverTimeout);
+    body.style.width = 'auto';
+    body.style.minWidth = '80px';
+    body.style.maxWidth = '100%';
+    body.style.height = '100%';
+    body.style.borderRadius = 'var(--vbs-radius, 4px)';
+    body.style.background = 'rgba(15,23,42,0.95)';
+    body.style.border = '1px solid var(--vbs-primary, #3b82f6)';
     body.style.color = 'var(--vbs-text-primary, #f4f4f5)';
+    labelSpan.style.display = 'block';
+    actions.style.display = 'flex';
   });
-  fo.addEventListener('mouseleave', () => {
-    actions.style.display = 'none';
-    body.style.borderColor = 'var(--vbs-border, #27272a)';
-    body.style.color = 'var(--vbs-text-secondary, #a1a1aa)';
+
+  body.addEventListener('mouseleave', () => {
+    hoverTimeout = setTimeout(() => {
+      body.style.width = `${KNOB_SIZE}px`;
+      body.style.minWidth = `${KNOB_SIZE}px`;
+      body.style.height = `${KNOB_SIZE}px`;
+      body.style.borderRadius = '12px';
+      body.style.background = 'var(--vbs-primary, #3b82f6)';
+      body.style.border = '2px solid rgba(15,23,42,0.88)';
+      labelSpan.style.display = 'none';
+      actions.style.display = 'none';
+    }, 100);
   });
 
   return fo;
@@ -219,6 +253,12 @@ export const createLinkFinalizer = function(
           el.parentNode.removeChild(el);
         }
       });
+    }
+
+    // Force clear any path or group that might have prefix but didn't match EXACT linkId
+    const orphanedPaths = contentRoot.querySelectorAll(`path[id^="${linkId}"], g[id^="${linkId}"]`);
+    if (orphanedPaths.length > 0) {
+      orphanedPaths.forEach(el => el.parentNode?.removeChild(el));
     }
     
     // Only notify Redux store about individual link deletions, not during entity cascade

@@ -1,8 +1,9 @@
 import type { SchemaGraphKernel } from "@atomos-web/structura/dist/core/create-schema-graph-kernel.js";
 import type { EntityManager } from "@atomos-web/structura/dist/core/presentation/entity-manager.js";
+import { applySchemaCommands } from "@atomos-web/structura/dist/core/application/dag-service.js";
 
-export const load_preset = (kernel: SchemaGraphKernel, entity_manager: EntityManager, preset: string) => {
-  const presets: Record<string, { entities: any[]; links: any[] }> = {
+export const load_preset = (kernel: SchemaGraphKernel, entityManager: EntityManager, preset: string) => {
+  const presets: Record<string, { entities: any[]; links: any[]; applyAfterLoad?: string[] }> = {
     'mvc': {
       entities: [
         { id: 'mvc-view', name: 'View (UI)', nodeType: 'box', position: { x: 100, y: 100 } },
@@ -13,7 +14,8 @@ export const load_preset = (kernel: SchemaGraphKernel, entity_manager: EntityMan
         { source: 'mvc-view', target: 'mvc-controller' },
         { source: 'mvc-controller', target: 'mvc-model' },
         { source: 'mvc-model', target: 'mvc-view' },
-      ]
+      ],
+      applyAfterLoad: ['auto-layout', 'optimize-connections', 'center-to-schema', 'fit-to-screen']
     },
     'mvvm': {
       entities: [
@@ -24,7 +26,8 @@ export const load_preset = (kernel: SchemaGraphKernel, entity_manager: EntityMan
       links: [
         { source: 'mvvm-view', target: 'mvvm-viewmodel' },
         { source: 'mvvm-viewmodel', target: 'mvvm-model' },
-      ]
+      ],
+      applyAfterLoad: ['auto-layout', 'optimize-connections', 'center-to-schema', 'fit-to-screen']
     },
     'cqrs': {
       entities: [
@@ -42,7 +45,8 @@ export const load_preset = (kernel: SchemaGraphKernel, entity_manager: EntityMan
         { source: 'cqrs-write-db', target: 'cqrs-bus' },
         { source: 'cqrs-bus', target: 'cqrs-read-db' },
         { source: 'cqrs-query', target: 'cqrs-read-db' },
-      ]
+      ],
+      applyAfterLoad: ['auto-layout', 'optimize-connections', 'center-to-schema', 'fit-to-screen']
     },
     'flux': {
       entities: [
@@ -56,7 +60,8 @@ export const load_preset = (kernel: SchemaGraphKernel, entity_manager: EntityMan
         { source: 'flux-action', target: 'flux-dispatcher' },
         { source: 'flux-dispatcher', target: 'flux-store' },
         { source: 'flux-store', target: 'flux-view' },
-      ]
+      ],
+      applyAfterLoad: ['auto-layout', 'optimize-connections', 'center-to-schema', 'fit-to-screen']
     },
     'database': {
       entities: [
@@ -67,7 +72,8 @@ export const load_preset = (kernel: SchemaGraphKernel, entity_manager: EntityMan
       links: [
         { source: 'db-users', target: 'db-posts' },
         { source: 'db-posts', target: 'db-comments' }
-      ]
+      ],
+      applyAfterLoad: ['auto-layout', 'optimize-connections', 'center-to-schema', 'fit-to-screen']
     },
     'class-diagram': {
       entities: [
@@ -78,7 +84,8 @@ export const load_preset = (kernel: SchemaGraphKernel, entity_manager: EntityMan
       links: [
         { source: 'cls-dog', target: 'cls-animal' },
         { source: 'cls-bird', target: 'cls-animal' }
-      ]
+      ],
+      applyAfterLoad: ['auto-layout', 'optimize-connections', 'center-to-schema', 'fit-to-screen']
     },
     'uml': {
       entities: [
@@ -89,7 +96,8 @@ export const load_preset = (kernel: SchemaGraphKernel, entity_manager: EntityMan
       links: [
         { source: 'uml-actor', target: 'uml-uc1' },
         { source: 'uml-actor', target: 'uml-uc2' }
-      ]
+      ],
+      applyAfterLoad: ['auto-layout', 'optimize-connections', 'center-to-schema', 'fit-to-screen']
     },
     'activity-workflow': {
       entities: [
@@ -102,7 +110,8 @@ export const load_preset = (kernel: SchemaGraphKernel, entity_manager: EntityMan
         { source: 'act-start', target: 'act-process' },
         { source: 'act-process', target: 'act-decision' },
         { source: 'act-decision', target: 'act-end' }
-      ]
+      ],
+      applyAfterLoad: ['auto-layout', 'optimize-connections', 'center-to-schema', 'fit-to-screen']
     },
     'security-schema': {
       entities: [
@@ -117,7 +126,8 @@ export const load_preset = (kernel: SchemaGraphKernel, entity_manager: EntityMan
         { source: 'sec-waf', target: 'sec-api' },
         { source: 'sec-api', target: 'sec-auth' },
         { source: 'sec-api', target: 'sec-db' }
-      ]
+      ],
+      applyAfterLoad: ['auto-layout', 'optimize-connections', 'center-to-schema', 'fit-to-screen']
     }
   };
 
@@ -126,24 +136,31 @@ export const load_preset = (kernel: SchemaGraphKernel, entity_manager: EntityMan
 
   p.entities.forEach((e: any) => {
     entityManager.createEntity(
-      e.id, 
-      e.name, 
-      e.position || { x: 0, y: 0 }, 
-      e.dimensions || { width: 220, height: 120 }, 
+      e.id,
+      e.name,
+      e.position || { x: 0, y: 0 },
+      e.dimensions || { width: 220, height: 120 },
       { shape: e.nodeType || 'box' }
     );
-    if (e.properties && e.properties.length > 0) {
-      entityManager.updateEntityProperties(e.id, e.properties);
-    }
+    const props = e.properties || [
+      { key: 'id', label: 'Identifier', type: 'uuid' },
+      { key: 'status', label: 'Status', type: 'string' },
+      { key: 'description', label: 'Description', type: 'string' }
+    ];
+    entityManager.updateEntityProperties(e.id, props);
   });
 
   p.links.forEach((l: any, i: number) => {
     entityManager.createLink(
       `link-${preset}-${i}`,
-      'right',
-      'left',
+      `${l.source}-anchor-right`,
+      `${l.target}-anchor-left`,
       l.source,
       l.target
     );
   });
+
+  if (p.applyAfterLoad && Array.isArray(p.applyAfterLoad)) {
+    applySchemaCommands(entityManager, p.applyAfterLoad);
+  }
 };

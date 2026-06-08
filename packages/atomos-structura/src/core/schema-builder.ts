@@ -1,4 +1,4 @@
-﻿import type { Entity, WorkspaceConfig } from '@atomos-web/structura-core'
+import type { Entity, WorkspaceConfig } from '@atomos-web/structura-core'
 import type { MenuControl } from '../types/menu-control.types.js'
 import type { ReduxStore } from '../types/redux-state.types.js'
 import { createMenuControl } from './create-menu-control.js'
@@ -27,6 +27,10 @@ export interface SchemaBuilder {
   readonly kernel: SchemaGraphKernel;
   /** Runtime control of toolbar item availability and values. */
   readonly menuControl: MenuControl;
+  /** Listen for custom actions defined in the config */
+  onCustomAction(actionId: string, callback: (state: any) => void): () => void;
+  /** Trigger a custom action */
+  triggerCustomAction(actionId: string): void;
   addEntity(entity: Entity): void;
   removeEntity(entityId: string): void;
   updateEntity(entity: Entity): void;
@@ -114,11 +118,31 @@ export const createSchemaBuilder = function(props: SchemaBuilderProps): SchemaBu
     return canvas?.active_schema_id ?? '';
   };
 
+  const customActionListeners = new Map<string, Set<(state: any) => void>>();
+
   const builder: SchemaBuilder = {
     store,
     workspaceApi,
     kernel,
     menuControl,
+
+    onCustomAction(actionId: string, callback: (state: any) => void): () => void {
+      let listeners = customActionListeners.get(actionId);
+      if (!listeners) {
+        listeners = new Set();
+        customActionListeners.set(actionId, listeners);
+      }
+      listeners.add(callback);
+      return () => listeners?.delete(callback);
+    },
+
+    triggerCustomAction(actionId: string): void {
+      const listeners = customActionListeners.get(actionId);
+      if (listeners) {
+        const state = store.get_state();
+        listeners.forEach(cb => cb(state));
+      }
+    },
 
     addEntity(entity: Entity): void {
       store.dispatch({ type: 'entity-added', schema_id: get_active_schema_id(), entity });

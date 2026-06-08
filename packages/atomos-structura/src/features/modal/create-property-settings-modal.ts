@@ -1,4 +1,4 @@
-﻿import { createButton, createFormularDropdown, createFormularInput } from '@atomos-web/prime'
+import { createButton, createFormularDropdown, createFormularInput } from '@atomos-web/prime'
 import type { DataType, Property } from '@atomos-web/structura-core'
 import { COMPONENT_TYPES, DATA_TYPES } from '@atomos-web/structura-core'
 import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
@@ -171,6 +171,7 @@ export const createPropertySettingsModal = function(
         cb.style.cssText = 'width:18px;height:18px;cursor:pointer;accent-color:var(--vbs-primary, #3b82f6);';
         cb.addEventListener('change', () => { currentValue = cb.checked; });
         activeValueInput = cb;
+        valueInputWrap.appendChild(activeValueInput);
       } else if (ct === 'textarea') {
         const ta = document.createElement('textarea');
         ta.value = String(currentValue ?? '');
@@ -178,6 +179,47 @@ export const createPropertySettingsModal = function(
         ta.style.cssText = sharedInputStyle + ';resize:vertical;';
         ta.addEventListener('input', () => { currentValue = ta.value; });
         activeValueInput = ta;
+        valueInputWrap.appendChild(activeValueInput);
+      } else if (ct === 'select') {
+        const sel = document.createElement('select');
+        sel.style.cssText = sharedInputStyle;
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = String(currentValue ?? '');
+        defaultOpt.textContent = String(currentValue ?? 'Loading options...');
+        sel.appendChild(defaultOpt);
+        sel.addEventListener('change', () => { currentValue = sel.value; });
+        activeValueInput = sel;
+        valueInputWrap.appendChild(activeValueInput);
+
+        // Fetch options
+        import('../../core/create-redux-store.js').then(({ getInstanceReduxStore }) => {
+          try {
+            const config = getInstanceReduxStore(props.instanceId).get_state().workspace.config;
+            if (config?.onLoadOptions) {
+              config.onLoadOptions(props.propertyKey, props.entityId).then(options => {
+                sel.innerHTML = ''; // clear old options
+                options.forEach(opt => {
+                  const o = document.createElement('option');
+                  o.value = String(opt.value);
+                  o.textContent = opt.label;
+                  if (String(opt.value) === String(currentValue)) o.selected = true;
+                  sel.appendChild(o);
+                });
+                if (!options.some(opt => String(opt.value) === String(currentValue))) {
+                  currentValue = options[0]?.value ?? '';
+                  if (options.length > 0) sel.value = String(options[0]?.value);
+                }
+              }).catch(err => {
+                console.error('[PROPERTY-MODAL] onLoadOptions failed:', err);
+                defaultOpt.textContent = 'Error loading options';
+              });
+            } else {
+              defaultOpt.textContent = String(currentValue ?? '');
+            }
+          } catch (e) {
+            console.error('[PROPERTY-MODAL] Failed to access store for onLoadOptions:', e);
+          }
+        });
       } else {
         const inp = document.createElement('input');
         if (dt === 'number' || dt === 'integer' || dt === 'float') inp.type = 'number';
@@ -188,8 +230,8 @@ export const createPropertySettingsModal = function(
         inp.style.cssText = sharedInputStyle;
         inp.addEventListener('input', () => { currentValue = inp.value; });
         activeValueInput = inp;
+        valueInputWrap.appendChild(activeValueInput);
       }
-      valueInputWrap.appendChild(activeValueInput);
     };
 
     buildValueInput();

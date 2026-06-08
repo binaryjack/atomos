@@ -14,10 +14,11 @@ import type { WorkspaceState } from './types/workspace-state.types.js'
 export const createWorkspaceManager = function(
   svgContainer: SVGSVGElement,
   contentRoot: SVGElement = svgContainer,
-  instanceId: string
+  instanceId: string,
+  isReadonly?: () => boolean
 ): WorkspaceManager {
   injectDesignSystemTokens();
-  const behaviorManager  = createInteractiveBehaviorManager();
+  const behaviorManager  = createInteractiveBehaviorManager(isReadonly ? { isReadonly } : undefined);
   const linkManager      = createLinkManager();
   const transformer      = createCoordinateTransformer(svgContainer, contentRoot);
   const registry         = createEntityRegistry(contentRoot);
@@ -65,6 +66,7 @@ export const createWorkspaceManager = function(
     getManager:        () => manager,
     onWorkspaceStateUpdate: patchState,
     instanceId,
+    ...(isReadonly ? { isReadonly } : {}),
   });
 
   manager = {

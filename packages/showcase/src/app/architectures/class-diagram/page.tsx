@@ -2,7 +2,7 @@ import { CanvasSandbox } from "../../../components/CanvasSandboxWrapper";
 
 export default function classdiagramPage() {
   return (
-    <div className="flex flex-col gap-10 max-w-4xl w-full h-full pb-10">
+    <div className="flex flex-col gap-10 w-full h-full pb-10">
       <header className="border-b border-slate-800 pb-8 shrink-0">
         <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-4">Class Diagram</h1>
         <p className="text-slate-400 leading-relaxed text-lg">Visual representation of object-oriented classes and their relationships.</p>
@@ -15,7 +15,7 @@ export default function classdiagramPage() {
             Live Class Diagram
           </h2>
         </div>
-        <div className="flex-1 w-full bg-slate-900 border border-slate-700 rounded-xl overflow-hidden relative shadow-2xl min-h-[500px]">
+        <div className="flex-1 w-full rounded-xl overflow-hidden relative min-h-[500px]">
           <CanvasSandbox preset="class-diagram" />
         </div>
       </section>
