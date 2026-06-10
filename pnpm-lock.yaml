@@ -90,6 +90,9 @@ importers:
       '@atomos-web/structura-mcp':
         specifier: workspace:*
         version: link:../atomos-structura-mcp
+      '@binaryjack/formular.dev':
+        specifier: workspace:*
+        version: link:../formular-dev
     devDependencies:
       glob:
         specifier: ^10.0.0

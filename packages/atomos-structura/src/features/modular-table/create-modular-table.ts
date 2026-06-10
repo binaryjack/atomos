@@ -18,8 +18,7 @@ export const createModularTable = function<T = any>(props: ModularTableProps<T>)
   const filters: Record<string, string> = {};
 
   const container = document.createElement('div');
-  // Modern container styling
-  container.className = \`w-full overflow-auto rounded-xl border border-slate-700/50 bg-slate-900/80 backdrop-blur-md shadow-xl \${props.className || ''}\`;
+  container.className = `w-full overflow-auto rounded-xl border border-slate-700/50 bg-slate-900/80 backdrop-blur-md shadow-xl ${props.className || ''}`;
 
   const table = document.createElement('table');
   table.className = 'w-full text-sm text-left text-slate-300 border-collapse';

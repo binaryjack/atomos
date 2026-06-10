@@ -26,7 +26,7 @@ export const renderCellContent = <T>(
       input.checked = !!cellValue;
       input.addEventListener('change', (e) => {
         const val = (e.target as HTMLInputElement).checked;
-        const newObj = { ...dataArr[rowIndex], [col.id]: val };
+        const newObj = { ...dataArr[rowIndex], [col.id]: val } as T;
         dataArr[rowIndex] = newObj;
         if (onChangeCb) onChangeCb([...dataArr]);
         if (!isFooter) {
@@ -48,7 +48,7 @@ export const renderCellContent = <T>(
       });
       select.addEventListener('change', (e) => {
         const val = (e.target as HTMLSelectElement).value;
-        const newObj = { ...dataArr[rowIndex], [col.id]: val };
+        const newObj = { ...dataArr[rowIndex], [col.id]: val } as T;
         dataArr[rowIndex] = newObj;
         if (onChangeCb) onChangeCb([...dataArr]);
         if (!isFooter) {
@@ -62,12 +62,12 @@ export const renderCellContent = <T>(
       input.type = col.type === 'number' ? 'number' : 'text';
       input.value = cellValue !== undefined ? String(cellValue) : '';
       // Modern styling
-      input.className = \`bg-transparent border-b border-transparent hover:border-slate-600 focus:border-blue-500 focus:outline-none w-full p-1.5 transition-colors text-slate-200 \${isFooter ? 'font-bold' : ''}\`;
+      input.className = `bg-transparent border-b border-transparent hover:border-slate-600 focus:border-blue-500 focus:outline-none w-full p-1.5 transition-colors text-slate-200 ${isFooter ? 'font-bold' : ''}`;
       
       input.addEventListener('change', (e) => {
         let val: any = (e.target as HTMLInputElement).value;
         if (col.type === 'number') val = Number(val);
-        const newObj = { ...dataArr[rowIndex], [col.id]: val };
+        const newObj = { ...dataArr[rowIndex], [col.id]: val } as T;
         dataArr[rowIndex] = newObj;
         if (onChangeCb) onChangeCb([...dataArr]);
         if (!isFooter) {

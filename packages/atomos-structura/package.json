@@ -33,7 +33,8 @@
     "@atomos-web/prime": "workspace:*",
     "@atomos-web/prime-style": "workspace:*",
     "@atomos-web/structura-core": "workspace:*",
-    "@atomos-web/structura-mcp": "workspace:*"
+    "@atomos-web/structura-mcp": "workspace:*",
+    "@binaryjack/formular.dev": "workspace:*"
   },
   "devDependencies": {
     "glob": "^10.0.0",
