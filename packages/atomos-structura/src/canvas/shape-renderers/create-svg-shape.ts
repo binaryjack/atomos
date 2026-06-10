@@ -1,4 +1,4 @@
-﻿import type { EntityShape } from '@atomos-web/structura-core'
+import type { EntityShape } from '@atomos-web/structura-core'
 import { getCustomShapes } from '../../core/adapters/toolbox-config-manager.js'
 import { applyCommonStyles } from './apply-common-styles.js'
 import { createChevron } from './create-chevron.js'
@@ -40,7 +40,17 @@ export const createSVGShape = (shape: EntityShape, width: number, height: number
       // setAttribute('style') works on DOMParser elements before adoption into main document.
       // .style CSSStyleDeclaration is unavailable on cross-document XML nodes.
       // CSS var() resolves correctly inside inline style strings.
-      svgEl.setAttribute('style', `fill: ${finalColor}; stroke: var(--vbs-primary, #3b82f6); stroke-width: 1; transition: all 0.2s ease-in-out;`);
+      const stroke = 'var(--shape-stroke, var(--vbs-primary, rgba(59, 130, 246, 0.6)))';
+      const strokeWidth = 'var(--shape-stroke-width, 1.5px)';
+      const shadow = 'var(--shape-shadow, drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4)))';
+      
+      svgEl.setAttribute('style', `
+        fill: ${finalColor}; 
+        stroke: ${stroke}; 
+        stroke-width: ${strokeWidth}; 
+        filter: ${shadow};
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      `);
       return svgEl;
     }
   }

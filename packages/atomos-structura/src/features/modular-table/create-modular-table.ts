@@ -1,4 +1,7 @@
 import type { ModularTableProps, ModularTableResult, ColumnDef } from './types/modular-table.types.js';
+import { applyFiltering } from './modular-table-filter.js';
+import { applySorting } from './modular-table-sort.js';
+import { renderCellContent } from './modular-table-cells.js';
 
 export const createModularTable = function<T = any>(props: ModularTableProps<T>): ModularTableResult<T> {
   const cleanupFunctions: Array<() => void> = [];
@@ -15,16 +18,26 @@ export const createModularTable = function<T = any>(props: ModularTableProps<T>)
   const filters: Record<string, string> = {};
 
   const container = document.createElement('div');
-  container.className = `w-full overflow-auto rounded-md border border-slate-700 bg-slate-900 ${props.className || ''}`;
+  // Modern container styling
+  container.className = \`w-full overflow-auto rounded-xl border border-slate-700/50 bg-slate-900/80 backdrop-blur-md shadow-xl \${props.className || ''}\`;
 
   const table = document.createElement('table');
-  table.className = 'w-full text-sm text-left text-slate-300';
+  table.className = 'w-full text-sm text-left text-slate-300 border-collapse';
 
   const thead = document.createElement('thead');
-  thead.className = 'text-xs uppercase bg-slate-800 text-slate-400';
+  thead.className = 'text-xs uppercase bg-slate-800/80 text-slate-400 border-b border-slate-700/50 backdrop-blur-md';
   if (props.fixedHeader) {
     thead.classList.add('sticky', 'top-0', 'z-10');
   }
+
+  const applyFiltersAndSort = () => {
+    let result = applyFiltering(rawData, filters);
+    result = applySorting(result, sortColId, sortAsc);
+
+    currentData = result;
+    renderHeader();
+    renderRows();
+  };
 
   const renderHeader = () => {
     thead.innerHTML = '';
@@ -34,7 +47,7 @@ export const createModularTable = function<T = any>(props: ModularTableProps<T>)
     currentColumns.forEach(col => {
       const th = document.createElement('th');
       th.scope = 'col';
-      th.className = 'px-6 py-3 font-medium cursor-default align-top';
+      th.className = 'px-6 py-4 font-semibold tracking-wider cursor-default align-top';
       if (col.width) th.style.width = col.width;
 
       const content = document.createElement('div');
@@ -45,15 +58,16 @@ export const createModularTable = function<T = any>(props: ModularTableProps<T>)
       content.appendChild(titleSpan);
 
       if (col.sortable) {
-        th.classList.add('hover:bg-slate-700', 'transition-colors', 'cursor-pointer');
+        th.classList.add('hover:bg-slate-700/50', 'transition-colors', 'cursor-pointer', 'select-none');
         const sortIcon = document.createElement('span');
-        sortIcon.className = 'text-slate-500 text-xs flex-shrink-0';
+        sortIcon.className = 'text-slate-500 text-xs flex-shrink-0 transition-colors';
         
         if (sortColId === col.id) {
           sortIcon.textContent = sortAsc ? '▲' : '▼';
-          sortIcon.classList.add('text-purple-400');
+          sortIcon.classList.add('text-blue-400');
         } else {
           sortIcon.textContent = '↕';
+          sortIcon.classList.add('opacity-50');
         }
         content.appendChild(sortIcon);
 
@@ -74,11 +88,11 @@ export const createModularTable = function<T = any>(props: ModularTableProps<T>)
       // Filter row
       if (col.filterable) {
         const filterWrap = document.createElement('div');
-        filterWrap.className = 'mt-2';
+        filterWrap.className = 'mt-3';
         const filterInput = document.createElement('input');
         filterInput.type = 'text';
         filterInput.placeholder = 'Filter...';
-        filterInput.className = 'w-full bg-slate-900 border border-slate-700 text-slate-300 text-xs px-2 py-1 rounded focus:ring-1 focus:ring-purple-500 focus:outline-none focus:border-purple-500 transition-colors placeholder-slate-600';
+        filterInput.className = 'w-full bg-slate-900/50 border border-slate-700/50 text-slate-200 text-xs px-3 py-1.5 rounded-md focus:ring-2 focus:ring-blue-500/50 focus:outline-none focus:border-blue-500 transition-all placeholder-slate-500';
         filterInput.value = filters[col.id] || '';
         
         filterInput.onclick = (e) => e.stopPropagation();
@@ -97,105 +111,9 @@ export const createModularTable = function<T = any>(props: ModularTableProps<T>)
     thead.appendChild(headerRow);
   };
 
-  const applyFiltersAndSort = () => {
-    let result = [...rawData];
-
-    // Applies filters
-    Object.keys(filters).forEach(key => {
-      const q = (filters[key] || '').toLowerCase().trim();
-      if (q) {
-        result = result.filter(row => {
-          const val = (row as any)[key];
-          if (val === undefined || val === null) return false;
-          return String(val).toLowerCase().includes(q);
-        });
-      }
-    });
-
-    // Applies sorting
-    if (sortColId) {
-      result.sort((a, b) => {
-         const valA = (a as any)[sortColId!];
-         const valB = (b as any)[sortColId!];
-         
-         if (valA === valB) return 0;
-         if (valA === undefined || valA === null) return 1;
-         if (valB === undefined || valB === null) return -1;
-         
-         if (typeof valA === 'number' && typeof valB === 'number') {
-           return sortAsc ? valA - valB : valB - valA;
-         }
-         return sortAsc 
-           ? String(valA).localeCompare(String(valB)) 
-           : String(valB).localeCompare(String(valA));
-      });
-    }
-
-    currentData = result;
-    renderHeader();
-    renderRows();
-  };
-
   // Body
   const tbody = document.createElement('tbody');
-
-  // Shared cell render
-  const renderCellContent = (td: HTMLElement, col: any, cellValue: any, rowIndex: number, row: any, isFooter: boolean, dataArr: any[], onChangeCb?: Function) => {
-    if (col.renderCell) {
-      td.appendChild(col.renderCell(cellValue, row, rowIndex));
-      return;
-    }
-
-    if (col.editable) {
-      if (col.type === 'boolean') {
-         const input = document.createElement('input');
-         input.type = 'checkbox';
-         input.className = 'rounded border-slate-600 bg-slate-700 text-purple-600 focus:ring-purple-500';
-         input.checked = !!cellValue;
-         input.addEventListener('change', (e) => {
-           const val = (e.target as HTMLInputElement).checked;
-           dataArr[rowIndex] = { ...dataArr[rowIndex], [col.id]: val };
-           if (onChangeCb) onChangeCb([...dataArr]);
-           if(!isFooter) { rawData = [...dataArr]; } // Fix rawData sync
-         });
-         td.appendChild(input);
-      } else if (col.type === 'enum' && col.options) {
-         const select = document.createElement('select');
-         select.className = 'bg-slate-800 border border-slate-600 text-slate-300 text-sm rounded focus:ring-purple-500 focus:border-purple-500 block w-full p-1';
-         col.options.forEach((opt: string) => {
-           const option = document.createElement('option');
-           option.value = opt;
-           option.textContent = opt;
-           if (opt === String(cellValue)) option.selected = true;
-           select.appendChild(option);
-         });
-         select.addEventListener('change', (e) => {
-           const val = (e.target as HTMLSelectElement).value;
-           dataArr[rowIndex] = { ...dataArr[rowIndex], [col.id]: val };
-           if (onChangeCb) onChangeCb([...dataArr]);
-           if(!isFooter) { rawData = [...dataArr]; }
-         });
-         td.appendChild(select);
-      } else {
-         const input = document.createElement('input');
-         input.type = col.type === 'number' ? 'number' : 'text';
-         input.value = cellValue !== undefined ? String(cellValue) : '';
-         input.className = `bg-transparent border-b border-transparent hover:border-slate-600 focus:border-purple-500 focus:outline-none w-full p-1 transition-colors ${isFooter ? 'font-bold' : ''}`;
-         
-         input.addEventListener('change', (e) => {
-           let val: any = (e.target as HTMLInputElement).value;
-           if (col.type === 'number') val = Number(val);
-           dataArr[rowIndex] = { ...dataArr[rowIndex], [col.id]: val };
-           if (onChangeCb) onChangeCb([...dataArr]);
-           if(!isFooter) { rawData = [...dataArr]; }
-           applyFiltersAndSort(); // refresh to ensure data stays valid
-         });
-         td.appendChild(input);
-      }
-    } else {
-       td.textContent = cellValue !== undefined ? String(cellValue) : '-';
-    }
-  };
+  tbody.className = 'divide-y divide-slate-800/50';
 
   const renderRows = () => {
     tbody.innerHTML = '';
@@ -204,14 +122,14 @@ export const createModularTable = function<T = any>(props: ModularTableProps<T>)
       const emptyRow = document.createElement('tr');
       const emptyCell = document.createElement('td');
       emptyCell.colSpan = currentColumns.length;
-      emptyCell.className = 'px-6 py-8 text-center text-slate-500 italic';
+      emptyCell.className = 'px-6 py-12 text-center text-slate-500 italic';
       emptyCell.textContent = 'No data available';
       emptyRow.appendChild(emptyCell);
       tbody.appendChild(emptyRow);
     } else {
       currentData.forEach((row, viewIndex) => {
         const tr = document.createElement('tr');
-        tr.className = 'bg-slate-900 border-b border-slate-800 hover:bg-slate-800/50 transition-colors';
+        tr.className = 'bg-transparent hover:bg-slate-800/30 transition-colors group';
         
         // Find original index for data mapping
         const rowIndex = rawData.indexOf(row);
@@ -223,9 +141,13 @@ export const createModularTable = function<T = any>(props: ModularTableProps<T>)
 
         currentColumns.forEach(col => {
           const td = document.createElement('td');
-          td.className = 'px-6 py-3 whitespace-nowrap';
+          td.className = 'px-6 py-3 whitespace-nowrap text-slate-300 group-hover:text-slate-200 transition-colors';
           const cellValue = (row as any)[col.id];
-          renderCellContent(td, col, cellValue, rowIndex, row, false, rawData, props.onDataChange);
+          
+          renderCellContent(
+            td, col, cellValue, rowIndex, row, false, currentData, rawData, props.onDataChange, applyFiltersAndSort
+          );
+          
           tr.appendChild(td);
         });
         tbody.appendChild(tr);
@@ -236,13 +158,17 @@ export const createModularTable = function<T = any>(props: ModularTableProps<T>)
     if (currentFooterData && currentFooterData.length > 0) {
       currentFooterData.forEach((row, rowIndex) => {
         const tr = document.createElement('tr');
-        tr.className = 'bg-slate-800 border-t-2 border-slate-700 font-semibold';
+        tr.className = 'bg-slate-800/80 border-t-2 border-slate-700/80 font-semibold backdrop-blur-md';
         
         currentColumns.forEach(col => {
           const td = document.createElement('td');
-          td.className = 'px-6 py-3 whitespace-nowrap';
+          td.className = 'px-6 py-4 whitespace-nowrap text-blue-100';
           const cellValue = (row as any)[col.id];
-          renderCellContent(td, col, cellValue, rowIndex, row, true, currentFooterData, props.onFooterDataChange);
+          
+          renderCellContent(
+            td, col, cellValue, rowIndex, row, true, currentFooterData, rawData, props.onFooterDataChange
+          );
+          
           tr.appendChild(td);
         });
         tbody.appendChild(tr);

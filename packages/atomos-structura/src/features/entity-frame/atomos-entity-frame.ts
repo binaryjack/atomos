@@ -3,22 +3,26 @@ template.innerHTML = `
 <style>
   :host {
     display: block;
-    width: var(--frame-width, 200px);
-    background: var(--vbs-bg-panel);
-    border: 1px solid var(--vbs-border);
-    border-radius: var(--vbs-radius);
-    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
-    font-family: sans-serif;
+    width: var(--frame-width, 220px);
+    background: var(--vbs-bg-panel, rgba(15, 23, 42, 0.75));
+    backdrop-filter: blur(var(--glass-blur, 12px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
+    border: 1px solid var(--vbs-border, rgba(255, 255, 255, 0.1));
+    border-radius: var(--vbs-radius, 12px);
+    box-shadow: var(--shadow-elevation, 0 8px 32px 0 rgba(0, 0, 0, 0.37));
+    font-family: var(--vbs-font-family, 'Inter', system-ui, sans-serif);
     position: absolute;
     user-select: none;
-    color: var(--vbs-text-primary);
+    color: var(--vbs-text-primary, #f8fafc);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden;
   }
   
   /* Spotlight Border variables set by JS */
   :host(.spotlight-active) {
     border: 1px solid transparent;
-    background: linear-gradient(var(--vbs-bg-panel), var(--vbs-bg-panel)) padding-box,
-                var(--vbs-border) border-box;
+    background: linear-gradient(var(--vbs-bg-panel, rgba(15, 23, 42, 0.75)), var(--vbs-bg-panel, rgba(15, 23, 42, 0.75))) padding-box,
+                var(--vbs-border, rgba(255, 255, 255, 0.1)) border-box;
     z-index: 100;
   }
   
@@ -30,20 +34,24 @@ template.innerHTML = `
     padding: 1px;
     background: radial-gradient(
       150px circle at var(--mouse-x, 0%) var(--mouse-y, 0%),
-      rgba(255, 255, 255, 0.9) 0%,
-      rgba(59, 130, 246, 1) 10%,
-      rgba(59, 130, 246, 0.2) 40%,
-      transparent 60%
+      rgba(255, 255, 255, 0.8) 0%,
+      var(--vbs-primary, rgba(59, 130, 246, 1)) 20%,
+      transparent 80%
     );
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.4s ease;
     z-index: -1;
     pointer-events: none;
   }
   
+  :host(.spotlight-active:hover) {
+    box-shadow: 0 12px 40px -4px rgba(0, 0, 0, 0.5), 0 0 15px var(--vbs-primary-glow, rgba(59, 130, 246, 0.2));
+    transform: translateY(-2px);
+  }
+
   :host(.spotlight-active:hover)::before {
     opacity: 1;
   }
@@ -52,47 +60,96 @@ template.innerHTML = `
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px;
-    background: rgba(0,0,0,0.2);
-    border-bottom: 1px solid var(--vbs-border);
+    padding: var(--entity-padding, 12px 16px);
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
     cursor: move;
-    border-radius: var(--vbs-radius) var(--vbs-radius) 0 0;
+  }
+  .title-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
   .title {
     font-weight: 600;
-    font-size: 13px;
+    font-size: 14px;
+    letter-spacing: 0.01em;
     cursor: pointer;
-    color: var(--vbs-text-primary);
+    color: var(--vbs-text-primary, #f8fafc);
   }
   .subtitle {
     font-size: 11px;
-    color: var(--vbs-text-secondary);
-    margin-left: 8px;
+    font-weight: 500;
+    color: var(--vbs-text-secondary, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
   .toggle {
     background: transparent;
     border: none;
     cursor: pointer;
-    font-size: 12px;
-    color: var(--vbs-text-secondary);
+    font-size: 10px;
+    color: var(--vbs-text-secondary, #94a3b8);
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .toggle:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
   }
   .body {
-    padding: 8px;
+    padding: var(--entity-padding, 12px 16px);
     display: block;
   }
   :host([collapsed]) .body {
     display: none;
   }
+
+  /* Properties Grid Layout */
+  .properties-grid {
+    display: grid;
+    grid-template-columns: minmax(60px, auto) 1fr auto;
+    gap: 8px 12px;
+    align-items: baseline;
+    font-size: 12px;
+  }
+  
+  ::slotted(.property-key) {
+    font-weight: 600;
+    color: var(--vbs-text-muted, #cbd5e1);
+  }
+  
+  ::slotted(.property-value) {
+    color: var(--vbs-text-primary, #f8fafc);
+    word-break: break-all;
+  }
+  
+  ::slotted(.property-type) {
+    font-size: 10px;
+    font-style: italic;
+    color: var(--vbs-text-tertiary, #64748b);
+    text-align: right;
+  }
 </style>
 <div class="header">
-  <div>
+  <div class="title-wrapper">
     <span class="title"></span>
     <span class="subtitle"></span>
   </div>
-  <button class="toggle">▼</button>
+  <button class="toggle">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </button>
 </div>
 <div class="body">
-  <slot></slot>
+  <div class="properties-grid">
+    <slot></slot>
+  </div>
 </div>
 `;
 

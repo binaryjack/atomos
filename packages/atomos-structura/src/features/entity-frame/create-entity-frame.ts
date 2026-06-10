@@ -1,4 +1,4 @@
-﻿import type { EntityFrameProps, EntityFrameResult } from './types/entity-frame.types.js';
+import type { EntityFrameProps, EntityFrameResult } from './types/entity-frame.types.js';
 export type { EntityFrameProps, EntityFrameResult };
 import { defineAtomosEntityFrame } from './atomos-entity-frame.js';
 
@@ -45,10 +45,21 @@ export const createEntityFrame = function(props: EntityFrameProps): EntityFrameR
     
     const propsList = Array.isArray(propertiesData) ? propertiesData : propertiesData.value;
     propsList.forEach((prop) => {
-      const propElement = document.createElement('div');
-      propElement.className = 'property';
-      propElement.innerHTML = `<strong>${prop.key}:</strong> <span class="text-gray-600">${prop.value}</span> <em class="text-xs text-gray-400">(${prop.type})</em>`;
-      element.appendChild(propElement);
+      const keySpan = document.createElement('span');
+      keySpan.className = 'property-key';
+      keySpan.textContent = prop.key;
+      
+      const valueSpan = document.createElement('span');
+      valueSpan.className = 'property-value';
+      valueSpan.textContent = prop.value;
+      
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'property-type';
+      typeSpan.textContent = prop.type;
+      
+      element.appendChild(keySpan);
+      element.appendChild(valueSpan);
+      element.appendChild(typeSpan);
     });
   };
 
