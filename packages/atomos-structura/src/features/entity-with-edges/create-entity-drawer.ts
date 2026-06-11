@@ -89,6 +89,8 @@ export const createEntityDrawer = (
   const boxHTML = boxContent.foreignObject.firstChild as HTMLElement;
   boxHTML.style.width = '100%';
   boxHTML.style.height = '100%';
+  boxHTML.style.background = props.color || 'var(--vbs-bg-input, #09090b)';
+  boxHTML.style.border = '1.5px solid var(--vbs-border, #27272a)';
   drawer.appendChild(boxHTML);
 
   // Animate In

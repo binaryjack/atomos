@@ -1,4 +1,5 @@
-﻿import type { Signal } from '@atomos-web/prime'
+import type { Signal } from '@atomos-web/prime'
+import { createSVGShape } from '../../canvas/shape-renderers/create-svg-shape.js';
 import { createSignal } from '@atomos-web/prime'
 import type { ComponentType, DataType, Entity } from '@atomos-web/structura-core'
 import { createLegacyPropertyRepositoryBridge } from '../../core/adapters/legacy-property-bridge.js'
@@ -23,11 +24,13 @@ export interface EntityContentProps {
   readonly onDelete: (entityId: string) => void;
   readonly onSettingsClick: (entityId: string) => void;
   readonly color?: string | undefined;
+  readonly shape?: string | undefined;
   /** Called whenever the required height changes so SVG geometry can update */
   readonly onHeightChange: (height: number) => void;
 }
 
 export interface EntityContentResult {
+  readonly rootElement: SVGGElement;
   readonly foreignObject: SVGForeignObjectElement;
   readonly dragHandle: HTMLDivElement;
   readonly updateSize: (width: number, height: number) => void;
@@ -38,11 +41,20 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   const cleanups: Array<() => void> = [];
   const store = props.entityStore; // Use the store passed in, don't create a new one!
 
+  // ─── root group ────────────────────────────────────────────────────────────
+  const rootElement = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+  // ─── background shape ──────────────────────────────────────────────────────
+  let currentShape: SVGElement | null = null;
+  // We'll update the background shape in updateSize()
+
   // ─── foreignObject shell ───────────────────────────────────────────────────
   const fo = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
   fo.setAttribute('x', '0');
   fo.setAttribute('y', '0');
   fo.setAttribute('overflow', 'visible');
+  
+  rootElement.appendChild(fo);
 
   // body element (required for HTML inside foreignObject)
   const body = document.createElement('div');
@@ -51,9 +63,8 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
     'display:flex', 'flex-direction:column',
     'width:100%', 'height:100%',
     'overflow:hidden',
-    'border-radius: var(--vbs-radius, 2px)',
-    `background:${props.color || 'var(--vbs-bg-input, #09090b)'}`,
-    'border:1.5px solid var(--vbs-border, #27272a)',
+    'background:transparent',
+    'border:none',
     'box-sizing:border-box',
     'font-family:var(--vbs-entity-name-font-family, system-ui, sans-serif)',
     'color:var(--vbs-text-primary, #f4f4f5)',
@@ -309,9 +320,17 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
     fo.setAttribute('height', height.toString());
     body.style.width  = `${width}px`;
     body.style.height = `${height}px`;
+    
+    // Dynamically update background shape
+    if (currentShape && currentShape.parentNode) {
+      currentShape.parentNode.removeChild(currentShape);
+    }
+    currentShape = createSVGShape((props.shape || 'rectangle') as any, width, height, props.color);
+    rootElement.insertBefore(currentShape, fo);
   };
 
   return {
+    rootElement,
     foreignObject: fo,
     dragHandle: body,
     updateSize,

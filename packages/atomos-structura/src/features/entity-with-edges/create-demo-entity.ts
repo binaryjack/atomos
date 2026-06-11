@@ -1,4 +1,4 @@
-﻿import { createSignal } from '@atomos-web/prime'
+import { createSignal } from '@atomos-web/prime'
 import type { EntityInstance } from '../../core/types/entity-instance.types.js'
 import { createEdge } from '../edge/create-edge.js'
 import type { EdgePosition } from '../edge/types/edge-position.types.js'
@@ -83,6 +83,7 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
         globalConfig: props.globalConfig,
         storageProvider: props.storageProvider,
         color: color,
+        shape: shape || 'rectangle',
         onDelete: () => props.workspace.unregisterEntity(props.id),
         onSettingsClick: () => {
           const modal = createEntitySettingsModal(props.instanceId, props.id);
@@ -102,7 +103,7 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
           }
         },
       });
-      contentElement = content.foreignObject;
+      contentElement = content.rootElement;
       dragHandleElement = content.dragHandle;
       updateSize = content.updateSize;
       contentCleanup = content.cleanup.destroy;

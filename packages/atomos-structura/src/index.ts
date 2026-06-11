@@ -16,3 +16,4 @@ export { createMenuControl } from './core/create-menu-control.js';
 export type { MenuControl } from './types/menu-control.types.js';
 export { getCanvasAdapterFor, destroyCanvasAdapter } from './core/adapters/canvas-adapter.js';
 export type { CanvasAdapter } from './core/adapters/canvas-adapter.js';
+export * from './viewer/index.js';

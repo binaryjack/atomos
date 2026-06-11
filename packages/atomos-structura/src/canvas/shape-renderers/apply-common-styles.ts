@@ -15,15 +15,10 @@ export const applyCommonStyles = (element: SVGElement, color?: string | undefine
   const stroke = 'var(--shape-stroke, rgba(59, 130, 246, 0.6))';
   const strokeWidth = 'var(--shape-stroke-width, 1.5px)';
   const shadow = 'var(--shape-shadow, drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4)))';
-  const filter = 'var(--shape-backdrop-filter, blur(8px))';
   
-  element.setAttribute('style', `
-    fill: ${fill};
-    stroke: ${stroke};
-    stroke-width: ${strokeWidth};
-    filter: ${shadow};
-    backdrop-filter: ${filter};
-    -webkit-backdrop-filter: ${filter};
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  `);
+  element.style.fill = fill;
+  element.style.stroke = stroke;
+  element.style.strokeWidth = strokeWidth;
+  element.style.filter = shadow;
+  element.style.transition = 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
 };
