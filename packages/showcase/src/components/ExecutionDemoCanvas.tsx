@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 
 const sampleSchema = {
   version: "1.0",
@@ -129,7 +129,7 @@ export function ExecutionDemoCanvas() {
 
   return (
     <div className="w-full h-[600px] border border-slate-800 rounded-xl overflow-hidden relative">
-      <atomos-structura-viewer ref={viewerRef}></atomos-structura-viewer>
+      {React.createElement('atomos-structura-viewer', { ref: viewerRef })}
     </div>
   )
 }
