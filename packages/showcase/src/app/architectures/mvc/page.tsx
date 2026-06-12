@@ -1,4 +1,4 @@
-import { CanvasSandbox } from "../../../components/CanvasSandboxWrapper";
+import { LightweightCanvas } from "../../../components/LightweightCanvasWrapper";
 
 export default function mvcPage() {
   return (
@@ -16,7 +16,7 @@ export default function mvcPage() {
           </h2>
         </div>
         <div className="flex-1 w-full rounded-xl overflow-hidden relative min-h-[500px]">
-          <CanvasSandbox preset="mvc" />
+          <LightweightCanvas preset="mvc" />
         </div>
       </section>
     </div>

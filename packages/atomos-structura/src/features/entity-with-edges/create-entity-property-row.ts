@@ -1,4 +1,4 @@
-﻿import type { ComponentType, DataType } from '@atomos-web/structura-core';
+import type { ComponentType, DataType } from '@atomos-web/structura-core';
 import type { Signal } from '@atomos-web/prime';
 import { createDropdown } from '@atomos-web/prime';
 import { createEditableLabel } from '@atomos-web/prime';
@@ -17,6 +17,7 @@ export interface EntityPropertyRowProps {
   readonly onValueChange: (value: unknown) => void;
   readonly onSettingsClick: () => void;
   readonly onDeleteClick: () => void;
+  readonly isReadonly?: boolean;
 }
 
 const buildValueInput = function(
@@ -24,7 +25,8 @@ const buildValueInput = function(
   dataType: Signal<DataType>,
   value: Signal<unknown>,
   onValueChange: (v: unknown) => void,
-  cleanups: Array<() => void>
+  cleanups: Array<() => void>,
+  isReadonly?: boolean
 ): HTMLElement {
   const wrap = document.createElement('span');
   wrap.style.cssText = 'flex:1;min-width:0;display:flex;align-items:center;overflow:hidden;';
@@ -54,6 +56,7 @@ const buildValueInput = function(
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.className = 'no-drag';
+      cb.disabled = !!isReadonly;
       cb.checked = Boolean(value.value);
       cb.style.cssText = 'cursor:pointer;flex-shrink:0;width:calc(var(--vbs-entity-props-font-size, 12px) + 2px);height:calc(var(--vbs-entity-props-font-size, 12px) + 2px);align-self:center;appearance:none;background:var(--vbs-bg-input, #09090b);border:1px solid var(--vbs-border, #27272a);border-radius:var(--vbs-radius, 2px);transition:background-color 0.15s, border-color 0.15s;';
       cb.addEventListener('change', () => {
@@ -85,6 +88,7 @@ const buildValueInput = function(
     } else if (ct === 'textarea') {
       const ta = document.createElement('textarea');
       ta.className = 'no-drag';
+      ta.disabled = !!isReadonly;
       ta.value = String(value.value ?? '');
       ta.rows = 1;
       ta.style.cssText = sharedStyle + ';resize:none;height:auto;overflow:hidden;padding:2px 4px;';
@@ -94,6 +98,7 @@ const buildValueInput = function(
     } else {
       const inp = document.createElement('input');
       inp.className = 'no-drag';
+      inp.disabled = !!isReadonly;
       if (dt === 'number' || dt === 'integer' || dt === 'float') inp.type = 'number';
       else if (dt === 'date') inp.type = 'date';
       else inp.type = 'text';
@@ -143,6 +148,9 @@ export const createEntityPropertyRow = function(
     inputClassName: 'text-xs text-slate-300',
     onChange: props.onLabelChange,
   });
+  if (props.isReadonly) {
+    editableLabel.element.style.pointerEvents = 'none';
+  }
   editableLabel.element.style.flex = '1 1 min-content';
   editableLabel.element.style.minWidth = '50px';
   editableLabel.element.style.overflow = 'hidden';
@@ -158,7 +166,8 @@ export const createEntityPropertyRow = function(
     props.dataType,
     props.value,
     props.onValueChange,
-    cleanups
+    cleanups,
+    props.isReadonly
   );
   valueInput.style.flex = '2 1 100px';
 
@@ -175,6 +184,10 @@ export const createEntityPropertyRow = function(
     className: 'text-xs',
     onChange: (v) => props.onComponentTypeChange(v as ComponentType),
   });
+  if (props.isReadonly) {
+    ctDropdown.select.disabled = true;
+    ctDropdown.select.style.pointerEvents = 'none';
+  }
   ctDropdown.select.style.cssText = [
     '--dropdown-bg-color:var(--vbs-bg-input, #09090b)',
     '--dropdown-text-color:var(--vbs-primary, #3b82f6)',
@@ -194,10 +207,14 @@ export const createEntityPropertyRow = function(
   // DataType dropdown
   const dropdown = createDropdown({
     value: props.dataType as Signal<string>,
-    options: props.availableDataTypes.map(dt => ({ value: dt, label: dt })),
+    options: (props.availableDataTypes || []).map(dt => ({ value: dt, label: dt })),
     className: 'text-xs',
     onChange: (v) => props.onDataTypeChange(v as DataType),
   });
+  if (props.isReadonly) {
+    dropdown.select.disabled = true;
+    dropdown.select.style.pointerEvents = 'none';
+  }
   dropdown.select.style.cssText = [
     '--dropdown-bg-color:var(--vbs-bg-input, #09090b)',
     '--dropdown-text-color:var(--vbs-text-secondary, #a1a1aa)',
@@ -244,8 +261,11 @@ export const createEntityPropertyRow = function(
   row.appendChild(valueInput);
   row.appendChild(ctDropdown.element);
   row.appendChild(dropdown.element);
-  row.appendChild(settingsBtn);
-  row.appendChild(deleteBtn);
+  
+  if (!props.isReadonly) {
+    row.appendChild(settingsBtn);
+    row.appendChild(deleteBtn);
+  }
 
   return {
     element: row,

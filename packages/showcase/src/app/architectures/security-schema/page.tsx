@@ -1,4 +1,4 @@
-import { CanvasSandbox } from "../../../components/CanvasSandboxWrapper";
+import { LightweightCanvas } from "../../../components/LightweightCanvasWrapper";
 
 export default function securityschemaPage() {
   return (
@@ -16,7 +16,7 @@ export default function securityschemaPage() {
           </h2>
         </div>
         <div className="flex-1 w-full rounded-xl overflow-hidden relative min-h-[500px]">
-          <CanvasSandbox preset="security-schema" />
+          <LightweightCanvas preset="security-schema" />
         </div>
       </section>
     </div>

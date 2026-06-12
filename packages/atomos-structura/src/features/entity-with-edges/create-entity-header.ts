@@ -1,4 +1,4 @@
-﻿import { computeContrastColor } from '@atomos-web/prime';
+import { computeContrastColor } from '@atomos-web/prime';
 import type { Signal } from '@atomos-web/prime';
 import { createEditableLabel } from '@atomos-web/prime';
 import { createIcon } from '@atomos-web/prime';
@@ -11,6 +11,7 @@ export interface EntityHeaderProps {
   readonly onSettingsClick: () => void;
   readonly onDeleteClick: () => void;
   readonly color?: string | undefined;
+  readonly isReadonly?: boolean;
 }
 
 export interface EntityHeaderResult {
@@ -48,10 +49,14 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
   editableLabel.element.style.fontFamily = 'var(--vbs-entity-name-font-family, system-ui, sans-serif)';
   editableLabel.element.style.fontSize = 'var(--vbs-entity-name-font-size, 14px)';
   editableLabel.element.style.fontWeight = 'var(--vbs-entity-name-font-weight, bold)';
+  
+  if (props.isReadonly) {
+    editableLabel.element.style.pointerEvents = 'none';
+  }
   cleanups.push(editableLabel.cleanup.destroy);
 
   // Collapse button
-  const collapseIcon = createIcon({ name: 'arrow-down', size: 'var(--vbs-entity-name-font-size, 14px)', color: contrast.mutedColor });
+  const collapseIcon = createIcon({ name: 'chevron-down', size: 'var(--vbs-entity-name-font-size, 14px)', color: contrast.mutedColor });
   const collapseBtn = document.createElement('button');
   collapseBtn.type = 'button';
   collapseBtn.style.cssText = 'flex-shrink:0;background:none;border:none;cursor:pointer;padding:2px;display:flex;border-radius: var(--vbs-radius, 2px); transition: transform 0.2s ease;';
@@ -106,10 +111,13 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
     deleteIcon.cleanup.destroy();
   });
 
-  header.appendChild(collapseBtn);
   header.appendChild(editableLabel.element);
-  header.appendChild(settingsBtn);
-  header.appendChild(deleteBtn);
+  
+  if (!props.isReadonly) {
+    header.insertBefore(collapseBtn, editableLabel.element);
+    header.appendChild(settingsBtn);
+    header.appendChild(deleteBtn);
+  }
 
   return {
     element: header,

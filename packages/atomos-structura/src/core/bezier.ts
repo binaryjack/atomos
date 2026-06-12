@@ -1,9 +1,9 @@
 import type { EdgePosition } from '../features/edge/types/edge.types.js'
 
 // Control-point offset as fraction of distance, clamped to [minOffset, maxOffset]
-const MIN_OFFSET = 40;
-const MAX_OFFSET = 200;
-const OFFSET_RATIO = 0.45;
+const MIN_OFFSET = 80;
+const MAX_OFFSET = 300;
+const OFFSET_RATIO = 0.6;
 
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));

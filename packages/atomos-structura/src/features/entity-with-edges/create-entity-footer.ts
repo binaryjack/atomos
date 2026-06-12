@@ -1,9 +1,10 @@
-﻿import { computeContrastColor } from '@atomos-web/prime';
+import { computeContrastColor } from '@atomos-web/prime';
 import { createIcon } from '@atomos-web/prime';
 
 export interface EntityFooterProps {
   readonly onAddProperty: () => void;
   readonly color?: string | undefined;
+  readonly isReadonly?: boolean;
 }
 
 export interface EntityFooterResult {
@@ -44,7 +45,14 @@ export const createEntityFooter = function(props: EntityFooterProps): EntityFoot
   addBtn.appendChild(plusIcon.element);
   addBtn.appendChild(label);
   addBtn.addEventListener('click', props.onAddProperty);
-  footer.appendChild(addBtn);
+  
+  if (!props.isReadonly) {
+    footer.appendChild(addBtn);
+  } else {
+    footer.style.minHeight = '0';
+    footer.style.padding = '0';
+    footer.style.borderTop = 'none';
+  }
 
   return {
     element: footer,

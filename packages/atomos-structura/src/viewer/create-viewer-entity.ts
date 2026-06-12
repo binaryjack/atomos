@@ -5,6 +5,7 @@ import { createEntityContent } from '../features/entity-with-edges/create-entity
 
 export interface ViewerEntityProps {
   id: string;
+  name?: string;
   shape?: string;
   color?: string;
   position: { x: number; y: number };
@@ -24,7 +25,7 @@ export const createViewerEntity = function(props: ViewerEntityProps): EntityInst
   
   // Dummy store for createEntityContent to read collapsed state etc
   const dummyStore = {
-    signal: createSignal({ collapsed: false, properties: props.properties || [] }),
+    signal: createSignal({ collapsed: false, properties: props.properties || [], name: props.name || 'Entity name' }),
     updateProperties: () => {},
     setCollapsed: () => {},
   };
@@ -61,6 +62,7 @@ export const createViewerEntity = function(props: ViewerEntityProps): EntityInst
             dimensionsSignal.set({ width: dimensionsSignal.value.width, height: h });
           }
         },
+        isReadonly: true,
       });
       contentElement = content.rootElement;
       updateSize = content.updateSize;
@@ -71,7 +73,8 @@ export const createViewerEntity = function(props: ViewerEntityProps): EntityInst
         color: color,
         entitySignal: dummyStore.signal as any,
         onDelete: () => {},
-        onDoubleClick: () => {}
+        onDoubleClick: () => {},
+        isReadonly: true
       });
       contentElement = content.rootElement;
       updateSize = content.updateSize;

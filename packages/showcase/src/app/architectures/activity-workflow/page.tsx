@@ -1,4 +1,4 @@
-import { CanvasSandbox } from "../../../components/CanvasSandboxWrapper";
+import { LightweightCanvas } from "../../../components/LightweightCanvasWrapper";
 
 export default function activityworkflowPage() {
   return (
@@ -16,7 +16,7 @@ export default function activityworkflowPage() {
           </h2>
         </div>
         <div className="flex-1 w-full rounded-xl overflow-hidden relative min-h-[500px]">
-          <CanvasSandbox preset="activity-workflow" />
+          <LightweightCanvas preset="activity-workflow" />
         </div>
       </section>
     </div>

@@ -1,4 +1,4 @@
-﻿import type { Entity, EntityShape } from '@atomos-web/structura-core';
+import type { Entity, EntityShape } from '@atomos-web/structura-core';
 import { createSVGShape } from '../../canvas/shape-renderers/create-svg-shape.js';
 import { computeContrastColor } from '@atomos-web/prime';
 import type { Signal } from '@atomos-web/prime';
@@ -16,6 +16,7 @@ export const createCompactEntityContent = (props: {
   entitySignal: Signal<Entity>;
   onDoubleClick: () => void;
   onDelete?: () => void;
+  isReadonly?: boolean;
 }): CompactEntityContentResult => {
   const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   const contrast = computeContrastColor(props.color ?? 'var(--vbs-bg-panel, #111111)');
@@ -72,7 +73,10 @@ export const createCompactEntityContent = (props: {
     e.stopPropagation();
     if (props.onDelete) props.onDelete();
   };
-  g.appendChild(deleteBtnGroup);
+  
+  if (!props.isReadonly) {
+    g.appendChild(deleteBtnGroup);
+  }
   
   // Interaction
   const handleDblClick = (e: MouseEvent) => {
@@ -97,7 +101,9 @@ export const createCompactEntityContent = (props: {
     propsNode.setAttribute('x', (width / 2).toString());
     propsNode.setAttribute('y', (height / 2 + propsPy).toString());
 
-    deleteBtnGroup.setAttribute('transform', `translate(${width - 10}, 10)`);
+    if (!props.isReadonly) {
+      deleteBtnGroup.setAttribute('transform', `translate(${width - 10}, 10)`);
+    }
   };
 
   return {

@@ -27,6 +27,7 @@ export interface EntityContentProps {
   readonly shape?: string | undefined;
   /** Called whenever the required height changes so SVG geometry can update */
   readonly onHeightChange: (height: number) => void;
+  readonly isReadonly?: boolean;
 }
 
 export interface EntityContentResult {
@@ -80,6 +81,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
     color: props.color,
     label: labelSignal,
     isCollapsed: isCollapsedSignal,
+    isReadonly: !!props.isReadonly,
     onLabelChange: (v) => {
       store.updateLabel(v);
     },
@@ -160,6 +162,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
           dataType: propTypeSignal,
           componentType: propComponentTypeSignal,
           value: propValueSignal,
+          isReadonly: !!props.isReadonly,
           availableDataTypes: props.globalConfig.value.dataTypes,
           onLabelChange: (v) => {
             propLabelSignal.set(v);
@@ -260,6 +263,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   // ─── footer ───────────────────────────────────────────────────────────────
   const footer = createEntityFooter({
     color: props.color,
+    isReadonly: !!props.isReadonly,
     onAddProperty: async () => {
       console.log('[ENTITY-CONTENT] Adding new property via clean architecture bridge...');
       const repository = createLegacyPropertyRepositoryBridge({
