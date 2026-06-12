@@ -140,6 +140,33 @@ export const createEntityPropertyRow = function(
     'border-bottom:1px solid var(--vbs-border, #27272a)',
   ].join(';');
 
+  if (props.isReadonly) {
+    row.style.padding = '6px 8px';
+    row.style.alignItems = 'center';
+    
+    // Name
+    const nameSpan = document.createElement('span');
+    nameSpan.style.cssText = 'flex:1;font-size:var(--vbs-entity-props-font-size, 12px);font-weight:600;color:var(--vbs-text-primary, #f4f4f5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--vbs-entity-props-font-family, system-ui, sans-serif);';
+    nameSpan.textContent = props.label.value;
+    
+    // Type Pill
+    const typePill = document.createElement('span');
+    typePill.style.cssText = 'background:var(--vbs-bg-muted, #27272a);color:var(--vbs-text-secondary, #a1a1aa);padding:2px 6px;border-radius:4px;font-size:10px;text-transform:uppercase;font-weight:bold;letter-spacing:0.5px;';
+    typePill.textContent = props.dataType.value;
+    
+    row.appendChild(nameSpan);
+    row.appendChild(typePill);
+    
+    const unsubLabel = props.label.subscribe(v => nameSpan.textContent = v);
+    const unsubType = props.dataType.subscribe(v => typePill.textContent = v);
+    cleanups.push(unsubLabel, unsubType);
+    
+    return {
+      element: row,
+      cleanup: { destroy: () => { cleanups.forEach(fn => fn()); cleanups.length = 0; } }
+    };
+  }
+
   // Editable label (compact — value input takes remaining space)
   const editableLabel = createEditableLabel({
     value: props.label,
@@ -148,9 +175,6 @@ export const createEntityPropertyRow = function(
     inputClassName: 'text-xs text-slate-300',
     onChange: props.onLabelChange,
   });
-  if (props.isReadonly) {
-    editableLabel.element.style.pointerEvents = 'none';
-  }
   editableLabel.element.style.flex = '1 1 min-content';
   editableLabel.element.style.minWidth = '50px';
   editableLabel.element.style.overflow = 'hidden';
@@ -184,10 +208,6 @@ export const createEntityPropertyRow = function(
     className: 'text-xs',
     onChange: (v) => props.onComponentTypeChange(v as ComponentType),
   });
-  if (props.isReadonly) {
-    ctDropdown.select.disabled = true;
-    ctDropdown.select.style.pointerEvents = 'none';
-  }
   ctDropdown.select.style.cssText = [
     '--dropdown-bg-color:var(--vbs-bg-input, #09090b)',
     '--dropdown-text-color:var(--vbs-primary, #3b82f6)',
@@ -211,10 +231,6 @@ export const createEntityPropertyRow = function(
     className: 'text-xs',
     onChange: (v) => props.onDataTypeChange(v as DataType),
   });
-  if (props.isReadonly) {
-    dropdown.select.disabled = true;
-    dropdown.select.style.pointerEvents = 'none';
-  }
   dropdown.select.style.cssText = [
     '--dropdown-bg-color:var(--vbs-bg-input, #09090b)',
     '--dropdown-text-color:var(--vbs-text-secondary, #a1a1aa)',
@@ -261,11 +277,8 @@ export const createEntityPropertyRow = function(
   row.appendChild(valueInput);
   row.appendChild(ctDropdown.element);
   row.appendChild(dropdown.element);
-  
-  if (!props.isReadonly) {
-    row.appendChild(settingsBtn);
-    row.appendChild(deleteBtn);
-  }
+  row.appendChild(settingsBtn);
+  row.appendChild(deleteBtn);
 
   return {
     element: row,
