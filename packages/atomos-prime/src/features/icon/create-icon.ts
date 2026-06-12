@@ -41,6 +41,8 @@ export const createIcon = function(props: IconProps): IconResult {
     close: 'M18 6L6 18M6 6l12 12',
     'arrow-up': 'M19 14l-7-7m0 0l-7 7m7-7v18',
     'arrow-down': 'M5 10l7 7m0 0l7-7m-7 7V3',
+    'chevron-down': 'M19 9l-7 7-7-7',
+    'chevron-up': 'M5 15l7-7 7 7',
     'arrow-left': 'M14 5l-7 7 7 7',
     'arrow-right': 'M10 19l7-7-7-7',
     plus: 'M12 5v14M5 12h14',
