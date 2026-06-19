@@ -9,5 +9,8 @@ export const linkSchema = f.object({
   rightCardinality: f.enum(['1', '*', '0..1', '1..*'] as const),
   renderType:       f.enum(['linear', 'bezier', 'orthogonal'] as const),
   leftAnchorId:     f.string().nonempty(),
-  rightAnchorId:    f.string().nonempty()
+  rightAnchorId:    f.string().nonempty(),
+  leftProperty:     f.string().optional(),
+  rightProperty:    f.string().optional(),
+  direction:        f.enum(['default', 'left', 'right'] as const).optional()
 }) satisfies { readonly _output: LinkProps };

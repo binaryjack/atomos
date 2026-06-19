@@ -189,6 +189,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
 
   // Phase 5: Shape Palette (Drag & Drop or Click to spawn)
   const palette = document.createElement('div');
+  palette.classList.add('vbs-palette');
   palette.style.cssText = [
     'position:absolute;top:50%;left:16px;transform:translateY(-50%);',
     'display:flex;flex-direction:column;gap:8px;z-index:20;',
@@ -429,6 +430,38 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
         : '';
     });
   }));
+
+  // Responsive Styles for Auto-hiding toolbars
+  if (!document.getElementById('vbs-responsive-toolbars')) {
+    const style = document.createElement('style');
+    style.id = 'vbs-responsive-toolbars';
+    style.textContent = `
+      @media (max-width: 768px) {
+        .vbs-palette {
+          opacity: 0.3;
+          transform: translateY(-50%) scale(0.85) !important;
+          transform-origin: left center;
+          transition: all 0.3s ease;
+        }
+        .vbs-palette:hover, .vbs-palette:focus-within {
+          opacity: 1;
+          transform: translateY(-50%) scale(1) !important;
+        }
+        
+        .vbs-bottom-toolbar {
+          opacity: 0.3;
+          transform: translateX(-50%) scale(0.85) !important;
+          transform-origin: bottom center;
+          transition: all 0.3s ease;
+        }
+        .vbs-bottom-toolbar:hover, .vbs-bottom-toolbar:focus-within {
+          opacity: 1;
+          transform: translateX(-50%) scale(1) !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
 
   // Shortcuts panel
   const shortcutsPanel = createShortcutsPanel();

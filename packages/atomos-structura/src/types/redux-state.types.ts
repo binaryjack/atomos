@@ -1,4 +1,4 @@
-﻿import type { Entity, LinkProps, WorkspaceConfig } from '@atomos-web/structura-core'
+import type { Entity, LinkProps, WorkspaceConfig } from '@atomos-web/structura-core'
 import type { AppSettings } from '../features/settings-page/types/settings-page.types.js'
 
 export interface SchemaModel {
@@ -44,7 +44,7 @@ export type ReduxAction =
   | { type: 'entity-updated'; schema_id: string; entity: Entity }
   | { type: 'entity-added'; schema_id: string; entity: Entity }
   | { type: 'entity-removed'; schema_id: string; entity_id: string }
-  | { type: 'link-created'; schema_id: string; link_id?: string; from_id: string; to_id: string; from_anchor?: string; to_anchor?: string; leftCardinality?: string; rightCardinality?: string; leftProperty?: string; rightProperty?: string; renderType?: string }
+  | { type: 'link-created'; schema_id: string; link_id?: string; from_id: string; to_id: string; from_anchor?: string; to_anchor?: string; leftCardinality?: string; rightCardinality?: string; leftProperty?: string; rightProperty?: string; renderType?: string; direction?: 'default' | 'left' | 'right' }
   | { type: 'link-updated'; schema_id: string; link: LinkProps }
   | { type: 'link-removed'; schema_id: string; link_id: string }
   | { type: 'viewport-updated'; viewport: ViewportState }

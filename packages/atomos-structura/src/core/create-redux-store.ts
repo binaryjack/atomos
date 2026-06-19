@@ -139,6 +139,7 @@ const reduce_state = function(state: ReduxState, action: ReduxAction): ReduxStat
           rightCardinality: (action.rightCardinality || '1') as Cardinality,
           ...(action.leftProperty ? { leftProperty: action.leftProperty } : {}),
           ...(action.rightProperty ? { rightProperty: action.rightProperty } : {}),
+          ...(action.direction ? { direction: action.direction } : {}),
           renderType: (action.renderType as RenderType) || 'bezier',
         };
         const links = [...schema.links, link];

@@ -12,7 +12,7 @@ export interface LinkProps {
   readonly renderType: RenderType;
   readonly leftAnchorId: string;
   readonly rightAnchorId: string;
-  readonly leftProperty?: string;
-  readonly rightProperty?: string;
-  readonly direction?: 'default' | 'left' | 'right';
+  readonly leftProperty?: string | undefined;
+  readonly rightProperty?: string | undefined;
+  readonly direction?: 'default' | 'left' | 'right' | undefined;
 }

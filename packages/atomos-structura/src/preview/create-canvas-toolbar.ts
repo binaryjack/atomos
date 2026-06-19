@@ -25,6 +25,7 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
   const { viewport, entityManager } = config;
 
   const toolbar = document.createElement('div');
+  toolbar.classList.add('vbs-bottom-toolbar');
   toolbar.style.cssText = [
     'position:absolute;bottom:24px;left:50%;transform:translateX(-50%);',
     'display:flex;align-items:center;gap:8px;z-index:30;',

@@ -703,6 +703,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
 
   // ── Initial render ────────────────────────────────────────────────────────
   renderTree();
+  collapse();
 
   return {
     element: root,

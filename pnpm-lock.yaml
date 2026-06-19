@@ -44,6 +44,9 @@ importers:
       '@atomos-web/structura-core':
         specifier: workspace:*
         version: link:../atomos-structura-core
+      '@binaryjack/formular.dev':
+        specifier: workspace:*
+        version: link:../formular-dev
     devDependencies:
       '@vitest/ui':
         specifier: ^4.1.2

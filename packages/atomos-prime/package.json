@@ -26,7 +26,8 @@
   },
   "dependencies": {
     "@atomos-web/structura-core": "workspace:*",
-    "@atomos-web/prime-style": "workspace:*"
+    "@atomos-web/prime-style": "workspace:*",
+    "@binaryjack/formular.dev": "workspace:*"
   },
   "devDependencies": {
     "@vitest/ui": "^4.1.2",

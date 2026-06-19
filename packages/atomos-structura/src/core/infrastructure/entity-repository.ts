@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Infrastructure Layer - Repository Implementation
  * Handles persistence through the Instance-specific Redux Store
  */
@@ -89,6 +89,7 @@ export const createPersistedLinkRepository = function(instanceId: string): LinkR
       targetCardinality: link.rightCardinality || '1',
       sourceProperty: link.leftProperty,
       targetProperty: link.rightProperty,
+      direction: link.direction || 'default',
       renderType: (link.renderType as "bezier" | "orthogonal" | "linear") || undefined,
       createdAt: Date.now(),
       updatedAt: Date.now()
@@ -114,7 +115,8 @@ export const createPersistedLinkRepository = function(instanceId: string): LinkR
           rightCardinality: (link.targetCardinality || '1') as '1' | '*' | '0..1' | '1..*',
           renderType: (link.renderType as "bezier" | "orthogonal" | "linear") || 'bezier',
           ...(link.sourceProperty ? { leftProperty: link.sourceProperty } : {}),
-          ...(link.targetProperty ? { rightProperty: link.targetProperty } : {})
+          ...(link.targetProperty ? { rightProperty: link.targetProperty } : {}),
+          ...(link.direction ? { direction: link.direction } : {})
         } as unknown as any
       });
     } else {
@@ -130,6 +132,7 @@ export const createPersistedLinkRepository = function(instanceId: string): LinkR
         rightCardinality: link.targetCardinality,
         leftProperty: link.sourceProperty,
         rightProperty: link.targetProperty,
+        direction: link.direction || 'default',
         renderType: (link.renderType as "bezier" | "orthogonal" | "linear") || 'bezier'
       } as any);
     }
@@ -157,6 +160,7 @@ export const createPersistedLinkRepository = function(instanceId: string): LinkR
       targetCardinality: l.rightCardinality || '1',
       sourceProperty: l.leftProperty,
       targetProperty: l.rightProperty,
+      direction: l.direction || 'default',
       createdAt: Date.now(),
       updatedAt: Date.now()
     }));

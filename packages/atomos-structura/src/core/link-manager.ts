@@ -79,10 +79,11 @@ export const createLinkManager = function(): LinkManager {
       if (props.animated) path.style.animation = 'vbs-dash 0.6s linear infinite';
     }
 
-    // Glow Filter Defs
-    if (!document.querySelector('#vbs-glow-filter')) {
+    // Glow Filter and Marker Defs
+    if (!document.getElementById('vbs-global-svg-defs')) {
       const svgRoot = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svgRoot.style.display = 'none';
+      svgRoot.id = 'vbs-global-svg-defs';
+      svgRoot.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;';
       svgRoot.innerHTML = `
         <defs>
           <filter id="vbs-glow-filter" x="-50%" y="-50%" width="200%" height="200%">
@@ -100,7 +101,7 @@ export const createLinkManager = function(): LinkManager {
           </marker>
         </defs>
       `;
-      document.head.appendChild(svgRoot);
+      document.body.appendChild(svgRoot);
     }
 
     // Execution Animation Container
