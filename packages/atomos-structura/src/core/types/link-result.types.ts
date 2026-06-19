@@ -1,4 +1,4 @@
-﻿import type { RenderType } from '@atomos-web/structura-core'
+import type { RenderType } from '@atomos-web/structura-core'
 import type { EdgePosition } from '../../features/edge/types/edge-position.types.js'
 
 export interface LinkResult {
@@ -12,7 +12,8 @@ export interface LinkResult {
     dstEdge?: EdgePosition,
     renderType?: RenderType,
     srcRect?: { x: number; y: number; width: number; height: number },
-    dstRect?: { x: number; y: number; width: number; height: number }
+    dstRect?: { x: number; y: number; width: number; height: number },
+    direction?: 'default' | 'left' | 'right'
   ) => void;
   readonly setTemporary: (temporary: boolean) => void;
   readonly setValidity: (isValid: boolean) => void;

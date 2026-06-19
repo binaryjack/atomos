@@ -14,4 +14,5 @@ export interface LinkProps {
   readonly rightAnchorId: string;
   readonly leftProperty?: string;
   readonly rightProperty?: string;
+  readonly direction?: 'default' | 'left' | 'right';
 }

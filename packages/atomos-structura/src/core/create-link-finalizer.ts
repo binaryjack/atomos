@@ -362,10 +362,11 @@ export const createLinkFinalizer = function(
         const d = getCurDst();
         const currentLink = adapter.getLink(linkId);
         const currentRenderType: any = currentLink?.renderType || 'bezier';
+        const currentDirection: any = currentLink?.direction || 'default';
         const srcRect = { ...srcEntity.position.value, ...srcEntity.dimensions.value };
         const dstRect = { ...dstEntity.position.value, ...dstEntity.dimensions.value };
         
-        permanentLink.updatePath(s, d, srcEdge, dstEdge, currentRenderType, srcRect, dstRect);
+        permanentLink.updatePath(s, d, srcEdge, dstEdge, currentRenderType, srcRect, dstRect, currentDirection);
         
         const valid = currentLink?.isValid ?? true;
         permanentLink.setValidity(valid);

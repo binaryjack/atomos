@@ -175,7 +175,8 @@ export const createStructuraViewer = function(
               targetEdge: dstEdge,
               strokeColor: '#3b82f6',
               strokeWidth: 2,
-              renderType: 'bezier'
+              renderType: 'bezier',
+              direction: (edge as any).direction || 'default'
             });
 
             contentRoot.prepend(permanentLink.element);
@@ -186,7 +187,7 @@ export const createStructuraViewer = function(
               const d = computeAnchorPos(dstEntity, dstEdge);
               const srcRect = { ...srcEntity.position.value, ...srcEntity.dimensions.value };
               const dstRect = { ...dstEntity.position.value, ...dstEntity.dimensions.value };
-              permanentLink.updatePath(s, d, srcEdge, dstEdge, 'bezier', srcRect, dstRect);
+              permanentLink.updatePath(s, d, srcEdge, dstEdge, 'bezier', srcRect, dstRect, (edge as any).direction || 'default');
             };
 
             srcEntity.position.subscribe(recompute);

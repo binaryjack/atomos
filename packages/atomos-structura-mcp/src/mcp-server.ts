@@ -976,12 +976,15 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
             properties: {
               schema_id: { type: "string" },
               id: { type: "string" },
-              source: { type: "string" },
-              target: { type: "string" },
+              leftEntityId: { type: "string" },
+              rightEntityId: { type: "string" },
+              leftAnchorId: { type: "string" },
+              rightAnchorId: { type: "string" },
+              direction: { type: "string", enum: ["default", "left", "right"] },
               type: { type: "string" },
               props: { type: "object" }
             },
-            required: ["schema_id", "id", "source", "target"]
+            required: ["schema_id", "id", "leftEntityId", "rightEntityId", "leftAnchorId", "rightAnchorId"]
           }
         }
       ]

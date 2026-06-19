@@ -17,13 +17,14 @@ export interface LinkProps {
   readonly strokeWidth?: number;
   readonly animated?: boolean;
   readonly renderType?: RenderType;
+  readonly direction?: 'default' | 'left' | 'right';
 }
 
 export interface LinkResult {
   readonly element: SVGPathElement;
   readonly sourceAnchorId: string;
   readonly targetAnchorId?: string;
-  readonly updatePath: (sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }) => void;
+  readonly updatePath: (sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }, direction?: 'default' | 'left' | 'right') => void;
   readonly setTemporary: (temporary: boolean) => void;
   readonly setValidity: (isValid: boolean) => void;
   readonly setExecutionState?: (state: any) => void;
@@ -35,7 +36,7 @@ export interface LinkResult {
 export interface LinkManager {
   readonly links: Signal<Map<string, LinkResult>>;
   readonly createLink: (props: LinkProps) => LinkResult;
-  readonly updateLinkPath: (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }) => void;
+  readonly updateLinkPath: (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }, direction?: 'default' | 'left' | 'right') => void;
   readonly removeLink: (linkId: string) => void;
   readonly getLink: (linkId: string) => LinkResult | undefined;
   readonly cleanup: {
@@ -91,6 +92,12 @@ export const createLinkManager = function(): LinkManager {
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
           </filter>
+          <marker id="vbs-arrow-left" viewBox="0 -5 10 10" refX="0" refY="0" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 10,-5 L 0,0 L 10,5 z" fill="context-stroke"></path>
+          </marker>
+          <marker id="vbs-arrow-right" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0,-5 L 10,0 L 0,5 z" fill="context-stroke"></path>
+          </marker>
         </defs>
       `;
       document.head.appendChild(svgRoot);
@@ -163,7 +170,8 @@ export const createLinkManager = function(): LinkManager {
       dstEdge?: EdgePosition,
       renderType?: RenderType,
       srcRect?: { x: number; y: number; width: number; height: number },
-      dstRect?: { x: number; y: number; width: number; height: number }
+      dstRect?: { x: number; y: number; width: number; height: number },
+      direction?: 'default' | 'left' | 'right'
     ) => {
       const src = srcEdge ?? props.sourceEdge ?? 'right';
       const dst = dstEdge ?? props.targetEdge;
@@ -182,6 +190,18 @@ export const createLinkManager = function(): LinkManager {
       }
       
       path.setAttribute('d', d);
+
+      const dir = direction ?? props.direction ?? 'default';
+      if (dir === 'left') {
+        path.setAttribute('marker-start', 'url(#vbs-arrow-left)');
+        path.removeAttribute('marker-end');
+      } else if (dir === 'right') {
+        path.setAttribute('marker-end', 'url(#vbs-arrow-right)');
+        path.removeAttribute('marker-start');
+      } else {
+        path.removeAttribute('marker-start');
+        path.removeAttribute('marker-end');
+      }
       
       if (animCircle && !animCircle.parentNode && path.parentNode) {
         path.parentNode.appendChild(animCircle);
@@ -250,9 +270,9 @@ export const createLinkManager = function(): LinkManager {
   };
 
   // Update existing link path
-  const updateLinkPath = (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }) => {
+  const updateLinkPath = (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }, direction?: 'default' | 'left' | 'right') => {
     const link = links.value.get(linkId);
-    if (link) link.updatePath(sourcePos, targetPos, srcEdge, dstEdge, renderType, srcRect, dstRect);
+    if (link) link.updatePath(sourcePos, targetPos, srcEdge, dstEdge, renderType, srcRect, dstRect, direction);
   };
 
   // Remove link

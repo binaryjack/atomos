@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Application Layer - Use Cases & Commands  
  * Orchestrates domain logic with clean command/query separation
  */
@@ -99,6 +99,7 @@ export interface CreateLinkCommand {
   readonly sourceProperty?: string | undefined;
   readonly targetProperty?: string | undefined;
   readonly renderType?: string | undefined;
+  readonly direction?: 'default' | 'left' | 'right' | undefined;
 }
 
 export interface RemoveLinkCommand {
@@ -115,6 +116,7 @@ export interface UpdateLinkPropertiesCommand {
     readonly sourceProperty?: string | undefined;
     readonly targetProperty?: string | undefined;
     readonly renderType?: string | undefined;
+    readonly direction?: 'default' | 'left' | 'right' | undefined;
   };
 }
 
@@ -223,6 +225,7 @@ export interface LinkPropertiesUpdatedEvent {
     readonly sourceProperty?: string | undefined;
     readonly targetProperty?: string | undefined;
     readonly renderType?: string | undefined;
+    readonly direction?: 'default' | 'left' | 'right' | undefined;
   };
 }
 
@@ -380,7 +383,8 @@ export const createEntityApplicationService = function(
           command.targetCardinality,
           command.sourceProperty,
           command.targetProperty,
-          command.renderType
+          command.renderType,
+          command.direction
         );
         linkRepository.save(link);
         eventBus.publish({ type: 'LinkCreated', link });

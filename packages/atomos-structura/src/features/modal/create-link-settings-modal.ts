@@ -1,4 +1,4 @@
-﻿import { createButton } from '@atomos-web/prime'
+import { createButton } from '@atomos-web/prime'
 import type { RenderType } from '@atomos-web/structura-core'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
 import { getAppearanceSettings, setAppearanceSettings } from '../../core/adapters/toolbox-config-manager.js'
@@ -41,13 +41,42 @@ export const openLinkSettingsModal = function(instanceId: string, linkId: string
   const body = document.createElement('div');
   body.style.cssText = 'color:var(--vbs-text-primary, #f4f4f5);font-size:14px;display:flex;flex-direction:column;gap:16px;';
 
-  const titleDiv = document.createElement('div');
-  titleDiv.style.cssText = 'font-weight:bold;text-align:center;padding-bottom:12px;border-bottom:1px solid var(--vbs-border, #27272a);font-size:16px;';
+  let pendingDirection = link.direction || 'default';
+
+  const titleContainer = document.createElement('div');
+  titleContainer.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--vbs-border, #27272a);font-size:16px;font-weight:bold;';
+
+  const leftText = document.createElement('span');
+  const rightText = document.createElement('span');
+  
+  const arrowBtn = document.createElement('button');
+  arrowBtn.style.cssText = 'background:transparent;border:none;color:var(--vbs-text-secondary, #a1a1aa);cursor:pointer;font-family:monospace;font-size:16px;padding:4px 8px;border-radius:4px;transition:all 0.2s;';
+  arrowBtn.addEventListener('mouseover', () => { arrowBtn.style.color = 'var(--vbs-text-primary, #f4f4f5)'; arrowBtn.style.background = 'var(--vbs-bg-panel-hover, #27272a)'; });
+  arrowBtn.addEventListener('mouseout', () => { arrowBtn.style.color = 'var(--vbs-text-secondary, #a1a1aa)'; arrowBtn.style.background = 'transparent'; });
+  
+  const updateArrowText = () => {
+    if (pendingDirection === 'left') arrowBtn.textContent = '<===';
+    else if (pendingDirection === 'right') arrowBtn.textContent = '===>';
+    else arrowBtn.textContent = '---';
+  };
+  
+  arrowBtn.addEventListener('click', () => {
+    if (pendingDirection === 'default') pendingDirection = 'left';
+    else if (pendingDirection === 'left') pendingDirection = 'right';
+    else pendingDirection = 'default';
+    updateArrowText();
+  });
+  updateArrowText();
+
+  titleContainer.appendChild(leftText);
+  titleContainer.appendChild(arrowBtn);
+  titleContainer.appendChild(rightText);
   
   const updateTitle = () => {
-    const leftCard = sourceCardDropdown.getSelectElement().value || '1';
-    const rightCard = targetCardDropdown.getSelectElement().value || 'n';
-    titleDiv.textContent = `${sourceEntity.name} (${leftCard}) <=> (${rightCard}) ${targetEntity.name}`;
+    const leftCard = sourceCardDropdown?.getSelectElement().value || link.sourceCardinality || '1';
+    const rightCard = targetCardDropdown?.getSelectElement().value || link.targetCardinality || 'n';
+    leftText.textContent = `${sourceEntity.name} (${leftCard})`;
+    rightText.textContent = `(${rightCard}) ${targetEntity.name}`;
   };
 
   const createDropdown = (label: string, options: {value: string; label: string}[], value: string) => {
@@ -115,7 +144,7 @@ export const openLinkSettingsModal = function(instanceId: string, linkId: string
   bottomRow.appendChild(sourcePropDropdown.container);
   bottomRow.appendChild(targetPropDropdown.container);
 
-  body.appendChild(titleDiv);
+  body.appendChild(titleContainer);
   body.appendChild(topRow);
   body.appendChild(bottomRow);
   const bottomRow2 = document.createElement('div');
@@ -224,7 +253,8 @@ export const openLinkSettingsModal = function(instanceId: string, linkId: string
         targetCardinality: targetCardDropdown.getSelectElement().value,
         sourceProperty: sourcePropDropdown.getSelectElement().value || undefined, 
         targetProperty: targetPropDropdown.getSelectElement().value || undefined,
-        renderType: renderTypeDropdown.getSelectElement().value as RenderType
+        renderType: renderTypeDropdown.getSelectElement().value as RenderType,
+        direction: pendingDirection as any
       });
       // Persist link appearance
       const savedAppearance = getAppearanceSettings() || {};

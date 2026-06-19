@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Domain Layer - Entity Aggregate Root
  * Manages entity lifecycle and business rules in pure domain logic
  */
@@ -136,6 +136,7 @@ export interface DomainLink {
   readonly sourceProperty?: string | undefined;
   readonly targetProperty?: string | undefined;
   readonly renderType?: string | undefined;
+  readonly direction?: 'default' | 'left' | 'right' | undefined;
   readonly createdAt: number;
   readonly updatedAt: number;
 }
@@ -157,7 +158,8 @@ export const createLinkAggregate = function(
   targetCardinality?: string,
   sourceProperty?: string,
   targetProperty?: string,
-  renderType?: string
+  renderType?: string,
+  direction?: 'default' | 'left' | 'right'
 ): DomainLink {
   const now = Date.now();
 
@@ -172,6 +174,7 @@ export const createLinkAggregate = function(
     sourceProperty,
     targetProperty,
     renderType,
+    direction: direction ?? 'default',
     createdAt: now,
     updatedAt: now
   };
@@ -185,6 +188,7 @@ export const updateLinkProperties = function(
     readonly sourceProperty?: string | undefined;
     readonly targetProperty?: string | undefined;
     readonly renderType?: string | undefined;
+    readonly direction?: 'default' | 'left' | 'right' | undefined;
   }
 ): DomainLink {
   return {
@@ -194,6 +198,7 @@ export const updateLinkProperties = function(
     sourceProperty: updates.sourceProperty !== undefined ? updates.sourceProperty : link.sourceProperty,
     targetProperty: updates.targetProperty !== undefined ? updates.targetProperty : link.targetProperty,
     renderType: updates.renderType !== undefined ? updates.renderType : link.renderType,
+    direction: updates.direction !== undefined ? updates.direction : link.direction,
     updatedAt: Date.now()
   };
 };
