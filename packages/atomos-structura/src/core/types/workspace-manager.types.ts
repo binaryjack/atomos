@@ -11,6 +11,7 @@ export interface WorkspaceManager {
   readonly workspaceState: Signal<WorkspaceState>;
   readonly behaviorManager: InteractiveBehaviorManager;
   readonly linkManager: LinkManager;
+  readonly isReadonly?: () => boolean;
   readonly registerEntity: (entity: EntityInstance) => void;
   readonly unregisterEntity: (entityId: string) => void;
   readonly screenToSvgCoords: (clientX: number, clientY: number) => { x: number; y: number };

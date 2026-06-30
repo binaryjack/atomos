@@ -73,6 +73,7 @@ export const createWorkspaceManager = function(
     workspaceState:    registry.workspaceState,
     behaviorManager,
     linkManager,
+    ...(isReadonly ? { isReadonly } : {}),
 
     registerEntity:    registry.registerEntity,
     unregisterEntity:  (entityId: string) => {

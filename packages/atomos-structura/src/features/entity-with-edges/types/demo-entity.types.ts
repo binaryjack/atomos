@@ -1,4 +1,4 @@
-﻿import type { Signal } from '@atomos-web/prime'
+import type { Signal } from '@atomos-web/prime'
 import type { Entity } from '@atomos-web/structura-core'
 import type { EntityStore } from '../../../core/create-entity-store.js'
 import type { IStorageProvider } from '../../../core/storage/types/storage-provider.types.js'
@@ -17,6 +17,7 @@ export interface DemoEntityProps {
   readonly dimensions: Signal<{ width: number; height: number }>;
   readonly workspace: WorkspaceManager;
   readonly storageProvider: IStorageProvider<Entity>;
+  readonly isReadonly?: boolean;
 }
 
 export interface DemoEntityResult {

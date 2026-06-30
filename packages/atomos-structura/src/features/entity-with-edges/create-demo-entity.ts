@@ -84,6 +84,7 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
         storageProvider: props.storageProvider,
         color: color,
         shape: shape || 'rectangle',
+        ...(props.isReadonly !== undefined ? { isReadonly: props.isReadonly } : {}),
         onDelete: () => props.workspace.unregisterEntity(props.id),
         onSettingsClick: () => {
           const modal = createEntitySettingsModal(props.instanceId, props.id);

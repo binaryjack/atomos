@@ -1,4 +1,4 @@
-﻿import { createSignal } from '@atomos-web/prime'
+import { createSignal } from '@atomos-web/prime'
 import type { Entity } from '@atomos-web/structura-core'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
 import { createLegacyEntityStoreBridge, createLegacyStorageProviderBridge } from '../../core/adapters/legacy-property-bridge.js'
@@ -149,6 +149,7 @@ const spawnEntity = (
     dimensions: dimsSignal,
     workspace,
     storageProvider,
+    isReadonly: workspace.isReadonly?.() ?? false,
   });
   entity.edgeElements.forEach(el => workspace.appendToCanvas(el));
   return entity.instance;
