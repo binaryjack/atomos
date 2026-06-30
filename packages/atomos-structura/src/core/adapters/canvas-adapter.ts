@@ -136,8 +136,12 @@ export const createCanvasAdapter = function(instanceId: string): CanvasAdapter {
     viewStore.dispatch({ type: 'SetViewport', viewport });
   };
   
-  const selectEntity = function(entityId: string | null): void {
+  const selectEntity = function(entityId: string | null) {
     viewStore.dispatch({ type: 'SelectEntity', entityId });
+  };
+  
+  const selectEntities = function(entityIds: string[]) {
+    viewStore.dispatch({ type: 'SetMultiSelection', entityIds });
   };
   
   const getViewport = function() {
@@ -198,6 +202,7 @@ export const createCanvasAdapter = function(instanceId: string): CanvasAdapter {
     getAllLinks,
     setViewport,
     selectEntity,
+    selectEntities,
     getViewport,
     getSelectedEntityId,
     onEntityChanged,

@@ -36,6 +36,11 @@ export interface AddToSelectionCommand {
   readonly entityId: string;
 }
 
+export interface SetMultiSelectionCommand {
+  readonly type: 'SetMultiSelection';
+  readonly entityIds: readonly string[];
+}
+
 export interface SetDraggingCommand {
   readonly type: 'SetDragging';
   readonly isDragging: boolean;
@@ -50,6 +55,7 @@ export type ViewCommand =
   | SetViewportCommand
   | SelectEntityCommand  
   | AddToSelectionCommand
+  | SetMultiSelectionCommand
   | SetDraggingCommand
   | SetPanningCommand;
 
@@ -156,6 +162,20 @@ export const createCanvasViewStore = function(): CanvasViewStore {
         publishEvent({
           type: 'SelectionChanged',
           selection: newSelection  
+        });
+        break;
+      }
+      
+      case 'SetMultiSelection': {
+        const newSelection: SelectionState = {
+          selectedEntityId: command.entityIds[0] || null,
+          multiSelection: command.entityIds
+        };
+        state = { ...state, selection: newSelection };
+        
+        publishEvent({
+          type: 'SelectionChanged',
+          selection: newSelection
         });
         break;
       }
