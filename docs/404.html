@@ -6,11 +6,11 @@
   <title>Redirecting...</title>
   <script type="text/javascript">
     // Get the base path from the URL. For a GitHub Project Page like
-    // https://binaryjack.github.io/atomos-monorepo/, the base path is /atomos-monorepo.
+    // https://binaryjack.github.io/atomos/, the base path is /atomos.
     // We need to extract this dynamically.
     const pathSegments = window.location.pathname.split('/');
     // Assuming the repo name is always the second segment (after username.github.io)
-    // For example: /atomos-monorepo/some-path -> atomos-monorepo
+    // For example: /atomos/some-path -> atomos
     const repoName = pathSegments[1];
     const basePath = repoName ? `/${repoName}` : '';
 

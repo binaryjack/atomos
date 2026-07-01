@@ -1,6 +1,6 @@
 {
   "name": "@atomos-web/prime",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "license": "MIT",
   "type": "module",
   "publishConfig": {
@@ -33,6 +33,6 @@
     "@vitest/ui": "^4.1.2",
     "jsdom": "^29.0.1",
     "typescript": "^5.3.0",
-    "vitest run --passWithNoTests": "^4.1.2"
+    "vitest": "^4.1.2"
   }
 }

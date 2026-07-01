@@ -1,6 +1,6 @@
 {
   "name": "@atomos-web/structura-core",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "license": "MIT",
   "type": "module",
   "publishConfig": {
@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "typescript": "^5.3.0",
-    "vitest run --passWithNoTests": "^1.0.0"
+    "vitest": "^1.0.0"
   },
   "dependencies": {
     "@binaryjack/formular.dev": "workspace:*"
