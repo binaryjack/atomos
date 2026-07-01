@@ -3,8 +3,8 @@ self.__BUILD_MANIFEST = {
     "afterFiles": [],
     "beforeFiles": [
       {
-        "source": "/formular-atomos//_next/:path+",
-        "destination": "/formular-atomos/_next/:path+"
+        "source": "/atomos//_next/:path+",
+        "destination": "/atomos/_next/:path+"
       }
     ],
     "fallback": []
