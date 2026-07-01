@@ -1,2 +1,2 @@
-:HL["/atomos/_next/static/chunks/15~imu4ne1-27.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"INCWSN16M8bz9P4R49Jd5"}
+:HL["/formular-atomos/_next/static/chunks/15~imu4ne1-27.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"EFGdn3FctKLq5Hv285-mM"}
