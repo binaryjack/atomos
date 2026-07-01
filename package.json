@@ -1,5 +1,5 @@
 {
-  "name": "vbs-monorepo",
+  "name": "atomos",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -8,7 +8,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "echo \"Skipped recursive build from atomos-monorepo context as top-level pnpm correctly traverses\"",
+    "build": "echo \"Skipped recursive build from atomos context as top-level pnpm correctly traverses\"",
     "dev": "pnpm -r dev",
     "demo": "pnpm -r build && npx http-server packages -p 3002 -o /atomos-structura/canvas.html",
     "demo:dev": "start cmd /k \"pnpm --filter @atomos-web/structura dev\" && npx http-server packages -p 4002 -o /atomos-structura/canvas.html",

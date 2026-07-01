@@ -1,16 +1,16 @@
-﻿# @atomos-web/structura-mcp
+# @atomos-web/structura-mcp
 
 **Node.js MCP server** that exposes Atomos Structura schema designer over the [Model Context Protocol](https://modelcontextprotocol.io).  
 
-🤖 **20+ AI Tools** for Claude, GPT, Cursor, and other AI agents to create, manipulate, and manage schema workspaces in real-time.
+**20+ AI Tools** for Claude, GPT, Cursor, and other AI agents to create, manipulate, and manage schema workspaces in real-time.
 
-## ✨ New AI Capabilities
+## New AI Capabilities
 
-- 🎛️ **Viewport Control** — AI can zoom, pan, center, and fit schemas to screen
-- 🔒 **Availability Guards** — Fine-grained permission system for menu features  
-- 🔄 **Session Management** — Clean memory wipe and graceful session termination
-- 📊 **Menu Configuration** — Runtime enable/disable of UI features
-- 🎯 **Advanced Layout** — Smart centering and fit-to-screen algorithms
+- **Viewport Control** — AI can zoom, pan, center, and fit schemas to screen
+- **Availability Guards** — Fine-grained permission system for menu features  
+- **Session Management** — Clean memory wipe and graceful session termination
+- **Menu Configuration** — Runtime enable/disable of UI features
+- **Advanced Layout** — Smart centering and fit-to-screen algorithms
 
 ## Install
 
@@ -61,7 +61,7 @@ createServer((req, res) => {
 
 ---
 
-## 🤖 AI Tools Reference
+## AI Tools Reference
 
 ### Entity Management
 | Tool | Purpose |
@@ -77,7 +77,7 @@ createServer((req, res) => {
 | `atomos-structura/create-link` | Create relationship between entities with cardinality |
 | `atomos-structura/get-schema` | Get all entities and links in active schema |
 
-### **🆕 Viewport Control**
+### **Viewport Control**
 | Tool | Purpose | Availability Guard |
 |------|---------|-------------------|
 | `atomos-structura/viewport/get` | Get current zoom and pan state | None |
@@ -86,7 +86,7 @@ createServer((req, res) => {
 | `atomos-structura/viewport/center` | Center view on entity centroids | `menu.center_on_screen.available` |
 | `atomos-structura/viewport/fit-to-screen` | Fit all entities in viewport (zoom ≤2) | `menu.fit_to_screen.available` |
 
-### **🆕 Session Lifecycle**
+### **Session Lifecycle**
 | Tool | Purpose |  
 |------|---------|
 | `atomos-structura/session/close` | End session, call onSessionClose hook, clear SSE clients |
@@ -112,7 +112,7 @@ createServer((req, res) => {
 
 ---
 
-## 🔒 Availability Guards
+## Availability Guards
 
 AI tools respect menu configuration - if a feature is disabled, the tool returns `403 Forbidden`:
 
@@ -135,7 +135,7 @@ await mcp.call('atomos-structura/viewport/set-zoom', { level: 2.0 });
 
 ---
 
-## 📡 Real-Time Updates
+## Real-Time Updates
 
 SSE events keep AI agents synchronized with workspace changes:
 
@@ -148,7 +148,7 @@ SSE events keep AI agents synchronized with workspace changes:
 | `menu-config` | `{ zoom: { available, value }, ... }` | Menu configuration |
 | `state-reset` | `{ success: true }` | Memory clear operations |
 
-## 📚 Example Usage
+## Example Usage
 
 ### Complete Schema Creation
 ```typescript
@@ -183,7 +183,7 @@ await mcp.call('atomos-structura/viewport/center', { width: 1200, height: 800 })
 await mcp.call('atomos-structura/viewport/fit-to-screen', { width: 1200, height: 800 });
 ```
 
-Built with battle-tested reliability - **157/162 tests passing** 🎯
+Built with battle-tested reliability - **157/162 tests passing**
 |---|---|---|
 | Tool calls → server | HTTP POST | `/` |
 | Server → client (push) | SSE | `GET /events` |

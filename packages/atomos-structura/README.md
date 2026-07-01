@@ -2,7 +2,7 @@
 
 **Visual schema designer for TypeScript projects** — Build, edit, and export data-model schemas headlessly via API or with a full interactive canvas UI.
 
-## ⚠️ Breaking Changes in v2.0.0
+## Breaking Changes in v2.0.0
 
 - **`instanceId` is now REQUIRED**: To support multi-instance isolation and prevent state collisions between multiple canvases (e.g. in VS Code webviews), you must provide a unique `instanceId` when creating a canvas page or initializing a webview.
 
@@ -13,13 +13,13 @@ const page = createCanvasPage('my-unique-instance-id', config);
 
 ---
 
-## ✨ New Features
+## New Features
 
-- 🎛️ **Fine-Grained Menu Control** — Runtime enable/disable of zoom, center, export, etc.
-- 🖼️ **Advanced Viewport API** — Programmatic zoom, pan, center-on-screen, fit-to-screen
-- 🔄 **Session Lifecycle** — Clean memory wipe, graceful session termination
-- 🤖 **Enhanced MCP Integration** — 20+ tools for AI agents with availability guards
-- 📊 **Multi-Schema Workspaces** — Create and switch between multiple diagrams
+- **Fine-Grained Menu Control** — Runtime enable/disable of zoom, center, export, etc.
+- **Advanced Viewport API** — Programmatic zoom, pan, center-on-screen, fit-to-screen
+- **Session Lifecycle** — Clean memory wipe, graceful session termination
+- **Enhanced MCP Integration** — 20+ tools for AI agents with availability guards
+- **Multi-Schema Workspaces** — Create and switch between multiple diagrams
 
 ## Install
 
@@ -33,7 +33,7 @@ npm i @atomos-web/structura
 
 ---
 
-## 🎯 Headless API — Complete Control
+## Headless API — Complete Control
 
 ### Basic Schema Creation
 ```typescript
@@ -150,7 +150,7 @@ schemas.forEach(s => console.log(`${s.name}: ${s.entityCount} entities`));
 
 ---
 
-## 🎨 Canvas UI — Visual Editor
+## Canvas UI — Visual Editor
 
 ```typescript
 import { createSchemaBuilder } from '@atomos-web/structura';

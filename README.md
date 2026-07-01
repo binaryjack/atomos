@@ -2,31 +2,31 @@
 
 **Visual schema designer for TypeScript projects** — Build, edit, and export data-model schemas headlessly via API, through MCP tools for AI agents, or with a full interactive canvas UI.
 
-## ✨ Key Features
+## Key Features
 
-- 🎯 **Headless API** — Programmatically create schemas without UI
-- 🤖 **AI Agent Integration** — Full MCP server for Claude, GPT, Cursor
-- 🎨 **Visual Canvas** — Interactive drag-and-drop schema builder  
-- 🔗 **Rich Relationships** — 1:1, 1:*, *:*, self-referencing with cardinality
-- 📱 **Multi-Schema Support** — Multiple diagrams in one workspace
-- 🎛️ **Fine-Grained Control** — Menu system, viewport management, session lifecycle
-- 💾 **Complete Persistence** — Save/load workspaces, localStorage integration
-- 🔧 **Zero Dependencies** — Pure TypeScript, Web Components, TypeScript-first
+- **Headless API** — Programmatically create schemas without UI
+- **AI Agent Integration** — Full MCP server for Claude, GPT, Cursor
+- **Visual Canvas** — Interactive drag-and-drop schema builder  
+- **Rich Relationships** — 1:1, 1:*, *:*, self-referencing with cardinality
+- **Multi-Schema Support** — Multiple diagrams in one workspace
+- **Fine-Grained Control** — Menu system, viewport management, session lifecycle
+- **Complete Persistence** — Save/load workspaces, localStorage integration
+- **Zero Dependencies** — Pure TypeScript, Web Components, TypeScript-first
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 atomos-structura/
 ├── packages/
-│   ├── atomos-structura/       # 🎨 Main visual schema builder
-│   ├── atomos-structura-core/  # 📦 Core types, models, factories  
-│   ├── atomos-structura-mcp/   # 🤖 MCP server for AI tools
-│   ├── atomos-prime/           # 🧩 Reusable web components
-│   └── atomos-prime-style/     # 🎨 Tailwind theme & design system
-└── examples/                   # 📚 Usage examples
+│   ├── atomos-structura/       # Main visual schema builder
+│   ├── atomos-structura-core/  # Core types, models, factories  
+│   ├── atomos-structura-mcp/   # MCP server for AI tools
+│   ├── atomos-prime/           # Reusable web components
+│   └── atomos-prime-style/     # Tailwind theme & design system
+└── examples/                   # Usage examples
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Headless Schema Creation
 ```typescript
@@ -68,7 +68,7 @@ cd packages/atomos-structura
 pnpm serve
 ```
 
-## 📦 Packages
+## Packages
 
 ### @atomos-web/structura
 **Main schema builder** with headless API + visual canvas. Create entities, relationships, manage multiple schemas, viewport control.
@@ -85,7 +85,7 @@ pnpm serve
 ### @atomos-web/prime-style
 **Design system** — Tailwind CSS theme with consistent colors, spacing, typography.
 
-## 🏛️ Architecture
+## Architecture
 
 - **TypeScript-first**: Strict mode, zero `any` types
 - **Functional constructors**: No classes, Object.defineProperty pattern
@@ -93,7 +93,7 @@ pnpm serve
 - **kebab-case naming**: Consistent throughout
 - **Ultra-high standards**: 95% test coverage minimum
 
-## 🔧 Core Models
+## Core Models
 
 - **BaseEntity**: Common properties (id, code, timestamps)
 - **Entity**: Schema entities with properties rows and edges
@@ -103,7 +103,7 @@ pnpm serve
 - **Edge**: Resize handlers and anchor hosts
 - **Settings**: Tool configuration options
 
-## 🚦 Commands
+## Commands
 
 ```bash
 pnpm build        # Build all packages
@@ -114,7 +114,7 @@ pnpm type-check   # TypeScript validation
 pnpm clean        # Clean dist folders
 ```
 
-## 📋 Development Guidelines
+## Development Guidelines
 
 - Follow the system instructions in `system-instructions.md`
 - Use functional constructors with proper `this` typing

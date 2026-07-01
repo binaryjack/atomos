@@ -6,7 +6,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [2.0.0] — 2026-04-17
 
-### ⚠️ BREAKING CHANGES
+### **BREAKING CHANGES**
 
 **`instanceId` is now REQUIRED everywhere** (no auto-generation fallback).
 
@@ -89,11 +89,11 @@ Structura relied on hardcoded localStorage keys for persistence. When multiple i
 
 | File | Keys | Status |
 |------|------|--------|
-| `create-redux-store.ts` | `vbe2:redux-state` | ✅ Fixed v1.2.2 |
-| `create-persistence.ts` | `vbs-canvas-state` | ✅ Fixed v1.2.2 |
-| `toolbox-config-manager.ts` | `atomos_toolbox_config`, `atomos_custom_shapes`, `atomos_general_settings`, `atomos_appearance_settings` | ✅ Fixed v1.2.2 |
-| `create-export-registry.ts` | `vbe2:custom-export-plugins` | ✅ Fixed v1.2.2 |
-| `schema-builder.ts` | `close()` method clears all `vbe2:*` keys | ✅ Fixed v1.2.2 |
+| `create-redux-store.ts` | `vbe2:redux-state` | Fixed v1.2.2 |
+| `create-persistence.ts` | `vbs-canvas-state` | Fixed v1.2.2 |
+| `toolbox-config-manager.ts` | `atomos_toolbox_config`, `atomos_custom_shapes`, `atomos_general_settings`, `atomos_appearance_settings` | Fixed v1.2.2 |
+| `create-export-registry.ts` | `vbe2:custom-export-plugins` | Fixed v1.2.2 |
+| `schema-builder.ts` | `close()` method clears all `vbe2:*` keys | Fixed v1.2.2 |
 
 ### Scenario (Before Fix)
 
@@ -176,10 +176,10 @@ const app = await initializeStructuraWebview({
 
 ```typescript
 // v2.0.0 throws for all of these:
-initializeStructuraWebview({});  // ❌ throws: "instanceId is REQUIRED"
-createSchemaBuilder({});  // ❌ throws: "instanceId is required"
-create_redux_store(config, undefined);  // ❌ throws: "instanceId must be non-empty"
-getInstanceReduxStore('');  // ❌ throws: "requires a non-empty instanceId"
+initializeStructuraWebview({});  // throws: "instanceId is REQUIRED"
+createSchemaBuilder({});  // throws: "instanceId is required"
+create_redux_store(config, undefined);  // throws: "instanceId must be non-empty"
+getInstanceReduxStore('');  // throws: "requires a non-empty instanceId"
 ```
 
 **Key Points:**
