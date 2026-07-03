@@ -267,12 +267,9 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
         const screenW = rect.width;
         const screenH = rect.height;
         // Fix: Use Math.max and Number.isFinite to ensure valid coordinates
-        const safePanX = Number.isFinite(v.pan.x) ? v.pan.x : 0;
-        const safePanY = Number.isFinite(v.pan.y) ? v.pan.y : 0;
-        const safeZoom = (Number.isFinite(v.zoom) && v.zoom > 0) ? v.zoom : 1;
-        
-        const worldX = (screenW / 2 - safePanX) / safeZoom;
-        const worldY = (screenH / 2 - safePanY) / safeZoom;
+        const center = viewport.screenToCanvas(rect.left + rect.width / 2, rect.top + rect.height / 2, rect);
+        const worldX = center.x;
+        const worldY = center.y;
         const id = `entity-${Date.now()}`;
         getEntityManager(instanceId).createEntity(id, `New ${sh.name}`, { x: worldX - 100, y: worldY - 50 }, { width: 200, height: sh.shape === 'box' || sh.shape === 'rectangle' ? 100 : 180 }, { shape: sh.shape, color: sh.baseColor });
       };
@@ -390,17 +387,11 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
       if (shapeType) {
         const v = viewport.state.value;
         const rect = canvasWrap.getBoundingClientRect();
-        // Mouse coordinates relative to canvas
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-        // World coordinates
-        // Fix: Use Math.max and Number.isFinite to ensure valid coordinates
-        const safePanX = Number.isFinite(v.pan.x) ? v.pan.x : 0;
-        const safePanY = Number.isFinite(v.pan.y) ? v.pan.y : 0;
-        const safeZoom = (Number.isFinite(v.zoom) && v.zoom > 0) ? v.zoom : 1;
+        // Mouse coordinates are implicitly handled by screenToCanvas using clientX/clientY
         
-        const worldX = (mx - safePanX) / safeZoom;
-        const worldY = (my - safePanY) / safeZoom;
+        const pos = viewport.screenToCanvas(e.clientX, e.clientY, rect);
+        const worldX = pos.x;
+        const worldY = pos.y;
         
         const id = `entity-${Date.now()}`;
         const metadata: any = { shape: shapeType };

@@ -570,8 +570,8 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
     console.log('[SCHEMA-PANEL-LOG] focusEntityOnCanvas requested for entity:', entity.id);
     const rect  = props.canvasContainer.getBoundingClientRect();
     const currentZoom = Number.isFinite(props.viewport.state.value.zoom) ? props.viewport.state.value.zoom : 1;
-    const cx    = entity.position.x + entity.dimensions.width  / 2;
-    const cy    = entity.position.y + entity.dimensions.height / 2;
+    const cx    = entity.position.x + (entity.dimensions?.width ?? 200)  / 2;
+    const cy    = entity.position.y + (entity.dimensions?.height ?? 100) / 2;
     const viewW = rect.width  - (isCollapsed ? PANEL_COLLAPSED_W : panelWidth);
     const viewH = rect.height;
     

@@ -135,8 +135,8 @@ export const createEntitySearch = function(
     close();
     const rect = canvasContainer.getBoundingClientRect();
     const { zoom } = viewport.state.value;
-    const cx = entity.position.x + entity.dimensions.width / 2;
-    const cy = entity.position.y + entity.dimensions.height / 2;
+    const cx = entity.position.x + (entity.dimensions?.width ?? 200) / 2;
+    const cy = entity.position.y + (entity.dimensions?.height ?? 100) / 2;
     viewport.panTo(
       rect.width / 2 - cx * zoom,
       rect.height / 2 - cy * zoom,

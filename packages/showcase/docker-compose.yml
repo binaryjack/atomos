@@ -1,0 +1,9 @@
+services:
+  structura-showcase:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: structura-showcase
+    restart: unless-stopped
+    ports:
+      - "3005:80"
