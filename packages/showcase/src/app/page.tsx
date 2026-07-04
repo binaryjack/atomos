@@ -7,7 +7,7 @@ export default function Home() {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold tracking-wide uppercase mb-6 shadow-[0_0_15px_rgba(59,130,246,0.15)]">
           <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> v2.0 Released
         </div>
-        <h1 className="text-5xl font-extrabold tracking-tight text-white mb-6 drop-shadow-sm">
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-6 drop-shadow-sm">
           Atomos Structura
         </h1>
         <p className="text-xl text-slate-400 font-light leading-relaxed max-w-2xl">
