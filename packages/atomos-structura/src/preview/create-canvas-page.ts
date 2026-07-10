@@ -220,7 +220,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   cleanups.push(workspace.cleanup.destroy);
 
   // Apply persisted appearance tokens AFTER design system is injected
-  const savedAppearance = getAppearanceSettings();
+  const savedAppearance = store.get_state().workspace.settings?.appearance || getAppearanceSettings();
   if (savedAppearance) {
     applyAppearanceTokens(savedAppearance.entity, savedAppearance.link);
   }
@@ -755,7 +755,8 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   let currentSettingsPage: { element: HTMLElement; cleanup: { destroy: () => void } } | null = null;
 
   const applyGridSettings = () => {
-    const general = getGeneralSettings();
+    const st = store.get_state();
+    const general = st.workspace.settings?.general || getGeneralSettings();
     if (general) {
       if (general.canvasBackgroundColor) {
         root.style.backgroundColor = general.canvasBackgroundColor;
@@ -844,6 +845,16 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   // apply settings at startup
   applyGridSettings();
 
+  // dynamic settings listener
+  let prevSettings = store.get_state().workspace.settings;
+  const unsubSettingsUpdate = store.subscribe(() => {
+    const st = store.get_state();
+    if (st.workspace.settings !== prevSettings) {
+      prevSettings = st.workspace.settings;
+      applyGridSettings();
+    }
+  });
+
   // initial check
   const initSt = store.get_state();
   if (initSt.is_settings_open) {
@@ -852,6 +863,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
 
   cleanups.push(() => {
     unsubSettings();
+    unsubSettingsUpdate();
     if (currentSettingsPage) {
       currentSettingsPage.element.remove();
       currentSettingsPage.cleanup.destroy();
