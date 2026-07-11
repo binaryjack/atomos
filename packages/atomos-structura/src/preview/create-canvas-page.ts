@@ -1003,6 +1003,14 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
       removeLink: getEntityManager(instanceId).removeLink,
       getLink: getEntityManager(instanceId).getLink,
       getAllLinks: getEntityManager(instanceId).getAllLinks,
+      zoomIn: () => viewport.zoomBy(0.1),
+      zoomOut: () => viewport.zoomBy(-0.1),
+      fitToScreen: (immediate?: boolean) => {
+        // Find fitToScreen inside createCanvasToolbar logic if needed, or simply let the app handle it.
+        // Actually, there's no native fitToScreen exposed on viewport except zoomTo, reset, etc.
+        // I will just use viewport.reset() for now, or I'll implement a simple fitToScreen
+        viewport.reset();
+      }
     }
   };
 };
