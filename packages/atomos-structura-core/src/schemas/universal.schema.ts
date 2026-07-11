@@ -6,7 +6,8 @@ export const menuItemConfigSchema = f.object({
 });
 
 export const workspaceMenuConfigSchema = f.object({
-  zoom: menuItemConfigSchema.optional(),
+  toolbar: menuItemConfigSchema.optional(),
+  zoom: f.object({ available: f.boolean().optional(), value: f.number().optional() }).optional(),
   zoom_in: menuItemConfigSchema.optional(),
   zoom_out: menuItemConfigSchema.optional(),
   center_on_screen: menuItemConfigSchema.optional(),

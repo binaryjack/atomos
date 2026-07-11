@@ -10,6 +10,7 @@ export interface MenuItemConfig<T = void> {
  * All entries are optional; omitting an entry means the item is available by default.
  */
 export interface WorkspaceMenuConfig {
+  readonly toolbar?: MenuItemConfig;
   /** Zoom level control (value = initial zoom, e.g. 1.5). */
   readonly zoom?: MenuItemConfig<number>;
   readonly zoom_in?: MenuItemConfig;

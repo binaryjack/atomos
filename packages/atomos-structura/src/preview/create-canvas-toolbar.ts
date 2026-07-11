@@ -545,6 +545,12 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
         els.style.display = display_value;
       }
     });
+    
+    if (cfg.toolbar?.available === false) {
+      toolbar.style.display = 'none';
+    } else {
+      toolbar.style.display = 'flex';
+    }
     // Apply initial zoom value if provided
     const zoom_item = cfg.zoom;
     if (zoom_item?.value !== undefined) {
