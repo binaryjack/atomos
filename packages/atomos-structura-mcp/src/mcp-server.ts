@@ -967,6 +967,34 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
           }
         },
         {
+          name: "structura_set_menu_available",
+          description: "Toggle the availability of a structura menu item natively.",
+          inputSchema: {
+            type: "object",
+            properties: { 
+              item: { type: "string" },
+              available: { type: "boolean" }
+            },
+            required: ["item", "available"]
+          }
+        },
+        {
+          name: "structura_fit_to_screen",
+          description: "Fits the view of the canvas to fit the bounding box of all nodes.",
+          inputSchema: {
+            type: "object",
+            properties: {},
+          }
+        },
+        {
+          name: "structura_center_on_screen",
+          description: "Centers the view of the canvas on the screen.",
+          inputSchema: {
+            type: "object",
+            properties: {},
+          }
+        },
+        {
           name: "structura_create_entity",
           description: "Add a new node/entity to the Erathos canvas.",
           inputSchema: {
@@ -1040,6 +1068,16 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
         srv._state = { ...srv._state, toolbox_config: args.config };
         emit_sse(srv._clients, 'toolbox-config', args.config);
         return { result: { success: true }, id: req.id };
+      case 'structura_set_menu_available':
+        const currentMenu: Record<string, any> = srv._state.menu_config || {};
+        const newMenu = { ...currentMenu, [args.item]: { ...(currentMenu[args.item] || {}), available: args.available } };
+        srv._state = { ...srv._state, menu_config: newMenu as any };
+        emit_sse(srv._clients, 'menu-config', newMenu);
+        return { result: { success: true }, id: req.id };
+      case 'structura_fit_to_screen':
+        return handle_viewport_fit(srv, { id: req.id, method: 'atomos-structura/viewport/fit-to-screen', params: args });
+      case 'structura_center_on_screen':
+        return handle_viewport_center(srv, { id: req.id, method: 'atomos-structura/viewport/center', params: args });
       case 'structura_create_entity':
         return handle_create_entity(srv, { id: req.id, method: 'atomos-structura/create-entity', params: args });
       case 'structura_update_entity':
