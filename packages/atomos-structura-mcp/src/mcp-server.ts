@@ -647,7 +647,7 @@ function isPathAllowed(filePath: string, allowedRoots: string[]): boolean {
   return allowedRoots.some(root => filePath.startsWith(root));
 }
 
-function hydraterPlanCodernic(payload: any): McpWorkspaceState {
+function parseExecutionPlan(payload: any): McpWorkspaceState {
   // Si le payload contient déjà des canvases, c'est un format Atomos natif, on ne fait rien
   if (payload.canvases || (payload.workspace && payload.workspace.canvases)) {
     return payload as McpWorkspaceState;
@@ -658,7 +658,7 @@ function hydraterPlanCodernic(payload: any): McpWorkspaceState {
     return payload;
   }
 
-  // Extraction des lanes (Format Codernic de dag_config.schema.json / dag-generator.ts)
+  // Extraction des lanes (Format Agent DAG)
   const lanes = payload.lanes || [];
 
   // Calcul du layout spatial via Dagre
@@ -702,12 +702,12 @@ function hydraterPlanCodernic(payload: any): McpWorkspaceState {
   );
 
   // Hydratation complète du Redux Mirror d'Atomos
-  const schema_id = "codernic-execution-graph";
+  const schema_id = "agent-execution-graph";
   const canvas_id = "main-canvas";
 
   return {
     workspace: {
-      name: "Codernic Autonomous Plan",
+      name: "Agent Autonomous Plan",
       version: "1.0.0",
       last_modified: new Date().toISOString(),
       active_canvas_id: canvas_id,
@@ -744,7 +744,7 @@ const handle_load_workspace = (srv: VbsMcpServerInstance, req: McpRequest): McpR
     };
   }
 
-  const hydratedWorkspace = hydraterPlanCodernic(workspace);
+  const hydratedWorkspace = parseExecutionPlan(workspace);
   const runtimeConfig = srv._state.workspace.config;
 
   if (filePath) {
@@ -755,7 +755,7 @@ const handle_load_workspace = (srv: VbsMcpServerInstance, req: McpRequest): McpR
       try {
         const fileContent = await fs.promises.readFile(filePath, 'utf-8');
         const rawJson = JSON.parse(fileContent);
-        const hydratedState = hydraterPlanCodernic(rawJson);
+        const hydratedState = parseExecutionPlan(rawJson);
         (srv as any).broadcast_event('workspace-mutated', hydratedState);
       } catch (err) {
         console.error("Failed to broadcast file change to SSE:", err);
@@ -1140,7 +1140,7 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
   };
 };
 
-const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse | Promise<McpResponse> => {
   const { name, arguments: args } = (req.params ?? {}) as any;
   
   try {
@@ -1202,13 +1202,13 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
         emit_sse(srv._clients, 'frontend-action-request', { action: name, reqId, args });
         return new Promise<McpResponse>((resolve, reject) => {
           srv._pendingRequests.set(reqId, {
-            resolve: (result) => resolve({ result: { success: true, ...result }, id: req.id }),
-            reject: (err) => resolve({ error: { code: 500, message: err.message }, id: req.id }) // resolve with error to respond to MCP cleanly
+            resolve: (result) => resolve({ result: { success: true, ...result }, id: String(req.id) }),
+            reject: (err) => resolve({ error: { code: 500, message: err.message }, id: String(req.id) }) // resolve with error to respond to MCP cleanly
           });
           setTimeout(() => {
             if (srv._pendingRequests.has(reqId)) {
               srv._pendingRequests.delete(reqId);
-              resolve({ error: { code: 504, message: `Tool execution timeout for ${name}` }, id: req.id });
+              resolve({ error: { code: 504, message: `Tool execution timeout for ${name}` }, id: String(req.id) });
             }
           }, 15000); // 15 seconds timeout
         });

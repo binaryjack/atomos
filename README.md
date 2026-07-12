@@ -116,7 +116,6 @@ pnpm clean        # Clean dist folders
 
 ## Development Guidelines
 
-- Follow the system instructions in `system-instructions.md`
 - Use functional constructors with proper `this` typing
 - Maintain 95% test coverage
 - Zero TypeScript errors policy

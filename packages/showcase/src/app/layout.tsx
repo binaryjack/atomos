@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import Link from 'next/link';
 import './globals.css';
-import SidebarNav from "../components/SidebarNav";
+import { Sidebar } from "../widgets/Sidebar/Sidebar";
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -37,7 +37,7 @@ export default function RootLayout({
         </div>
 
         {/* Glassmorphic Sidebar */}
-        <SidebarNav />
+        <Sidebar />
 
         {/* Main Content Area */}
         <main className="flex-1 p-4 md:p-8 min-w-0 relative z-10 flex flex-col overflow-y-auto">

@@ -48,19 +48,24 @@
   }
 
   .vbs-entity {
-    @apply bg-vbs-entity-bg border border-vbs-entity-border rounded-lg shadow-sm;
+    background-color: var(--vbs-entity-bg, #111111);
+    border: 1px solid var(--vbs-entity-border, #27272a);
+    @apply rounded-lg shadow-sm;
     @apply transition-all duration-200 ease-in-out;
-    @apply hover:bg-vbs-entity-hover hover:shadow-md;
+    @apply hover:shadow-md;
+  }
+  .vbs-entity:hover {
+    background-color: var(--vbs-entity-hover, #1e293b);
   }
 
   .vbs-edge {
-    @apply border-vbs-edge-default;
+    border-color: var(--vbs-edge-default, #3b82f6);
     border-width: var(--vbs-edge-thickness);
     @apply transition-all duration-200 ease-in-out;
   }
 
   .vbs-edge:hover {
-    @apply border-vbs-edge-hover;
+    border-color: var(--vbs-edge-hover, #60a5fa);
     border-width: var(--vbs-edge-thickness-hover);
   }
 
