@@ -188,7 +188,7 @@ export const createLinkManager = function(): LinkManager {
       } else if (type === 'orthogonal') {
         d = orthogonalPath(sourcePos, src, targetPos, dst, srcRect, dstRect, obstacles);
       } else {
-        d = bezierPath(sourcePos, src, targetPos, dst);
+        d = bezierPath(sourcePos, src, targetPos, dst, obstacles);
       }
       
       path.setAttribute('d', d);

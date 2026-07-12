@@ -78,7 +78,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
 
   // ── Canvas Area ────────────────────────────────────────────────────────
   const mainArea = document.createElement('div');
-  mainArea.style.cssText = 'flex:1;display:flex;flex-direction:row;min-height:0;min-width:0;overflow:hidden;';
+  mainArea.style.cssText = `position:absolute;top:${TAB_H}px;left:0;right:0;bottom:0;display:flex;flex-direction:row;min-height:0;min-width:0;overflow:hidden;`;
   root.appendChild(mainArea);
   
   const canvasWrap = document.createElement('div');
@@ -234,7 +234,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   cleanups.push(() => canvasResizeObserver.disconnect());
 
   const isReadonly = () => {
-    return isSmallCanvas || !!config?.headless || (store.get_state().workspace.config?.readonly ?? false);
+    return isSmallCanvas || !!config?.readonly || (store.get_state().workspace.config?.readonly ?? false);
   };
 
   // Workspace
@@ -474,11 +474,21 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
     }
   }
 
-  // Validation overlay
+  // Validation overlay & Error Propagation
   const validator = createSchemaValidator(store);
-  const validationOverlay = createValidationOverlay(validator, viewport, getEntityManager(instanceId), canvasWrap);
-  cleanups.push(validationOverlay.cleanup.destroy);
   cleanups.push(validator.cleanup);
+  
+  if (!config?.headless) {
+    const validationOverlay = createValidationOverlay(validator, viewport, getEntityManager(instanceId), canvasWrap);
+    cleanups.push(validationOverlay.cleanup.destroy);
+  }
+  
+  // Always emit warnings via a custom event so consumers (e.g. headless setups) can display them externally
+  cleanups.push(validator.subscribe((warnings) => {
+    window.dispatchEvent(new CustomEvent('vbs-validation-warnings', {
+      detail: { instanceId, warnings }
+    }));
+  }));
 
   // Rubber-band multi-select
   const rubberBand = createRubberBand(svg, viewportGroup, viewport, getEntityManager(instanceId));

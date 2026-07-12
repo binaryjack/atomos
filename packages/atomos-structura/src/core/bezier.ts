@@ -23,6 +23,41 @@ const offsetForEdge = (
   }
 };
 
+const roundedOrthogonalPath = (pts: {x: number, y: number}[], radius: number = 20): string => {
+  if (pts.length < 2) return '';
+  let d = `M ${pts[0]!.x} ${pts[0]!.y} `;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const prev = pts[i - 1]!;
+    const curr = pts[i]!;
+    const next = pts[i + 1]!;
+    
+    const dx1 = curr.x - prev.x;
+    const dy1 = curr.y - prev.y;
+    const len1 = Math.sqrt(dx1*dx1 + dy1*dy1);
+    
+    const dx2 = next.x - curr.x;
+    const dy2 = next.y - curr.y;
+    const len2 = Math.sqrt(dx2*dx2 + dy2*dy2);
+    
+    const r = Math.min(radius, len1 / 2.1, len2 / 2.1);
+    
+    if (r === 0) {
+      d += `L ${curr.x} ${curr.y} `;
+      continue;
+    }
+    
+    const p1x = curr.x - (dx1 / len1) * r;
+    const p1y = curr.y - (dy1 / len1) * r;
+    
+    const p2x = curr.x + (dx2 / len2) * r;
+    const p2y = curr.y + (dy2 / len2) * r;
+    
+    d += `L ${p1x} ${p1y} Q ${curr.x} ${curr.y} ${p2x} ${p2y} `;
+  }
+  d += `L ${pts[pts.length - 1]!.x} ${pts[pts.length - 1]!.y}`;
+  return d;
+};
+
 /**
  * Returns an SVG cubic-bezier path string connecting two anchor points.
  * srcEdge defines the exit direction from src.
@@ -32,20 +67,30 @@ export const bezierPath = (
   src: { x: number; y: number },
   srcEdge: EdgePosition,
   dst: { x: number; y: number },
-  dstEdge?: EdgePosition
+  dstEdge?: EdgePosition,
+  obstacles?: { x: number; y: number; width: number; height: number }[]
 ): string => {
-  const dx = dst.x - src.x;
-  const dy = dst.y - src.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-
-  const cp1 = offsetForEdge(src, srcEdge, dist);
-
   // If no dstEdge, infer the opposite of srcEdge for natural entry
   const inferredDstEdge: EdgePosition = dstEdge ?? (
     srcEdge === 'top'    ? 'bottom' :
     srcEdge === 'bottom' ? 'top'    :
     srcEdge === 'left'   ? 'right'  : 'left'
   );
+
+  if (obstacles && obstacles.length > 0) {
+    try {
+      const pts = routeAStar(src, srcEdge, dst, inferredDstEdge, obstacles);
+      return roundedOrthogonalPath(pts, 30);
+    } catch (e) {
+      console.warn("AStar routing failed in bezierPath, falling back to simple bezier", e);
+    }
+  }
+
+  const dx = dst.x - src.x;
+  const dy = dst.y - src.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  const cp1 = offsetForEdge(src, srcEdge, dist);
   const cp2 = offsetForEdge(dst, inferredDstEdge, dist);
 
   return (
@@ -233,9 +278,17 @@ export const orthogonalPath = (
     srcEdge === 'left'   ? 'right'  : 'left'
   );
 
-  const pts = (obstacles && obstacles.length > 0)
-    ? routeAStar(src, srcEdge, dst, inferredDstEdge, obstacles)
-    : getOrthogonalPoints(src, srcEdge, dst, dstEdge, srcRect, dstRect);
+  let pts: { x: number; y: number }[] = [];
+  if (obstacles && obstacles.length > 0) {
+    try {
+      pts = routeAStar(src, srcEdge, dst, inferredDstEdge, obstacles);
+    } catch (e) {
+      console.warn("AStar routing failed, falling back to simple orthogonal", e);
+      pts = getOrthogonalPoints(src, srcEdge, dst, dstEdge, srcRect, dstRect);
+    }
+  } else {
+    pts = getOrthogonalPoints(src, srcEdge, dst, dstEdge, srcRect, dstRect);
+  }
     
   return `M ${pts[0]!.x} ${pts[0]!.y} ` + pts.slice(1).map((p: any) => `L ${p.x} ${p.y}`).join(' ');
 };
@@ -291,9 +344,16 @@ export const orthogonalMidpoint = (
     srcEdge === 'left'   ? 'right'  : 'left'
   );
 
-  const pts = (obstacles && obstacles.length > 0)
-    ? routeAStar(src, srcEdge, dst, inferredDstEdge, obstacles)
-    : getOrthogonalPoints(src, srcEdge, dst, dstEdge, srcRect, dstRect);
+  let pts: { x: number; y: number }[] = [];
+  if (obstacles && obstacles.length > 0) {
+    try {
+      pts = routeAStar(src, srcEdge, dst, inferredDstEdge, obstacles);
+    } catch (e) {
+      pts = getOrthogonalPoints(src, srcEdge, dst, dstEdge, srcRect, dstRect);
+    }
+  } else {
+    pts = getOrthogonalPoints(src, srcEdge, dst, dstEdge, srcRect, dstRect);
+  }
   
   // Calculate total path length
   let totalLength = 0;

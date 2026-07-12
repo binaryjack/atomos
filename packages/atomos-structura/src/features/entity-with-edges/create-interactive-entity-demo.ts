@@ -270,7 +270,7 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager,
     // createEntity dispatches to Redux synchronously. That triggers runReconcile
     // which calls reannounceEntity → EventBus EntityCreated → the handler above
     // spawns + registers the instance before this line returns.
-    canvasAdapter.createEntity(id, 'New Entity', pos.x, pos.y);
+    canvasAdapter.createEntity(id, 'New Entity', pos.x, pos.y, 220, 180);
     // If the EventBus chain already spawned and registered this entity, return
     // the existing instance. Calling spawnEntity again would create a second
     // orphaned SVG tree that no cleanup path can ever reach.

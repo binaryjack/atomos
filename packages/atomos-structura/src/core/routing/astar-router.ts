@@ -123,14 +123,30 @@ export function routeAStar(
   const yArr = Array.from(ys).sort((a, b) => a - b);
   
   const gridNodes = new Map<string, {x: number, y: number}>();
-  for (const x of xArr) {
-    for (const y of yArr) {
-      gridNodes.set(`${x},${y}`, {x, y});
+  for (let i = 0; i < xArr.length; i++) {
+    for (let j = 0; j < yArr.length; j++) {
+      gridNodes.set(`${i},${j}`, {x: xArr[i]!, y: yArr[j]!});
     }
   }
 
-  const startKey = `${startOffset.x},${startOffset.y}`;
-  const endKey = `${endOffset.x},${endOffset.y}`;
+  // Find start and end indices securely
+  const getIndex = (arr: number[], val: number) => {
+    let closest = 0;
+    let minDist = Infinity;
+    for (let i = 0; i < arr.length; i++) {
+      const d = Math.abs(arr[i]! - val);
+      if (d < minDist) { minDist = d; closest = i; }
+    }
+    return closest;
+  };
+
+  const startXi = getIndex(xArr, startOffset.x);
+  const startYi = getIndex(yArr, startOffset.y);
+  const endXi = getIndex(xArr, endOffset.x);
+  const endYi = getIndex(yArr, endOffset.y);
+
+  const startKey = `${startXi},${startYi}`;
+  const endKey = `${endXi},${endYi}`;
   
   const openSet = new PriorityQueue<string>();
   openSet.enqueue(startKey, 0);
@@ -141,15 +157,13 @@ export function routeAStar(
   
   const getNeighbors = (key: string): string[] => {
     const parts = key.split(',');
-    const xsNum = Number(parts[0]);
-    const ysNum = Number(parts[1]);
-    const xi = xArr.indexOf(xsNum);
-    const yi = yArr.indexOf(ysNum);
+    const xi = Number(parts[0]);
+    const yi = Number(parts[1]);
     const neighbors: string[] = [];
-    if (xi > 0) neighbors.push(`${xArr[xi - 1]},${ysNum}`);
-    if (xi < xArr.length - 1) neighbors.push(`${xArr[xi + 1]},${ysNum}`);
-    if (yi > 0) neighbors.push(`${xsNum},${yArr[yi - 1]}`);
-    if (yi < yArr.length - 1) neighbors.push(`${xsNum},${yArr[yi + 1]}`);
+    if (xi > 0) neighbors.push(`${xi - 1},${yi}`);
+    if (xi < xArr.length - 1) neighbors.push(`${xi + 1},${yi}`);
+    if (yi > 0) neighbors.push(`${xi},${yi - 1}`);
+    if (yi < yArr.length - 1) neighbors.push(`${xi},${yi + 1}`);
     return neighbors;
   };
   

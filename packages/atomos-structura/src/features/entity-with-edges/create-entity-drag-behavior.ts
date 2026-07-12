@@ -44,6 +44,10 @@ export const createEntityDragBehavior = function(
     dragStart = { svgX: svg.x, svgY: svg.y, posX: position.value.x, posY: position.value.y };
     if (bodyElement instanceof HTMLElement) bodyElement.style.cursor = 'grabbing';
     document.body.style.cursor = 'grabbing';
+    
+    // Prevent text selection globally while dragging
+    document.body.style.userSelect = 'none';
+    
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
   };
@@ -126,6 +130,10 @@ export const createEntityDragBehavior = function(
     didMove = false;
     if (bodyElement instanceof HTMLElement) bodyElement.style.cursor = '';
     document.body.style.cursor = '';
+    
+    // Restore text selection
+    document.body.style.userSelect = '';
+    
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
   };
