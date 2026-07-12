@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: 'export',
   distDir: "out", // this is the default
+  trailingSlash: true,
   basePath: '',
   assetPrefix: '',
   images: {
