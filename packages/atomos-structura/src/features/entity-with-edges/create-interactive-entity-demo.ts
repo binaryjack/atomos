@@ -142,14 +142,14 @@ const spawnEntity = (
     id: entityProps.id,
     shape: entityProps.shape as any,
     color: entityProps.color,
+    isReadonly: workspace.isReadonly?.() ?? false,
     // Bridge: connects existing property UI to clean architecture
     entityStore: entityStore,
     globalConfig: globalConfigSignal,
     position: posSignal,
     dimensions: dimsSignal,
     workspace,
-    storageProvider,
-    isReadonly: workspace.isReadonly?.() ?? false,
+    storageProvider
   });
   entity.edgeElements.forEach(el => workspace.appendToCanvas(el));
   return entity.instance;

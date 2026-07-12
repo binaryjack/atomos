@@ -29,15 +29,21 @@ class PriorityQueue<T> {
   }
 }
 
-const PADDING = 24;
 const PENALTY_BEND = 10;
 
-function isSegmentBlocked(p1: RoutingPoint, p2: RoutingPoint, obstacles: RoutingObstacle[]): boolean {
+function getPadding(src: RoutingPoint, dst: RoutingPoint): number {
+  // Simple hash of coordinates to create 4 different tracks
+  const hash = Math.abs(Math.floor(src.x * 7 + dst.x * 13 + src.y * 17 + dst.y * 19));
+  const track = hash % 5; // 0, 1, 2, 3, 4
+  return 24 + (track * 12); // 24, 36, 48, 60, 72
+}
+
+function isSegmentBlocked(p1: RoutingPoint, p2: RoutingPoint, obstacles: RoutingObstacle[], padding: number): boolean {
   for (const obs of obstacles) {
-    const ox1 = obs.x - PADDING + 2; 
-    const ox2 = obs.x + obs.width + PADDING - 2;
-    const oy1 = obs.y - PADDING + 2;
-    const oy2 = obs.y + obs.height + PADDING - 2;
+    const ox1 = obs.x - padding + 2; 
+    const ox2 = obs.x + obs.width + padding - 2;
+    const oy1 = obs.y - padding + 2;
+    const oy2 = obs.y + obs.height + padding - 2;
     
     const minX = Math.min(p1.x, p2.x);
     const maxX = Math.max(p1.x, p2.x);
@@ -92,17 +98,19 @@ export function routeAStar(
   const xs = new Set<number>();
   const ys = new Set<number>();
   
+  const padding = getPadding(src, dst);
+  
   const startOffset = { ...src };
-  if (srcEdge === 'top') startOffset.y -= PADDING;
-  if (srcEdge === 'bottom') startOffset.y += PADDING;
-  if (srcEdge === 'left') startOffset.x -= PADDING;
-  if (srcEdge === 'right') startOffset.x += PADDING;
+  if (srcEdge === 'top') startOffset.y -= padding;
+  if (srcEdge === 'bottom') startOffset.y += padding;
+  if (srcEdge === 'left') startOffset.x -= padding;
+  if (srcEdge === 'right') startOffset.x += padding;
   
   const endOffset = { ...dst };
-  if (dstEdge === 'top') endOffset.y -= PADDING;
-  if (dstEdge === 'bottom') endOffset.y += PADDING;
-  if (dstEdge === 'left') endOffset.x -= PADDING;
-  if (dstEdge === 'right') endOffset.x += PADDING;
+  if (dstEdge === 'top') endOffset.y -= padding;
+  if (dstEdge === 'bottom') endOffset.y += padding;
+  if (dstEdge === 'left') endOffset.x -= padding;
+  if (dstEdge === 'right') endOffset.x += padding;
   
   const addP = (x: number, y: number) => { xs.add(x); ys.add(y); };
   
@@ -113,10 +121,10 @@ export function routeAStar(
   
   // Add bbox edges and center lines for better routing
   for (const obs of obstacles) {
-    xs.add(obs.x - PADDING);
-    xs.add(obs.x + obs.width + PADDING);
-    ys.add(obs.y - PADDING);
-    ys.add(obs.y + obs.height + PADDING);
+    xs.add(obs.x - padding);
+    xs.add(obs.x + obs.width + padding);
+    ys.add(obs.y - padding);
+    ys.add(obs.y + obs.height + padding);
   }
   
   const xArr = Array.from(xs).sort((a, b) => a - b);
@@ -182,7 +190,7 @@ export function routeAStar(
     for (const neighbor of neighbors) {
       const neighborNode = gridNodes.get(neighbor)!;
       
-      if (isSegmentBlocked(currNode, neighborNode, obstacles)) {
+      if (isSegmentBlocked(currNode, neighborNode, obstacles, padding)) {
         continue;
       }
       

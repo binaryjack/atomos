@@ -1,4 +1,4 @@
-﻿import { computeShapeAnchorPos } from '../../canvas/geometry/compute-shape-anchor-pos.js';
+import { computeShapeAnchorPos } from '../../canvas/geometry/compute-shape-anchor-pos.js';
 import { createSignal } from '@atomos-web/prime';
 import { createAnchor } from '@atomos-web/prime';
 import type { EdgeProps, EdgeResult, EdgeState } from './types/edge.types.js';
@@ -143,20 +143,25 @@ export const createEdge = function(props: EdgeProps): EdgeResult {
     position: anchorPos,
     edgePosition: props.position,
     connected: false,
-    radius: 7,
-    onConnect: (linkId) => props.onAnchorConnect?.(props.anchorId, linkId),
-    onMouseDown: (event) => props.onAnchorMouseDown?.(event, props.anchorId),
-    onMouseUp:   (event) => props.onAnchorMouseUp?.(event, props.anchorId)
+    radius: 4,
+    ...((!props.isReadonly && props.onAnchorConnect) ? { onConnect: (linkId: string) => { props.onAnchorConnect!(props.anchorId, linkId); } } : {}),
+    ...((!props.isReadonly && props.onAnchorMouseDown) ? { onMouseDown: (event: MouseEvent) => { props.onAnchorMouseDown!(event, props.anchorId); } } : {}),
+    ...((!props.isReadonly && props.onAnchorMouseUp) ? { onMouseUp: (event: MouseEvent) => { props.onAnchorMouseUp!(event, props.anchorId); } } : {})
   });
+
+  if (props.isReadonly && anchorResult) {
+    anchorResult.element.style.display = 'none';
+  }
 
   // DOM order: bar (bottom visual), anchor (above bar), hit (top — captures hover events)
   // hit is last so it covers bar area; anchor circle is above bar but below hit by index
   // SVG: later elements receive events first. Anchor circle must come AFTER hit to receive clicks.
   // Solution: put anchor AFTER hit so it is on top and captures its own events.
   container.appendChild(bar);
-  container.appendChild(hit);
-  container.appendChild(anchorResult.element);
-  cleanups.push(anchorResult.cleanup.destroy);
+  container.appendChild(hit);  if (anchorResult) {
+    container.appendChild(anchorResult.element);
+    cleanups.push(anchorResult.cleanup.destroy);
+  }
 
   const updateState = (state: EdgeState) => {
     edgeState.set(state);

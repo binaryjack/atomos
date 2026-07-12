@@ -38,6 +38,7 @@ export const createEntityDragBehavior = function(
 
     const me = e as MouseEvent;
     me.stopPropagation();
+    me.preventDefault(); // Prevent native HTML5 drag-and-drop ghosts
     const svg = workspace.screenToSvgCoords(me.clientX, me.clientY);
     dragging = true;
     didMove = false;

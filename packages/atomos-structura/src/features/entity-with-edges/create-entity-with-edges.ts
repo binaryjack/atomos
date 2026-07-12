@@ -1,4 +1,4 @@
-﻿import type { EntityWithEdgesProps, EntityWithEdgesResult } from './types/entity-with-edges.types.js';
+import type { EntityWithEdgesProps, EntityWithEdgesResult } from './types/entity-with-edges.types.js';
 export type { EntityWithEdgesProps, EntityWithEdgesResult };
 import { createCard } from '@atomos-web/prime';
 import { createTypography } from '@atomos-web/prime';
@@ -54,6 +54,7 @@ export const createEntityWithEdges = function(props: EntityWithEdgesProps): Enti
         entityDimensions: dimensionsSignal,
         thickness: edgeConfig.thickness,
         anchorId: edgeConfig.anchor.id,
+        isReadonly: props.isReadonly ?? false,
         onHover: (hovered: boolean) => {
           hoverSignal.set(hovered);
           if (edgeConfig.onHover) edgeConfig.onHover(hovered);
