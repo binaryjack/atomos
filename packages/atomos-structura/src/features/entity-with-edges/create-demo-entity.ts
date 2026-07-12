@@ -15,6 +15,7 @@ const EDGE_THICKNESS = 3 as const;
 export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResult {
   const root = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   root.dataset.entityId = props.id;
+  root.classList.add('vbs-entity');
   const cleanups: Array<() => void> = [];
   const edgeElements: SVGGElement[] = [];
 
@@ -84,7 +85,7 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
         storageProvider: props.storageProvider,
         color: color,
         shape: shape || 'rectangle',
-        ...(props.isReadonly !== undefined ? { isReadonly: props.isReadonly } : {}),
+        isReadonly: !!props.isReadonly,
         onDelete: () => props.workspace.unregisterEntity(props.id),
         onSettingsClick: () => {
           const modal = createEntitySettingsModal(props.instanceId, props.id);
@@ -113,6 +114,7 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
       const content = createCompactEntityContent({
         shape: shape as any,
         color: color,
+        isReadonly: !!props.isReadonly,
         entitySignal: props.entityStore.signal,
         onDelete: () => props.workspace.unregisterEntity(props.id),
         onDoubleClick: () => {
@@ -152,9 +154,13 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
       root.appendChild(contentElement);
     }
 
-    // Reattach drag behavior to new handles
-    const drag = createEntityDragBehavior(dragHandleElement, props.position, selected, props.workspace, props.id, visualDimensions);
-    dragCleanup = drag.cleanup;
+    // Reattach drag behavior
+    if (!props.isReadonly) {
+      const drag = createEntityDragBehavior(dragHandleElement, props.position, selected, props.workspace, props.id, visualDimensions);
+      dragCleanup = drag.cleanup;
+    } else {
+      dragCleanup = () => {};
+    }
 
     // Note: Don't call updateSize here - let syncGeometry() handle it with proper visual dimensions
   };
@@ -184,7 +190,9 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
   const resizeHandles = createEntityResizeHandles(
     props.position, visualDimensions, selected, props.workspace, props.shape
   );
-  resizeHandles.handles.forEach(h => root.appendChild(h));
+  if (!props.isReadonly) {
+    resizeHandles.handles.forEach(h => root.appendChild(h));
+  }
   cleanups.push(resizeHandles.cleanup);
 
   // Wire geometry sync after sub-factories are constructed
@@ -200,33 +208,35 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
     right:  `${props.id}-anchor-right`,
   };
 
-  (['top', 'bottom', 'left', 'right'] as EdgePosition[]).forEach(side => {
-    const edge = createEdge({
-      position: side,
-      entityId: props.id,
-      shape: props.shape as any,
-      entityPosition: props.position,
-      entityDimensions: visualDimensions,
-      thickness: EDGE_THICKNESS,
-      anchorId: anchorIds[side],
-      onHover: (hovered) => {
-        if (hovered) props.workspace.notifyAnchorHoverStart(anchorIds[side], props.id, side);
-        else props.workspace.notifyAnchorHoverEnd();
-      },
-      onAnchorMouseDown: (event, anchorId) => {
-        props.workspace.startLinkFromAnchor(anchorId, edge.getAnchorPosition(), props.id, side, event);
-      },
-      onAnchorMouseUp: (_event, anchorId) => {
-        props.workspace.finalizeLinkToAnchor(anchorId, edge.getAnchorPosition(), props.id, side);
-      }
-    });
+  if (!props.isReadonly) {
+    (['top', 'bottom', 'left', 'right'] as EdgePosition[]).forEach(side => {
+      const edge = createEdge({
+        position: side,
+        entityId: props.id,
+        shape: props.shape as any,
+        entityPosition: props.position,
+        entityDimensions: visualDimensions,
+        thickness: EDGE_THICKNESS,
+        anchorId: anchorIds[side],
+        onHover: (hovered) => {
+          if (hovered) props.workspace.notifyAnchorHoverStart(anchorIds[side], props.id, side);
+          else props.workspace.notifyAnchorHoverEnd();
+        },
+        onAnchorMouseDown: (event, anchorId) => {
+          props.workspace.startLinkFromAnchor(anchorId, edge.getAnchorPosition(), props.id, side, event);
+        },
+        onAnchorMouseUp: (_event, anchorId) => {
+          props.workspace.finalizeLinkToAnchor(anchorId, edge.getAnchorPosition(), props.id, side);
+        }
+      });
 
-    edgeElements.push(edge.element);
-    cleanups.push(() => {
-      edge.cleanup.destroy();
-      if (edge.element.parentNode) edge.element.parentNode.removeChild(edge.element);
+      edgeElements.push(edge.element);
+      cleanups.push(() => {
+        edge.cleanup.destroy();
+        if (edge.element.parentNode) edge.element.parentNode.removeChild(edge.element);
+      });
     });
-  });
+  }
 
   // --- Drag behavior handles internally attached inside buildContent ---
 

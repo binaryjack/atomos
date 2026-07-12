@@ -76,10 +76,15 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
     TAB_H = schemaTabs.height;
   }
 
-  // Canvas container — full area below tab bar
+  // ── Canvas Area ────────────────────────────────────────────────────────
+  const mainArea = document.createElement('div');
+  mainArea.style.cssText = 'flex:1;display:flex;flex-direction:row;min-height:0;min-width:0;overflow:hidden;';
+  root.appendChild(mainArea);
+  
   const canvasWrap = document.createElement('div');
-  canvasWrap.style.cssText = `position:absolute;top:${TAB_H}px;left:0;right:0;bottom:0;overflow:hidden;`;
-  root.appendChild(canvasWrap);
+  canvasWrap.classList.add('vbs-canvas-wrap');
+  canvasWrap.style.cssText = 'position:relative;flex:1;min-width:0;min-height:0;overflow:hidden;background-color:var(--vbs-bg-canvas, #1e293b);';
+  mainArea.appendChild(canvasWrap);
 
   // Inject Hover Zones if configured
   if (config?.hoverZoneMessage) {
@@ -199,6 +204,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
 
   // ── Auto Readonly on Small Canvas ──────────────────────────────────────────
   let isSmallCanvas = false;
+  let canvasResizeDebounce: any = null;
   const canvasResizeObserver = new ResizeObserver(entries => {
     for (const entry of entries) {
       const isSmall = entry.contentRect.width < 500 || entry.contentRect.height < 400;
@@ -206,6 +212,22 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
         isSmallCanvas = isSmall;
         // Optionally dispatch an event or rely on reactiveness. For now just update the flag.
       }
+      
+      // Debounce the state update to avoid spamming Redux
+      if (canvasResizeDebounce) clearTimeout(canvasResizeDebounce);
+      canvasResizeDebounce = setTimeout(() => {
+        const st = store.get_state();
+        const activeCanvas = st.workspace.canvases[st.workspace.active_canvas_id];
+        if (activeCanvas && activeCanvas.viewport) {
+          store.dispatch({
+            type: 'viewport-updated',
+            viewport: {
+              ...activeCanvas.viewport,
+              container: { width: entry.contentRect.width, height: entry.contentRect.height }
+            }
+          });
+        }
+      }, 500);
     }
   });
   canvasResizeObserver.observe(canvasWrap);
@@ -435,18 +457,21 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
     getSnapshot: () => canvasWrap.querySelector('svg') as SVGSVGElement,
   });
   cleanups.push(destroyToolbar);
-  canvasWrap.appendChild(bottomBar);
   
-  // Inject topBurger before schemaTabs element, or absolutely positioned if no tabs
-  if (schemaTabs) {
-    schemaTabs.element.insertBefore(topBurger, schemaTabs.element.firstChild);
-    topBurger.style.marginLeft = '8px';
-  } else {
-    topBurger.style.position = 'absolute';
-    topBurger.style.top = '4px';
-    topBurger.style.left = '4px';
-    topBurger.style.zIndex = '50';
-    root.appendChild(topBurger);
+  if (!config?.headless) {
+    canvasWrap.appendChild(bottomBar);
+    
+    // Inject topBurger before schemaTabs element, or absolutely positioned if no tabs
+    if (schemaTabs) {
+      schemaTabs.element.insertBefore(topBurger, schemaTabs.element.firstChild);
+      topBurger.style.marginLeft = '8px';
+    } else {
+      topBurger.style.position = 'absolute';
+      topBurger.style.top = '4px';
+      topBurger.style.left = '4px';
+      topBurger.style.zIndex = '50';
+      root.appendChild(topBurger);
+    }
   }
 
   // Validation overlay
@@ -507,6 +532,35 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
           pointer-events: none !important;
         }
       }
+      
+      /* Phase 7: Explicit Read-Only Mode (Black background, frozen state) */
+      .vbs-readonly-mode, .vbs-readonly-mode .vbs-canvas-wrap {
+        background-color: #000 !important;
+      }
+      .vbs-readonly-mode #canvas-grid-large,
+      .vbs-readonly-mode #canvas-grid-small,
+      .vbs-readonly-mode #grid-large-rect,
+      .vbs-readonly-mode #grid-large-path,
+      .vbs-readonly-mode #grid-small-path {
+        display: none !important;
+      }
+      .vbs-readonly-mode .vbs-palette,
+      .vbs-readonly-mode .vbs-bottom-toolbar,
+      .vbs-readonly-mode .vbs-burger-menu,
+      .vbs-readonly-mode .vbs-schema-tabs {
+        display: none !important;
+      }
+      .vbs-readonly-mode .resize-handle,
+      .vbs-readonly-mode [data-anchor],
+      .vbs-readonly-mode .selection-ring {
+        display: none !important;
+      }
+      .vbs-readonly-mode .vbs-entity,
+      .vbs-readonly-mode .vbs-link,
+      .vbs-readonly-mode .vbs-link-label-body {
+        pointer-events: none !important;
+      }
+      
       .vbs-hover-zone {
         position: absolute;
         z-index: 9999;
@@ -744,12 +798,18 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
         applyAppearanceTokens(appearance?.entity, appearance?.link);
       }
     }
+    
+    // Toggle Explicit Read-Only visual mode
+    const isExplicitlyReadonly = state.workspace.config?.readonly === true || config?.readonly === true;
+    root.classList.toggle('vbs-readonly-mode', isExplicitlyReadonly);
+    
     console.log('[CANVAS-PAGE-LOG] runReconcile called from Redux subscription');
     runReconcile(state);
   });
   // Trigger immediately so persisted entities/links appear on page load without
   // requiring a Redux dispatch (the store does not fire subscribers on the initial load).
   runReconcile(store.get_state());
+  root.classList.toggle('vbs-readonly-mode', store.get_state().workspace.config?.readonly === true || config?.readonly === true);
   cleanups.push(unsubReconcile);
 
   let currentSettingsPage: { element: HTMLElement; cleanup: { destroy: () => void } } | null = null;
@@ -931,12 +991,13 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
     viewport,
     behaviorManager: workspace.behaviorManager,
     canvasContainer: canvasWrap,
+    onWidthChange: (w: number) => {
+      // Flexbox handles the resizing naturally now. No need to set right offset.
+    },
   });
 
-  // Append to root so it floats over the canvas on the right side
-  root.appendChild(schemaPanel.element);
-  // Push panel below the tab bar
-  schemaPanel.element.style.top = `${TAB_H}px`;
+  // Append to mainArea so it sits side-by-side with canvasWrap
+  mainArea.appendChild(schemaPanel.element);
 
   cleanups.push(() => {
     schemaPanel.cleanup.destroy();
@@ -1006,10 +1067,52 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
       zoomIn: () => viewport.zoomBy(0.1),
       zoomOut: () => viewport.zoomBy(-0.1),
       fitToScreen: (immediate?: boolean) => {
-        // Find fitToScreen inside createCanvasToolbar logic if needed, or simply let the app handle it.
-        // Actually, there's no native fitToScreen exposed on viewport except zoomTo, reset, etc.
-        // I will just use viewport.reset() for now, or I'll implement a simple fitToScreen
-        viewport.reset();
+        const entitiesMap = workspace.workspaceState.value.entities;
+        if (entitiesMap.size === 0) {
+          viewport.reset();
+          return;
+        }
+
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        entitiesMap.forEach(e => {
+          const px = e.position.value.x;
+          const py = e.position.value.y;
+          const w = e.dimensions.value.width;
+          const h = e.dimensions.value.height;
+          if (px < minX) minX = px;
+          if (py < minY) minY = py;
+          if (px + w > maxX) maxX = px + w;
+          if (py + h > maxY) maxY = py + h;
+        });
+
+        const padding = 100;
+        minX -= padding;
+        minY -= padding;
+        maxX += padding;
+        maxY += padding;
+
+        const contentW = maxX - minX;
+        const contentH = maxY - minY;
+
+        const rect = canvasWrap.getBoundingClientRect();
+        const screenW = rect.width;
+        const screenH = rect.height;
+
+        if (screenW === 0 || screenH === 0) return;
+
+        const scaleX = screenW / contentW;
+        const scaleY = screenH / contentH;
+        let zoom = Math.min(scaleX, scaleY, 1.5);
+
+        const contentCenterX = minX + contentW / 2;
+        const contentCenterY = minY + contentH / 2;
+
+        const panX = screenW / 2 - contentCenterX * zoom;
+        const panY = screenH / 2 - contentCenterY * zoom;
+
+        const newVp = { zoom, pan: { x: panX, y: panY } };
+        viewport.setExternalState(newVp);
+        store.dispatch({ type: 'viewport-updated', viewport: newVp });
       }
     }
   };

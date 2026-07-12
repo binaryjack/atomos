@@ -163,6 +163,46 @@ export const createMcpSync = (
         }
       } catch { /* ignore malformed events */ }
     });
+    es.addEventListener('viewport-updated', (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.viewport) {
+          store.dispatch({ type: 'viewport-updated', viewport: data.viewport });
+        }
+      } catch { /* ignore malformed events */ }
+    });
+    es.addEventListener('canvas-appearance-updated', (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.canvas_id && data.appearance !== undefined) {
+          store.dispatch({ type: 'canvas-appearance-updated', canvas_id: data.canvas_id, appearance: data.appearance });
+        }
+      } catch { /* ignore malformed events */ }
+    });
+    es.addEventListener('frontend-action-request', (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data) as { action: string; reqId: string; args: any };
+        const sendResult = (result: any = {}, error?: string) => {
+          fetch(`${mcpUrl}/atomos-structura/tool-result`, {
+            method: 'POST',
+            body: JSON.stringify({ reqId: data.reqId, result, error })
+          }).catch(console.error);
+        };
+        
+        if (data.action === 'structura_undo') {
+          store.undo();
+          sendResult();
+        } else if (data.action === 'structura_redo') {
+          store.redo();
+          sendResult();
+        } else {
+          // Dispatch custom event for toolbar/page to handle (SVG export, auto-layout, etc)
+          window.dispatchEvent(new CustomEvent('vbs-mcp-action', { 
+            detail: { ...data, mcpUrl, sendResult } 
+          }));
+        }
+      } catch { /* ignore malformed events */ }
+    });
     es.onerror = () => { /* MCP server may not be running — silent */ };
   } catch { /* EventSource not available or URL invalid */ }
 

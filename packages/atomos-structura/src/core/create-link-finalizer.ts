@@ -79,6 +79,7 @@ const createLinkLabelFO = (
   ].join(';');
 
   const body = document.createElement('div');
+  body.classList.add('vbs-link-label-body');
   body.style.cssText = [
     'display:flex',
     'align-items:center',
@@ -333,6 +334,8 @@ export const createLinkFinalizer = function(
       renderType: initialRenderType
     });
 
+    permanentLink.element.id = linkId;
+    permanentLink.element.classList.add('vbs-link');
     contentRoot.appendChild(permanentLink.element);
     linkEntityMap.set(linkId, { srcEntityId, dstEntityId });
 
@@ -366,12 +369,16 @@ export const createLinkFinalizer = function(
         const srcRect = { ...srcEntity.position.value, ...srcEntity.dimensions.value };
         const dstRect = { ...dstEntity.position.value, ...dstEntity.dimensions.value };
         
-        permanentLink.updatePath(s, d, srcEdge, dstEdge, currentRenderType, srcRect, dstRect, currentDirection);
+        const obstacles = Array.from(workspaceState.value.entities.values())
+          .filter(ent => ent.id !== srcEntityId && ent.id !== dstEntityId)
+          .map(ent => ({ ...ent.position.value, ...ent.dimensions.value }));
+
+        permanentLink.updatePath(s, d, srcEdge, dstEdge, currentRenderType, srcRect, dstRect, currentDirection, obstacles);
         
         const valid = currentLink?.isValid ?? true;
         permanentLink.setValidity(valid);
         
-        moveLinkLabelFO(fo, getMidpoint(currentRenderType, s, srcEdge, d, dstEdge, srcRect, dstRect));
+        moveLinkLabelFO(fo, getMidpoint(currentRenderType, s, srcEdge, d, dstEdge, srcRect, dstRect, obstacles));
       };
       linkSubscriptions.set(linkId, [
         srcEntity.position.subscribe(recompute),

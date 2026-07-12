@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="data:,">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consumer Simulator</title>
+  <link rel="stylesheet" href="/atomos-prime-style/dist/styles.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; }
+    #app { display: flex; width: 100%; height: 100%; }
+    
+    #sidebar {
+      width: 300px;
+      background: #1e293b;
+      border-right: 1px solid #334155;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      gap: 1rem;
+      overflow-y: auto;
+    }
+    
+    #canvas-container {
+      flex: 1;
+      position: relative;
+    }
+
+    h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; border-bottom: 1px solid #334155; padding-bottom: 0.5rem; }
+    
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 0.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    button:hover { background: #2563eb; }
+    button:active { background: #1d4ed8; }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+    
+    input[type="checkbox"] {
+      width: 1rem;
+      height: 1rem;
+      cursor: pointer;
+    }
+    
+    @keyframes vbs-dash {
+      to {
+        stroke-dashoffset: -10;
+      }
+    }
+    .sim-animated-link {
+      animation: vbs-dash 0.6s linear infinite !important;
+    }
+  </style>
+</head>
+<body>
+  
+  <div id="app">
+    <div id="sidebar">
+      <h2>Consumer Simulator</h2>
+      <p style="font-size: 0.875rem; color: #94a3b8;">
+        This panel imitates an external consumer controlling Structura via MCP tools and Redux configs.
+      </p>
+
+      <div class="control-group">
+        <h3>Modes</h3>
+        <label class="toggle-row">
+          <input type="checkbox" id="readonly-toggle" />
+          <span>Read-Only Mode</span>
+        </label>
+        <label class="toggle-row">
+          <input type="checkbox" id="headless-toggle" />
+          <span>Headless (No UI)</span>
+        </label>
+        <button id="telemetry-btn">Start Telemetry</button>
+      </div>
+
+      <div class="control-group">
+        <h3>Viewport</h3>
+        <button onclick="dispatchMcp('structura_set_zoom', { level: 'in' })">Zoom In</button>
+        <button onclick="dispatchMcp('structura_set_zoom', { level: 'out' })">Zoom Out</button>
+        <button onclick="dispatchMcp('structura_fit_to_screen')">Fit to Screen</button>
+      </div>
+
+      <div class="control-group">
+        <h3>Actions</h3>
+        <button onclick="dispatchMcp('structura_undo')">Undo</button>
+        <button onclick="dispatchMcp('structura_redo')">Redo</button>
+        <button onclick="dispatchMcp('structura_auto_layout')">Auto Layout Nodes</button>
+        <button onclick="dispatchMcp('structura_optimize_connections')">Optimize Connections</button>
+        <button onclick="dispatchMcp('structura_load_schema_preset')">Load Schema Preset</button>
+      </div>
+
+      <div class="control-group">
+        <h3>Export</h3>
+        <button onclick="dispatchMcp('structura_export_svg')">Export SVG</button>
+        <button onclick="dispatchMcp('structura_export_png')">Export PNG</button>
+        <button onclick="dispatchMcp('structura_export_dag')">Export DAG JSON</button>
+      </div>
+    </div>
+    
+    <div id="canvas-container"></div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "@atomos-web/prime": "/atomos-prime/dist/index.js",
+      "@atomos-web/prime-style": "/atomos-prime-style/dist/index.js",
+      "@atomos-web/structura-core": "/atomos-structura-core/dist/index.js",
+      "@atomos-web/structura": "/atomos-structura/dist/index.js",
+      "@binaryjack/formular.dev": "/formular-dev/dist/formular-dev.mjs"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import { createCanvasPage } from '../dist/preview/create-canvas-page.js';
+    import { getEntityManager } from '../dist/core/presentation/entity-manager.js';
+
+    // 1. Setup Canvas with initial configuration
+    let isReadonly = false;
+    let isHeadless = false;
+    let canvasPage;
+    let instanceId = 'simulator-instance';
+
+    function mountCanvas() {
+      const container = document.getElementById('canvas-container');
+      container.innerHTML = '';
+      if (canvasPage) {
+        canvasPage.cleanup.destroy();
+      }
+
+      // Re-mount with new config
+      canvasPage = createCanvasPage(instanceId, { readonly: isReadonly, headless: isHeadless });
+      container.appendChild(canvasPage.element);
+      
+      return canvasPage;
+    }
+
+    // Initial mount
+    mountCanvas();
+
+    // 2. Setup a default schema with multiple nodes for layout/telemetry testing
+    function seedSchema() {
+      const em = getEntityManager(instanceId);
+      
+      em.createEntity('node1', 'View', { x: -300, y: -100 }, { width: 220, height: 180 }, { shape: 'rectangle', color: '#3b82f6' });
+      em.updateEntityProperties('node1', [
+        { key: 'render', label: 'render()', dataType: 'function', componentType: 'input', value: '' },
+        { key: 'template', label: 'template', dataType: 'string', componentType: 'input', value: 'html' }
+      ]);
+      
+      em.createEntity('node2', 'Controller', { x: 0, y: -100 }, { width: 220, height: 180 }, { shape: 'rectangle', color: '#10b981' });
+      em.updateEntityProperties('node2', [
+        { key: 'handleInput', label: 'handleInput()', dataType: 'function', componentType: 'input', value: '' },
+        { key: 'updateModel', label: 'updateModel()', dataType: 'function', componentType: 'input', value: '' }
+      ]);
+
+      em.createEntity('node3', 'Model', { x: 300, y: -100 }, { width: 220, height: 180 }, { shape: 'cylinder', color: '#f59e0b' });
+      em.updateEntityProperties('node3', [
+        { key: 'data', label: 'data', dataType: 'object', componentType: 'input', value: '{}' },
+        { key: 'notifyObservers', label: 'notify()', dataType: 'function', componentType: 'input', value: '' }
+      ]);
+      
+      // We must specify proper anchor IDs for the links to attach to the entities
+      em.createLink('link1', 'right', 'left', 'node1', 'node2');
+      em.createLink('link2', 'right', 'left', 'node2', 'node3');
+      em.createLink('link3', 'bottom', 'bottom', 'node3', 'node1');
+    }
+    
+    // Slight delay to ensure Redux is ready
+    setTimeout(seedSchema, 100);
+
+    // 3. MCP Simulator Dispatcher
+    window.dispatchMcp = (action, args = {}) => {
+      console.log(`[Simulator] Dispatching external MCP action:`, action, args);
+      
+      // Dispatch the custom event that create-canvas-toolbar expects
+      window.dispatchEvent(new CustomEvent('vbs-mcp-action', {
+        detail: {
+          reqId: `sim-req-${Date.now()}`,
+          action,
+          args
+        }
+      }));
+    };
+
+    // Listen for the tool-result (simulating MCP intercepting the HTTP callback)
+    // The actual HTTP fetch will fail in the browser because the MCP server isn't running on this port,
+    // but we can intercept the vbs-mcp-action logic if we want, or just let it fail gracefully.
+    // For pure UI actions (Zoom, Undo), we can simulate them directly against the page's testApi or Redux if vbs-mcp-action doesn't cover it.
+
+    // Note: vbs-mcp-action covers AutoLayout, Optimize, and Exports. 
+    // Undo/Redo are covered by mcp-sync usually, but since the MCP Sync client isn't active without a server URL, we simulate it:
+    window.dispatchMcp = (action, args = {}) => {
+      console.log(`[Simulator] Executing ${action}`);
+      if (action === 'structura_undo') {
+        // Use keyboard event simulation or raw api if available
+        document.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'z' }));
+      } else if (action === 'structura_redo') {
+        document.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'y' }));
+      } else {
+        // Use the event for DOM-bound actions
+        window.dispatchEvent(new CustomEvent('vbs-mcp-action', {
+          detail: { reqId: `sim-req-${Date.now()}`, action, args },
+          sendResult: (data) => console.log('[Simulator] Received tool result payload:', data) // Mocking the SSE fetch callback
+        }));
+      }
+    };
+
+    // 4. Toggle Modes
+    document.getElementById('readonly-toggle').addEventListener('change', (e) => {
+      isReadonly = e.target.checked;
+      mountCanvas();
+      seedSchema(); 
+    });
+    document.getElementById('headless-toggle').addEventListener('change', (e) => {
+      isHeadless = e.target.checked;
+      mountCanvas();
+      seedSchema(); 
+    });
+
+    // 5. Telemetry / Execution Simulator
+    let isExecuting = false;
+    document.getElementById('telemetry-btn').addEventListener('click', async (e) => {
+      if (isExecuting) {
+        isExecuting = false;
+        e.target.textContent = 'Start Telemetry';
+        e.target.style.background = '#3b82f6';
+        return;
+      }
+      isExecuting = true;
+      e.target.textContent = 'Stop Telemetry';
+      e.target.style.background = '#ef4444';
+
+      const em = getEntityManager(instanceId);
+      const entities = em.getAllEntities();
+      const links = em.getAllLinks();
+      
+      const inDegree = new Map(entities.map(en => [en.id, 0]));
+      const adj = new Map(entities.map(en => [en.id, []]));
+      
+      links.forEach(l => {
+        if(inDegree.has(l.targetEntityId)) inDegree.set(l.targetEntityId, inDegree.get(l.targetEntityId) + 1);
+        if(adj.has(l.sourceEntityId)) adj.get(l.sourceEntityId).push({ link: l, target: l.targetEntityId });
+      });
+      
+      let queue = entities.filter(en => inDegree.get(en.id) === 0).map(en => en.id);
+      if (queue.length === 0 && entities.length > 0) queue = [entities[0].id]; // Handle cycles fallback
+      
+      // Reset visuals
+      entities.forEach(en => {
+        em.updateEntityMetadata(en.id, { color: undefined });
+        const el = document.querySelector(`[data-entity-id="${en.id}"]`);
+        if (el) {
+          el.style.filter = '';
+          const badge = el.querySelector('.sim-check-badge');
+          if (badge) badge.remove();
+        }
+      });
+      links.forEach(l => {
+        const linkEl = document.getElementById(l.id);
+        if (linkEl) {
+          const p = linkEl.querySelector('path');
+          if (p) {
+            p.style.stroke = '';
+            p.style.strokeDasharray = '';
+            p.style.strokeDashoffset = '';
+          }
+          const progress = linkEl.querySelector('.sim-progress-path');
+          if (progress) progress.remove();
+          const dot = linkEl.querySelector('.sim-travel-dot');
+          if (dot) dot.remove();
+        }
+      });
+
+      while (queue.length > 0 && isExecuting) {
+        // Glow (Processing state)
+        for (const id of queue) {
+           em.updateEntityMetadata(id, { color: '#f59e0b' });
+           const el = document.querySelector(`[data-entity-id="${id}"]`);
+           if (el) {
+             el.style.transition = 'filter 0.3s';
+             el.style.filter = 'drop-shadow(0 0 12px #f59e0b)';
+           }
+        }
+        
+        await new Promise(r => setTimeout(r, 800));
+        if (!isExecuting) break;
+        
+        // Mark Completed with Random State
+        for (const id of queue) {
+           const states = [
+             { color: '#10b981', type: 'success', shadow: '0 0 16px #10b981' }, // Green
+             { color: '#ef4444', type: 'error', shadow: '0 0 16px #ef4444' }, // Red
+             { color: '#f59e0b', type: 'warning', shadow: '0 0 16px #f59e0b' }, // Orange
+             { color: '#64748b', type: 'skipped', shadow: 'none' } // Gray
+           ];
+           // Bias towards success (60% success, 40% others)
+           const roll = Math.random();
+           let state = states[0];
+           if (roll > 0.6) state = states[1];
+           if (roll > 0.8) state = states[2];
+           if (roll > 0.9) state = states[3];
+           
+           em.updateEntityMetadata(id, { color: state.color });
+           const el = document.querySelector(`[data-entity-id="${id}"]`);
+           if (el) {
+             el.style.filter = state.shadow ? `drop-shadow(${state.shadow})` : '';
+             const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+             badge.setAttribute('class', 'sim-check-badge');
+             const entity = em.getEntity(id);
+             const w = entity.dimensions?.width ?? 200;
+             badge.setAttribute('transform', `translate(${w - 12}, -12)`);
+             
+             if (state.type === 'success') {
+               badge.innerHTML = `
+                 <circle cx="12" cy="12" r="12" fill="${state.color}" />
+                 <path d="M7 12l3 3l7-7" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+               `;
+             } else if (state.type === 'error') {
+               badge.innerHTML = `
+                 <circle cx="12" cy="12" r="12" fill="${state.color}" />
+                 <path d="M8 8l8 8M16 8l-8 8" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" />
+               `;
+             } else if (state.type === 'warning') {
+               badge.innerHTML = `
+                 <circle cx="12" cy="12" r="12" fill="${state.color}" />
+                 <path d="M12 6v6M12 16v2" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" />
+               `;
+             } else {
+               badge.innerHTML = `
+                 <circle cx="12" cy="12" r="12" fill="${state.color}" />
+                 <path d="M7 12h10" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" />
+               `;
+             }
+             el.appendChild(badge);
+           }
+        }
+        
+        // Link Animations
+        let nextQueue = [];
+        let linkPromises = [];
+        for (const id of queue) {
+           const outgoing = adj.get(id);
+           for (const out of outgoing) {
+             nextQueue.push(out.target);
+             linkPromises.push(new Promise(resolve => {
+                const linkEl = document.getElementById(out.link.id);
+                if (!linkEl) return resolve(null);
+                
+                const mainPath = linkEl.querySelector('path');
+                if (!mainPath) return resolve(null);
+                
+                const pathLength = mainPath.getTotalLength();
+                
+                const progPath = mainPath.cloneNode(false);
+                progPath.setAttribute('class', 'sim-progress-path');
+                progPath.style.stroke = '#10b981';
+                progPath.style.strokeWidth = '4';
+                progPath.style.strokeDasharray = pathLength.toString();
+                progPath.style.strokeDashoffset = pathLength.toString();
+                progPath.style.transition = 'stroke-dashoffset 1s linear';
+                linkEl.appendChild(progPath);
+                
+                const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                dot.setAttribute('class', 'sim-travel-dot');
+                dot.setAttribute('r', '6');
+                dot.setAttribute('fill', '#fff');
+                dot.setAttribute('filter', 'drop-shadow(0 0 6px #10b981)');
+                
+                const motion = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
+                motion.setAttribute('dur', '1s');
+                motion.setAttribute('fill', 'freeze');
+                
+                const mpath = document.createElementNS('http://www.w3.org/2000/svg', 'mpath');
+                const pathId = 'path-' + out.link.id;
+                mainPath.setAttribute('id', pathId);
+                mpath.setAttribute('href', '#' + pathId);
+                mpath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#' + pathId);
+                
+                motion.appendChild(mpath);
+                dot.appendChild(motion);
+                linkEl.appendChild(dot);
+                
+                
+                // Allow browser to register initial state
+                setTimeout(() => {
+                  progPath.style.strokeDashoffset = '0';
+                }, 50);
+                
+                setTimeout(() => {
+                  progPath.style.transition = 'opacity 0.3s';
+                  progPath.style.opacity = '0';
+                  dot.style.transition = 'opacity 0.3s';
+                  dot.style.opacity = '0';
+                  setTimeout(() => { 
+                    progPath.remove(); 
+                    dot.remove(); 
+                    resolve(null); 
+                  }, 300);
+                }, 1000);
+             }));
+           }
+        }
+        
+        if (linkPromises.length > 0) {
+          await Promise.all(linkPromises);
+        }
+        
+        queue = [...new Set(nextQueue)];
+      }
+      
+      if (isExecuting) {
+         isExecuting = false;
+         document.getElementById('telemetry-btn').textContent = 'Start Telemetry';
+         document.getElementById('telemetry-btn').style.background = '#3b82f6';
+      }
+    });
+  </script>
+</body>
+</html>

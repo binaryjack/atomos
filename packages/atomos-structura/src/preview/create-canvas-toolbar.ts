@@ -565,9 +565,51 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
     unsub_menu = config.menuControl.subscribe(apply_menu_config);
   }
 
+  // ── MCP Action Listener ───────────────────────────────────────────────────
+  const handleMcpAction = async (e: Event) => {
+    const { action, sendResult } = (e as CustomEvent).detail;
+    try {
+      if (action === 'structura_auto_layout') {
+        autoLayoutDAG(entityManager);
+        autoRouteLinks(entityManager);
+        centerToSchema();
+        if (sendResult) sendResult();
+      } else if (action === 'structura_optimize_connections') {
+        autoRouteLinks(entityManager);
+        if (sendResult) sendResult();
+      } else if (action === 'structura_export_svg') {
+        const svgContent = snapshot.exportSVG(true);
+        if (sendResult) sendResult({ content: svgContent });
+      } else if (action === 'structura_export_png') {
+        const dataUrl = await snapshot.exportPNG(true);
+        if (sendResult) sendResult({ content: dataUrl });
+      } else if (action === 'structura_export_dag') {
+        const dagJson = serializeDAG(entityManager);
+        if (sendResult) sendResult({ content: JSON.parse(dagJson) });
+      } else if (action === 'structura_set_zoom') {
+        const args = (e as CustomEvent).detail.args || {};
+        if (args.level === 'in') viewport.zoomBy(0.1);
+        else if (args.level === 'out') viewport.zoomBy(-0.1);
+        if (sendResult) sendResult();
+      } else if (action === 'structura_fit_to_screen') {
+        fitToScreen();
+        if (sendResult) sendResult();
+      } else if (action === 'structura_center_to_schema') {
+        centerToSchema();
+        if (sendResult) sendResult();
+      }
+    } catch (err) {
+      if (sendResult) sendResult(null, err instanceof Error ? err.message : String(err));
+    }
+  };
+  window.addEventListener('vbs-mcp-action', handleMcpAction);
+
   return {
     bottomBar: toolbar,
     topBurger,
-    destroy: () => { if (unsub_menu) unsub_menu(); },
+    destroy: () => { 
+      if (unsub_menu) unsub_menu(); 
+      window.removeEventListener('vbs-mcp-action', handleMcpAction);
+    },
   };
 };

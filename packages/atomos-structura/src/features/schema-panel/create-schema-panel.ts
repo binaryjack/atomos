@@ -6,6 +6,7 @@ import type { CanvasViewport } from '../../core/create-canvas-viewport.js'
 import type { DomainEntity } from '../../core/domain/entity-aggregate.js'
 import type { InteractiveBehaviorManager } from '../../core/types/interactive-behavior-manager.types.js'
 import { createPropertySettingsModal } from '../modal/create-property-settings-modal.js'
+import { openLinkSettingsModal } from '../modal/create-link-settings-modal.js'
 
 export interface SchemaPanelProps {
   readonly instanceId: string;
@@ -13,6 +14,7 @@ export interface SchemaPanelProps {
   readonly viewport: CanvasViewport;
   readonly behaviorManager: InteractiveBehaviorManager;
   readonly canvasContainer: HTMLElement;
+  readonly onWidthChange?: (width: number) => void;
 }
 
 export interface SchemaPanelResult {
@@ -46,7 +48,7 @@ const ensureFlashStyles = (() => {
       '  55%  { opacity:1; stroke-width:2.5; stroke:#3b82f6; stroke-dasharray:none; }',
       '  100% { opacity:0; stroke-width:2; stroke-dasharray:none; }',
       '}',
-      '.vbs-nav-flash .vbs-sel-ring {',
+      '.vbs-nav-flash .vbs-sel-ring, .vbs-nav-flash-link path {',
       '  animation: vbs-nav-flash 1s cubic-bezier(0.4,0,0.2,1) forwards !important;',
       '}',
     ].join('\n');
@@ -72,7 +74,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
   // ── Root wrapper ─────────────────────────────────────────────────────────
   const root = document.createElement('div');
   root.style.cssText = css(
-    'position:absolute', 'top:0', 'right:0', 'bottom:0',
+    'position:relative',
     `width:${px(PANEL_DEFAULT_W)}`,
     'z-index:25',
     'display:flex', 'flex-direction:row',
@@ -248,9 +250,41 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
           'display:flex', 'align-items:center', 'gap:3px',
           'padding:2px 10px', 'font-size:10px', 'font-family:monospace',
           'color:#475569', 'border-radius: var(--vbs-radius, 2px)', 'margin:1px 4px',
+          'cursor:pointer'
         );
-        linkRow.onmouseenter = () => { linkRow.style.background = 'var(--vbs-bg-input, #09090b)'; };
-        linkRow.onmouseleave = () => { linkRow.style.background = ''; };
+        linkRow.title = 'Click to focus, double-click to edit';
+        linkRow.addEventListener('click', () => focusLinkOnCanvas(edge as any, src, dst));
+        linkRow.addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          openLinkSettingsModal(props.instanceId, edge.id);
+        });
+
+        // Gear button
+        const gearBtn = document.createElement('button');
+        gearBtn.type = 'button';
+        gearBtn.title = 'Link settings';
+        gearBtn.textContent = '⚙';
+        gearBtn.style.cssText = css(
+          'flex-shrink:0', 'background:none', 'border:none', 'cursor:pointer',
+          'color:#475569', 'font-size:10px', 'padding:0 2px',
+          'line-height:1', 'border-radius:2px',
+          'opacity:0', 'transition:opacity 0.1s',
+          'margin-left:auto'
+        );
+
+        linkRow.onmouseenter = () => { 
+          linkRow.style.background = 'var(--vbs-bg-input, #09090b)'; 
+          gearBtn.style.opacity = '1';
+        };
+        linkRow.onmouseleave = () => { 
+          linkRow.style.background = ''; 
+          gearBtn.style.opacity = '0';
+        };
+        
+        gearBtn.addEventListener('click', (e: MouseEvent) => {
+          e.stopPropagation();
+          openLinkSettingsModal(props.instanceId, edge.id);
+        });
 
         const mkSpan = (text: string, color: string): HTMLSpanElement => {
           const s = document.createElement('span');
@@ -262,6 +296,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
         linkRow.appendChild(mkSpan(srcName,           'var(--vbs-text-primary, #f4f4f5)'));
         linkRow.appendChild(mkSpan(` ──(${card})──▶ `, 'var(--vbs-text-secondary, #a1a1aa)'));
         linkRow.appendChild(mkSpan(dstName,           'var(--vbs-text-primary, #f4f4f5)'));
+        linkRow.appendChild(gearBtn);
         treeview.appendChild(linkRow);
       });
     }
@@ -566,13 +601,57 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
   // ── Focus + flash entity on canvas ───────────────────────────────────────
   let flashTimeout: ReturnType<typeof setTimeout> | null = null;
 
+  const focusLinkOnCanvas = (edge: any, src: DomainEntity | undefined, dst: DomainEntity | undefined): void => {
+    if (!src || !dst) return;
+    console.log('[SCHEMA-PANEL-LOG] focusLinkOnCanvas requested for link:', edge.id);
+    const rect  = props.canvasContainer.getBoundingClientRect();
+    const currentZoom = Number.isFinite(props.viewport.state.value.zoom) ? props.viewport.state.value.zoom : 1;
+    const srcCx = src.position.x + (src.dimensions?.width ?? 200) / 2;
+    const srcCy = src.position.y + (src.dimensions?.height ?? 100) / 2;
+    const dstCx = dst.position.x + (dst.dimensions?.width ?? 200) / 2;
+    const dstCy = dst.position.y + (dst.dimensions?.height ?? 100) / 2;
+    
+    const cx = (srcCx + dstCx) / 2;
+    const cy = (srcCy + dstCy) / 2;
+    const viewW = rect.width;
+    const viewH = rect.height;
+    
+    const targetPanX = viewW / 2 - cx * currentZoom;
+    const targetPanY = viewH / 2 - cy * currentZoom;
+    
+    props.viewport.panTo(
+      Number.isFinite(targetPanX) ? targetPanX : 0, 
+      Number.isFinite(targetPanY) ? targetPanY : 0
+    );
+
+    // Flash animation on link path
+    ensureFlashStyles();
+    const svg = props.canvasContainer.querySelector('svg');
+    if (svg) {
+      if (flashTimeout !== null) clearTimeout(flashTimeout);
+      const prev = svg.querySelector('.vbs-nav-flash-link');
+      if (prev) prev.classList.remove('vbs-nav-flash-link');
+
+      const target = svg.querySelector<SVGGElement>(`[id="${edge.id}"]`);
+      if (target) {
+        // Force animation restart via reflow
+        void target.getBoundingClientRect();
+        target.classList.add('vbs-nav-flash-link');
+        flashTimeout = setTimeout(() => {
+          target.classList.remove('vbs-nav-flash-link');
+          flashTimeout = null;
+        }, 1050);
+      }
+    }
+  };
+
   const focusEntityOnCanvas = (entity: DomainEntity): void => {
     console.log('[SCHEMA-PANEL-LOG] focusEntityOnCanvas requested for entity:', entity.id);
     const rect  = props.canvasContainer.getBoundingClientRect();
     const currentZoom = Number.isFinite(props.viewport.state.value.zoom) ? props.viewport.state.value.zoom : 1;
     const cx    = entity.position.x + (entity.dimensions?.width ?? 200)  / 2;
     const cy    = entity.position.y + (entity.dimensions?.height ?? 100) / 2;
-    const viewW = rect.width  - (isCollapsed ? PANEL_COLLAPSED_W : panelWidth);
+    const viewW = rect.width;
     const viewH = rect.height;
     
     const targetPanX = viewW / 2 - cx * currentZoom;
@@ -624,6 +703,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
     headerExpanded.style.display = 'none';
     headerCollapsed.style.display = 'flex';
     treeview.style.display = 'none';
+    props.onWidthChange?.(PANEL_COLLAPSED_W);
   };
 
   const expand = (): void => {
@@ -633,6 +713,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
     headerExpanded.style.display = 'flex';
     headerCollapsed.style.display = 'none';
     treeview.style.display = '';
+    props.onWidthChange?.(panelWidth);
   };
 
   collapseBtn.addEventListener('click', collapse);
@@ -658,6 +739,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
     const delta = resizeStartX - e.clientX;
     panelWidth  = Math.max(PANEL_MIN_W, Math.min(PANEL_MAX_W, resizeStartW + delta));
     root.style.width = px(panelWidth);
+    props.onWidthChange?.(panelWidth);
   };
 
   const onResizeUp = (): void => {

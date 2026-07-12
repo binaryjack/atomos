@@ -11,6 +11,7 @@ export interface SchemaModel {
 export interface ViewportState {
   readonly pan: { x: number; y: number };
   readonly zoom: number;
+  readonly container?: { width: number; height: number };
 }
 
 export interface CanvasModel {

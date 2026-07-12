@@ -145,20 +145,25 @@ export const autoLayoutDAG = function(entityManager: EntityManager): void {
 
   // 3. Apply positions based on levels
   const HORIZONTAL_SPACING = 350;
-  const VERTICAL_SPACING = 250;
+  const VERTICAL_SPACING = 200;
   const START_X = 100;
   const START_Y = 100;
 
+  // Find the maximum height among all levels to use as a centering baseline
+  const maxNodesInLevel = Math.max(...levels.map(l => l.length));
+  const maxTotalHeight = maxNodesInLevel * VERTICAL_SPACING;
+  const baselineCenterY = Math.max(START_Y, (1000 - maxTotalHeight) / 2) + (maxTotalHeight / 2);
+
   levels.forEach((levelNodes, levelIndex) => {
     const x = START_X + (levelIndex * HORIZONTAL_SPACING);
-    const stagger = (levelIndex % 2) * (VERTICAL_SPACING / 2);
     
-    // Center vertically based on number of nodes in level, with stagger to dodge connections
+    // Center vertically based on number of nodes in THIS level relative to the global baseline
     const totalHeight = levelNodes.length * VERTICAL_SPACING;
-    const startY = Math.max(START_Y, (1000 - totalHeight) / 2) + stagger;
+    const startY = baselineCenterY - (totalHeight / 2);
 
     levelNodes.forEach((nodeId, nodeIndex) => {
-      const y = startY + (nodeIndex * VERTICAL_SPACING);
+      // Add a small offset (half vertical spacing) to center the node block itself
+      const y = startY + (nodeIndex * VERTICAL_SPACING) + (VERTICAL_SPACING / 2) - 60; // 60 is approx half node height
       entityManager.moveEntity(nodeId, { x, y });
     });
   });
@@ -206,6 +211,11 @@ export const autoRouteLinks = function(entityManager: EntityManager): void {
         link.sourceEntityId,
         link.targetEntityId
       );
+    }
+    
+    // 5. Force orthogonal routing so A* pathfinding is used
+    if (link.renderType !== 'orthogonal') {
+      entityManager.updateLinkProperties(link.id, { renderType: 'orthogonal' });
     }
   });
 };

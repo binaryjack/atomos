@@ -179,6 +179,7 @@ interface VbsMcpServerInstance {
   _clients: Set<ServerResponse>;
   _cfg: McpServerConfig;
   _watcher?: FSWatcher;
+  _pendingRequests: Map<string, { resolve: (result: any) => void; reject: (err: Error) => void }>;
   broadcast_event(event: string, data: unknown): void;
 }
 
@@ -208,6 +209,11 @@ export function VbsMcpServer(this: VbsMcpServerInstance, cfg?: McpServerConfig):
     enumerable: false,
     writable: true,
     value: undefined,
+  });
+  Object.defineProperty(this, '_pendingRequests', {
+    enumerable: false,
+    writable: true,
+    value: new Map<string, { resolve: (result: any) => void; reject: (err: Error) => void }>(),
   });
 }
 
@@ -251,7 +257,7 @@ VbsMcpServer.prototype.handleRequest = async function(
     }
     const body = await read_body(req);
     const request = JSON.parse(body) as McpRequest;
-    const response = process_request(this, request);
+    const response = await process_request(this, request);
     res.setHeader('Content-Type', 'application/json');
     res.writeHead(200);
     res.end(JSON.stringify(response));
@@ -267,7 +273,7 @@ VbsMcpServer.prototype.handleRequest = async function(
 
 // Request router
 
-const process_request = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+const process_request = async (srv: VbsMcpServerInstance, req: McpRequest): Promise<McpResponse> => {
   switch (req.method) {
     case 'atomos-structura/initialize-workspace': return handle_initialize_workspace(srv, req);
     case 'atomos-structura/create-entity':   return handle_create_entity(srv, req);
@@ -296,8 +302,20 @@ const process_request = (srv: VbsMcpServerInstance, req: McpRequest): McpRespons
     case 'atomos-structura/session/clear-memory': return handle_session_clear_memory(srv, req);
     case 'tools/list': return handle_tools_list(srv, req);
     case 'tools/call': return handle_tools_call(srv, req);
+    case 'atomos-structura/tool-result': return handle_tool_result(srv, req);
     default: return { error: { code: -32601, message: 'Method not found' }, id: req.id };
   }
+};
+
+const handle_tool_result = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
+  const { reqId, result, error } = req.params as { reqId: string; result?: any; error?: string };
+  const pending = srv._pendingRequests.get(reqId);
+  if (pending) {
+    if (error) pending.reject(new Error(error));
+    else pending.resolve(result);
+    srv._pendingRequests.delete(reqId);
+  }
+  return { result: { success: true }, id: req.id };
 };
 
 // Entity handlers
@@ -995,6 +1013,33 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
           }
         },
         {
+          name: "structura_set_zoom",
+          description: "Sets the zoom level of the canvas.",
+          inputSchema: {
+            type: "object",
+            properties: { level: { type: "number" } },
+            required: ["level"]
+          }
+        },
+        {
+          name: "structura_set_pan",
+          description: "Sets the pan coordinates of the canvas.",
+          inputSchema: {
+            type: "object",
+            properties: { x: { type: "number" }, y: { type: "number" } },
+            required: ["x", "y"]
+          }
+        },
+        {
+          name: "structura_set_canvas_appearance",
+          description: "Sets the appearance override (theme) for the active canvas.",
+          inputSchema: {
+            type: "object",
+            properties: { appearance: { type: "string" } },
+            required: ["appearance"]
+          }
+        },
+        {
           name: "structura_create_entity",
           description: "Add a new node/entity to the Erathos canvas.",
           inputSchema: {
@@ -1049,6 +1094,46 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
             },
             required: ["schema_id", "id", "leftEntityId", "rightEntityId", "leftAnchorId", "rightAnchorId"]
           }
+        },
+        {
+          name: "structura_undo",
+          description: "Undo the last action on the canvas.",
+          inputSchema: { type: "object", properties: {} }
+        },
+        {
+          name: "structura_redo",
+          description: "Redo the previously undone action on the canvas.",
+          inputSchema: { type: "object", properties: {} }
+        },
+        {
+          name: "structura_auto_layout",
+          description: "Automatically layout all nodes on the canvas.",
+          inputSchema: { type: "object", properties: {} }
+        },
+        {
+          name: "structura_load_schema_preset",
+          description: "Load a predefined schema preset into the canvas.",
+          inputSchema: { type: "object", properties: {} }
+        },
+        {
+          name: "structura_optimize_connections",
+          description: "Automatically optimize the anchor endpoints for all connections on the canvas.",
+          inputSchema: { type: "object", properties: {} }
+        },
+        {
+          name: "structura_export_svg",
+          description: "Export the current canvas as an SVG string.",
+          inputSchema: { type: "object", properties: {} }
+        },
+        {
+          name: "structura_export_png",
+          description: "Export the current canvas as a PNG Data URI.",
+          inputSchema: { type: "object", properties: {} }
+        },
+        {
+          name: "structura_export_dag",
+          description: "Export the current canvas as a DAG JSON payload.",
+          inputSchema: { type: "object", properties: {} }
         }
       ]
     }
@@ -1078,12 +1163,56 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
         return handle_viewport_fit(srv, { id: req.id, method: 'atomos-structura/viewport/fit-to-screen', params: args });
       case 'structura_center_on_screen':
         return handle_viewport_center(srv, { id: req.id, method: 'atomos-structura/viewport/center', params: args });
+      case 'structura_set_zoom':
+        return handle_viewport_set_zoom(srv, { id: req.id, method: 'atomos-structura/viewport/set-zoom', params: args });
+      case 'structura_set_pan':
+        return handle_viewport_set_pan(srv, { id: req.id, method: 'atomos-structura/viewport/set-pan', params: args });
+      case 'structura_set_canvas_appearance': {
+        const canvas = get_active_canvas(srv._state);
+        if (!canvas) return { error: { code: 404, message: 'No active canvas' }, id: req.id };
+        const canvasId = srv._state.workspace.active_canvas_id;
+        srv._state = {
+          ...srv._state,
+          workspace: {
+            ...srv._state.workspace,
+            canvases: {
+              ...srv._state.workspace.canvases,
+              [canvasId]: { ...canvas, appearance_override: args.appearance }
+            }
+          }
+        };
+        emit_sse(srv._clients, 'canvas-appearance-updated', { canvas_id: canvasId, appearance: args.appearance });
+        return { result: { success: true }, id: req.id };
+      }
       case 'structura_create_entity':
         return handle_create_entity(srv, { id: req.id, method: 'atomos-structura/create-entity', params: args });
       case 'structura_update_entity':
         return handle_update_entity(srv, { id: req.id, method: 'atomos-structura/update-entity', params: args });
       case 'structura_create_link':
         return handle_create_link(srv, { id: req.id, method: 'atomos-structura/create-link', params: args });
+      case 'structura_undo':
+      case 'structura_redo':
+      case 'structura_auto_layout':
+      case 'structura_load_schema_preset':
+      case 'structura_optimize_connections':
+      case 'structura_export_svg':
+      case 'structura_export_png':
+      case 'structura_export_dag': {
+        const reqId = `${name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        emit_sse(srv._clients, 'frontend-action-request', { action: name, reqId, args });
+        return new Promise<McpResponse>((resolve, reject) => {
+          srv._pendingRequests.set(reqId, {
+            resolve: (result) => resolve({ result: { success: true, ...result }, id: req.id }),
+            reject: (err) => resolve({ error: { code: 500, message: err.message }, id: req.id }) // resolve with error to respond to MCP cleanly
+          });
+          setTimeout(() => {
+            if (srv._pendingRequests.has(reqId)) {
+              srv._pendingRequests.delete(reqId);
+              resolve({ error: { code: 504, message: `Tool execution timeout for ${name}` }, id: req.id });
+            }
+          }, 15000); // 15 seconds timeout
+        });
+      }
       default:
         return { error: { code: -32601, message: `Tool ${name} not found` }, id: req.id };
     }

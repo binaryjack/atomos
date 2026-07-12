@@ -1,6 +1,6 @@
 export interface CanvasSnapshot {
-  readonly exportSVG: () => void;
-  readonly exportPNG: () => void;
+  readonly exportSVG: (returnContent?: boolean) => string | void;
+  readonly exportPNG: (returnContent?: boolean) => Promise<string> | void;
 }
 
 export const createCanvasSnapshot = (getSvg: () => SVGSVGElement): CanvasSnapshot => {
@@ -37,9 +37,11 @@ export const createCanvasSnapshot = (getSvg: () => SVGSVGElement): CanvasSnapsho
     return { clone, w: rect.width, h: rect.height };
   };
 
-  const exportSVG = (): void => {
+  const exportSVG = (returnContent?: boolean): string | void => {
     const { clone } = buildClone();
     const svgStr = new XMLSerializer().serializeToString(clone);
+    if (returnContent) return svgStr;
+
     const blob = new Blob([svgStr], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -49,11 +51,30 @@ export const createCanvasSnapshot = (getSvg: () => SVGSVGElement): CanvasSnapsho
     URL.revokeObjectURL(url);
   };
 
-  const exportPNG = (): void => {
+  const exportPNG = (returnContent?: boolean): Promise<string> | void => {
     const { clone, w, h } = buildClone();
     const svgStr = new XMLSerializer().serializeToString(clone);
     const blob = new Blob([svgStr], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
+    
+    if (returnContent) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const cnv = document.createElement('canvas');
+          cnv.width = w;
+          cnv.height = h;
+          const ctx = cnv.getContext('2d');
+          if (!ctx) { URL.revokeObjectURL(url); reject(new Error('Canvas 2D context not available')); return; }
+          ctx.drawImage(img, 0, 0);
+          URL.revokeObjectURL(url);
+          resolve(cnv.toDataURL('image/png'));
+        };
+        img.onerror = () => reject(new Error('Failed to load image for PNG export'));
+        img.src = url;
+      });
+    }
+
     const img = new Image();
     img.onload = () => {
       const cnv = document.createElement('canvas');

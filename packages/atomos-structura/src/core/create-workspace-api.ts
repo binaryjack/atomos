@@ -197,8 +197,8 @@ export const createWorkspaceApi = function(store: ReduxStore): WorkspaceApi {
         ? canvas.viewport.zoom 
         : 1;
         
-      const screenW = opts?.width ?? 800;
-      const screenH = opts?.height ?? 600;
+      const screenW = opts?.width ?? canvas.viewport?.container?.width ?? 800;
+      const screenH = opts?.height ?? canvas.viewport?.container?.height ?? 600;
       let sumX = 0;
       let sumY = 0;
       schema.entities.forEach(e => {
@@ -231,8 +231,8 @@ export const createWorkspaceApi = function(store: ReduxStore): WorkspaceApi {
       if (!canvas) return;
       const schema = canvas.schemas[canvas.active_schema_id];
       if (!schema || schema.entities.length === 0) return;
-      const screenW = opts?.width ?? 800;
-      const screenH = opts?.height ?? 600;
+      const screenW = opts?.width ?? canvas.viewport?.container?.width ?? 800;
+      const screenH = opts?.height ?? canvas.viewport?.container?.height ?? 600;
       const padding = opts?.padding ?? 100;
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
       schema.entities.forEach(e => {

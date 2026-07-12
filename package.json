@@ -15,6 +15,8 @@
     "demo:dev-lnx": "pnpm --filter @atomos-web/structura dev & npx http-server packages -p 4002 -o /atomos-structura/canvas.html",
     "demo:neura": "start cmd /k \"pnpm --filter @atomos-web/structura dev\" && npx http-server packages -p 4002 -o /atomos-structura/demos/test-neura.html",
     "demo:neura-lnx": "pnpm --filter @atomos-web/structura dev & npx http-server packages -p 4002 -o /atomos-structura/demos/test-neura.html",
+    "demo:consumer-simulator": "start cmd /k \"pnpm --filter @atomos-web/structura dev\" && npx http-server packages -p 4002 -o /atomos-structura/demos/test-consumer-simulator.html",
+    "demo:consumer-simulator-lnx": "pnpm --filter @atomos-web/structura dev & npx http-server packages -p 4002 -o /atomos-structura/demos/test-consumer-simulator.html",
     "docs:prime": "pnpm --filter @atomos-web/prime docs",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
