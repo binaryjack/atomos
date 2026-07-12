@@ -198,6 +198,9 @@ importers:
       '@atomos-web/structura':
         specifier: workspace:^
         version: link:../atomos-structura
+      '@atomos-web/structura-core':
+        specifier: workspace:^
+        version: link:../atomos-structura-core
       next:
         specifier: 16.2.3
         version: 16.2.3(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
