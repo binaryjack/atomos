@@ -56,7 +56,7 @@ export const createEntityDragBehavior = function(
     const dy = svg.y - dragStart.svgY;
     if (!didMove && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
       didMove = true;
-      console.log('[DRAG-BEHAVIOR] Started dragging entity:', entityId);
+      // console.log('[DRAG-BEHAVIOR] Started dragging entity:', entityId);
     }
 
     if (queuedFrame !== null) {
@@ -72,7 +72,7 @@ export const createEntityDragBehavior = function(
 
       // Get current dimensions for alignment guides
       const currentDims = dimensions.value;
-      console.log('[DRAG-BEHAVIOR] Current dimensions:', currentDims);
+      // console.log('[DRAG-BEHAVIOR] Current dimensions:', currentDims);
 
       // Calculate and show alignment guides
       const guides = workspace.updateAlignmentGuides(entityId, { x: rawX, y: rawY }, currentDims);

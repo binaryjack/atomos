@@ -59,7 +59,7 @@ export const createCanvasViewport = function(
   const updateState = (newState: ViewportState) => {
     // Clone objects so that the Signal detects a strict equality mismatch
     const stateClone = { zoom: newState.zoom, pan: { x: newState.pan.x, y: newState.pan.y } };
-    console.log('[VIEWPORT-LOG] updateState called with:', JSON.stringify(stateClone));
+    // console.log('[VIEWPORT-LOG] updateState called with:', JSON.stringify(stateClone));
     state.set(stateClone);
     if (onChange) onChange(stateClone);
   };
@@ -70,7 +70,7 @@ export const createCanvasViewport = function(
     const safePanY = (pan && Number.isFinite(pan.y)) ? pan.y : 0;
     const safeZoom = Number.isFinite(zoom) ? zoom : 1;
     const t = `translate(${safePanX},${safePanY}) scale(${safeZoom})`;
-    console.log(`[VIEWPORT-LOG] transform generated: ${t} from state:`, JSON.stringify({ pan, zoom }));
+    // console.log(`[VIEWPORT-LOG] transform generated: ${t} from state:`, JSON.stringify({ pan, zoom }));
     return t;
   };
 
@@ -78,12 +78,12 @@ export const createCanvasViewport = function(
 
   const panBy = (dx: number, dy: number) => {
     const { pan, zoom } = state.value;
-    console.log(`[VIEWPORT-LOG] panBy dx:${dx}, dy:${dy}`);
+    // console.log(`[VIEWPORT-LOG] panBy dx:${dx}, dy:${dy}`);
     updateState({ pan: { x: pan.x + dx, y: pan.y + dy }, zoom });
   };
 
   const panTo = (x: number, y: number) => {
-    console.log(`[VIEWPORT-LOG] panTo requested x:${x}, y:${y}`);
+    // console.log(`[VIEWPORT-LOG] panTo requested x:${x}, y:${y}`);
     const { zoom } = state.value;
     let safeX = Number.isFinite(x) ? x : 0;
     let safeY = Number.isFinite(y) ? y : 0;
@@ -98,7 +98,7 @@ export const createCanvasViewport = function(
   };
 
   const zoomTo = (zoom: number, originX = 0, originY = 0) => {
-    console.log(`[VIEWPORT-LOG] zoomTo requested zoom:${zoom}, originX:${originX}, originY:${originY}`);
+    // console.log(`[VIEWPORT-LOG] zoomTo requested zoom:${zoom}, originX:${originX}, originY:${originY}`);
     const { pan, zoom: oldZoom } = state.value;
     const newZoom = clampZoom(zoom);
 
@@ -124,14 +124,14 @@ export const createCanvasViewport = function(
   };
 
   const reset = () => {
-    console.log('[VIEWPORT-LOG] reset requested');
+    // console.log('[VIEWPORT-LOG] reset requested');
     updateState({ pan: { x: 0, y: 0 }, zoom: 1 });
   };
 
   const setExternalState = (newState: ViewportState) => {
     // Clone objects so that the Signal detects a strict equality mismatch
     const stateClone = { zoom: newState.zoom, pan: { x: newState.pan.x, y: newState.pan.y } };
-    console.log('[VIEWPORT-LOG] setExternalState called with:', JSON.stringify(stateClone));
+    // console.log('[VIEWPORT-LOG] setExternalState called with:', JSON.stringify(stateClone));
     state.set(stateClone);
   };
 
@@ -189,7 +189,7 @@ export const createCanvasViewport = function(
     let newX = panOrigin.x + dx;
     let newY = panOrigin.y + dy;
     
-    console.log(`[VIEWPORT-LOG] onMouseMove (drag) dx:${dx} dy:${dy} | result newX:${newX} newY:${newY}`);
+    // console.log(`[VIEWPORT-LOG] onMouseMove (drag) dx:${dx} dy:${dy} | result newX:${newX} newY:${newY}`);
     
     newX = Math.max(-500000, Math.min(500000, newX));
     newY = Math.max(-500000, Math.min(500000, newY));

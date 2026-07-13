@@ -1,4 +1,4 @@
-﻿import type { EntityShape } from '@atomos-web/structura-core'
+import type { EntityShape } from '@atomos-web/structura-core'
 import type { Signal } from '@atomos-web/prime'
 
 export type EdgePosition = 'top' | 'bottom' | 'left' | 'right';
@@ -18,6 +18,7 @@ export interface EdgeProps {
   readonly onAnchorConnect?: (anchorId: string, linkId: string) => void;
   readonly onAnchorMouseDown?: (event: MouseEvent, anchorId: string) => void;
   readonly onAnchorMouseUp?: (event: MouseEvent, anchorId: string) => void;
+  readonly isReadonly?: boolean;
 }
 
 export interface EdgeResult {

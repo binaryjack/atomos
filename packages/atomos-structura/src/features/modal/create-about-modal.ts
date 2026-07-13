@@ -10,37 +10,31 @@ export const createAboutModal = (container: HTMLElement): (() => void) => {
   const version = APP_VERSION;
 
   const backdrop = document.createElement('div');
-  backdrop.style.cssText = [
-    'position:fixed;inset:0;z-index:9999;',
-    'display:flex;align-items:center;justify-content:center;',
-    'background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);',
-  ].join('');
+  backdrop.classList.add('vbs-modal-backdrop');
+  // Need to force opacity to 1 because transition needs a tick? No, let's just make it visible immediately or let CSS handle it.
+  // Actually the CSS has opacity:0. Let's just set opacity=1 inline, or rely on a setTimeout if we want it to fade in.
+  // For simplicity, let's set opacity to 1 so it's visible.
+  backdrop.style.opacity = '1';
 
   const dialog = document.createElement('div');
-  dialog.style.cssText = [
-    'background:var(--vbs-bg-panel,#111111);',
-    'border:1px solid var(--vbs-border,#27272a);',
-    'border-radius:var(--vbs-radius,8px);',
-    'box-shadow:0 25px 60px rgba(0,0,0,0.65);',
-    'padding:28px 32px;min-width:320px;max-width:440px;',
-    'color:var(--vbs-text-primary,#f4f4f5);',
-    'font-family:system-ui,sans-serif;',
-  ].join('');
+  dialog.classList.add('vbs-modal-dialog');
+  dialog.style.opacity = '1';
+  dialog.style.transform = 'scale(1)';
 
   const title = document.createElement('h2');
-  title.style.cssText = 'margin:0 0 4px;font-size:18px;font-weight:600;letter-spacing:-0.01em;';
+  title.classList.add('vbs-modal-title');
   title.textContent = '@atomos-web/structura';
 
   const versionBadge = document.createElement('p');
-  versionBadge.style.cssText = 'margin:0 0 16px;font-size:12px;font-family:monospace;color:var(--vbs-text-secondary,#a1a1aa);';
+  versionBadge.classList.add('vbs-modal-version');
   versionBadge.textContent = `v${version}`;
 
   const license = document.createElement('p');
-  license.style.cssText = 'margin:0 0 20px;font-size:13px;line-height:1.6;color:var(--vbs-text-secondary,#a1a1aa);';
+  license.classList.add('vbs-modal-license');
   license.textContent = 'Released under the MIT License.';
 
   const links = document.createElement('div');
-  links.style.cssText = 'display:flex;gap:12px;margin-bottom:24px;';
+  links.classList.add('vbs-modal-links');
 
   const makeLink = (label: string, href: string): HTMLAnchorElement => {
     const a = document.createElement('a');
@@ -48,12 +42,7 @@ export const createAboutModal = (container: HTMLElement): (() => void) => {
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
     a.textContent = label;
-    a.style.cssText = [
-      'font-size:13px;color:var(--vbs-primary,#3b82f6);',
-      'text-decoration:none;',
-    ].join('');
-    a.onmouseover = () => { a.style.textDecoration = 'underline'; };
-    a.onmouseout  = () => { a.style.textDecoration = 'none'; };
+    a.classList.add('vbs-modal-link');
     return a;
   };
 
@@ -61,13 +50,7 @@ export const createAboutModal = (container: HTMLElement): (() => void) => {
 
   const closeBtn = document.createElement('button');
   closeBtn.textContent = 'Close';
-  closeBtn.style.cssText = [
-    'width:100%;padding:8px 0;border:none;border-radius:var(--vbs-radius,4px);',
-    'background:var(--vbs-primary,#3b82f6);color:#fff;font-size:14px;font-weight:500;',
-    'cursor:pointer;transition:opacity 0.15s;',
-  ].join('');
-  closeBtn.onmouseover = () => { closeBtn.style.opacity = '0.85'; };
-  closeBtn.onmouseout  = () => { closeBtn.style.opacity = '1'; };
+  closeBtn.classList.add('vbs-modal-close-btn');
 
   const destroy = (): void => { container.removeChild(backdrop); };
 

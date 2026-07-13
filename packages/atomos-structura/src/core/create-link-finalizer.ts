@@ -369,16 +369,12 @@ export const createLinkFinalizer = function(
         const srcRect = { ...srcEntity.position.value, ...srcEntity.dimensions.value };
         const dstRect = { ...dstEntity.position.value, ...dstEntity.dimensions.value };
         
-        const obstacles = Array.from(workspaceState.value.entities.values())
-          .filter(ent => ent.id !== srcEntityId && ent.id !== dstEntityId)
-          .map(ent => ({ ...ent.position.value, ...ent.dimensions.value }));
-
-        permanentLink.updatePath(s, d, srcEdge, dstEdge, currentRenderType, srcRect, dstRect, currentDirection, obstacles);
+        permanentLink.updatePath(s, d, srcEdge, dstEdge, currentRenderType, srcRect, dstRect, currentDirection);
         
         const valid = currentLink?.isValid ?? true;
         permanentLink.setValidity(valid);
         
-        moveLinkLabelFO(fo, getMidpoint(currentRenderType, s, srcEdge, d, dstEdge, srcRect, dstRect, obstacles));
+        moveLinkLabelFO(fo, getMidpoint(currentRenderType, s, srcEdge, d, dstEdge, srcRect, dstRect));
       };
       linkSubscriptions.set(linkId, [
         srcEntity.position.subscribe(recompute),

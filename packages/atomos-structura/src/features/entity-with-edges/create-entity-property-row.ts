@@ -30,18 +30,12 @@ const buildValueInput = function(
   isReadonly?: boolean
 ): HTMLElement {
   const wrap = document.createElement('span');
-  wrap.style.cssText = 'flex:1;min-width:0;display:flex;align-items:center;overflow:hidden;';
+  wrap.classList.add('vbs-property-row-wrap');
 
   let currentInput: HTMLElement | null = null;
   let valueSub: (() => void) | null = null;
 
-  const sharedStyle = [
-    'background:var(--vbs-bg-input, #09090b)', 'color:var(--vbs-text-primary, #f4f4f5)',
-    'border:1px solid var(--vbs-border, #27272a)', 'border-radius:var(--vbs-radius, 2px)',
-    'font-size:var(--vbs-entity-props-font-size, 12px)', 'padding:0 6px',
-    'height:var(--vbs-control-height, 28px)', 'width:100%', 'box-sizing:border-box', 'min-width:0', 'outline:none',
-    'transition:border-color 0.15s ease'
-  ].join(';');
+
 
   const rebuild = (): void => {
     if (currentInput) {
@@ -56,56 +50,30 @@ const buildValueInput = function(
     if (ct === 'checkbox' || dt === 'boolean') {
       const cb = document.createElement('input');
       cb.type = 'checkbox';
-      cb.className = 'no-drag';
+      cb.classList.add('no-drag', 'vbs-property-checkbox');
       cb.disabled = !!isReadonly;
       cb.checked = Boolean(value.value);
-      cb.style.cssText = 'cursor:pointer;flex-shrink:0;width:calc(var(--vbs-entity-props-font-size, 12px) + 2px);height:calc(var(--vbs-entity-props-font-size, 12px) + 2px);align-self:center;appearance:none;background:var(--vbs-bg-input, #09090b);border:1px solid var(--vbs-border, #27272a);border-radius:var(--vbs-radius, 2px);transition:background-color 0.15s, border-color 0.15s;';
-      cb.addEventListener('change', () => {
-        onValueChange(cb.checked);
-        if(cb.checked) {
-          cb.style.background = 'var(--vbs-primary, #3b82f6)';
-          cb.style.borderColor = 'var(--vbs-primary, #3b82f6)';
-        } else {
-          cb.style.background = 'var(--vbs-bg-input, #09090b)';
-          cb.style.borderColor = 'var(--vbs-border, #27272a)';
-        }
-      });
-      // Initial style application
-      if(cb.checked) {
-        cb.style.background = 'var(--vbs-primary, #3b82f6)';
-        cb.style.borderColor = 'var(--vbs-primary, #3b82f6)';
-      }
-      valueSub = value.subscribe(() => { 
-        cb.checked = Boolean(value.value); 
-        if(cb.checked) {
-          cb.style.background = 'var(--vbs-primary, #3b82f6)';
-          cb.style.borderColor = 'var(--vbs-primary, #3b82f6)';
-        } else {
-          cb.style.background = 'var(--vbs-bg-input, #09090b)';
-          cb.style.borderColor = 'var(--vbs-border, #27272a)';
-        }
-      });
+      cb.addEventListener('change', () => onValueChange(cb.checked));
+      valueSub = value.subscribe(() => { cb.checked = Boolean(value.value); });
       currentInput = cb;
     } else if (ct === 'textarea') {
       const ta = document.createElement('textarea');
-      ta.className = 'no-drag';
+      ta.classList.add('no-drag', 'vbs-property-input-base', 'vbs-property-textarea');
       ta.disabled = !!isReadonly;
       ta.value = String(value.value ?? '');
       ta.rows = 1;
-      ta.style.cssText = sharedStyle + ';resize:none;height:auto;overflow:hidden;padding:2px 4px;';
       ta.addEventListener('change', () => onValueChange(ta.value));
       valueSub = value.subscribe(() => { ta.value = String(value.value ?? ''); });
       currentInput = ta;
     } else {
       const inp = document.createElement('input');
-      inp.className = 'no-drag';
+      inp.classList.add('no-drag', 'vbs-property-input-base', 'vbs-property-input');
       inp.disabled = !!isReadonly;
       if (dt === 'number' || dt === 'integer' || dt === 'float') inp.type = 'number';
       else if (dt === 'date') inp.type = 'date';
       else inp.type = 'text';
       inp.value = String(value.value ?? '');
       inp.placeholder = dt;
-      inp.style.cssText = sharedStyle;
       inp.addEventListener('change', () => onValueChange(inp.value));
       valueSub = value.subscribe(() => { inp.value = String(value.value ?? ''); });
       currentInput = inp;
@@ -133,13 +101,7 @@ export const createEntityPropertyRow = function(
   const cleanups: Array<() => void> = [];
 
   const row = document.createElement('div');
-  row.style.cssText = [
-    'display:flex', 'align-items:center', 'gap:4px',
-    'padding:2px 8px',
-    'box-sizing:border-box',
-    'min-height:28px',
-    'border-bottom:1px solid var(--vbs-border, #27272a)',
-  ].join(';');
+  row.classList.add('vbs-property-row');
 
   if (props.isReadonly) {
     row.style.padding = '6px 8px';
@@ -147,12 +109,12 @@ export const createEntityPropertyRow = function(
     
     // Name
     const nameSpan = document.createElement('span');
-    nameSpan.style.cssText = 'flex:1;font-size:var(--vbs-entity-props-font-size, 12px);font-weight:600;color:var(--vbs-text-primary, #f4f4f5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--vbs-entity-props-font-family, system-ui, sans-serif);';
+    nameSpan.classList.add('vbs-property-name');
     nameSpan.textContent = props.label.value;
     
     // Type Pill container
     const typePill = document.createElement('span');
-    typePill.style.cssText = 'background:var(--vbs-bg-muted, #27272a);color:var(--vbs-text-secondary, #a1a1aa);padding:2px 6px;border-radius:4px;font-size:10px;text-transform:uppercase;font-weight:bold;letter-spacing:0.5px;display:flex;gap:4px;align-items:center;';
+    typePill.classList.add('vbs-property-type-pill');
     
     const dtSpan = document.createElement('span');
     dtSpan.textContent = props.dataType.value || 'string';
@@ -161,7 +123,7 @@ export const createEntityPropertyRow = function(
     if (props.required) {
       const reqSpan = document.createElement('span');
       reqSpan.textContent = '*';
-      reqSpan.style.cssText = 'color:var(--vbs-danger, #ef4444);font-size:12px;line-height:0;margin-top:4px;';
+      reqSpan.classList.add('vbs-property-req-star');
       typePill.appendChild(reqSpan);
     }
     
@@ -219,20 +181,8 @@ export const createEntityPropertyRow = function(
     className: 'text-xs',
     onChange: (v) => props.onComponentTypeChange(v as ComponentType),
   });
-  ctDropdown.select.style.cssText = [
-    '--dropdown-bg-color:var(--vbs-bg-input, #09090b)',
-    '--dropdown-text-color:var(--vbs-primary, #3b82f6)',
-    '--dropdown-border-color:var(--vbs-border, #27272a)',
-    '--dropdown-focus-border-color:var(--vbs-primary, #3b82f6)',
-    '--dropdown-border-radius:var(--vbs-radius, 2px)',
-    '--dropdown-font-size:var(--vbs-entity-props-font-size, 12px)',
-    '--dropdown-padding:0 20px 0 6px',
-    'width:60px',
-    'height:var(--vbs-control-height, 28px)',
-    'box-sizing:border-box',
-    'outline:none'
-  ].join(';');
-  ctDropdown.element.style.cssText = 'flex-shrink:0;height:var(--vbs-control-height, 28px);display:flex;align-items:center;';
+  ctDropdown.select.classList.add('vbs-property-dropdown');
+  ctDropdown.element.classList.add('vbs-property-dropdown');
   cleanups.push(ctDropdown.cleanup.destroy);
 
   // DataType dropdown
@@ -242,27 +192,15 @@ export const createEntityPropertyRow = function(
     className: 'text-xs',
     onChange: (v) => props.onDataTypeChange(v as DataType),
   });
-  dropdown.select.style.cssText = [
-    '--dropdown-bg-color:var(--vbs-bg-input, #09090b)',
-    '--dropdown-text-color:var(--vbs-text-secondary, #a1a1aa)',
-    '--dropdown-border-color:var(--vbs-border, #27272a)',
-    '--dropdown-focus-border-color:var(--vbs-primary, #3b82f6)',
-    '--dropdown-border-radius:var(--vbs-radius, 2px)',
-    '--dropdown-font-size:var(--vbs-entity-props-font-size, 12px)',
-    '--dropdown-padding:0 20px 0 6px',
-    'width:80px',
-    'height:var(--vbs-control-height, 28px)',
-    'box-sizing:border-box',
-    'outline:none'
-  ].join(';');
-  dropdown.element.style.cssText = 'flex-shrink:0;height:var(--vbs-control-height, 28px);display:flex;align-items:center;';
+  dropdown.select.classList.add('vbs-property-dropdown');
+  dropdown.element.classList.add('vbs-property-dropdown');
   cleanups.push(dropdown.cleanup.destroy);
 
   // Settings button
   const settingsIcon = createIcon({ name: 'settings', size: 'calc(var(--vbs-entity-props-font-size, 12px) + 2px)', color: '#64748b' });
   const settingsBtn = document.createElement('button');
   settingsBtn.type = 'button';
-  settingsBtn.style.cssText = 'flex-shrink:0;align-self:center;background:none;border:none;cursor:pointer;padding:1px;display:flex;align-items:center;border-radius:2px;';
+  settingsBtn.classList.add('vbs-property-action-btn');
   settingsBtn.title = 'Property settings';
   settingsBtn.appendChild(settingsIcon.element);
   settingsBtn.addEventListener('click', props.onSettingsClick);
@@ -275,7 +213,7 @@ export const createEntityPropertyRow = function(
   const deleteIcon = createIcon({ name: 'delete', size: 'calc(var(--vbs-entity-props-font-size, 12px) + 2px)', color: 'var(--vbs-danger, #ef4444)' });
   const deleteBtn = document.createElement('button');
   deleteBtn.type = 'button';
-  deleteBtn.style.cssText = 'flex-shrink:0;align-self:center;background:none;border:none;cursor:pointer;padding:1px;display:flex;align-items:center;border-radius:2px;';
+  deleteBtn.classList.add('vbs-property-action-btn');
   deleteBtn.title = 'Remove property';
   deleteBtn.appendChild(deleteIcon.element);
   deleteBtn.addEventListener('click', props.onDeleteClick);

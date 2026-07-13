@@ -17,26 +17,15 @@ export const createEntityFooter = function(props: EntityFooterProps): EntityFoot
   const contrast = computeContrastColor(bgColor);
 
   const footer = document.createElement('div');
-  footer.style.cssText = [
-    'display:flex', 'align-items:center', 'gap:4px',
-    'padding:4px 8px',
-    `background:${bgColor}`,
-    'border-top:1px solid var(--vbs-border, #27272a)',
-    'flex-shrink:0',
-    'min-height:calc(var(--vbs-entity-props-font-size, 11px) + 20px)',
-  ].join(';');
+  footer.classList.add('vbs-entity-footer');
+  footer.style.background = bgColor;
 
   const plusIcon = createIcon({ name: 'plus', size: 'calc(var(--vbs-entity-props-font-size, 11px) + 2px)', color: contrast.mutedColor });
 
   const addBtn = document.createElement('button');
   addBtn.type = 'button';
-  addBtn.style.cssText = [
-    'display:flex', 'align-items:center', 'gap:4px',
-    'background:none', 'border:none', 'cursor:pointer',
-    `color:${contrast.textColor}`, 'font-size:var(--vbs-entity-props-font-size, 11px)', 'padding:2px 4px',
-    'font-family:var(--vbs-entity-props-font-family, system-ui, sans-serif)',
-    'border-radius: var(--vbs-radius, 2px)',
-  ].join(';');
+  addBtn.classList.add('vbs-entity-footer-btn');
+  addBtn.style.color = contrast.textColor;
   addBtn.title = 'Add property';
 
   const label = document.createElement('span');

@@ -1,4 +1,4 @@
-﻿import { computeContrastColor, createButton, createFormularDropdown, createFormularInput, createFormularTextarea, createSignal } from '@atomos-web/prime'
+import { computeContrastColor, createButton, createFormularDropdown, createFormularInput, createFormularTextarea, createSignal } from '@atomos-web/prime'
 import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
 import { f } from '@binaryjack/formular.dev'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
@@ -121,29 +121,19 @@ export const createEntitySettingsModal = function(instanceId: string, entityId: 
 
     // ── Live contrast preview ──────────────────────────────────────────────
     const contrastBar = document.createElement('div');
-    contrastBar.style.cssText = [
-      'display:flex', 'align-items:center', 'gap:8px',
-      'padding:8px 10px', 'border-radius: var(--vbs-radius, 2px)',
-      'border:1px solid var(--vbs-bg-panel, #111111)',
-      'transition:background 0.15s',
-    ].join(';');
+    contrastBar.classList.add('vbs-contrast-bar');
 
     const contrastSwatch = document.createElement('div');
-    contrastSwatch.style.cssText = [
-      'width:32px', 'height:32px', 'border-radius: var(--vbs-radius, 2px)',
-      'border:1px solid var(--vbs-border, #27272a)', 'flex-shrink:0',
-      'display:flex', 'align-items:center', 'justify-content:center',
-      'font-size:11px', 'font-weight:700', 'font-family:monospace',
-    ].join(';');
+    contrastSwatch.classList.add('vbs-contrast-swatch');
 
     const contrastInfo = document.createElement('div');
-    contrastInfo.style.cssText = 'display:flex;flex-direction:column;gap:2px;flex:1;';
+    contrastInfo.classList.add('vbs-contrast-info');
 
     const contrastRatioEl = document.createElement('span');
-    contrastRatioEl.style.cssText = 'font-size:12px;font-weight:600;';
+    contrastRatioEl.classList.add('vbs-contrast-ratio');
 
     const contrastGradeEl = document.createElement('span');
-    contrastGradeEl.style.cssText = 'font-size:10px;';
+    contrastGradeEl.classList.add('vbs-contrast-grade');
 
     contrastInfo.appendChild(contrastRatioEl);
     contrastInfo.appendChild(contrastGradeEl);
@@ -176,26 +166,25 @@ export const createEntitySettingsModal = function(instanceId: string, entityId: 
     const localProperties: any[] = structuredClone(liveEntity.properties as any) || [];
 
     const propertiesContainer = document.createElement('div');
-    propertiesContainer.style.cssText = 'display:flex; flex-direction:column; gap:4px;';
+    propertiesContainer.classList.add('vbs-modal-properties-container');
     
     const propHeader = document.createElement('div');
-    propHeader.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-top: 10px; border-top: 1px solid var(--vbs-border, #27272a); padding-top: 10px;';
+    propHeader.classList.add('vbs-modal-properties-header');
     
     const propTitle = document.createElement('h3');
     propTitle.textContent = 'Properties';
-    propTitle.style.cssText = 'margin:0; font-size:14px; color:var(--vbs-text-primary, #f4f4f5); font-weight:600;';
+    propTitle.classList.add('vbs-modal-properties-title');
     
     const addPropBtn = document.createElement('button');
     addPropBtn.type = 'button';
     addPropBtn.textContent = '+ Add Property';
-    addPropBtn.className = 'vbs-btn vbs-btn-primary';
-    addPropBtn.style.cssText = 'padding: 4px 8px; font-size: 12px;';
+    addPropBtn.classList.add('vbs-btn', 'vbs-btn-primary', 'vbs-modal-add-prop-btn');
     
     propHeader.appendChild(propTitle);
     propHeader.appendChild(addPropBtn);
 
     const scrollBody = document.createElement('div');
-    scrollBody.style.cssText = 'max-height: 200px; overflow-y: auto; overflow-x: hidden; border: 1px solid var(--vbs-border, #27272a); border-radius: var(--vbs-radius, 2px); padding: 4px; display: flex; flex-direction: column; background: var(--vbs-bg-input, #09090b);';
+    scrollBody.classList.add('vbs-modal-properties-scroll');
     
     propertiesContainer.appendChild(propHeader);
     propertiesContainer.appendChild(scrollBody);

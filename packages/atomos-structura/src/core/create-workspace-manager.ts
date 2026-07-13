@@ -24,24 +24,24 @@ export const createWorkspaceManager = function(
   const registry         = createEntityRegistry(contentRoot);
   const alignmentGuides  = createAlignmentGuides();
   
-  console.log('[WORKSPACE-MANAGER] Alignment guides created:', alignmentGuides);
+  // console.log('[WORKSPACE-MANAGER] Alignment guides created:', alignmentGuides);
   
   // Add alignment guides to canvas (behind entities)
   if (contentRoot.firstChild) {
     contentRoot.insertBefore(alignmentGuides.element, contentRoot.firstChild);
-    console.log('[WORKSPACE-MANAGER] Alignment guides inserted before first child');
+    // console.log('[WORKSPACE-MANAGER] Alignment guides inserted before first child');
   } else {
     contentRoot.appendChild(alignmentGuides.element);
-    console.log('[WORKSPACE-MANAGER] Alignment guides appended to content root');
+    // console.log('[WORKSPACE-MANAGER] Alignment guides appended to content root');
   }
   
   const linkFinalizer    = createLinkFinalizer(linkManager, registry.workspaceState, contentRoot, instanceId, (link, isReconnect) => {
     // Forward to workspace manager's onLinkCreated callback if set
-    console.log('[WORKSPACE-MANAGER] Link created via finalizer:', link, { isReconnect });
+    // console.log('[WORKSPACE-MANAGER] Link created via finalizer:', link, { isReconnect });
     (manager as any).onLinkCreated?.(link, isReconnect);
   }, (linkId) => {
     // Forward to workspace manager's onLinkDeleted callback if set
-    console.log('[WORKSPACE-MANAGER] Link deleted via finalizer:', linkId);
+    // console.log('[WORKSPACE-MANAGER] Link deleted via finalizer:', linkId);
     (manager as any).onLinkDeleted?.(linkId);
   });
   const linkDrawCtrl     = createLinkDrawController(linkManager, behaviorManager, contentRoot, linkFinalizer);
@@ -136,7 +136,7 @@ export const createWorkspaceManager = function(
 
     // Alignment guides support
     updateAlignmentGuides: (draggingEntityId: string, position: { x: number; y: number }, dimensions: { width: number; height: number }) => {
-      console.log('[WORKSPACE] updateAlignmentGuides called for:', draggingEntityId, position, dimensions);
+      // console.log('[WORKSPACE] updateAlignmentGuides called for:', draggingEntityId, position, dimensions);
       const otherEntities = Array.from(registry.workspaceState.value.entities.values())
         .filter(e => e.id !== draggingEntityId)
         .map(e => ({

@@ -61,19 +61,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   // body element (required for HTML inside foreignObject)
   const body = document.createElement('div');
   body.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
-  body.style.cssText = [
-    'display:flex', 'flex-direction:column',
-    'width:100%', 'height:100%',
-    'overflow:hidden',
-    'background:transparent',
-    'border:1px solid transparent',
-    'border-radius:var(--vbs-radius, 6px)',
-    'box-sizing:border-box',
-    'position:relative',
-    'font-family:var(--vbs-entity-name-font-family, system-ui, sans-serif)',
-    'color:var(--vbs-text-primary, #f4f4f5)',
-    'transition:box-shadow 0.3s ease, border-color 0.3s ease'
-  ].join(';');
+  body.classList.add('vbs-entity-content-body');
 
   // Inject animation keyframes
   const styleTag = document.createElement('style');
@@ -130,12 +118,12 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
 
   // Execution Progress Bar
   const progressBar = document.createElement('div');
-  progressBar.style.cssText = 'position:absolute;bottom:0;left:0;height:2px;background:#3b82f6;width:0%;transition:width 0.3s linear;opacity:0;';
+  progressBar.classList.add('vbs-exec-progress');
   header.element.appendChild(progressBar);
 
   // Floating Status Badge
   const statusBadge = document.createElement('div');
-  statusBadge.style.cssText = 'position:absolute;top:-8px;right:-8px;width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12px;color:white;opacity:0;transition:opacity 0.2s, transform 0.2s;transform:scale(0.8);box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:10;';
+  statusBadge.classList.add('vbs-status-badge');
   
   // We append statusBadge to `body` so it can break out of the header bounds, 
   // but wait `overflow:hidden` is on `body`. We should put it on `fo`? No, foreignObject doesn't support overflow visible easily in all browsers. 
@@ -186,7 +174,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
 
   // ─── scrollable body ──────────────────────────────────────────────────────
   const scrollBody = document.createElement('div');
-  scrollBody.style.cssText = 'flex:1;overflow-y:auto;overflow-x:auto;background:var(--vbs-bg-input, #09090b);';
+  scrollBody.classList.add('vbs-scroll-body');
   body.appendChild(scrollBody);
 
 // Track existing rows by property key

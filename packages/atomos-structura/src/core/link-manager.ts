@@ -24,7 +24,7 @@ export interface LinkResult {
   readonly element: SVGPathElement;
   readonly sourceAnchorId: string;
   readonly targetAnchorId?: string;
-  readonly updatePath: (sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }, direction?: 'default' | 'left' | 'right', obstacles?: { x: number; y: number; width: number; height: number }[]) => void;
+  readonly updatePath: (sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }, direction?: 'default' | 'left' | 'right') => void;
   readonly setTemporary: (temporary: boolean) => void;
   readonly setValidity: (isValid: boolean) => void;
   readonly setExecutionState?: (state: any) => void;
@@ -36,7 +36,7 @@ export interface LinkResult {
 export interface LinkManager {
   readonly links: Signal<Map<string, LinkResult>>;
   readonly createLink: (props: LinkProps) => LinkResult;
-  readonly updateLinkPath: (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }, direction?: 'default' | 'left' | 'right', obstacles?: { x: number; y: number; width: number; height: number }[]) => void;
+  readonly updateLinkPath: (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }, direction?: 'default' | 'left' | 'right') => void;
   readonly removeLink: (linkId: string) => void;
   readonly getLink: (linkId: string) => LinkResult | undefined;
   readonly cleanup: {
@@ -172,8 +172,7 @@ export const createLinkManager = function(): LinkManager {
       renderType?: RenderType,
       srcRect?: { x: number; y: number; width: number; height: number },
       dstRect?: { x: number; y: number; width: number; height: number },
-      direction?: 'default' | 'left' | 'right',
-      obstacles?: { x: number; y: number; width: number; height: number }[]
+      direction?: 'default' | 'left' | 'right'
     ) => {
       const src = srcEdge ?? props.sourceEdge ?? 'right';
       const dst = dstEdge ?? props.targetEdge;
@@ -186,7 +185,7 @@ export const createLinkManager = function(): LinkManager {
       if (type === 'linear') {
         d = linearPath(sourcePos, targetPos);
       } else if (type === 'orthogonal') {
-        d = orthogonalPath(sourcePos, src, targetPos, dst, srcRect, dstRect, obstacles);
+        d = orthogonalPath(sourcePos, src, targetPos, dst, srcRect, dstRect);
       } else {
         d = bezierPath(sourcePos, src, targetPos, dst);
       }
@@ -272,9 +271,9 @@ export const createLinkManager = function(): LinkManager {
   };
 
   // Update existing link path
-  const updateLinkPath = (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }, direction?: 'default' | 'left' | 'right', obstacles?: { x: number; y: number; width: number; height: number }[]) => {
+  const updateLinkPath = (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }, direction?: 'default' | 'left' | 'right') => {
     const link = links.value.get(linkId);
-    if (link) link.updatePath(sourcePos, targetPos, srcEdge, dstEdge, renderType, srcRect, dstRect, direction, obstacles);
+    if (link) link.updatePath(sourcePos, targetPos, srcEdge, dstEdge, renderType, srcRect, dstRect, direction);
   };
 
   // Remove link
