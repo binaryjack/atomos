@@ -111,6 +111,17 @@
     background: var(--vbs-bg-input, #09090b);
   }
 
+  .vbs-entity.vbs-dragging .vbs-scroll-body,
+  .vbs-entity.vbs-dragging .vbs-entity-footer {
+    display: none !important;
+  }
+
+  .vbs-entity.vbs-dragging .vbs-entity-content-body {
+    background: rgba(15, 23, 42, 0.75) !important;
+    border: 1.5px dashed var(--vbs-primary, #3b82f6) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+  }
+
   .vbs-entity-header {
     display: flex;
     align-items: center;

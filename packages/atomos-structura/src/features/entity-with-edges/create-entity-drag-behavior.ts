@@ -68,7 +68,10 @@ export const createEntityDragBehavior = function(
     const dy = svg.y - dragStart.svgY;
     if (!didMove && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
       didMove = true;
-      // console.log('[DRAG-BEHAVIOR] Started dragging entity:', entityId);
+      const entityRoot = bodyElement.closest('.vbs-entity');
+      if (entityRoot) {
+        entityRoot.classList.add('vbs-dragging');
+      }
     }
 
     if (queuedFrame !== null) {
@@ -121,6 +124,11 @@ export const createEntityDragBehavior = function(
     
     // Clear alignment guides
     workspace.clearAlignmentGuides();
+    
+    const entityRoot = bodyElement.closest('.vbs-entity');
+    if (entityRoot) {
+      entityRoot.classList.remove('vbs-dragging');
+    }
     
     if (!didMove) {
       // Pure click — select this entity
