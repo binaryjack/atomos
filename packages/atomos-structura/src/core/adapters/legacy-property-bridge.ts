@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Legacy Property Bridge
  * Connects existing property UI components to clean architecture
  */
@@ -66,23 +66,19 @@ export const createLegacyEntityStoreBridge = function(entityId: string, instance
           edges: []
         };
         signal.set(legacyUpdated);
-        console.log(`[LegacyBridge] Entity ${entityId} signal updated from clean architecture`);
       }
     }
   });
   
   const updateLabel = function(label: string): void {
-    console.log(`[LegacyBridge] Updating entity ${entityId} name to "${label}" via clean architecture`);
     adapter.updateEntityName(entityId, label);
   };
   
   const updateCollapse = function(collapsed: boolean): void {
-    console.log(`[LegacyBridge] Toggling entity ${entityId} collapse state to ${collapsed} via clean architecture`);
     adapter.updateEntityCollapse(entityId, collapsed);
   };
 
   const addProperty = function(prop: Property): void {
-    console.log(`[LegacyBridge] Adding property ${prop.key} to entity ${entityId} via clean architecture`);
     const currentEntity = adapter.getEntity(entityId);
     if (currentEntity) {
       const newProperties = [...currentEntity.properties, prop];
@@ -91,7 +87,6 @@ export const createLegacyEntityStoreBridge = function(entityId: string, instance
   };
   
   const removeProperty = function(propKey: string): void {
-    console.log(`[LegacyBridge] Removing property ${propKey} from entity ${entityId} via clean architecture`);
     const currentEntity = adapter.getEntity(entityId);
     if (currentEntity) {
       const newProperties = currentEntity.properties.filter(p => p.key !== propKey);
@@ -128,8 +123,6 @@ export const createLegacyPropertyRepositoryBridge = function(config: {
   };
   
   const update = async function(key: string, data: Partial<Property>): Promise<Property> {
-    console.log(`[LegacyPropertyBridge] Updating property ${key} in entity ${config.entityId}`);
-    
     const entity = adapter.getEntity(config.entityId);
     if (!entity) throw new Error(`Entity ${config.entityId} not found`);
     
@@ -152,8 +145,6 @@ export const createLegacyPropertyRepositoryBridge = function(config: {
   };
   
   const create = async function(data: Partial<Property>): Promise<Property> {
-    console.log(`[LegacyPropertyBridge] Creating property in entity ${config.entityId}`);
-    
     if (!data.key) throw new Error('Property key is required');
     
     const validated = createProperty({
@@ -175,8 +166,6 @@ export const createLegacyPropertyRepositoryBridge = function(config: {
   };
   
   const deleteProperty = async function(key: string): Promise<void> {
-    console.log(`[LegacyPropertyBridge] Deleting property ${key} from entity ${config.entityId}`);
-    
     const entity = adapter.getEntity(config.entityId);
     if (!entity) throw new Error(`Entity ${config.entityId} not found`);
     
@@ -192,34 +181,27 @@ export const createLegacyPropertyRepositoryBridge = function(config: {
  * Adapts clean architecture to legacy storage provider interface
  */
 export const createLegacyStorageProviderBridge = function<T>(instanceId: string): IStorageProvider<T> {
-  console.log('[LegacyBridge] Created storage provider bridge - delegates to clean architecture persistence');
-  
   return {
     get: async function(key: string): Promise<T | null> {
-      console.log(`[LegacyStorageBridge] get(${key}) - delegating to clean architecture`);
       // Clean architecture handles loading automatically
       return null;
     },
     
     set: async function(key: string, value: T): Promise<void> {
-      console.log(`[LegacyStorageBridge] set(${key}) - clean architecture handles persistence automatically`);
       // Clean architecture handles persistence automatically via repository
     },
     
     delete: async function(key: string): Promise<void> {
-      console.log(`[LegacyStorageBridge] delete(${key}) - delegating to clean architecture`);
       // Clean architecture handles deletion
     },
     
     list: async function(): Promise<readonly string[]> {
-      console.log('[LegacyStorageBridge] list() - delegating to clean architecture');
       const adapter = getCanvasAdapter(instanceId);
       const entities = adapter.getAllEntities();
       return entities.map(e => e.id);
     },
     
     clear: async function(): Promise<void> {
-      console.log('[LegacyStorageBridge] clear() - clean architecture would handle clearing all entities');
       // Clean architecture could handle clearing all entities
     }
   };

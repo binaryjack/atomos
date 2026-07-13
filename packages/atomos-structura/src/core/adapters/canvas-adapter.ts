@@ -87,38 +87,27 @@ export const createCanvasAdapter = function(instanceId: string): CanvasAdapter {
   
   const getEntity = function(entityId: string): DomainEntity | undefined {
     const entity = entityManager.getEntity(entityId);
-    console.log('[CANVAS-ADAPTER] 🔍 Get entity:', entityId, '→', entity ? 'FOUND' : 'NOT FOUND');
-    if (entity) {
-      console.log('[CANVAS-ADAPTER] 📄 Entity details:', { id: entity.id, position: entity.position, dimensions: entity.dimensions });
-    }
     return entity;
   };
   const getAllEntities = function(): readonly DomainEntity[] {
     const entities = entityManager.getAllEntities();
-    console.log('[CANVAS-ADAPTER] 📋 Get all entities:', entities.length, 'total');
-    entities.forEach(e => console.log('[CANVAS-ADAPTER] 📄 Entity in list:', e.id));
     return entities;
   };
   
   // Link Operations - Delegate to Domain Layer
   const createLink = function(id: string, sourceAnchorId: string, targetAnchorId: string, leftEntityId: string, rightEntityId: string): void {
-    console.log('[CANVAS-ADAPTER] 🔗 Creating link via clean architecture:', { id, sourceAnchorId, targetAnchorId, leftEntityId, rightEntityId });
     entityManager.createLink(id, sourceAnchorId, targetAnchorId, leftEntityId, rightEntityId);
-    console.log('[CANVAS-ADAPTER] ✅ Link creation delegated to entity manager');
   };
   
   const updateLinkProperties = function(linkId: string, properties: { sourceCardinality?: string | undefined; targetCardinality?: string | undefined; sourceProperty?: string | undefined; targetProperty?: string | undefined; renderType?: string | undefined; direction?: 'default' | 'left' | 'right' | undefined; }): void {
-    console.log('[CANVAS-ADAPTER] 🔄 Updating link properties:', { linkId, properties });
     entityManager.updateLinkProperties(linkId, properties);
   };
 
   const updateLinkEndpoints = function(linkId: string, sourceAnchorId: string, targetAnchorId: string, sourceEntityId: string, targetEntityId: string): void {
-    console.log('[CANVAS-ADAPTER] 🔄 Updating link endpoints for reconnect:', { linkId, sourceAnchorId, targetAnchorId, sourceEntityId, targetEntityId });
     entityManager.updateLinkEndpoints(linkId, sourceAnchorId, targetAnchorId, sourceEntityId, targetEntityId);
   };
 
   const removeLink = function(linkId: string): void {
-    console.log('[CANVAS-ADAPTER] 🗑️ Removing link via clean architecture:', linkId);
     entityManager.removeLink(linkId);
   };
   
@@ -128,7 +117,6 @@ export const createCanvasAdapter = function(instanceId: string): CanvasAdapter {
 
   const getAllLinks = function(): readonly any[] {
     const links = entityManager.getAllLinks();
-    console.log('[CANVAS-ADAPTER] 📋 Getting all links via clean architecture:', links.length, 'found');
     return links;
   };
   
