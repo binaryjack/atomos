@@ -1,4 +1,4 @@
-import { dagExchangeSchema, universalSchema, entitySchema, linkSchema, type Entity, type LinkProps, type WorkspaceConfig, type WorkspaceMenuConfig } from '@atomos-web/structura-core';
+import { dagExchangeSchema, universalSchema, entitySchema, linkSchema, appSettingsSchema, type Entity, type LinkProps, type WorkspaceConfig, type WorkspaceMenuConfig } from '@atomos-web/structura-core';
 import { f } from '@binaryjack/formular.dev';
 import chokidar, { type FSWatcher } from 'chokidar';
 import dagre from 'dagre';
@@ -989,7 +989,7 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
           inputSchema: {
             type: "object",
             properties: {
-              formatType: { type: "string", enum: ["DAGExchange", "SchemaModel"], description: "The format to get the schema for" },
+              formatType: { type: "string", enum: ["DAGExchange", "SchemaModel", "AppSettings"], description: "The format to get the schema for" },
               outputFormat: { type: "string", enum: ["Default", "TSinMD"], description: "The requested output format. 'TSinMD' for Typescript in Markdown, 'Default' for JSON schema." }
             },
             required: ["formatType"]
@@ -1001,7 +1001,7 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
           inputSchema: {
             type: "object",
             properties: {
-              formatType: { type: "string", enum: ["DAGExchange", "SchemaModel", "WorkspaceState"], description: "The format to validate against" },
+              formatType: { type: "string", enum: ["DAGExchange", "SchemaModel", "WorkspaceState", "AppSettings"], description: "The format to validate against" },
               payload: { type: "object", description: "The JSON payload to validate" }
             },
             required: ["formatType", "payload"]
@@ -1013,7 +1013,7 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
           inputSchema: {
             type: "object",
             properties: {
-              formatType: { type: "string", enum: ["DAGExchange", "WorkspaceState"], description: "The format of the payload" },
+              formatType: { type: "string", enum: ["DAGExchange"], description: "The format of the payload" },
               payload: { type: "object", description: "The JSON payload to inject" }
             },
             required: ["formatType", "payload"]
@@ -1049,6 +1049,17 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
             },
             required: ["enabled"]
           }
+        },
+        {
+          name: "structura_set_settings",
+          description: "Inject application settings into Structura to configure appearance and behavior.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              settings: { type: "object", description: "The AppSettings payload to inject" }
+            },
+            required: ["settings"]
+          }
         }
       ]
     }
@@ -1073,6 +1084,7 @@ const formatValidationErrors = (errors: any[]): string => {
 const getTSFormat = (type: string): string => {
   if (type === 'DAGExchange') return `\n\`\`\`ts\ninterface DAGExchange {\n  version: string;\n  nodes: Entity[];\n  edges: LinkProps[];\n  applyAfterLoad?: string[];\n}\n\ninterface Entity {\n  id: string;\n  name: string;\n  position: { x: number; y: number };\n  dimensions: { width: number; height: number };\n  shape?: string;\n  color?: string;\n  description?: string;\n  properties: Record<string, any>;\n}\n\ninterface LinkProps {\n  id: string;\n  sourceAnchorId: string;\n  targetAnchorId: string;\n  sourceEntityId: string;\n  targetEntityId: string;\n}\n\`\`\`\n`;
   if (type === 'SchemaModel') return `\n\`\`\`ts\ninterface SchemaModel {\n  id: string;\n  name: string;\n  entities: Entity[];\n  links: LinkProps[];\n}\n\ninterface Entity {\n  id: string;\n  name: string;\n  position: { x: number; y: number };\n  dimensions: { width: number; height: number };\n  shape?: string;\n  color?: string;\n  description?: string;\n  properties: Record<string, any>;\n}\n\ninterface LinkProps {\n  id: string;\n  sourceAnchorId: string;\n  targetAnchorId: string;\n  sourceEntityId: string;\n  targetEntityId: string;\n}\n\`\`\`\n`;
+  if (type === 'AppSettings') return `\n\`\`\`ts\n// [NOTE: Use ONLY these exact types for AppSettings. Do NOT hallucinate keys]\nexport type FontFamily = 'sans-serif' | 'serif' | 'monospace' | 'system-ui' | 'Inter, sans-serif' | 'Georgia, serif' | 'Courier New, monospace';\nexport type FontWeight = 'normal' | '600' | 'bold';\n\nexport interface EntityStyleSettings {\n  nameFontFamily: FontFamily;\n  nameFontSize: number;\n  nameFontWeight: FontWeight;\n  nameColor: string;\n  propsFontFamily: FontFamily;\n  propsFontSize: number;\n  propsFontWeight: FontWeight;\n  propsColor: string;\n  borderRadius: number;\n  borderWidth: number;\n  namePaddingY: number;\n  propsPaddingY: number;\n}\n\nexport interface LinkStyleSettings {\n  color: string;\n  selectedColor: string;\n  thickness: number;\n  selectedThickness: number;\n}\n\nexport interface AppSettings {\n  toolbox?: unknown;\n  general?: {\n    gridSize?: number;\n    enableSnapping?: boolean;\n    defaultLinkStyle?: string;\n    gridPrimaryColor?: string;\n    gridSecondaryColor?: string;\n    canvasBackgroundColor?: string;\n  };\n  appearance?: {\n    entity?: Partial<EntityStyleSettings>;\n    link?: Partial<LinkStyleSettings>;\n  };\n  shapes?: any[];\n}\n\`\`\`\n`;
   return '';
 };
 
@@ -1137,6 +1149,7 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
         let schemaDef;
         if (type === 'DAGExchange') schemaDef = dagExchangeSchema.toJSONSchema();
         else if (type === 'SchemaModel') schemaDef = schemaModelSchema.toJSONSchema();
+        else if (type === 'AppSettings') schemaDef = appSettingsSchema.toJSONSchema();
         else return { error: { code: 400, message: `Unsupported format type ${type}` }, id: req.id };
         return { result: { format: schemaDef }, id: req.id };
       }
@@ -1146,6 +1159,7 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
         if (type === 'DAGExchange') result = f.validateSchema(dagExchangeSchema, args.payload);
         else if (type === 'SchemaModel') result = f.validateSchema(schemaModelSchema, args.payload);
         else if (type === 'WorkspaceState') result = f.validateSchema(mcpWorkspaceStateSchema, { workspace: args.payload });
+        else if (type === 'AppSettings') result = f.validateSchema(appSettingsSchema, args.payload);
         else return { error: { code: 400, message: `Unsupported format type ${type}` }, id: req.id };
         
         let errors;
@@ -1158,7 +1172,6 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
         const type = args.formatType;
         let result;
         if (type === 'DAGExchange') result = f.validateSchema(dagExchangeSchema, args.payload);
-        else if (type === 'WorkspaceState') result = f.validateSchema(mcpWorkspaceStateSchema, { workspace: args.payload });
         else return { error: { code: 400, message: `Unsupported format type ${type}` }, id: req.id };
         
         const mode = srv._state.workspace.config?.validationMode || 'passive';
@@ -1172,10 +1185,7 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
             }
         }
 
-        if (type === 'WorkspaceState') {
-          srv._state = { ...srv._state, workspace: args.payload };
-          emit_sse(srv._clients, 'workspace', { type: 'state-loaded', state: srv._state });
-        } else if (type === 'DAGExchange') {
+        if (type === 'DAGExchange') {
           // Send injection as a frontend action
           const reqId = `structura_inject_schema-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
           emit_sse(srv._clients, 'frontend-action-request', { action: 'structura_inject_schema', reqId, args: { dag: args.payload } });
@@ -1192,6 +1202,22 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
             }, 15000);
           });
         }
+        return { result: { success: true, validationWarnings: mode === 'passive' ? (formattedErrors ? [formattedErrors] : []) : [] }, id: req.id };
+      }
+      case 'structura_set_settings': {
+        const result = f.validateSchema(appSettingsSchema, args.settings);
+        const mode = srv._state.workspace.config?.validationMode || 'passive';
+        let formattedErrors: string | undefined;
+        if (!result.success && result.errors) {
+            formattedErrors = formatValidationErrors(result.errors);
+            if (mode === 'strict') {
+              return { error: { code: 422, message: `Validation failed:\n${formattedErrors}` }, id: req.id };
+            } else {
+              console.warn(`[Structura MCP] Validation warnings for settings injection:\n`, formattedErrors);
+            }
+        }
+        const reqId = `structura_set_settings-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        emit_sse(srv._clients, 'frontend-action-request', { action: 'structura_set_settings', reqId, args: { settings: args.settings } });
         return { result: { success: true, validationWarnings: mode === 'passive' ? (formattedErrors ? [formattedErrors] : []) : [] }, id: req.id };
       }
       case 'structura_undo':

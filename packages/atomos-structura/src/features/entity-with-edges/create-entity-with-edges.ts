@@ -165,13 +165,29 @@ export const createEntityWithEdges = function(props: EntityWithEdgesProps): Enti
   
   // Embed entity content in SVG
   const foreignObject = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
-  foreignObject.setAttribute('x', currentPosition.x.toString());
-  foreignObject.setAttribute('y', currentPosition.y.toString());
+  foreignObject.setAttribute('x', '0');
+  foreignObject.setAttribute('y', '0');
   foreignObject.setAttribute('width', currentDimensions.width.toString());
   foreignObject.setAttribute('height', currentDimensions.height.toString());
   foreignObject.appendChild(entityContent);
   
   container.appendChild(foreignObject);
+
+  // Apply hardware-accelerated transform to the entire container
+  container.style.transform = `translate(${currentPosition.x}px, ${currentPosition.y}px)`;
+
+  // Update layout when signals change
+  const updateLayout = () => {
+    const pos = positionSignal.value;
+    const dims = dimensionsSignal.value;
+    container.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
+    foreignObject.setAttribute('width', dims.width.toString());
+    foreignObject.setAttribute('height', dims.height.toString());
+    entityContent.style.width = `${dims.width}px`;
+  };
+  
+  cleanupFunctions.push(positionSignal.subscribe(updateLayout));
+  cleanupFunctions.push(dimensionsSignal.subscribe(updateLayout));
   
   // Create edges after content
   createEntityEdges();

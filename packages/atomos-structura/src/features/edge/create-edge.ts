@@ -48,7 +48,7 @@ export const createEdge = function(props: EdgeProps): EdgeResult {
   const pos0  = props.entityPosition.value;
   const dims0 = props.entityDimensions.value;
 
-// Visual bar — now invisible as requested
+  // Visual bar — now invisible as requested
   const bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');   
   bar.setAttribute('fill', 'transparent');
   bar.setAttribute('opacity', '0');
@@ -56,14 +56,15 @@ export const createEdge = function(props: EdgeProps): EdgeResult {
   bar.style.pointerEvents = 'none';
   // CSS transition for color/opacity; thickness is changed via attribute in hover handlers
   bar.style.transition = 'opacity 0.12s ease, fill 0.12s ease';
-  applyRect(bar, computeBar(pos0, dims0));
+  const relPos = { x: 0, y: 0 };
+  applyRect(bar, computeBar(relPos, dims0));
 
   // Transparent hit area — wider than bar for comfortable hover
   const hit = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
   hit.setAttribute('fill', 'transparent');
   hit.setAttribute('pointer-events', 'all');
   hit.style.cursor = 'crosshair';
-  applyRect(hit, computeHit(pos0, dims0));
+  applyRect(hit, computeHit(relPos, dims0));
 
   // Anchor position signal — updated reactively when entity moves
   const anchorPos = createSignal(computeAnchorPos(pos0, dims0));
@@ -72,8 +73,9 @@ export const createEdge = function(props: EdgeProps): EdgeResult {
   const onEntityChange = () => {
     const p = props.entityPosition.value;
     const d = props.entityDimensions.value;
-    applyRect(bar, computeBar(p, d));
-    applyRect(hit, computeHit(p, d));
+    const relPos = { x: 0, y: 0 };
+    applyRect(bar, computeBar(relPos, d));
+    applyRect(hit, computeHit(relPos, d));
     anchorPos.set(computeAnchorPos(p, d));
   };
 
@@ -93,9 +95,9 @@ export const createEdge = function(props: EdgeProps): EdgeResult {
     bar.setAttribute('fill', 'transparent');
     bar.setAttribute('opacity', '0');
     // Grow bar thickness
-    const p = props.entityPosition.value;
     const d = props.entityDimensions.value;
-    const thick = { ...computeBar(p, d) };
+    const relPos = { x: 0, y: 0 };
+    const thick = { ...computeBar(relPos, d) };
     // Override the thin dimension with hover thickness
     const extra = thickHover - props.thickness;
     if (props.position === 'top' || props.position === 'bottom') thick.height = thickHover;
@@ -113,7 +115,7 @@ export const createEdge = function(props: EdgeProps): EdgeResult {
     bar.setAttribute('fill', 'transparent');
     bar.setAttribute('opacity', '0');
     // Reset bar to normal thickness
-    applyRect(bar, computeBar(props.entityPosition.value, props.entityDimensions.value));
+    applyRect(bar, computeBar({ x: 0, y: 0 }, props.entityDimensions.value));
     anchorResult?.updateState('idle');
     props.onHover?.(false);
   };

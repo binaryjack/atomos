@@ -664,6 +664,12 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
           viewport.setMouseZoomEnabled(args.enabled !== false);
         }
         if (sendResult) sendResult();
+      } else if (action === 'structura_set_settings') {
+        const args = (e as CustomEvent).detail.args || {};
+        if (args.settings) {
+          store.dispatch({ type: 'settings-updated', settings: args.settings });
+        }
+        if (sendResult) sendResult();
       }
     } catch (err) {
       if (sendResult) sendResult(null, err instanceof Error ? err.message : String(err));
