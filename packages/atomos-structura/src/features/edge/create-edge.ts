@@ -69,18 +69,27 @@ export const createEdge = function(props: EdgeProps): EdgeResult {
   // Anchor position signal — updated reactively when entity moves
   const anchorPos = createSignal(computeAnchorPos(pos0, dims0));
 
-  // Single update function for all geometry — called when entity position or dimensions change
-  const onEntityChange = () => {
+  // Split updates to avoid layout thrashing during drag
+  const onPositionChange = () => {
+    const p = props.entityPosition.value;
+    const d = props.entityDimensions.value;
+    // We strictly do NOT touch SVG rect attributes here!
+    // We only update the mathematical anchor position for bezier links
+    anchorPos.set(computeAnchorPos(p, d));
+  };
+
+  const onDimensionsChange = () => {
     const p = props.entityPosition.value;
     const d = props.entityDimensions.value;
     const relPos = { x: 0, y: 0 };
+    // Update SVG rect attributes only when dimensions actually change
     applyRect(bar, computeBar(relPos, d));
     applyRect(hit, computeHit(relPos, d));
     anchorPos.set(computeAnchorPos(p, d));
   };
 
-  cleanups.push(props.entityPosition.subscribe(onEntityChange));
-  cleanups.push(props.entityDimensions.subscribe(onEntityChange));
+  cleanups.push(props.entityPosition.subscribe(onPositionChange));
+  cleanups.push(props.entityDimensions.subscribe(onDimensionsChange));
 
   // Container-level hover using mouseover/mouseout with relatedTarget guard.
   // This correctly handles pointer movement between bar/hit/anchor without false leave events.

@@ -177,17 +177,20 @@ export const createEntityWithEdges = function(props: EntityWithEdgesProps): Enti
   container.style.transform = `translate(${currentPosition.x}px, ${currentPosition.y}px)`;
 
   // Update layout when signals change
-  const updateLayout = () => {
+  const updatePosition = () => {
     const pos = positionSignal.value;
-    const dims = dimensionsSignal.value;
     container.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
+  };
+  
+  const updateDimensions = () => {
+    const dims = dimensionsSignal.value;
     foreignObject.setAttribute('width', dims.width.toString());
     foreignObject.setAttribute('height', dims.height.toString());
     entityContent.style.width = `${dims.width}px`;
   };
   
-  cleanupFunctions.push(positionSignal.subscribe(updateLayout));
-  cleanupFunctions.push(dimensionsSignal.subscribe(updateLayout));
+  cleanupFunctions.push(positionSignal.subscribe(updatePosition));
+  cleanupFunctions.push(dimensionsSignal.subscribe(updateDimensions));
   
   // Create edges after content
   createEntityEdges();
