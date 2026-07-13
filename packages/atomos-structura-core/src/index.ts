@@ -14,7 +14,7 @@ export type { WorkspaceConfig } from './types/workspace-config.types.js';
 export type { MenuItemConfig, WorkspaceMenuConfig } from './types/menu-config.types.js';
 
 // Schemas (f.object definitions — one per model)
-export { anchorSchema, baseEntitySchema, edgeSchema, entitySchema, linkSchema, settingsSchema } from './schemas/index.js';
+export { anchorSchema, baseEntitySchema, edgeSchema, entitySchema, linkSchema, settingsSchema, dagExchangeSchema, universalSchema } from './schemas/index.js';
 
 // Factories + schema builder (f from @binaryjack/formular.dev)
 export { createEntity, createProperty, f } from './factories/index.js';

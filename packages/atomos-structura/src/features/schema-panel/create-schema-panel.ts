@@ -1,7 +1,7 @@
 import { DATA_TYPES } from '@atomos-web/structura-core'
 import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
 import type { DAGObserver } from '../../core/adapters/dag-observer.js'
-import type { DAGExport } from '../../core/application/dag-service.js'
+import type { DAGExchange } from '../../core/application/dag-service.js'
 import type { CanvasViewport } from '../../core/create-canvas-viewport.js'
 import type { DomainEntity } from '../../core/domain/entity-aggregate.js'
 import type { InteractiveBehaviorManager } from '../../core/types/interactive-behavior-manager.types.js'
@@ -67,7 +67,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
   let panelWidth     = PANEL_DEFAULT_W;
   let isCollapsed    = true;
   let searchQuery    = '';
-  let currentDag: DAGExport | null = null;
+  let currentDag: DAGExchange | null = null;
   let editingEntityId = '';
   let editingPropKey  = '';
 

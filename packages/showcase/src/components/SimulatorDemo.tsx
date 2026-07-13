@@ -357,7 +357,21 @@ export function SimulatorDemo() {
           <button className={btnClass} onClick={() => dispatchMcp('structura_redo')}>Redo</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_auto_layout')}>Auto Layout Nodes</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_optimize_connections')}>Optimize Connections</button>
-          <button className={btnClass} onClick={() => dispatchMcp('structura_load_schema_preset')}>Load Schema Preset</button>
+          <button className={btnClass} onClick={() => dispatchMcp('structura_inject_schema', {
+            formatType: 'DAGExchange',
+            dag: {
+              nodes: [
+                { id: 'node1', type: 'View', width: 220, height: 180, position: { x: -300, y: -100 }, data: { shape: 'rectangle', color: '#3b82f6', properties: [] } },
+                { id: 'node2', type: 'Controller', width: 220, height: 180, position: { x: 0, y: -100 }, data: { shape: 'rectangle', color: '#10b981', properties: [] } },
+                { id: 'node3', type: 'Model', width: 220, height: 180, position: { x: 300, y: -100 }, data: { shape: 'cylinder', color: '#f59e0b', properties: [] } }
+              ],
+              edges: [
+                { id: 'link1', source: 'node1', target: 'node2', sourceHandle: 'right', targetHandle: 'left' },
+                { id: 'link2', source: 'node2', target: 'node3', sourceHandle: 'right', targetHandle: 'left' },
+                { id: 'link3', source: 'node3', target: 'node1', sourceHandle: 'bottom', targetHandle: 'bottom' }
+              ]
+            }
+          })}>Inject DAG Schema</button>
         </div>
 
         <div className="flex flex-col gap-2">

@@ -30,6 +30,7 @@ export const workspaceConfigSchema = f.object({
   readonly: f.boolean().optional(),
   headless: f.boolean().optional(),
   allow_multiple_schemas: f.boolean().optional(),
+  validationMode: f.enum(['strict', 'passive']).optional(),
   menu: workspaceMenuConfigSchema.optional()
 });
 

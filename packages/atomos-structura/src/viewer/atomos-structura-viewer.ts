@@ -1,12 +1,12 @@
 import { createStructuraViewer } from './create-structura-viewer.js'
-import type { DAGExport } from '../core/application/dag-service.js'
+import type { DAGExchange } from '../core/application/dag-service.js'
 import { injectDesignSystemTokens } from '../core/presentation/design-system.js'
 
 export class AtomosStructuraViewerElement extends HTMLElement {
   private svgContainer!: SVGSVGElement;
   private contentRoot!: SVGGElement;
   private viewerEngine: ReturnType<typeof createStructuraViewer> | null = null;
-  private _schema: DAGExport | null = null;
+  private _schema: DAGExchange | null = null;
   private resizeObserver: ResizeObserver | null = null;
 
   constructor() {
@@ -125,14 +125,14 @@ export class AtomosStructuraViewerElement extends HTMLElement {
     }
   }
 
-  set schema(dag: DAGExport | null) {
+  set schema(dag: DAGExchange | null) {
     this._schema = dag;
     if (this.viewerEngine && dag) {
       this.viewerEngine.loadSchema(dag);
     }
   }
 
-  get schema(): DAGExport | null {
+  get schema(): DAGExchange | null {
     return this._schema;
   }
   

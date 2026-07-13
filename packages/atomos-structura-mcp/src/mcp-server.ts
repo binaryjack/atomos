@@ -1,4 +1,5 @@
-import type { Entity, LinkProps, WorkspaceConfig, WorkspaceMenuConfig } from '@atomos-web/structura-core';
+import { dagExchangeSchema, universalSchema, entitySchema, linkSchema, type Entity, type LinkProps, type WorkspaceConfig, type WorkspaceMenuConfig } from '@atomos-web/structura-core';
+import { f } from '@binaryjack/formular.dev';
 import chokidar, { type FSWatcher } from 'chokidar';
 import dagre from 'dagre';
 import fs from 'fs';
@@ -44,6 +45,40 @@ export interface McpWorkspaceState {
 }
 
 // Public request/response types
+
+export const schemaModelSchema = f.object({
+  id: f.string().nonempty(),
+  name: f.string().nonempty(),
+  entities: f.array(entitySchema as any),
+  links: f.array(linkSchema as any)
+});
+
+export const canvasModelSchema = f.object({
+  id: f.string().nonempty(),
+  name: f.string().nonempty(),
+  schemas: f.record(f.string(), schemaModelSchema),
+  active_schema_id: f.string().nonempty(),
+  viewport: f.object({ pan: f.object({ x: f.number(), y: f.number() }), zoom: f.number() }),
+  appearance_override: f.record(f.string(), f.string()).optional()
+});
+
+export const workspaceStateSchema = f.object({
+  name: f.string().nonempty(),
+  version: f.string().nonempty(),
+  last_modified: f.string().nonempty(),
+  settings: f.record(f.string(), f.string()).optional(),
+  config: f.object({}).optional(),
+  canvases: f.record(f.string(), canvasModelSchema),
+  active_canvas_id: f.string().nonempty(),
+  allowed_root_paths: f.array(f.string()).optional()
+});
+
+export const mcpWorkspaceStateSchema = f.object({
+  workspace: workspaceStateSchema,
+  is_settings_open: f.boolean().optional(),
+  menu_config: f.object({}).optional(),
+  toolbox_config: f.object({}).optional()
+});
 
 export interface McpRequest {
   readonly method: string;
@@ -291,7 +326,7 @@ const process_request = async (srv: VbsMcpServerInstance, req: McpRequest): Prom
     case 'atomos-structura/delete-schema':   return handle_delete_schema(srv, req);
     case 'atomos-structura/activate-schema': return handle_activate_schema(srv, req);
     case 'atomos-structura/get-workspace':   return handle_get_workspace(srv, req);
-    case 'atomos-structura/load-workspace':  return handle_load_workspace(srv, req);
+
     case 'atomos-structura/report-progress': return handle_report_progress(srv, req);
     case 'atomos-structura/viewport/get':       return handle_viewport_get(srv, req);
     case 'atomos-structura/viewport/set-zoom':  return handle_viewport_set_zoom(srv, req);
@@ -633,169 +668,7 @@ const handle_get_workspace = (srv: VbsMcpServerInstance, req: McpRequest): McpRe
   id: req.id,
 });
 
-interface LegacyWorkspacePayload {
-  active_schema_id?: string;
-  schemas?: Array<{ id: string; name: string; entities: Entity[]; links: LinkProps[] }>;
-  settings?: unknown;
-}
 
-const is_legacy_payload = (w: unknown): w is LegacyWorkspacePayload =>
-  typeof w === 'object' && w !== null && !('workspace' in w);
-
-function isPathAllowed(filePath: string, allowedRoots: string[]): boolean {
-  if (!allowedRoots || allowedRoots.length === 0) return true; // Default to allow all if not set yet (v1 parity)
-  return allowedRoots.some(root => filePath.startsWith(root));
-}
-
-function parseExecutionPlan(payload: any): McpWorkspaceState {
-  // Si le payload contient déjà des canvases, c'est un format Atomos natif, on ne fait rien
-  if (payload.canvases || (payload.workspace && payload.workspace.canvases)) {
-    return payload as McpWorkspaceState;
-  }
-
-  // Si c'est un format legacy Atomos, on laisse handle_load_workspace le gérer
-  if (payload.schemas || (payload.workspace && payload.workspace.schemas)) {
-    return payload;
-  }
-
-  // Extraction des lanes (Format Agent DAG)
-  const lanes = payload.lanes || [];
-
-  // Calcul du layout spatial via Dagre
-  const g = new dagre.graphlib.Graph();
-  g.setGraph({ rankdir: 'LR', nodesep: 60, edgesep: 20, ranksep: 100 });
-  g.setDefaultEdgeLabel(() => ({}));
-
-  lanes.forEach((lane: any) => {
-    g.setNode(lane.id, { width: 200, height: 100 });
-    if (lane.dependsOn) {
-      lane.dependsOn.forEach((depId: string) => g.setEdge(depId, lane.id));
-    }
-  });
-
-  dagre.layout(g);
-
-  // Construction des entités graphiques Atomos
-  const entities = lanes.map((lane: any) => {
-    const node = g.node(lane.id);
-    return {
-      id: lane.id,
-      type: 'implementation',
-      position: { x: node.x, y: node.y },
-      props: {
-        agentFile: lane.agentFile || "default-agent.agent.json",
-        prompt: lane.prompt || "",
-        active: lane.active ?? true,
-        status: 'pending',
-        log_stream: ""
-      }
-    };
-  });
-
-  const links = lanes.flatMap((lane: any) =>
-    (lane.dependsOn || []).map((depId: string) => ({
-      id: `link-${depId}-${lane.id}`,
-      source: depId,
-      target: lane.id,
-      type: 'default'
-    }))
-  );
-
-  // Hydratation complète du Redux Mirror d'Atomos
-  const schema_id = "agent-execution-graph";
-  const canvas_id = "main-canvas";
-
-  return {
-    workspace: {
-      name: "Agent Autonomous Plan",
-      version: "1.0.0",
-      last_modified: new Date().toISOString(),
-      active_canvas_id: canvas_id,
-      canvases: {
-        [canvas_id]: {
-          id: canvas_id,
-          name: "Execution Pipeline",
-          active_schema_id: schema_id,
-          viewport: { pan: { x: 100, y: 100 }, zoom: 1 },
-          schemas: {
-            [schema_id]: {
-              id: schema_id,
-              name: "Agent DAG",
-              entities,
-              links
-            }
-          }
-        }
-      }
-    }
-  };
-}
-
-const handle_load_workspace = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse => {
-  const { workspace, filePath } = req.params as { workspace: any; filePath?: string };
-
-  if (filePath && !isPathAllowed(filePath, srv._state.workspace.allowed_root_paths || [])) {
-    return {
-      error: {
-        code: -32602,
-        message: `Access Denied: Le fichier ${filePath} est en dehors des racines du Workspace Multi-Root.`,
-      },
-      id: req.id,
-    };
-  }
-
-  const hydratedWorkspace = parseExecutionPlan(workspace);
-  const runtimeConfig = srv._state.workspace.config;
-
-  if (filePath) {
-    if (srv._watcher) {
-      (srv._watcher as any).close();
-    }
-    srv._watcher = (chokidar.watch(filePath) as any).on('change', async () => {
-      try {
-        const fileContent = await fs.promises.readFile(filePath, 'utf-8');
-        const rawJson = JSON.parse(fileContent);
-        const hydratedState = parseExecutionPlan(rawJson);
-        (srv as any).broadcast_event('workspace-mutated', hydratedState);
-      } catch (err) {
-        console.error("Failed to broadcast file change to SSE:", err);
-      }
-    });
-  }
-
-  const processedWorkspace = hydratedWorkspace;
-  if (is_legacy_payload(processedWorkspace)) {
-    const schemasRecord: Record<string, SchemaModel> = {};
-    (processedWorkspace.schemas ?? []).forEach(s => { schemasRecord[s.id] = { ...s }; });
-    const activeSchemaId = processedWorkspace.active_schema_id ?? DEFAULT_SCHEMA_ID;
-    const baseCanvas = make_default_canvas();
-    const rebuilt: McpWorkspaceState = {
-      workspace: {
-        name: 'Untitled Workspace',
-        version: '1',
-        last_modified: new Date().toISOString(),
-        ...(processedWorkspace.settings !== undefined ? { settings: processedWorkspace.settings as Record<string, unknown> } : {}),
-        canvases: {
-          [DEFAULT_CANVAS_ID]: {
-            ...baseCanvas,
-            schemas: Object.keys(schemasRecord).length > 0 ? schemasRecord : baseCanvas.schemas,
-            active_schema_id: activeSchemaId,
-          },
-        },
-        active_canvas_id: DEFAULT_CANVAS_ID,
-      },
-    };
-    srv._state = runtimeConfig
-      ? { ...rebuilt, workspace: { ...rebuilt.workspace, config: runtimeConfig } }
-      : rebuilt;
-  } else {
-    srv._state = runtimeConfig
-      ? { ...processedWorkspace, workspace: { ...processedWorkspace.workspace, config: runtimeConfig } }
-      : processedWorkspace;
-  }
-  emit_sse(srv._clients, 'workspace', { type: 'state-loaded', state: srv._state });
-  return { result: { success: true }, id: req.id };
-};
 
 // HTTP utility
 
@@ -1111,9 +984,40 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
           inputSchema: { type: "object", properties: {} }
         },
         {
-          name: "structura_load_schema_preset",
-          description: "Load a predefined schema preset into the canvas.",
-          inputSchema: { type: "object", properties: {} }
+          name: "structura_get_format",
+          description: "Get the JSON Schema format for injection. Use this to understand what format to use for inject_schema.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              formatType: { type: "string", enum: ["DAGExchange", "SchemaModel"], description: "The format to get the schema for" },
+              outputFormat: { type: "string", enum: ["Default", "TSinMD"], description: "The requested output format. 'TSinMD' for Typescript in Markdown, 'Default' for JSON schema." }
+            },
+            required: ["formatType"]
+          }
+        },
+        {
+          name: "structura_validate_schema",
+          description: "Validate a JSON payload against the specified Structura format.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              formatType: { type: "string", enum: ["DAGExchange", "SchemaModel", "WorkspaceState"], description: "The format to validate against" },
+              payload: { type: "object", description: "The JSON payload to validate" }
+            },
+            required: ["formatType", "payload"]
+          }
+        },
+        {
+          name: "structura_inject_schema",
+          description: "Inject a schema or workspace into Structura. Replaces all legacy load methods.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              formatType: { type: "string", enum: ["DAGExchange", "WorkspaceState"], description: "The format of the payload" },
+              payload: { type: "object", description: "The JSON payload to inject" }
+            },
+            required: ["formatType", "payload"]
+          }
         },
         {
           name: "structura_optimize_connections",
@@ -1134,10 +1038,42 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
           name: "structura_export_dag",
           description: "Export the current canvas as a DAG JSON payload.",
           inputSchema: { type: "object", properties: {} }
+        },
+        {
+          name: "structura_toggle_mouse_zoom",
+          description: "Enable or disable zooming via the mouse wheel.",
+          inputSchema: { 
+            type: "object", 
+            properties: {
+              enabled: { type: "boolean", description: "Whether to allow mouse wheel zoom." }
+            },
+            required: ["enabled"]
+          }
         }
       ]
     }
   };
+};
+
+const formatValidationErrors = (errors: any[]): string => {
+  if (!errors || !Array.isArray(errors)) return "Unknown validation error";
+  return errors.map(err => {
+    const path = err.path && err.path.length > 0 ? err.path.join('.') : 'root';
+    const msg = err.message || JSON.stringify(err);
+    if (msg.includes("nodes") || msg.includes("Unrecognized key(s) in object: 'nodes'")) {
+      return `[Structura Error] Key 'nodes' forbidden at path '${path}'. The root array must be named 'entities' or 'nodes' is invalid.`;
+    }
+    if (msg.includes("edges") || msg.includes("Unrecognized key(s) in object: 'edges'")) {
+      return `[Structura Error] Key 'edges' forbidden at path '${path}'. Connections must be named 'links' or 'edges' is invalid.`;
+    }
+    return `[Structura Error] Path '${path}': ${msg}`;
+  }).join('\n');
+};
+
+const getTSFormat = (type: string): string => {
+  if (type === 'DAGExchange') return `\n\`\`\`ts\ninterface DAGExchange {\n  version: string;\n  nodes: Entity[];\n  edges: LinkProps[];\n  applyAfterLoad?: string[];\n}\n\ninterface Entity {\n  id: string;\n  name: string;\n  position: { x: number; y: number };\n  dimensions: { width: number; height: number };\n  shape?: string;\n  color?: string;\n  description?: string;\n  properties: Record<string, any>;\n}\n\ninterface LinkProps {\n  id: string;\n  sourceAnchorId: string;\n  targetAnchorId: string;\n  sourceEntityId: string;\n  targetEntityId: string;\n}\n\`\`\`\n`;
+  if (type === 'SchemaModel') return `\n\`\`\`ts\ninterface SchemaModel {\n  id: string;\n  name: string;\n  entities: Entity[];\n  links: LinkProps[];\n}\n\ninterface Entity {\n  id: string;\n  name: string;\n  position: { x: number; y: number };\n  dimensions: { width: number; height: number };\n  shape?: string;\n  color?: string;\n  description?: string;\n  properties: Record<string, any>;\n}\n\ninterface LinkProps {\n  id: string;\n  sourceAnchorId: string;\n  targetAnchorId: string;\n  sourceEntityId: string;\n  targetEntityId: string;\n}\n\`\`\`\n`;
+  return '';
 };
 
 const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpResponse | Promise<McpResponse> => {
@@ -1190,10 +1126,77 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
         return handle_update_entity(srv, { id: req.id, method: 'atomos-structura/update-entity', params: args });
       case 'structura_create_link':
         return handle_create_link(srv, { id: req.id, method: 'atomos-structura/create-link', params: args });
+      case 'structura_get_format': {
+        const type = args.formatType;
+        const outFmt = args.outputFormat || 'Default';
+        if (outFmt === 'TSinMD') {
+          const tsDef = getTSFormat(type);
+          if (!tsDef) return { error: { code: 400, message: `Unsupported format type ${type}` }, id: req.id };
+          return { result: { format: tsDef }, id: req.id };
+        }
+        let schemaDef;
+        if (type === 'DAGExchange') schemaDef = dagExchangeSchema.toJSONSchema();
+        else if (type === 'SchemaModel') schemaDef = schemaModelSchema.toJSONSchema();
+        else return { error: { code: 400, message: `Unsupported format type ${type}` }, id: req.id };
+        return { result: { format: schemaDef }, id: req.id };
+      }
+      case 'structura_validate_schema': {
+        const type = args.formatType;
+        let result;
+        if (type === 'DAGExchange') result = f.validateSchema(dagExchangeSchema, args.payload);
+        else if (type === 'SchemaModel') result = f.validateSchema(schemaModelSchema, args.payload);
+        else if (type === 'WorkspaceState') result = f.validateSchema(mcpWorkspaceStateSchema, { workspace: args.payload });
+        else return { error: { code: 400, message: `Unsupported format type ${type}` }, id: req.id };
+        
+        let errors;
+        if (!result.success && result.errors) {
+            errors = formatValidationErrors(result.errors);
+        }
+        return { result: { valid: result.success, errors }, id: req.id };
+      }
+      case 'structura_inject_schema': {
+        const type = args.formatType;
+        let result;
+        if (type === 'DAGExchange') result = f.validateSchema(dagExchangeSchema, args.payload);
+        else if (type === 'WorkspaceState') result = f.validateSchema(mcpWorkspaceStateSchema, { workspace: args.payload });
+        else return { error: { code: 400, message: `Unsupported format type ${type}` }, id: req.id };
+        
+        const mode = srv._state.workspace.config?.validationMode || 'passive';
+        let formattedErrors: string | undefined;
+        if (!result.success && result.errors) {
+            formattedErrors = formatValidationErrors(result.errors);
+            if (mode === 'strict') {
+              return { error: { code: 422, message: `Validation failed:\n${formattedErrors}` }, id: req.id };
+            } else {
+              console.warn(`[Structura MCP] Validation warnings for injection:\n`, formattedErrors);
+            }
+        }
+
+        if (type === 'WorkspaceState') {
+          srv._state = { ...srv._state, workspace: args.payload };
+          emit_sse(srv._clients, 'workspace', { type: 'state-loaded', state: srv._state });
+        } else if (type === 'DAGExchange') {
+          // Send injection as a frontend action
+          const reqId = `structura_inject_schema-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          emit_sse(srv._clients, 'frontend-action-request', { action: 'structura_inject_schema', reqId, args: { dag: args.payload } });
+          return new Promise<McpResponse>((resolve) => {
+            srv._pendingRequests.set(reqId, {
+              resolve: (res) => resolve({ result: { success: true, validationWarnings: mode === 'passive' ? (formattedErrors || undefined) : undefined }, id: String(req.id) }),
+              reject: (err) => resolve({ error: { code: 500, message: err.message }, id: String(req.id) })
+            });
+            setTimeout(() => {
+              if (srv._pendingRequests.has(reqId)) {
+                srv._pendingRequests.delete(reqId);
+                resolve({ error: { code: 504, message: `Injection timeout` }, id: String(req.id) });
+              }
+            }, 15000);
+          });
+        }
+        return { result: { success: true, validationWarnings: mode === 'passive' ? (formattedErrors ? [formattedErrors] : []) : [] }, id: req.id };
+      }
       case 'structura_undo':
       case 'structura_redo':
       case 'structura_auto_layout':
-      case 'structura_load_schema_preset':
       case 'structura_optimize_connections':
       case 'structura_export_svg':
       case 'structura_export_png':
@@ -1211,6 +1214,22 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
               resolve({ error: { code: 504, message: `Tool execution timeout for ${name}` }, id: String(req.id) });
             }
           }, 15000); // 15 seconds timeout
+        });
+      }
+      case 'structura_toggle_mouse_zoom': {
+        const reqId = `${name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        emit_sse(srv._clients, 'frontend-action-request', { action: name, reqId, args });
+        return new Promise<McpResponse>((resolve, reject) => {
+          srv._pendingRequests.set(reqId, {
+            resolve: (result) => resolve({ result: { success: true, ...result }, id: String(req.id) }),
+            reject: (err) => resolve({ error: { code: 500, message: err.message }, id: String(req.id) })
+          });
+          setTimeout(() => {
+            if (srv._pendingRequests.has(reqId)) {
+              srv._pendingRequests.delete(reqId);
+              resolve({ error: { code: 504, message: `Tool execution timeout for ${name}` }, id: String(req.id) });
+            }
+          }, 15000);
         });
       }
       default:

@@ -1,6 +1,6 @@
 {
   "name": "@atomos-web/structura",
-  "version": "2.3.2",
+  "version": "2.3.4",
   "license": "MIT",
   "type": "module",
   "publishConfig": {

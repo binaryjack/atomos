@@ -12,6 +12,10 @@ export interface WorkspaceConfig {
   readonly allow_multiple_schemas?: boolean;
   /** Disable local storage persistence for schemas, pushing responsibility to Redux/parent session. */
   readonly disableLocalStorage?: boolean;
+  /** Schema injection validation mode: 'strict' (throw error) or 'passive' (store errors as warnings) */
+  readonly validationMode?: 'strict' | 'passive';
+  /** Allow zooming via the mouse wheel. Default is true. */
+  readonly allowMouseZoom?: boolean;
   /** Fine-grained availability and value config for every canvas toolbar item. */
   readonly menu?: WorkspaceMenuConfig;
   /**

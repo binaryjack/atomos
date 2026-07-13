@@ -1,6 +1,6 @@
 {
   "name": "@atomos-web/structura-mcp",
-  "version": "2.3.2",
+  "version": "2.3.4",
   "license": "MIT",
   "type": "module",
   "publishConfig": {
@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@atomos-web/structura-core": "workspace:*",
+    "@binaryjack/formular.dev": "workspace:*",
     "@types/dagre": "^0.7.54",
     "chokidar": "^5.0.0",
     "dagre": "^0.8.5"

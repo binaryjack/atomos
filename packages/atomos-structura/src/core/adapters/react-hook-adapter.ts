@@ -1,4 +1,4 @@
-﻿import type { DAGExport } from '../application/dag-service.js';
+import type { DAGExchange } from '../application/dag-service.js';
 import type { DAGObserver } from './dag-observer.js';
 
 // We define minimal React types manually to avoid creating an active
@@ -10,7 +10,7 @@ type UseSyncExternalStore = <Snapshot>(
 ) => Snapshot;
 
 export interface DAGReactHookAdapter {
-  readonly useDAG: () => DAGExport;
+  readonly useDAG: () => DAGExchange;
 }
 
 /**

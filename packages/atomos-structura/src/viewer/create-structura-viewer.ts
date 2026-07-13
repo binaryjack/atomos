@@ -1,7 +1,7 @@
 import { createSignal } from '@atomos-web/prime'
 import { createEntityRegistry } from '../core/create-entity-registry.js'
 import { createLinkManager } from '../core/link-manager.js'
-import type { DAGExport } from '../core/application/dag-service.js'
+import type { DAGExchange } from '../core/application/dag-service.js'
 import type { DomainEntity, DomainLink } from '../core/domain/entity-aggregate.js'
 import type { EdgePosition } from '../features/edge/types/edge-position.types.js'
 import { computeShapeAnchorPos } from '../canvas/geometry/compute-shape-anchor-pos.js'
@@ -97,7 +97,7 @@ export const createStructuraViewer = function(
     });
   };
 
-  const loadSchema = (dag: DAGExport) => {
+  const loadSchema = (dag: DAGExchange) => {
     // Clear existing
     linkManager.cleanup.destroy();
     registry.workspaceState.value.entities.forEach(e => registry.unregisterEntity(e.id));

@@ -1,7 +1,7 @@
-import type { DAGExport } from '../application/dag-service.js';
+import type { DAGExchange } from '../application/dag-service.js';
 import type { EntityManager } from '../presentation/entity-manager.js';
 
-export type DAGSubscriber = (dag: DAGExport) => void;
+export type DAGSubscriber = (dag: DAGExchange) => void;
 
 export interface DAGObserver {
   /**
@@ -13,7 +13,7 @@ export interface DAGObserver {
   /**
    * Synchronously compute and fetch the current DAG topology
    */
-  readonly getCurrentDAG: () => DAGExport;
+  readonly getCurrentDAG: () => DAGExchange;
   
   /**
    * Free memory and detach from the event bus
@@ -31,9 +31,9 @@ export const createDAGObserver = function(entityManager: EntityManager): DAGObse
   const subscribers = new Set<DAGSubscriber>();
   
   let animationFrameId: number | null = null;
-  let currentDAG: DAGExport | null = null;
+  let currentDAG: DAGExchange | null = null;
 
-  const getDAG = (): DAGExport => {
+  const getDAG = (): DAGExchange => {
     if (!currentDAG) {
       currentDAG = {
         version: '1.0.0',

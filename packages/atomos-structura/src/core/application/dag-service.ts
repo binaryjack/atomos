@@ -2,7 +2,7 @@ import type { DomainEntity, DomainLink } from '../domain/entity-aggregate.js';
 import type { EntityManager } from '../presentation/entity-manager.js';
 import { determineOptimalEdges } from '../math/anchor-routing.js';
 
-export interface DAGExport {
+export interface DAGExchange {
   readonly version: string;
   readonly nodes: readonly DomainEntity[];
   readonly edges: readonly DomainLink[];
@@ -28,7 +28,7 @@ export const applySchemaCommands = async (entityManager: EntityManager, commands
 };
 
 export const serializeDAG = function(entityManager: EntityManager): string {
-  const exportData: DAGExport = {
+  const exportData: DAGExchange = {
     version: '1.0.0',
     nodes: entityManager.getAllEntities(),
     edges: entityManager.getAllLinks(),
@@ -42,7 +42,7 @@ export const deserializeDAG = function(
   autoLayout: boolean = true
 ): void {
   try {
-    const data = JSON.parse(jsonString) as DAGExport;
+    const data = JSON.parse(jsonString) as DAGExchange;
     
     // Clear existing
     entityManager.getAllLinks().forEach(link => entityManager.removeLink(link.id));

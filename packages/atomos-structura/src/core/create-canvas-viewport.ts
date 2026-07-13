@@ -23,6 +23,7 @@ export interface CanvasViewport {
   readonly setExternalState: (state: ViewportState) => void;
   /** Convert screen (clientX/Y) coords to canvas (world) coords */
   readonly screenToCanvas: (clientX: number, clientY: number, containerRect: DOMRect) => { x: number; y: number };
+  readonly setMouseZoomEnabled: (enabled: boolean) => void;
   readonly cleanup: () => void;
 }
 
@@ -143,8 +144,14 @@ export const createCanvasViewport = function(
   };
 
   // --- Wheel zoom ---
+  let mouseZoomEnabled = true;
+  const setMouseZoomEnabled = (enabled: boolean) => {
+    mouseZoomEnabled = enabled;
+  };
+
   const onWheel = (e: WheelEvent) => {
     e.preventDefault();
+    if (!mouseZoomEnabled) return;
     const rect = container.getBoundingClientRect();
     const originX = e.clientX - rect.left;
     const originY = e.clientY - rect.top;
@@ -216,6 +223,7 @@ export const createCanvasViewport = function(
     reset,
     setExternalState,
     screenToCanvas,
+    setMouseZoomEnabled,
     cleanup: () => {
       cleanups.forEach(fn => fn());
       cleanups.length = 0;

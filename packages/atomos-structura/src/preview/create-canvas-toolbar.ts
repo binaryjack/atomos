@@ -639,6 +639,12 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
       } else if (action === 'structura_export_dag') {
         const dagJson = serializeDAG(entityManager);
         if (sendResult) sendResult({ content: JSON.parse(dagJson) });
+      } else if (action === 'structura_inject_schema') {
+        const args = (e as CustomEvent).detail.args || {};
+        if (args.dag) {
+          deserializeDAG(entityManager, JSON.stringify(args.dag), true);
+        }
+        if (sendResult) sendResult();
       } else if (action === 'structura_set_zoom') {
         const args = (e as CustomEvent).detail.args || {};
         if (args.level === 'in') viewport.zoomBy(0.1);
@@ -651,6 +657,12 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
       } else if (action === 'structura_center_to_schema') {
         const args = (e as CustomEvent).detail.args || {};
         centerToSchema(args);
+        if (sendResult) sendResult();
+      } else if (action === 'structura_toggle_mouse_zoom') {
+        const args = (e as CustomEvent).detail.args || {};
+        if (viewport.setMouseZoomEnabled) {
+          viewport.setMouseZoomEnabled(args.enabled !== false);
+        }
         if (sendResult) sendResult();
       }
     } catch (err) {
