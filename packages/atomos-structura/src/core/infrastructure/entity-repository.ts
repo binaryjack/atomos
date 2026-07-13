@@ -179,8 +179,6 @@ export const createEventBus = function(): EventBus {
   const handlers = new Set<(event: ApplicationEvent) => void>();
 
   const publish = function(event: ApplicationEvent): void {
-    console.log(`[EventBus] Publishing ${event.type}:`, event);
-
     // Snapshot handlers before iterating so that re-entrant publishes (e.g. entity
     // spawn triggering another event) do not corrupt the iteration.
     const snapshot = Array.from(handlers);
@@ -195,11 +193,9 @@ export const createEventBus = function(): EventBus {
 
   const subscribe = function(handler: (event: ApplicationEvent) => void): () => void {
     handlers.add(handler);
-    console.log(`[EventBus] Subscribed handler (total: ${handlers.size})`);
 
     return function unsubscribe() {
       handlers.delete(handler);
-      console.log(`[EventBus] Unsubscribed handler (total: ${handlers.size})`);
     };
   };
 

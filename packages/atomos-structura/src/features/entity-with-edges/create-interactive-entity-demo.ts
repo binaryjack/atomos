@@ -43,8 +43,6 @@ const spawnEntity = (
   adapter: ReturnType<typeof getCanvasAdapter>,
   instanceId: string
 ): EntityInstance => {
-  console.log(`[CANVAS-PAGE] ?? Spawning entity ${entityProps.id} through CLEAN ARCHITECTURE - No cascading stores!`);
-  
   // Initialize entity in clean domain layer if it doesn't exist
   const existingEntity = adapter.getEntity(entityProps.id);
   if (!existingEntity) {
@@ -94,7 +92,6 @@ const spawnEntity = (
     if (positionDebounceTimer) clearTimeout(positionDebounceTimer);
     
     positionDebounceTimer = window.setTimeout(() => {
-      console.log(`[CLEAN-ARCH] Entity ${entityProps.id} moved - Single clean persistence call`);
       adapter.moveEntity(entityProps.id, roundedPos.x, roundedPos.y);
       lastPersistedPos = roundedPos;
       positionDebounceTimer = undefined;
@@ -126,7 +123,6 @@ const spawnEntity = (
     if (dimensionsDebounceTimer) clearTimeout(dimensionsDebounceTimer);
     
     dimensionsDebounceTimer = window.setTimeout(() => {
-      console.log(`[CLEAN-ARCH] Entity ${entityProps.id} resized - Clean persistence`);
       adapter.resizeEntity(entityProps.id, roundedDims.width, roundedDims.height);
       lastPersistedDims = roundedDims;
       dimensionsDebounceTimer = undefined;
@@ -156,14 +152,12 @@ const spawnEntity = (
 };
 
 export const createInteractiveEntityDemo = function(workspace: WorkspaceManager, instanceId: string) {
-  console.log('?? [CANVAS-PAGE] ?? MAIN CANVAS PAGE WORKING! Clean architecture active - NO RUNTIME ERRORS!');
   
   // Get clean architecture adapter - Single source of truth
   const canvasAdapter = getCanvasAdapter(instanceId);
   
   // Clean event handling - No cascading subscriptions
   canvasAdapter.onEntityChanged(event => {
-    console.log('?? [CANVAS-PAGE] CANVAS WORKING: Clean architecture entity event:', event.type);
     
     switch (event.type) {
       case 'EntityCreated': {
@@ -246,7 +240,6 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager,
 
   // Wire up workspace events to clean architecture - Actually persist links
     (workspace as any).onLinkCreated = (link: any, isReconnect: boolean) => {
-      console.log('[CANVAS-PAGE] ?? Link created through workspace - Persisting via clean architecture');
       if (isReconnect) {
         canvasAdapter.updateLinkEndpoints(link.id, link.sourceAnchorId, link.targetAnchorId, link.leftEntityId, link.rightEntityId);
       } else {
@@ -254,13 +247,11 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager,
       }
     };
   (workspace as any).onEntityDeleted = (entityId: string) => {
-    console.log('[CANVAS-PAGE] ??? Entity deleted from main canvas:', entityId);
     canvasAdapter.removeEntity(entityId);
   };
   
   // Handle link deletion - remove from storage when deleted via UI
   (workspace as any).onLinkDeleted = (linkId: string) => {
-    console.log('[CANVAS-PAGE] ??? Link deleted from canvas:', linkId);
     canvasAdapter.removeLink(linkId);
   };
 
@@ -276,7 +267,6 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager,
     // orphaned SVG tree that no cleanup path can ever reach.
     const preRegistered = ws.workspaceState.value.entities.get(id);
     if (preRegistered) return preRegistered;
-    console.log(`[CANVAS-PAGE] ? New entity spawned at (${pos.x}, ${pos.y}) through clean architecture`);
     return spawnEntity(ep, ws, { value: DEFAULT_GLOBAL_CONFIG }, canvasAdapter, instanceId);
   };
   workspace.setEntitySpawnFactory(factory);
@@ -286,14 +276,9 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager,
     const ep: Entity & { shape?: string, color?: string | undefined } = makeEntityProps(domainEntity.id, domainEntity.name, domainEntity.position.x, domainEntity.position.y, domainEntity.dimensions.width, domainEntity.dimensions.height, domainEntity.properties as any[]);
     ep.shape = domainEntity.shape as any;
     ep.color = domainEntity.color;
-    console.log(`[CANVAS-PAGE] ?? Rendering entity ${domainEntity.id} at (${domainEntity.position.x}, ${domainEntity.position.y})`);
     
     const instance = spawnEntity(ep, workspace, { value: DEFAULT_GLOBAL_CONFIG }, canvasAdapter, instanceId);
     workspace.registerEntity(instance);
   });
   
-  console.log('?? [CANVAS-PAGE] ?? MAIN CANVAS PAGE WORKING PROPERLY! Clean architecture initialized successfully!');
-    
-  // === DEBUGGING: Add manual link debugging to window === 
-    console.log('?? [CANVAS-PAGE] ?? SUCCESS! MAIN CANVAS WORKING PROPERLY - No more errors!');
 };

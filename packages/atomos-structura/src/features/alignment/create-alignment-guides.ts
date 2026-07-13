@@ -24,19 +24,14 @@ const GUIDE_THICKNESS = 1;
 const SNAP_THRESHOLD = 8; // pixels
 
 export const createAlignmentGuides = function(): AlignmentGuidesResult {
-  console.log('[ALIGNMENT-GUIDES] Creating alignment guides');
   const container = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   container.setAttribute('class', 'alignment-guides');
   container.style.pointerEvents = 'none';
-  console.log('[ALIGNMENT-GUIDES] Container created:', container);
   
   const lines: SVGLineElement[] = [];
   
   const showGuides = (guides: AlignmentGuide[]): void => {
-    // Clear existing guides
     hideGuides();
-    
-    console.log('[ALIGNMENT-GUIDES] Showing guides:', guides);
     
     // Create new guide lines
     guides.forEach(guide => {

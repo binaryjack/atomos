@@ -192,7 +192,6 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   // Function to apply viewport visually
   const applyViewport = () => {
     const t = viewport.transform();
-    console.log('[CANVAS-PAGE-LOG] applyViewport applying transform:', t);
     viewportGroup.setAttribute('transform', t);
     smallGrid.setAttribute('patternTransform', t);
     largeGrid.setAttribute('patternTransform', t);
@@ -706,7 +705,6 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
         const curVp = viewport.state.value;
         const newVp = canvas.viewport;
         if (curVp.zoom !== newVp.zoom || curVp.pan.x !== newVp.pan.x || curVp.pan.y !== newVp.pan.y) {
-          console.log(`[CANVAS-PAGE-LOG] runReconcile calling setExternalState. newVp:`, JSON.stringify(newVp));
           viewport.setExternalState({
             zoom: Number.isFinite(newVp.zoom) ? newVp.zoom : 1,
             pan: {
@@ -813,7 +811,6 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
     const isExplicitlyReadonly = state.workspace.config?.readonly === true || config?.readonly === true;
     root.classList.toggle('vbs-readonly-mode', isExplicitlyReadonly);
     
-    console.log('[CANVAS-PAGE-LOG] runReconcile called from Redux subscription');
     runReconcile(state);
   });
   // Trigger immediately so persisted entities/links appear on page load without
