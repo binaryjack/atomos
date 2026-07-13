@@ -142,14 +142,14 @@ const spawnEntity = (
     id: entityProps.id,
     shape: entityProps.shape as any,
     color: entityProps.color,
-    isReadonly: workspace.isReadonly?.() ?? false,
     // Bridge: connects existing property UI to clean architecture
     entityStore: entityStore,
     globalConfig: globalConfigSignal,
     position: posSignal,
     dimensions: dimsSignal,
     workspace,
-    storageProvider
+    storageProvider,
+    isReadonly: workspace.isReadonly?.() ?? false,
   });
   entity.edgeElements.forEach(el => workspace.appendToCanvas(el));
   return entity.instance;
@@ -270,7 +270,7 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager,
     // createEntity dispatches to Redux synchronously. That triggers runReconcile
     // which calls reannounceEntity → EventBus EntityCreated → the handler above
     // spawns + registers the instance before this line returns.
-    canvasAdapter.createEntity(id, 'New Entity', pos.x, pos.y, 220, 180);
+    canvasAdapter.createEntity(id, 'New Entity', pos.x, pos.y);
     // If the EventBus chain already spawned and registered this entity, return
     // the existing instance. Calling spawnEntity again would create a second
     // orphaned SVG tree that no cleanup path can ever reach.

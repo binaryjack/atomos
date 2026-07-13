@@ -16,11 +16,6 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
   const root = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   root.dataset.entityId = props.id;
   root.classList.add('vbs-entity');
-  
-  // Prevent native HTML5 drag-and-drop which creates semi-transparent ghost artifacts 
-  // when dragging text selections or draggable child elements rapidly.
-  root.addEventListener('dragstart', (e) => e.preventDefault());
-  
   const cleanups: Array<() => void> = [];
   const edgeElements: SVGGElement[] = [];
 

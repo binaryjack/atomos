@@ -1,9 +1,53 @@
-import type { ToolboxConfiguration } from '@atomos-web/prime'
+﻿import type { ToolboxConfiguration } from '@atomos-web/prime'
 import type { SchemaGraphKernel } from '../../../core/create-schema-graph-kernel.js'
-import type { AppSettings as CoreAppSettings } from '@atomos-web/structura-core'
 
-export type AppSettings = CoreAppSettings<ToolboxConfiguration>;
-export type { CustomShape, FontFamily, FontWeight, EntityStyleSettings, LinkStyleSettings } from '@atomos-web/structura-core';
+export interface CustomShape {
+  id: string;
+  name: string;
+  svg: string;
+}
+
+export type FontFamily = 'sans-serif' | 'serif' | 'monospace' | 'system-ui' | 'Inter, sans-serif' | 'Georgia, serif' | 'Courier New, monospace';
+export type FontWeight = 'normal' | '600' | 'bold';
+
+export interface EntityStyleSettings {
+  nameFontFamily: FontFamily;
+  nameFontSize: number;
+  nameFontWeight: FontWeight;
+  nameColor: string;
+  propsFontFamily: FontFamily;
+  propsFontSize: number;
+  propsFontWeight: FontWeight;
+  propsColor: string;
+  borderRadius: number;
+  borderWidth: number;
+  namePaddingY: number;
+  propsPaddingY: number;
+}
+
+export interface LinkStyleSettings {
+  color: string;
+  selectedColor: string;
+  thickness: number;
+  selectedThickness: number;
+}
+
+export interface AppSettings {
+  toolbox: ToolboxConfiguration;
+  general?: {
+    gridSize?: number;
+    enableSnapping?: boolean;
+    defaultLinkStyle?: string;
+    gridPrimaryColor?: string;
+    gridSecondaryColor?: string;
+    canvasBackgroundColor?: string;
+  };
+  appearance?: {
+    entity?: Partial<EntityStyleSettings>;
+    link?: Partial<LinkStyleSettings>;
+  };
+  shapes: CustomShape[];
+}
 
 export interface SettingsPageProps {
   readonly initialSettings?: AppSettings;

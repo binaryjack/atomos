@@ -1,4 +1,4 @@
-import type { EntityWithEdgesProps, EntityWithEdgesResult } from './types/entity-with-edges.types.js';
+﻿import type { EntityWithEdgesProps, EntityWithEdgesResult } from './types/entity-with-edges.types.js';
 export type { EntityWithEdgesProps, EntityWithEdgesResult };
 import { createCard } from '@atomos-web/prime';
 import { createTypography } from '@atomos-web/prime';
@@ -54,7 +54,6 @@ export const createEntityWithEdges = function(props: EntityWithEdgesProps): Enti
         entityDimensions: dimensionsSignal,
         thickness: edgeConfig.thickness,
         anchorId: edgeConfig.anchor.id,
-        isReadonly: props.isReadonly ?? false,
         onHover: (hovered: boolean) => {
           hoverSignal.set(hovered);
           if (edgeConfig.onHover) edgeConfig.onHover(hovered);
@@ -165,32 +164,13 @@ export const createEntityWithEdges = function(props: EntityWithEdgesProps): Enti
   
   // Embed entity content in SVG
   const foreignObject = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
-  foreignObject.setAttribute('x', '0');
-  foreignObject.setAttribute('y', '0');
+  foreignObject.setAttribute('x', currentPosition.x.toString());
+  foreignObject.setAttribute('y', currentPosition.y.toString());
   foreignObject.setAttribute('width', currentDimensions.width.toString());
   foreignObject.setAttribute('height', currentDimensions.height.toString());
   foreignObject.appendChild(entityContent);
   
   container.appendChild(foreignObject);
-
-  // Apply hardware-accelerated transform to the entire container
-  container.style.transform = `translate(${currentPosition.x}px, ${currentPosition.y}px)`;
-
-  // Update layout when signals change
-  const updatePosition = () => {
-    const pos = positionSignal.value;
-    container.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
-  };
-  
-  const updateDimensions = () => {
-    const dims = dimensionsSignal.value;
-    foreignObject.setAttribute('width', dims.width.toString());
-    foreignObject.setAttribute('height', dims.height.toString());
-    entityContent.style.width = `${dims.width}px`;
-  };
-  
-  cleanupFunctions.push(positionSignal.subscribe(updatePosition));
-  cleanupFunctions.push(dimensionsSignal.subscribe(updateDimensions));
   
   // Create edges after content
   createEntityEdges();

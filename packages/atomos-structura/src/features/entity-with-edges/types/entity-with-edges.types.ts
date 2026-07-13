@@ -1,4 +1,4 @@
-import type { Signal } from '@atomos-web/prime';
+﻿import type { Signal } from '@atomos-web/prime';
 import type { Property } from '@atomos-web/structura-core';
 import type { EdgePosition } from '../../edge/types/edge.types.js';
 
@@ -29,7 +29,6 @@ export interface EntityWithEdgesProps {
   readonly selected: Signal<boolean>;
   readonly draggable: boolean;
   readonly resizable: boolean;
-  readonly isReadonly?: boolean;
   readonly edges: {
     readonly top: EdgeConfig;
     readonly bottom: EdgeConfig;

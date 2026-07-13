@@ -29,21 +29,15 @@ class PriorityQueue<T> {
   }
 }
 
+const PADDING = 24;
 const PENALTY_BEND = 10;
 
-function getPadding(src: RoutingPoint, dst: RoutingPoint): number {
-  // Simple hash of coordinates to create 4 different tracks
-  const hash = Math.abs(Math.floor(src.x * 7 + dst.x * 13 + src.y * 17 + dst.y * 19));
-  const track = hash % 5; // 0, 1, 2, 3, 4
-  return 24 + (track * 12); // 24, 36, 48, 60, 72
-}
-
-function isSegmentBlocked(p1: RoutingPoint, p2: RoutingPoint, obstacles: RoutingObstacle[], padding: number): boolean {
+function isSegmentBlocked(p1: RoutingPoint, p2: RoutingPoint, obstacles: RoutingObstacle[]): boolean {
   for (const obs of obstacles) {
-    const ox1 = obs.x - padding + 2; 
-    const ox2 = obs.x + obs.width + padding - 2;
-    const oy1 = obs.y - padding + 2;
-    const oy2 = obs.y + obs.height + padding - 2;
+    const ox1 = obs.x - PADDING + 2; 
+    const ox2 = obs.x + obs.width + PADDING - 2;
+    const oy1 = obs.y - PADDING + 2;
+    const oy2 = obs.y + obs.height + PADDING - 2;
     
     const minX = Math.min(p1.x, p2.x);
     const maxX = Math.max(p1.x, p2.x);
@@ -98,19 +92,17 @@ export function routeAStar(
   const xs = new Set<number>();
   const ys = new Set<number>();
   
-  const padding = getPadding(src, dst);
-  
   const startOffset = { ...src };
-  if (srcEdge === 'top') startOffset.y -= padding;
-  if (srcEdge === 'bottom') startOffset.y += padding;
-  if (srcEdge === 'left') startOffset.x -= padding;
-  if (srcEdge === 'right') startOffset.x += padding;
+  if (srcEdge === 'top') startOffset.y -= PADDING;
+  if (srcEdge === 'bottom') startOffset.y += PADDING;
+  if (srcEdge === 'left') startOffset.x -= PADDING;
+  if (srcEdge === 'right') startOffset.x += PADDING;
   
   const endOffset = { ...dst };
-  if (dstEdge === 'top') endOffset.y -= padding;
-  if (dstEdge === 'bottom') endOffset.y += padding;
-  if (dstEdge === 'left') endOffset.x -= padding;
-  if (dstEdge === 'right') endOffset.x += padding;
+  if (dstEdge === 'top') endOffset.y -= PADDING;
+  if (dstEdge === 'bottom') endOffset.y += PADDING;
+  if (dstEdge === 'left') endOffset.x -= PADDING;
+  if (dstEdge === 'right') endOffset.x += PADDING;
   
   const addP = (x: number, y: number) => { xs.add(x); ys.add(y); };
   
@@ -121,40 +113,24 @@ export function routeAStar(
   
   // Add bbox edges and center lines for better routing
   for (const obs of obstacles) {
-    xs.add(obs.x - padding);
-    xs.add(obs.x + obs.width + padding);
-    ys.add(obs.y - padding);
-    ys.add(obs.y + obs.height + padding);
+    xs.add(obs.x - PADDING);
+    xs.add(obs.x + obs.width + PADDING);
+    ys.add(obs.y - PADDING);
+    ys.add(obs.y + obs.height + PADDING);
   }
   
   const xArr = Array.from(xs).sort((a, b) => a - b);
   const yArr = Array.from(ys).sort((a, b) => a - b);
   
   const gridNodes = new Map<string, {x: number, y: number}>();
-  for (let i = 0; i < xArr.length; i++) {
-    for (let j = 0; j < yArr.length; j++) {
-      gridNodes.set(`${i},${j}`, {x: xArr[i]!, y: yArr[j]!});
+  for (const x of xArr) {
+    for (const y of yArr) {
+      gridNodes.set(`${x},${y}`, {x, y});
     }
   }
 
-  // Find start and end indices securely
-  const getIndex = (arr: number[], val: number) => {
-    let closest = 0;
-    let minDist = Infinity;
-    for (let i = 0; i < arr.length; i++) {
-      const d = Math.abs(arr[i]! - val);
-      if (d < minDist) { minDist = d; closest = i; }
-    }
-    return closest;
-  };
-
-  const startXi = getIndex(xArr, startOffset.x);
-  const startYi = getIndex(yArr, startOffset.y);
-  const endXi = getIndex(xArr, endOffset.x);
-  const endYi = getIndex(yArr, endOffset.y);
-
-  const startKey = `${startXi},${startYi}`;
-  const endKey = `${endXi},${endYi}`;
+  const startKey = `${startOffset.x},${startOffset.y}`;
+  const endKey = `${endOffset.x},${endOffset.y}`;
   
   const openSet = new PriorityQueue<string>();
   openSet.enqueue(startKey, 0);
@@ -165,13 +141,15 @@ export function routeAStar(
   
   const getNeighbors = (key: string): string[] => {
     const parts = key.split(',');
-    const xi = Number(parts[0]);
-    const yi = Number(parts[1]);
+    const xsNum = Number(parts[0]);
+    const ysNum = Number(parts[1]);
+    const xi = xArr.indexOf(xsNum);
+    const yi = yArr.indexOf(ysNum);
     const neighbors: string[] = [];
-    if (xi > 0) neighbors.push(`${xi - 1},${yi}`);
-    if (xi < xArr.length - 1) neighbors.push(`${xi + 1},${yi}`);
-    if (yi > 0) neighbors.push(`${xi},${yi - 1}`);
-    if (yi < yArr.length - 1) neighbors.push(`${xi},${yi + 1}`);
+    if (xi > 0) neighbors.push(`${xArr[xi - 1]},${ysNum}`);
+    if (xi < xArr.length - 1) neighbors.push(`${xArr[xi + 1]},${ysNum}`);
+    if (yi > 0) neighbors.push(`${xsNum},${yArr[yi - 1]}`);
+    if (yi < yArr.length - 1) neighbors.push(`${xsNum},${yArr[yi + 1]}`);
     return neighbors;
   };
   
@@ -190,7 +168,7 @@ export function routeAStar(
     for (const neighbor of neighbors) {
       const neighborNode = gridNodes.get(neighbor)!;
       
-      if (isSegmentBlocked(currNode, neighborNode, obstacles, padding)) {
+      if (isSegmentBlocked(currNode, neighborNode, obstacles)) {
         continue;
       }
       

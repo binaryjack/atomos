@@ -19,8 +19,6 @@ export interface CanvasToolbarConfig {
   readonly getSnapshot: () => SVGSVGElement;
   /** Optional runtime menu control for toolbar item visibility / values. */
   readonly menuControl?: MenuControl;
-  /** Optional callback to get the true visible bounding rect for accurate fitToScreen centering. */
-  readonly getVisibleRect?: () => DOMRect;
 }
 
 export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bottomBar: HTMLElement; topBurger: HTMLElement; destroy: () => void } {
@@ -60,28 +58,6 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
 
   // 1. Math Utils for calculations
   const getBoundingBox = () => {
-    // Attempt to get the true bounding box from the SVG group (includes edges)
-    try {
-      const svg = config.getSnapshot();
-      const viewportGroup = svg.querySelector('.vbs-viewport-group') as SVGGElement | null;
-      if (viewportGroup) {
-        const bbox = viewportGroup.getBBox();
-        if (bbox && bbox.width > 0 && bbox.height > 0) {
-          // Add a small margin to the SVG bbox
-          return {
-            minX: bbox.x,
-            minY: bbox.y,
-            maxX: bbox.x + bbox.width,
-            maxY: bbox.y + bbox.height,
-            width: bbox.width,
-            height: bbox.height
-          };
-        }
-      }
-    } catch (e) {
-      console.warn('[TOOLBAR-LOG] SVG getBBox failed, falling back to entity coordinates', e);
-    }
-
     const entities = entityManager.getAllEntities();
     if (entities.length === 0) return null;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -94,7 +70,7 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
     return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
   };
 
-  const centerToSchema = (args?: { padding?: { top?: number, right?: number, bottom?: number, left?: number } }) => {
+  const centerToSchema = () => {
     console.log('[TOOLBAR-LOG] centerToSchema requested');
     const box = getBoundingBox();
     if (!box) {
@@ -112,24 +88,10 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
     
     const { zoom } = viewport.state.value;
     const currentZoom = Number.isFinite(zoom) ? zoom : 1;
-    const rect = config.getVisibleRect 
-      ? config.getVisibleRect() 
-      : toolbar.parentElement?.getBoundingClientRect();
-    const screenW = rect ? rect.width : window.innerWidth;
-    const screenH = rect ? rect.height : window.innerHeight;
-    
-    const padTop = args?.padding?.top ?? 0;
-    const padRight = args?.padding?.right ?? 0;
-    const padBottom = args?.padding?.bottom ?? 0;
-    const padLeft = args?.padding?.left ?? 0;
-    
-    const availableW = screenW - padLeft - padRight;
-    const availableH = screenH - padTop - padBottom;
-    
-    const visibleCenterX = padLeft + (availableW / 2);
-    const visibleCenterY = padTop + (availableH / 2);
-    const targetPanX = visibleCenterX - ((box.minX + box.width / 2) * currentZoom);
-    const targetPanY = visibleCenterY - ((box.minY + box.height / 2) * currentZoom);
+    const screenW = toolbar.parentElement?.clientWidth || window.innerWidth;
+    const screenH = (toolbar.parentElement?.clientHeight || window.innerHeight) - 40; // Nav height
+    const targetPanX = (screenW / 2) - ((box.minX + box.width / 2) * currentZoom);
+    const targetPanY = (screenH / 2) - ((box.minY + box.height / 2) * currentZoom);
     
     console.log(`[TOOLBAR-LOG] centerToSchema targetPanX:${targetPanX} targetPanY:${targetPanY} currentZoom:${currentZoom}`);
     
@@ -139,8 +101,8 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
     );
   };
 
-  const fitToScreen = (args?: { padding?: { top?: number, right?: number, bottom?: number, left?: number } }) => {
-    console.log('[TOOLBAR-LOG] fitToScreen requested', args);
+  const fitToScreen = () => {
+    console.log('[TOOLBAR-LOG] fitToScreen requested');
     const box = getBoundingBox();
     if (!box) {
       console.log('[TOOLBAR-LOG] getBoundingBox returned null');
@@ -155,35 +117,20 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
 
     console.log('[TOOLBAR-LOG] getBoundingBox returned:', box);
     
-    const rect = config.getVisibleRect 
-      ? config.getVisibleRect() 
-      : toolbar.parentElement?.getBoundingClientRect();
-      
-    const screenW = rect ? rect.width : window.innerWidth;
-    const screenH = rect ? rect.height : window.innerHeight;
-    
-    const basePadding = 100;
-    const padTop = args?.padding?.top ?? basePadding;
-    const padRight = args?.padding?.right ?? basePadding;
-    const padBottom = args?.padding?.bottom ?? basePadding;
-    const padLeft = args?.padding?.left ?? basePadding;
-    
-    const availableW = screenW - padLeft - padRight;
-    const availableH = screenH - padTop - padBottom;
-    
-    const zoomX = availableW / Math.max(box.width, 1);
-    const zoomY = availableH / Math.max(box.height, 1);
+    const screenW = toolbar.parentElement?.clientWidth || window.innerWidth;
+    const screenH = (toolbar.parentElement?.clientHeight || window.innerHeight) - 40;
+    const padding = 100;
+    const zoomX = (screenW - padding * 2) / Math.max(box.width, 1);
+    const zoomY = (screenH - padding * 2) / Math.max(box.height, 1);
     const newZoom = Math.min(Math.min(zoomX, zoomY), 2); // Cap at 2x max
     
     console.log(`[TOOLBAR-LOG] fitToScreen zoomX:${zoomX} zoomY:${zoomY} calculated newZoom:${newZoom}`);
     
     viewport.zoomTo(Number.isFinite(newZoom) ? newZoom : 1);
     
-    // Recalculate pan with new zoom, offset by the asymmetrical padding
-    const visibleCenterX = padLeft + (availableW / 2);
-    const visibleCenterY = padTop + (availableH / 2);
-    const targetPanX = visibleCenterX - ((box.minX + box.width / 2) * newZoom);
-    const targetPanY = visibleCenterY - ((box.minY + box.height / 2) * newZoom);
+    // Recalculate pan with new zoom
+    const targetPanX = (screenW / 2) - ((box.minX + box.width / 2) * newZoom);
+    const targetPanY = (screenH / 2) - ((box.minY + box.height / 2) * newZoom);
     
     console.log(`[TOOLBAR-LOG] fitToScreen targetPanX:${targetPanX} targetPanY:${targetPanY}`);
     
@@ -651,23 +598,15 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
         else if (args.level === 'out') viewport.zoomBy(-0.1);
         if (sendResult) sendResult();
       } else if (action === 'structura_fit_to_screen') {
-        const args = (e as CustomEvent).detail.args || {};
-        fitToScreen(args);
+        fitToScreen();
         if (sendResult) sendResult();
       } else if (action === 'structura_center_to_schema') {
-        const args = (e as CustomEvent).detail.args || {};
-        centerToSchema(args);
+        centerToSchema();
         if (sendResult) sendResult();
       } else if (action === 'structura_toggle_mouse_zoom') {
         const args = (e as CustomEvent).detail.args || {};
         if (viewport.setMouseZoomEnabled) {
           viewport.setMouseZoomEnabled(args.enabled !== false);
-        }
-        if (sendResult) sendResult();
-      } else if (action === 'structura_set_settings') {
-        const args = (e as CustomEvent).detail.args || {};
-        if (args.settings) {
-          store.dispatch({ type: 'settings-updated', settings: args.settings });
         }
         if (sendResult) sendResult();
       }

@@ -1,4 +1,4 @@
-import { computeShapeAnchorPos } from '../../canvas/geometry/compute-shape-anchor-pos.js';
+﻿import { computeShapeAnchorPos } from '../../canvas/geometry/compute-shape-anchor-pos.js';
 import { createSignal } from '@atomos-web/prime';
 import { createAnchor } from '@atomos-web/prime';
 import type { EdgeProps, EdgeResult, EdgeState } from './types/edge.types.js';
@@ -48,7 +48,7 @@ export const createEdge = function(props: EdgeProps): EdgeResult {
   const pos0  = props.entityPosition.value;
   const dims0 = props.entityDimensions.value;
 
-  // Visual bar — now invisible as requested
+// Visual bar — now invisible as requested
   const bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');   
   bar.setAttribute('fill', 'transparent');
   bar.setAttribute('opacity', '0');
@@ -56,40 +56,29 @@ export const createEdge = function(props: EdgeProps): EdgeResult {
   bar.style.pointerEvents = 'none';
   // CSS transition for color/opacity; thickness is changed via attribute in hover handlers
   bar.style.transition = 'opacity 0.12s ease, fill 0.12s ease';
-  const relPos = { x: 0, y: 0 };
-  applyRect(bar, computeBar(relPos, dims0));
+  applyRect(bar, computeBar(pos0, dims0));
 
   // Transparent hit area — wider than bar for comfortable hover
   const hit = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
   hit.setAttribute('fill', 'transparent');
   hit.setAttribute('pointer-events', 'all');
   hit.style.cursor = 'crosshair';
-  applyRect(hit, computeHit(relPos, dims0));
+  applyRect(hit, computeHit(pos0, dims0));
 
   // Anchor position signal — updated reactively when entity moves
   const anchorPos = createSignal(computeAnchorPos(pos0, dims0));
 
-  // Split updates to avoid layout thrashing during drag
-  const onPositionChange = () => {
+  // Single update function for all geometry — called when entity position or dimensions change
+  const onEntityChange = () => {
     const p = props.entityPosition.value;
     const d = props.entityDimensions.value;
-    // We strictly do NOT touch SVG rect attributes here!
-    // We only update the mathematical anchor position for bezier links
+    applyRect(bar, computeBar(p, d));
+    applyRect(hit, computeHit(p, d));
     anchorPos.set(computeAnchorPos(p, d));
   };
 
-  const onDimensionsChange = () => {
-    const p = props.entityPosition.value;
-    const d = props.entityDimensions.value;
-    const relPos = { x: 0, y: 0 };
-    // Update SVG rect attributes only when dimensions actually change
-    applyRect(bar, computeBar(relPos, d));
-    applyRect(hit, computeHit(relPos, d));
-    anchorPos.set(computeAnchorPos(p, d));
-  };
-
-  cleanups.push(props.entityPosition.subscribe(onPositionChange));
-  cleanups.push(props.entityDimensions.subscribe(onDimensionsChange));
+  cleanups.push(props.entityPosition.subscribe(onEntityChange));
+  cleanups.push(props.entityDimensions.subscribe(onEntityChange));
 
   // Container-level hover using mouseover/mouseout with relatedTarget guard.
   // This correctly handles pointer movement between bar/hit/anchor without false leave events.
@@ -104,9 +93,9 @@ export const createEdge = function(props: EdgeProps): EdgeResult {
     bar.setAttribute('fill', 'transparent');
     bar.setAttribute('opacity', '0');
     // Grow bar thickness
+    const p = props.entityPosition.value;
     const d = props.entityDimensions.value;
-    const relPos = { x: 0, y: 0 };
-    const thick = { ...computeBar(relPos, d) };
+    const thick = { ...computeBar(p, d) };
     // Override the thin dimension with hover thickness
     const extra = thickHover - props.thickness;
     if (props.position === 'top' || props.position === 'bottom') thick.height = thickHover;
@@ -124,7 +113,7 @@ export const createEdge = function(props: EdgeProps): EdgeResult {
     bar.setAttribute('fill', 'transparent');
     bar.setAttribute('opacity', '0');
     // Reset bar to normal thickness
-    applyRect(bar, computeBar({ x: 0, y: 0 }, props.entityDimensions.value));
+    applyRect(bar, computeBar(props.entityPosition.value, props.entityDimensions.value));
     anchorResult?.updateState('idle');
     props.onHover?.(false);
   };
@@ -154,25 +143,20 @@ export const createEdge = function(props: EdgeProps): EdgeResult {
     position: anchorPos,
     edgePosition: props.position,
     connected: false,
-    radius: 4,
-    ...((!props.isReadonly && props.onAnchorConnect) ? { onConnect: (linkId: string) => { props.onAnchorConnect!(props.anchorId, linkId); } } : {}),
-    ...((!props.isReadonly && props.onAnchorMouseDown) ? { onMouseDown: (event: MouseEvent) => { props.onAnchorMouseDown!(event, props.anchorId); } } : {}),
-    ...((!props.isReadonly && props.onAnchorMouseUp) ? { onMouseUp: (event: MouseEvent) => { props.onAnchorMouseUp!(event, props.anchorId); } } : {})
+    radius: 7,
+    onConnect: (linkId) => props.onAnchorConnect?.(props.anchorId, linkId),
+    onMouseDown: (event) => props.onAnchorMouseDown?.(event, props.anchorId),
+    onMouseUp:   (event) => props.onAnchorMouseUp?.(event, props.anchorId)
   });
-
-  if (props.isReadonly && anchorResult) {
-    anchorResult.element.style.display = 'none';
-  }
 
   // DOM order: bar (bottom visual), anchor (above bar), hit (top — captures hover events)
   // hit is last so it covers bar area; anchor circle is above bar but below hit by index
   // SVG: later elements receive events first. Anchor circle must come AFTER hit to receive clicks.
   // Solution: put anchor AFTER hit so it is on top and captures its own events.
   container.appendChild(bar);
-  container.appendChild(hit);  if (anchorResult) {
-    container.appendChild(anchorResult.element);
-    cleanups.push(anchorResult.cleanup.destroy);
-  }
+  container.appendChild(hit);
+  container.appendChild(anchorResult.element);
+  cleanups.push(anchorResult.cleanup.destroy);
 
   const updateState = (state: EdgeState) => {
     edgeState.set(state);
