@@ -15,6 +15,8 @@ export interface WorkspaceManager {
   readonly registerEntity: (entity: EntityInstance) => void;
   readonly unregisterEntity: (entityId: string) => void;
   readonly screenToSvgCoords: (clientX: number, clientY: number) => { x: number; y: number };
+  readonly startCachingCoords: () => void;
+  readonly stopCachingCoords: () => void;
   readonly startLinkFromAnchor: (
     anchorId: string,
     anchorPos: { x: number; y: number },

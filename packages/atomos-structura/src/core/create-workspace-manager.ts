@@ -86,6 +86,8 @@ export const createWorkspaceManager = function(
       }
     },
     screenToSvgCoords: transformer.screenToSvgCoords,
+    startCachingCoords: transformer.startCachingCoords,
+    stopCachingCoords:  transformer.stopCachingCoords,
 
     startLinkFromAnchor: (anchorId, anchorPos, entityId, srcEdge, event) => {
       linkDrawCtrl.startLinkFromAnchor(anchorId, anchorPos, entityId, srcEdge, event);

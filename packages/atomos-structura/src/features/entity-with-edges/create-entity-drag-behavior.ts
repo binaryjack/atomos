@@ -40,6 +40,12 @@ export const createEntityDragBehavior = function(
 
     const me = e as MouseEvent;
     me.stopPropagation();
+    
+    // Start coordinate caching to eliminate getScreenCTM layout thrashing during mousemove
+    if (workspace.startCachingCoords) {
+      workspace.startCachingCoords();
+    }
+
     const svg = workspace.screenToSvgCoords(me.clientX, me.clientY);
     dragging = true;
     didMove = false;
@@ -74,52 +80,24 @@ export const createEntityDragBehavior = function(
       }
     }
 
-    if (queuedFrame !== null) {
-      cancelAnimationFrame(queuedFrame);
-    }
-    
-    queuedFrame = requestAnimationFrame(() => {
-      queuedFrame = null;
+    // Calculate raw position smoothly (no snapping during drag)
+    const rawX = dragStart.posX + dx;
+    const rawY = dragStart.posY + dy;
 
-      // Calculate raw position
-      let rawX = dragStart.posX + dx;
-      let rawY = dragStart.posY + dy;
+    // Show alignment guides as visual aid, but do NOT snap during drag
+    const currentDims = dimensions.value;
+    workspace.updateAlignmentGuides(entityId, { x: rawX, y: rawY }, currentDims);
 
-      // Get current dimensions for alignment guides
-      const currentDims = dimensions.value;
-      // console.log('[DRAG-BEHAVIOR] Current dimensions:', currentDims);
-
-      // Calculate and show alignment guides
-      const guides = workspace.updateAlignmentGuides(entityId, { x: rawX, y: rawY }, currentDims);
-
-      // Check if we should snap to alignment guides
-      if (guides.length > 0) {
-        const snappedPos = calculateSnappedPosition(
-          { x: rawX, y: rawY },
-          currentDims,
-          guides
-        );
-        rawX = snappedPos.x;
-        rawY = snappedPos.y;
-      } else {
-        // Grid snapping only when no alignment guides are active
-        const { enableSnapping } = getGeneralSettings() || {};
-        if (enableSnapping) {
-          rawX = Math.round(rawX / activeGridSize) * activeGridSize;
-          rawY = Math.round(rawY / activeGridSize) * activeGridSize;
-        }
-      }
-
-      position.set({ x: rawX, y: rawY });
-    });
+    position.set({ x: rawX, y: rawY });
   };
 
   const onMouseUp = (): void => {
     if (!dragging) return;
     dragging = false;
-    if (queuedFrame !== null) {
-      cancelAnimationFrame(queuedFrame);
-      queuedFrame = null;
+    
+    // Stop coordinate caching
+    if (workspace.stopCachingCoords) {
+      workspace.stopCachingCoords();
     }
     
     // Clear alignment guides
@@ -130,7 +108,34 @@ export const createEntityDragBehavior = function(
       entityRoot.classList.remove('vbs-dragging');
     }
     
-    if (!didMove) {
+    if (didMove) {
+      // Snap to grid/alignment on drop
+      let finalX = position.value.x;
+      let finalY = position.value.y;
+      const currentDims = dimensions.value;
+
+      // 1. Snap to alignment guides if nearby at drop time
+      const guides = workspace.updateAlignmentGuides(entityId, { x: finalX, y: finalY }, currentDims);
+      if (guides.length > 0) {
+        const snappedPos = calculateSnappedPosition(
+          { x: finalX, y: finalY },
+          currentDims,
+          guides
+        );
+        finalX = snappedPos.x;
+        finalY = snappedPos.y;
+      } else {
+        // 2. Fall back to grid snapping on drop time
+        const { enableSnapping } = getGeneralSettings() || {};
+        if (enableSnapping) {
+          finalX = Math.round(finalX / activeGridSize) * activeGridSize;
+          finalY = Math.round(finalY / activeGridSize) * activeGridSize;
+        }
+      }
+      
+      position.set({ x: finalX, y: finalY });
+      workspace.clearAlignmentGuides();
+    } else {
       // Pure click — select this entity
       selected.set(true);
       workspace.behaviorManager.selectEntity(entityId);

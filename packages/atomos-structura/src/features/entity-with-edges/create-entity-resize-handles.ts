@@ -56,6 +56,12 @@ export const createEntityResizeHandles = function(
       me.stopPropagation();
       if (!selected.value) return;
       resizing = true;
+      
+      // Start coordinate caching to eliminate getScreenCTM layout thrashing during mousemove
+      if (workspace.startCachingCoords) {
+        workspace.startCachingCoords();
+      }
+
       const svg = workspace.screenToSvgCoords(me.clientX, me.clientY);
       const { width, height } = dimensions.value;
       const { x, y } = position.value;
@@ -111,6 +117,12 @@ export const createEntityResizeHandles = function(
 
     const onMouseUp = (): void => {
       resizing = false;
+      
+      // Stop coordinate caching
+      if (workspace.stopCachingCoords) {
+        workspace.stopCachingCoords();
+      }
+
       if (queuedFrame !== null) {
         cancelAnimationFrame(queuedFrame);
         queuedFrame = null;

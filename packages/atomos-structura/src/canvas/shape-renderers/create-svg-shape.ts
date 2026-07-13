@@ -49,7 +49,7 @@ export const createSVGShape = (shape: EntityShape, width: number, height: number
         stroke: ${stroke}; 
         stroke-width: ${strokeWidth}; 
         filter: ${shadow};
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        transition: fill 0.3s, stroke 0.3s, filter 0.3s;
       `);
       return svgEl;
     }
