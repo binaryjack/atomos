@@ -20,6 +20,8 @@ export const createEntityDragBehavior = function(
   let dragStart = { svgX: 0, svgY: 0, posX: 0, posY: 0 };
   let queuedFrame: number | null = null;
 
+  let activeGridSize = 16;
+
   const onMouseDown = (e: Event): void => {
     const target = e.target as HTMLElement;
     if (target && (
@@ -42,6 +44,16 @@ export const createEntityDragBehavior = function(
     dragging = true;
     didMove = false;
     dragStart = { svgX: svg.x, svgY: svg.y, posX: position.value.x, posY: position.value.y };
+    
+    // Cache grid size at drag start to prevent layout thrashing (getComputedStyle) in onMouseMove
+    activeGridSize = 16;
+    const root = document.querySelector('.vbs-workspace, vbs-workspace') as HTMLElement || document.body;
+    if (root) {
+      const gridVar = getComputedStyle(root).getPropertyValue('--vbs-grid-size');
+      const parsed = parseInt(gridVar);
+      if (!isNaN(parsed) && parsed > 0) activeGridSize = parsed;
+    }
+
     if (bodyElement instanceof HTMLElement) bodyElement.style.cursor = 'grabbing';
     document.body.style.cursor = 'grabbing';
     document.addEventListener('mousemove', onMouseMove);
@@ -90,16 +102,8 @@ export const createEntityDragBehavior = function(
         // Grid snapping only when no alignment guides are active
         const { enableSnapping } = getGeneralSettings() || {};
         if (enableSnapping) {
-          const root = document.querySelector('.vbs-workspace, vbs-workspace') as HTMLElement || document.body;
-          let gridSize = 16;
-          if (root) {
-            const gridVar = getComputedStyle(root).getPropertyValue('--vbs-grid-size');
-            const parsed = parseInt(gridVar);
-            if (!isNaN(parsed) && parsed > 0) gridSize = parsed;
-          }
-
-          rawX = Math.round(rawX / gridSize) * gridSize;
-          rawY = Math.round(rawY / gridSize) * gridSize;
+          rawX = Math.round(rawX / activeGridSize) * activeGridSize;
+          rawY = Math.round(rawY / activeGridSize) * activeGridSize;
         }
       }
 

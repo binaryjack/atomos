@@ -172,13 +172,21 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
     if (dragCleanup) dragCleanup();
   });
 
-  const syncGeometry = (): void => {
+  const syncPosition = (): void => {
     const { x, y } = props.position.value;
-    const { width, height } = visualDimensions.value;
     root.setAttribute('transform', `translate(${x},${y})`);
+  };
+
+  const syncSizeAndSelection = (): void => {
+    const { width, height } = visualDimensions.value;
     if (updateSize) updateSize(width, height);
     resizeHandles.syncHandles(width, height, selected.value);
     selectionRing.syncRing(width, height, selected.value);
+  };
+
+  const syncGeometry = (): void => {
+    syncPosition();
+    syncSizeAndSelection();
   };
 
   // --- Selection ring ---
@@ -196,9 +204,9 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
   cleanups.push(resizeHandles.cleanup);
 
   // Wire geometry sync after sub-factories are constructed
-  cleanups.push(props.position.subscribe(syncGeometry));
-  cleanups.push(visualDimensions.subscribe(syncGeometry));
-  cleanups.push(selected.subscribe(syncGeometry));
+  cleanups.push(props.position.subscribe(syncPosition));
+  cleanups.push(visualDimensions.subscribe(syncSizeAndSelection));
+  cleanups.push(selected.subscribe(syncSizeAndSelection));
 
   // --- Edges ---
   const anchorIds: Record<EdgePosition, string> = {

@@ -28,45 +28,57 @@ export const createAlignmentGuides = function(): AlignmentGuidesResult {
   container.setAttribute('class', 'alignment-guides');
   container.style.pointerEvents = 'none';
   
-  const lines: SVGLineElement[] = [];
+  const POOL_SIZE = 10;
+  const linePool: SVGLineElement[] = [];
+  
+  // Pre-create and style pool lines once
+  for (let i = 0; i < POOL_SIZE; i++) {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('stroke', GUIDE_COLOR);
+    line.setAttribute('stroke-width', GUIDE_THICKNESS.toString());
+    line.setAttribute('stroke-opacity', GUIDE_OPACITY.toString());
+    line.setAttribute('stroke-dasharray', '4 4');
+    line.style.display = 'none';
+    container.appendChild(line);
+    linePool.push(line);
+  }
   
   const showGuides = (guides: AlignmentGuide[]): void => {
-    hideGuides();
+    const count = Math.min(guides.length, POOL_SIZE);
     
-    // Create new guide lines
-    guides.forEach(guide => {
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('stroke', GUIDE_COLOR);
-      line.setAttribute('stroke-width', GUIDE_THICKNESS.toString());
-      line.setAttribute('stroke-opacity', GUIDE_OPACITY.toString());
-      line.setAttribute('stroke-dasharray', '4 4');
+    for (let i = 0; i < count; i++) {
+      const guide = guides[i];
+      const line = linePool[i];
+      if (!guide || !line) continue;
       
       if (guide.type === 'vertical') {
-        // Vertical guide extends top to bottom of viewport
         line.setAttribute('x1', guide.position.toString());
         line.setAttribute('y1', '-10000');
         line.setAttribute('x2', guide.position.toString());
         line.setAttribute('y2', '10000');
       } else {
-        // Horizontal guide extends left to right of viewport
         line.setAttribute('x1', '-10000');
         line.setAttribute('y1', guide.position.toString());
         line.setAttribute('x2', '10000');
         line.setAttribute('y2', guide.position.toString());
       }
       
-      container.appendChild(line);
-      lines.push(line);
-    });
+      line.style.display = '';
+    }
+    
+    // Hide unused pool lines
+    for (let i = count; i < POOL_SIZE; i++) {
+      const line = linePool[i];
+      if (line) {
+        line.style.display = 'none';
+      }
+    }
   };
   
   const hideGuides = (): void => {
-    lines.forEach(line => {
-      if (line.parentNode) {
-        line.parentNode.removeChild(line);
-      }
+    linePool.forEach(line => {
+      line.style.display = 'none';
     });
-    lines.length = 0;
   };
   
   const cleanup = (): void => {
@@ -74,6 +86,7 @@ export const createAlignmentGuides = function(): AlignmentGuidesResult {
     if (container.parentNode) {
       container.parentNode.removeChild(container);
     }
+    linePool.length = 0;
   };
   
   return {
