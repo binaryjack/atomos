@@ -65,11 +65,11 @@ export function SimulatorDemo() {
         // Auto-heal logic: If entities exist but lack color (due to the telemetry bug), restore them
         const entities = em.getAllEntities();
         const n1 = entities.find(e => e.name === 'View');
-        if (n1 && !n1.color) em.updateEntityMetadata(n1.id, { color: '#3b82f6' });
+        if (n1 && !n1.metadata?.color) em.updateEntityMetadata(n1.id, { color: '#3b82f6' });
         const n2 = entities.find(e => e.name === 'Controller');
-        if (n2 && !n2.color) em.updateEntityMetadata(n2.id, { color: '#10b981' });
+        if (n2 && !n2.metadata?.color) em.updateEntityMetadata(n2.id, { color: '#10b981' });
         const n3 = entities.find(e => e.name === 'Model');
-        if (n3 && !n3.color) em.updateEntityMetadata(n3.id, { color: '#f59e0b' });
+        if (n3 && !n3.metadata?.color) em.updateEntityMetadata(n3.id, { color: '#f59e0b' });
         return;
       }
 
@@ -161,8 +161,13 @@ export function SimulatorDemo() {
       const el = document.querySelector(`[data-entity-id="${en.id}"]`) as HTMLElement;
       if (el) {
         el.style.filter = '';
-        const defaultColor = (en as any).color || 'var(--vbs-bg-panel, #111111)';
+        const defaultColor = en.metadata?.color || 'var(--vbs-bg-panel, #111111)';
         el.style.setProperty('--vbs-entity-color', defaultColor);
+        import('@atomos-web/prime').then(({ computeContrastColor }) => {
+          const contrast = computeContrastColor(defaultColor);
+          el.style.setProperty('--vbs-entity-text-color', contrast.textColor);
+          el.style.setProperty('--vbs-entity-muted-color', contrast.mutedColor);
+        });
         const badge = el.querySelector('.sim-check-badge');
         if (badge) badge.remove();
       }
@@ -190,6 +195,11 @@ export function SimulatorDemo() {
            el.style.transition = 'filter 0.3s';
            el.style.filter = 'drop-shadow(0 0 16px #f59e0b)';
            el.style.setProperty('--vbs-entity-color', '#f59e0b');
+           import('@atomos-web/prime').then(({ computeContrastColor }) => {
+             const contrast = computeContrastColor('#f59e0b');
+             el.style.setProperty('--vbs-entity-text-color', contrast.textColor);
+             el.style.setProperty('--vbs-entity-muted-color', contrast.mutedColor);
+           });
          }
       }
       
@@ -215,6 +225,11 @@ export function SimulatorDemo() {
          if (el) {
            el.style.filter = state.shadow ? `drop-shadow(${state.shadow})` : '';
            el.style.setProperty('--vbs-entity-color', state.color);
+           import('@atomos-web/prime').then(({ computeContrastColor }) => {
+             const contrast = computeContrastColor(state.color);
+             el.style.setProperty('--vbs-entity-text-color', contrast.textColor);
+             el.style.setProperty('--vbs-entity-muted-color', contrast.mutedColor);
+           });
 
            const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
            badge.setAttribute('class', 'sim-check-badge');

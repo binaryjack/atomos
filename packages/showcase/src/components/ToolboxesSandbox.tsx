@@ -89,7 +89,7 @@ export function ToolboxesSandbox() {
 
   return (
     <div className="flex flex-col h-full relative">
-      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 p-4 bg-slate-900/80 backdrop-blur border border-slate-700/50 rounded-xl shadow-2xl w-64">
+      <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 p-4 bg-slate-900/80 backdrop-blur border border-slate-700/50 rounded-xl shadow-2xl w-64">
         <label className="text-xs uppercase font-bold text-slate-400 tracking-wider">Select Domain</label>
         <select 
           className="bg-slate-950 border border-slate-700 rounded-lg p-2 text-sm text-slate-200 outline-none focus:border-amber-500 transition-colors"
