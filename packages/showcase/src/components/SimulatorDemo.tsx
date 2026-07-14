@@ -15,6 +15,8 @@ export function SimulatorDemo() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [warnings, setWarnings] = useState<Warning[]>([]);
   const [isMouseZoomEnabled, setIsMouseZoomEnabled] = useState(true);
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
 
   // We need to keep a ref to the latest state for the async telemetry
   const isExecutingRef = useRef(isExecuting);
@@ -310,7 +312,7 @@ export function SimulatorDemo() {
   const btnClass = "bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-medium py-2 px-3 rounded transition-colors text-sm text-left w-full";
 
   return (
-    <div className="flex w-full h-[700px] border border-slate-800 rounded-xl overflow-hidden bg-slate-950 text-slate-200">
+    <div className="flex flex-col md:flex-row w-full h-[calc(100vh-100px)] md:h-[700px] border border-slate-800 rounded-xl overflow-hidden bg-slate-950 text-slate-200 relative">
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes vbs-dash {
           to { stroke-dashoffset: -10; }
@@ -319,11 +321,50 @@ export function SimulatorDemo() {
           animation: vbs-dash 0.6s linear infinite !important;
         }
       `}} />
+
+      {/* Mobile Header Toggle */}
+      <div className="md:hidden flex items-center justify-between p-3 bg-slate-900 border-b border-slate-800 z-30 shrink-0">
+        <button 
+          onClick={() => setIsLeftSidebarOpen(true)}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-slate-800 hover:bg-slate-700 rounded-md text-white transition-colors"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          Simulator
+        </button>
+        <button 
+          onClick={() => setIsRightSidebarOpen(true)}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-red-900/30 hover:bg-red-900/50 text-red-200 rounded-md transition-colors"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          Logs
+        </button>
+      </div>
+
+      {/* Mobile Backdrop */}
+      {(isLeftSidebarOpen || isRightSidebarOpen) && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => {
+            setIsLeftSidebarOpen(false);
+            setIsRightSidebarOpen(false);
+          }}
+        />
+      )}
       
       {/* Left Sidebar */}
-      <div className="w-[280px] min-w-[280px] bg-slate-900 border-r border-slate-800 flex flex-col p-4 gap-6 overflow-y-auto">
-        <div>
-          <h2 className="text-lg font-semibold border-b border-slate-700 pb-2 mb-2 text-white">Consumer Simulator</h2>
+      <div className={`
+        fixed inset-y-0 left-0 z-50 md:z-10 md:relative w-72 md:w-[280px] md:min-w-[280px] 
+        bg-slate-900 border-r border-slate-800 flex flex-col p-4 gap-6 overflow-y-auto
+        transition-transform duration-300 ease-in-out shrink-0
+        ${isLeftSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+      `}>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-white">Consumer Simulator</h2>
+          <button className="md:hidden p-1 text-slate-400 hover:text-white" onClick={() => setIsLeftSidebarOpen(false)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div className="border-b border-slate-700 pb-2 -mt-4">
           <p className="text-xs text-slate-400">This panel imitates an external consumer controlling Structura via MCP tools.</p>
         </div>
 
@@ -390,14 +431,24 @@ export function SimulatorDemo() {
       </div>
 
       {/* Main Canvas Area */}
-      <div className="flex-1 relative bg-slate-950" ref={containerRef}>
+      <div className="flex-1 relative bg-slate-950 min-h-0 min-w-0" ref={containerRef}>
         {/* Canvas is injected here */}
       </div>
 
       {/* Right Sidebar */}
-      <div className="w-[300px] min-w-[300px] bg-slate-900 border-l border-slate-800 flex flex-col p-4 gap-4 overflow-y-auto">
-        <div>
-          <h2 className="text-lg font-semibold border-b border-slate-700 pb-2 mb-2 text-white">Errors & Warnings</h2>
+      <div className={`
+        fixed inset-y-0 right-0 z-50 md:z-10 md:relative w-72 md:w-[300px] md:min-w-[300px] 
+        bg-slate-900 border-l border-slate-800 flex flex-col p-4 gap-4 overflow-y-auto
+        transition-transform duration-300 ease-in-out shrink-0
+        ${isRightSidebarOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"}
+      `}>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-white">Errors & Warnings</h2>
+          <button className="md:hidden p-1 text-slate-400 hover:text-white" onClick={() => setIsRightSidebarOpen(false)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div className="border-b border-slate-700 pb-2 -mt-2">
           <p className="text-xs text-slate-400">Headless validation events propagated via MCP/DOM events.</p>
         </div>
         
