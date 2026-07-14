@@ -23,7 +23,7 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
 
   // Sync color from Redux into a CSS variable on the root node
   const updateRootColor = () => {
-    const color = props.entityStore.signal.value.color || 'var(--vbs-bg-panel, #111111)';
+    const color = props.color || 'var(--vbs-bg-panel, #111111)';
     root.style.setProperty('--vbs-entity-color', color);
   };
   updateRootColor();

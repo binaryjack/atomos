@@ -2,7 +2,7 @@ import { SimulatorDemo } from '@/components/SimulatorDemo'
 
 export default function SimulatorDemoPage() {
   return (
-    <div className="flex-1 flex flex-col -m-4 md:-m-8 bg-slate-950">
+    <div className="absolute inset-0 bg-slate-950 z-20">
       <SimulatorDemo />
     </div>
   )

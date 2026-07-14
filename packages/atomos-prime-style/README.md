@@ -80,4 +80,4 @@ export default {
 
 ## License
 
-MIT
+AGPLv3

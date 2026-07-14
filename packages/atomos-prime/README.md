@@ -100,4 +100,4 @@ import { lightTheme, darkTheme, colors, spacing } from '@atomos-web/prime-style'
 
 ## License
 
-MIT
+AGPLv3

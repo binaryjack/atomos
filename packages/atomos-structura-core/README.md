@@ -67,4 +67,4 @@ if (!result.success) console.error(result.error);
 
 ## License
 
-MIT
+AGPLv3

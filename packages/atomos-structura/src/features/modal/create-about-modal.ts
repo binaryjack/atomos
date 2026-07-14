@@ -31,7 +31,7 @@ export const createAboutModal = (container: HTMLElement): (() => void) => {
 
   const license = document.createElement('p');
   license.classList.add('vbs-modal-license');
-  license.textContent = 'Released under the MIT License.';
+  license.textContent = 'Released under the AGPLv3 License.';
 
   const links = document.createElement('div');
   links.classList.add('vbs-modal-links');

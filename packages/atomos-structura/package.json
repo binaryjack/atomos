@@ -1,7 +1,7 @@
 {
   "name": "@atomos-web/structura",
   "version": "2.3.7",
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "type": "module",
   "publishConfig": {
     "access": "public"

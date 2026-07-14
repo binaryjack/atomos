@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
+import '@atomos-web/prime-style/dist/styles.css'
 
 interface Warning {
   rule: string;
@@ -52,7 +53,7 @@ export function SimulatorDemo() {
       }
 
       containerRef.current.innerHTML = '';
-      const page = createCanvasPage('simulator-instance', { readonly: isReadonly, headless: isHeadless });
+      const page = createCanvasPage('simulator-instance', { readonly: isReadonly, headless: isHeadless, allow_multiple_schemas: false });
       canvasPageRef.current = page;
       containerRef.current.appendChild(page.element);
     };
@@ -64,12 +65,12 @@ export function SimulatorDemo() {
       if (em.getAllEntities().length > 0) {
         // Auto-heal logic: If entities exist but lack color (due to the telemetry bug), restore them
         const entities = em.getAllEntities();
-        const n1 = entities.find(e => e.name === 'View');
-        if (n1 && !n1.metadata?.color) em.updateEntityMetadata(n1.id, { color: '#3b82f6' });
-        const n2 = entities.find(e => e.name === 'Controller');
-        if (n2 && !n2.metadata?.color) em.updateEntityMetadata(n2.id, { color: '#10b981' });
-        const n3 = entities.find(e => e.name === 'Model');
-        if (n3 && !n3.metadata?.color) em.updateEntityMetadata(n3.id, { color: '#f59e0b' });
+        const n1 = entities.find((e: any) => e.name === 'View');
+        if (n1 && !n1.color) em.updateEntityMetadata(n1.id, { color: '#3b82f6' });
+        const n2 = entities.find((e: any) => e.name === 'Controller');
+        if (n2 && !n2.color) em.updateEntityMetadata(n2.id, { color: '#10b981' });
+        const n3 = entities.find((e: any) => e.name === 'Model');
+        if (n3 && !n3.color) em.updateEntityMetadata(n3.id, { color: '#f59e0b' });
         return;
       }
 
@@ -130,6 +131,15 @@ export function SimulatorDemo() {
     }
   };
 
+  // Re-center canvas when sidebars open/close
+  useEffect(() => {
+    // Wait for the CSS transition to finish before fitting
+    const timer = setTimeout(() => {
+      dispatchMcp('structura_fit_to_screen', { padding: { top: 100, bottom: 100, left: 100, right: 100 } });
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [isLeftSidebarOpen, isRightSidebarOpen]);
+
   const handleTelemetry = async () => {
     if (isExecuting) {
       setIsExecuting(false);
@@ -153,15 +163,15 @@ export function SimulatorDemo() {
       if(adj.has(l.sourceEntityId)) adj.get(l.sourceEntityId)?.push({ link: l, target: l.targetEntityId });
     });
     
-    let queue = entities.filter(en => inDegree.get(en.id) === 0).map(en => en.id);
+    let queue = entities.filter((en: any) => inDegree.get(en.id) === 0).map((en: any) => en.id);
     if (queue.length === 0 && entities.length > 0) queue = [entities[0].id];
     
     // Reset visuals
-    entities.forEach(en => {
+    entities.forEach((en: any) => {
       const el = document.querySelector(`[data-entity-id="${en.id}"]`) as HTMLElement;
       if (el) {
         el.style.filter = '';
-        const defaultColor = en.metadata?.color || 'var(--vbs-bg-panel, #111111)';
+        const defaultColor = en.color || 'var(--vbs-bg-panel, #111111)';
         el.style.setProperty('--vbs-entity-color', defaultColor);
         import('@atomos-web/prime').then(({ computeContrastColor }) => {
           const contrast = computeContrastColor(defaultColor);
@@ -370,23 +380,12 @@ export function SimulatorDemo() {
         </button>
       </div>
 
-      {/* Backdrop */}
-      {(isLeftSidebarOpen || isRightSidebarOpen) && (
-        <div 
-          className="absolute inset-0 bg-black/40 backdrop-blur-sm z-40"
-          onClick={() => {
-            setIsLeftSidebarOpen(false);
-            setIsRightSidebarOpen(false);
-          }}
-        />
-      )}
-      
       {/* Left Sidebar */}
       <div className={`
-        absolute inset-y-0 left-0 z-50 w-72 sm:w-[320px] 
-        bg-slate-900/95 backdrop-blur border-r border-slate-800 flex flex-col p-4 gap-6 overflow-y-auto
-        transition-transform duration-300 ease-in-out shadow-2xl
-        ${isLeftSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        flex-none relative w-72 sm:w-[320px] 
+        bg-slate-900 border-r border-slate-800 flex flex-col p-4 gap-6 overflow-y-auto
+        transition-[margin] duration-300 ease-in-out
+        ${isLeftSidebarOpen ? "ml-0" : "-ml-72 sm:-ml-[320px]"}
       `}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Consumer Simulator</h2>
@@ -472,10 +471,10 @@ export function SimulatorDemo() {
 
       {/* Right Sidebar */}
       <div className={`
-        absolute inset-y-0 right-0 z-50 w-72 sm:w-[320px] 
-        bg-slate-900/95 backdrop-blur border-l border-slate-800 flex flex-col p-4 gap-4 overflow-y-auto
-        transition-transform duration-300 ease-in-out shadow-2xl
-        ${isRightSidebarOpen ? "translate-x-0" : "translate-x-full"}
+        flex-none relative w-72 sm:w-[320px] 
+        bg-slate-900 border-l border-slate-800 flex flex-col p-4 gap-4 overflow-y-auto
+        transition-[margin] duration-300 ease-in-out
+        ${isRightSidebarOpen ? "mr-0" : "-mr-72 sm:-mr-[320px]"}
       `}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Errors & Warnings</h2>

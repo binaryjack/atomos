@@ -304,4 +304,4 @@ const { disconnect } = createMcpSync(store, 'http://localhost:3001');
 
 ## License
 
-MIT
+AGPLv3

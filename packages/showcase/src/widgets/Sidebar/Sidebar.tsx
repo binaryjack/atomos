@@ -41,8 +41,16 @@ export function Sidebar() {
 
   return (
     <>
+      {/* Desktop Floating Toggle (when sidebar is closed) */}
+      <button 
+        onClick={() => setIsOpen(true)}
+        className={`hidden md:flex fixed top-6 left-6 z-40 p-2 text-slate-300 hover:text-white bg-slate-900/80 hover:bg-slate-800 rounded-md border border-white/10 backdrop-blur-md shadow-xl transition-all duration-300 ${isOpen ? 'opacity-0 pointer-events-none -translate-x-10' : 'opacity-100 translate-x-0'}`}
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+      </button>
+
       {/* Mobile Header Toggle */}
-      <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-30 shrink-0">
+      <div className={`md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-30 shrink-0 ${isOpen ? 'hidden' : 'flex'}`}>
         <div className="flex flex-col gap-0.5">
           <h1 className="text-lg font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 tracking-tight drop-shadow-sm">Atomos Structura</h1>
         </div>
@@ -50,11 +58,7 @@ export function Sidebar() {
           onClick={() => setIsOpen(!isOpen)}
           className="p-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-md transition-colors"
         >
-          {isOpen ? (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          ) : (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-          )}
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
       </div>
 
@@ -69,12 +73,20 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside className={`
         fixed md:sticky top-0 left-0 h-screen z-50 md:z-20
-        w-72 bg-slate-950/95 md:bg-slate-950/40 backdrop-blur-xl border-r border-white/5 p-6 flex flex-col gap-6 overflow-y-auto shrink-0 shadow-2xl transition-transform duration-300 ease-in-out
-        ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        w-72 bg-slate-950 md:bg-slate-950/40 backdrop-blur-xl border-r border-white/5 p-6 flex flex-col gap-6 overflow-y-auto shrink-0 transition-[transform,margin] duration-300 ease-in-out
+        ${isOpen ? "translate-x-0 md:ml-0 shadow-2xl" : "-translate-x-full md:translate-x-0 md:-ml-72 md:shadow-none"}
       `}>
-        <div className="hidden md:flex flex-col gap-1">
-          <h1 className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 tracking-tight drop-shadow-sm">Atomos Structura</h1>
-          <p className="text-[11px] font-medium text-slate-500 uppercase tracking-widest mt-1">Enterprise Graph Engine</p>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 tracking-tight drop-shadow-sm">Atomos Structura</h1>
+            <p className="text-[11px] font-medium text-slate-500 uppercase tracking-widest mt-1">Enterprise Graph Engine</p>
+          </div>
+          <button 
+            onClick={() => setIsOpen(false)}
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-md transition-colors"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
         
         <nav className="flex flex-col gap-1.5 mt-2 md:mt-4">

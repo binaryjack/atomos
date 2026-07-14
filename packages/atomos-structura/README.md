@@ -284,4 +284,4 @@ resetGlobalReduxStore();
 
 ## License
 
-MIT
+AGPLv3

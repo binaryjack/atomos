@@ -120,3 +120,7 @@ pnpm clean        # Clean dist folders
 - Maintain 95% test coverage
 - Zero TypeScript errors policy
 - Performance target: <=10% of solid-js bundle size
+
+## License
+
+This project is licensed under the GNU Affero General Public License v3.0 (AGPLv3) - see the [LICENSE](LICENSE) file for details.
