@@ -2,6 +2,7 @@ import type { Entity, LinkProps, WorkspaceConfig } from '@atomos-web/structura-c
 import type { AppSettings } from '../features/settings-page/types/settings-page.types.js'
 
 export interface SchemaModel {
+  readonly type: 'SchemaModel';
   readonly id: string;
   readonly name: string;
   readonly entities: readonly Entity[];

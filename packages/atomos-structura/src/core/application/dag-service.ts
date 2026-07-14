@@ -3,6 +3,7 @@ import type { EntityManager } from '../presentation/entity-manager.js';
 import { determineOptimalEdges } from '../math/anchor-routing.js';
 
 export interface DAGExchange {
+  readonly type: 'DAGExchange';
   readonly version: string;
   readonly nodes: readonly DomainEntity[];
   readonly edges: readonly DomainLink[];
@@ -29,6 +30,7 @@ export const applySchemaCommands = async (entityManager: EntityManager, commands
 
 export const serializeDAG = function(entityManager: EntityManager): string {
   const exportData: DAGExchange = {
+    type: 'DAGExchange',
     version: '1.0.0',
     nodes: entityManager.getAllEntities(),
     edges: entityManager.getAllLinks(),

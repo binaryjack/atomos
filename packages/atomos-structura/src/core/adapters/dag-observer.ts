@@ -36,6 +36,7 @@ export const createDAGObserver = function(entityManager: EntityManager): DAGObse
   const getDAG = (): DAGExchange => {
     if (!currentDAG) {
       currentDAG = {
+        type: 'DAGExchange',
         version: '1.0.0',
         nodes: entityManager.getAllEntities(),
         edges: entityManager.getAllLinks(),

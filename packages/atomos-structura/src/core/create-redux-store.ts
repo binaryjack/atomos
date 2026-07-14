@@ -5,7 +5,7 @@ const DEFAULT_CANVAS_ID = 'canvas-default';
 const DEFAULT_SCHEMA_ID = 'schema-default';
 
 const makeDefaultSchema = (id = DEFAULT_SCHEMA_ID, name = 'Default Schema'): SchemaModel => ({
-  id, name, entities: [], links: [],
+  type: 'SchemaModel', id, name, entities: [], links: []
 });
 
 const makeDefaultCanvas = (id = DEFAULT_CANVAS_ID, name = 'Canvas 1'): CanvasModel => ({
