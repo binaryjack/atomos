@@ -598,7 +598,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
       
       /* Phase 7: Explicit Read-Only Mode (Black background, frozen state) */
       .vbs-readonly-mode, .vbs-readonly-mode .vbs-canvas-wrap {
-        background-color: #000 !important;
+        background-color: var(--vbs-bg-canvas, #0a0a0a) !important;
       }
       .vbs-readonly-mode #canvas-grid-large,
       .vbs-readonly-mode #canvas-grid-small,

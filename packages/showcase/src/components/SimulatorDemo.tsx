@@ -61,7 +61,17 @@ export function SimulatorDemo() {
       if (!getEntityManager) return;
       const em = getEntityManager('simulator-instance');
       
-      if (em.getAllEntities().length > 0) return;
+      if (em.getAllEntities().length > 0) {
+        // Auto-heal logic: If entities exist but lack color (due to the telemetry bug), restore them
+        const entities = em.getAllEntities();
+        const n1 = entities.find(e => e.name === 'View');
+        if (n1 && !n1.color) em.updateEntityMetadata(n1.id, { color: '#3b82f6' });
+        const n2 = entities.find(e => e.name === 'Controller');
+        if (n2 && !n2.color) em.updateEntityMetadata(n2.id, { color: '#10b981' });
+        const n3 = entities.find(e => e.name === 'Model');
+        if (n3 && !n3.color) em.updateEntityMetadata(n3.id, { color: '#f59e0b' });
+        return;
+      }
 
       em.createEntity('node1', 'View', { x: -300, y: -100 }, { width: 220, height: 180 }, { shape: 'rectangle', color: '#3b82f6' });
       em.updateEntityProperties('node1', [
