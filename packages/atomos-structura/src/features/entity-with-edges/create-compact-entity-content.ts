@@ -37,7 +37,7 @@ export const createCompactEntityContent = (props: {
   textNode.style.pointerEvents = 'none';
   textNode.style.userSelect = 'none';
   // Inline fill wins over CSS class — adaptive contrast to entity background color
-  textNode.style.fill = contrast.textColor;
+  textNode.style.fill = 'var(--vbs-entity-text-color, #ffffff)';
 
   const propsNode = document.createElementNS('http://www.w3.org/2000/svg', 'text');
   propsNode.setAttribute('text-anchor', 'middle');
@@ -46,7 +46,7 @@ export const createCompactEntityContent = (props: {
   propsNode.style.pointerEvents = 'none';
   propsNode.style.userSelect = 'none';
   // Inline fill wins over CSS class — adaptive muted contrast color
-  propsNode.style.fill = contrast.mutedColor;
+  propsNode.style.fill = 'var(--vbs-entity-muted-color, #94a3b8)';
   
   const updateLabel = () => {
     textNode.textContent = props.entitySignal.value.name || props.shape;

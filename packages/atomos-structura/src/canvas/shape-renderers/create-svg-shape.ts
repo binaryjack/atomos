@@ -14,7 +14,9 @@ export const createSVGShape = (shape: EntityShape, width: number, height: number
   switch (shape) {
     case 'circle': return createCircle(width, height, color);
     case 'diamond': return createDiamond(width, height, color);
-    case 'oval': return createOval(width, height, color);
+    case 'oval': 
+    case 'ellipse' as any: 
+      return createOval(width, height, color);
     case 'parallelogram': return createParallelogram(width, height, color);
     case 'chevron': return createChevron(width, height, color);
     case 'trapeze': return createTrapeze(width, height, color);

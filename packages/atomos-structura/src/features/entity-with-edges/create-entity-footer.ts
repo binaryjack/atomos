@@ -20,12 +20,13 @@ export const createEntityFooter = function(props: EntityFooterProps): EntityFoot
   footer.classList.add('vbs-entity-footer');
   footer.style.background = bgColor;
 
-  const plusIcon = createIcon({ name: 'plus', size: 'calc(var(--vbs-entity-props-font-size, 11px) + 2px)', color: contrast.mutedColor });
+  const plusIcon = createIcon({ name: 'plus', size: 'calc(var(--vbs-entity-props-font-size, 11px) + 2px)', color: 'var(--vbs-entity-muted-color, #94a3b8)' });
 
   const addBtn = document.createElement('button');
   addBtn.type = 'button';
   addBtn.classList.add('vbs-entity-footer-btn');
-  addBtn.style.color = contrast.textColor;
+  addBtn.style.color = 'var(--vbs-entity-text-color, #ffffff)';
+  addBtn.style.fontFamily = 'var(--vbs-entity-props-font-family, system-ui, sans-serif)';
   addBtn.title = 'Add property';
 
   const label = document.createElement('span');

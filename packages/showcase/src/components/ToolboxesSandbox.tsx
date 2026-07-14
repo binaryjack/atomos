@@ -22,7 +22,7 @@ const DOMAINS: DomainConfig[] = [
           icon: '<rect x="3" y="4" width="18" height="16" rx="2" /><line x1="3" y1="10" x2="21" y2="10" />',
           tools: [
             { id: "uml-class", name: "Class", shape: "box", baseColor: "#1c3557", icon: '<rect x="3" y="4" width="18" height="16" rx="2" /><line x1="3" y1="10" x2="21" y2="10" /><line x1="3" y1="16" x2="21" y2="16" />', description: "UML Class", properties: [] },
-            { id: "uml-interface", name: "Interface", shape: "box", baseColor: "#105e46", icon: '<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/>', description: "UML Interface", properties: [] },
+            { id: "uml-interface", name: "Interface", shape: "circle", baseColor: "#105e46", icon: '<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/>', description: "UML Interface", properties: [] },
             { id: "uml-actor", name: "Actor", shape: "actor", baseColor: "#331a5c", icon: '<circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 21v-2a7 7 0 0 1 14 0v2" fill="none" stroke="currentColor" stroke-width="2"/><line x1="5" y1="13" x2="19" y2="13" stroke="currentColor" stroke-width="2"/>', description: "UML Actor", properties: [] },
             { id: "uml-usecase", name: "Use Case", shape: "ellipse", baseColor: "#451a03", icon: '<ellipse cx="12" cy="12" rx="10" ry="6" fill="none" stroke="currentColor" stroke-width="2"/>', description: "UML Use Case", properties: [] }
           ]
@@ -75,7 +75,7 @@ const DOMAINS: DomainConfig[] = [
           icon: '<rect x="4" y="6" width="16" height="12" rx="6" />',
           tools: [
             { id: "sm-state", name: "State", shape: "box", baseColor: "#1d4ed8", icon: '<rect x="4" y="6" width="16" height="12" rx="6" fill="none" stroke="currentColor" stroke-width="2"/>', description: "Machine State", properties: [] },
-            { id: "sm-choice", name: "Choice", shape: "ellipse", baseColor: "#b45309", icon: '<polygon points="12 4 20 12 12 20 4 12" fill="none" stroke="currentColor" stroke-width="2"/>', description: "Choice Pseudo-state", properties: [] },
+            { id: "sm-choice", name: "Choice", shape: "diamond", baseColor: "#b45309", icon: '<polygon points="12 4 20 12 12 20 4 12" fill="none" stroke="currentColor" stroke-width="2"/>', description: "Choice Pseudo-state", properties: [] },
             { id: "sm-fork", name: "Fork/Join", shape: "cylinder", baseColor: "#1e293b", icon: '<rect x="2" y="10" width="20" height="4" fill="currentColor"/>', description: "Concurrency", properties: [] }
           ]
         }

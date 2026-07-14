@@ -39,7 +39,7 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
     onChange: props.onLabelChange,
   });
   // Override text colour based on background contrast; font from appearance settings vars
-  editableLabel.element.style.color = contrast.textColor;
+  editableLabel.element.style.color = 'var(--vbs-entity-text-color, #ffffff)';
   editableLabel.element.style.fontFamily = 'var(--vbs-entity-name-font-family, system-ui, sans-serif)';
   editableLabel.element.style.fontSize = 'var(--vbs-entity-name-font-size, 14px)';
   editableLabel.element.style.fontWeight = 'var(--vbs-entity-name-font-weight, bold)';
@@ -50,7 +50,7 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
   cleanups.push(editableLabel.cleanup.destroy);
 
   // Collapse button
-  const collapseIcon = createIcon({ name: 'chevron-down', size: 'var(--vbs-entity-name-font-size, 14px)', color: contrast.mutedColor });
+  const collapseIcon = createIcon({ name: 'chevron-down', size: 'var(--vbs-entity-name-font-size, 14px)', color: 'var(--vbs-entity-muted-color, #94a3b8)' });
   const collapseBtn = document.createElement('button');
   collapseBtn.type = 'button';
   collapseBtn.classList.add('vbs-entity-header-btn');
@@ -71,7 +71,7 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
   });
 
   // Settings button
-  const settingsIcon = createIcon({ name: 'settings', size: 'var(--vbs-entity-name-font-size, 14px)', color: contrast.mutedColor });
+  const settingsIcon = createIcon({ name: 'settings', size: 'var(--vbs-entity-name-font-size, 14px)', color: 'var(--vbs-entity-muted-color, #94a3b8)' });
   const settingsBtn = document.createElement('button');
   settingsBtn.type = 'button';
   settingsBtn.classList.add('vbs-entity-header-btn');
