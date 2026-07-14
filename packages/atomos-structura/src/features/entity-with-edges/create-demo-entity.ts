@@ -157,7 +157,6 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
 
     // Prepend so it goes behind selection rings and resize handles
     if (contentElement) {
-      contentElement.classList.add('sim-telemetry-target');
       if (root.firstChild) {
         root.insertBefore(contentElement, root.firstChild);
       } else {

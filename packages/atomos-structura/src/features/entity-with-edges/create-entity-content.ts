@@ -47,6 +47,10 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   const rootElement = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 
   // ─── background shape ──────────────────────────────────────────────────────
+  const shapeWrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  shapeWrapper.classList.add('sim-telemetry-target');
+  rootElement.appendChild(shapeWrapper);
+
   let currentShape: SVGElement | null = null;
   // We'll update the background shape in updateSize()
 
@@ -406,7 +410,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
       currentShape.parentNode.removeChild(currentShape);
     }
     currentShape = createSVGShape((props.shape || 'rectangle') as any, width, height, undefined);
-    rootElement.insertBefore(currentShape, fo);
+    shapeWrapper.appendChild(currentShape);
   };
 
   return {

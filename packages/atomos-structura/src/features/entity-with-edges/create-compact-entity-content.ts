@@ -23,6 +23,7 @@ export const createCompactEntityContent = (props: {
   
   // Create wrapper that will receive the rendered shape
   const shapeWrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  shapeWrapper.classList.add('sim-telemetry-target');
   g.appendChild(shapeWrapper);
 
   // Cache padding values once — reading getComputedStyle inside updateSize causes layout thrashing
