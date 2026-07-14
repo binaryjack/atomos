@@ -550,7 +550,26 @@ export const createInstanceReduxStore = function(config?: WorkspaceConfig, insta
   
   // Return existing if available
   const existing = instanceStores.get(instanceId);
-  if (existing) return existing;
+  if (existing) {
+    if (config !== undefined) {
+      // Re-inject the new runtime config to ensure mode toggles (headless, readonly) are respected!
+      const current = existing.get_state();
+      existing.dispatch({
+        type: 'state-loaded',
+        state: {
+          ...current,
+          workspace: {
+            ...current.workspace,
+            config: {
+              ...current.workspace.config,
+              ...config
+            }
+          }
+        }
+      });
+    }
+    return existing;
+  }
 
   const store = create_redux_store(config ? { instanceId, config } : { instanceId });
   instanceStores.set(instanceId, store);

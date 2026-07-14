@@ -70,6 +70,7 @@ export const createWorkspaceManager = function(
   });
 
   manager = {
+    instanceId,
     workspaceState:    registry.workspaceState,
     behaviorManager,
     linkManager,

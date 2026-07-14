@@ -31,7 +31,9 @@ export default function StructuraCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const reactId = useId();
   // Isolate instance IDs by preset so localStorage state doesn't bleed between different architectures
-  const instanceId = `showcase-canvas-${preset ?? 'sandbox'}-${reactId.replace(/[^a-zA-Z0-9]/g, '')}`;
+  // We explicitly DO NOT use useId() here to ensure that component remounts (due to theme toggles, etc.)
+  // load the exact same state from localStorage instead of generating a new instance ID.
+  const instanceId = `showcase-canvas-${preset ?? 'sandbox'}`;
 
   useEffect(() => {
     const container = containerRef.current;

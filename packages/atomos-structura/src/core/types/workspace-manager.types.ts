@@ -8,6 +8,7 @@ import type { EdgePosition } from '../../features/edge/types/edge-position.types
 import type { AlignmentGuide } from '../../features/alignment/create-alignment-guides.js';
 
 export interface WorkspaceManager {
+  readonly instanceId: string;
   readonly workspaceState: Signal<WorkspaceState>;
   readonly behaviorManager: InteractiveBehaviorManager;
   readonly linkManager: LinkManager;

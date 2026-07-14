@@ -201,37 +201,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   applyViewport();
   cleanups.push(viewport.cleanup);
 
-  // ── Auto Readonly on Small Canvas ──────────────────────────────────────────
   let isSmallCanvas = false;
-  let canvasResizeDebounce: any = null;
-  const canvasResizeObserver = new ResizeObserver(entries => {
-    for (const entry of entries) {
-      const isSmall = entry.contentRect.width < 500 || entry.contentRect.height < 400;
-      if (isSmall !== isSmallCanvas) {
-        isSmallCanvas = isSmall;
-        // Optionally dispatch an event or rely on reactiveness. For now just update the flag.
-      }
-      
-      // Debounce the state update to avoid spamming Redux
-      if (canvasResizeDebounce) clearTimeout(canvasResizeDebounce);
-      canvasResizeDebounce = setTimeout(() => {
-        const st = store.get_state();
-        const activeCanvas = st.workspace.canvases[st.workspace.active_canvas_id];
-        if (activeCanvas && activeCanvas.viewport) {
-          store.dispatch({
-            type: 'viewport-updated',
-            viewport: {
-              ...activeCanvas.viewport,
-              container: { width: entry.contentRect.width, height: entry.contentRect.height }
-            }
-          });
-        }
-      }, 500);
-    }
-  });
-  canvasResizeObserver.observe(canvasWrap);
-  cleanups.push(() => canvasResizeObserver.disconnect());
-
   const isReadonly = () => {
     return isSmallCanvas || !!config?.readonly || (store.get_state().workspace.config?.readonly ?? false);
   };
@@ -435,11 +405,95 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   const entitySearch = createEntitySearch(getEntityManager(instanceId), viewport, canvasWrap);
   cleanups.push(entitySearch.cleanup.destroy);
 
+  const doFitToScreen = () => {
+    const entitiesMap = workspace.workspaceState.value.entities;
+    if (entitiesMap.size === 0) {
+      viewport.reset();
+      return;
+    }
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    entitiesMap.forEach(e => {
+      const px = e.position.value.x;
+      const py = e.position.value.y;
+      const w = e.dimensions.value.width;
+      const h = e.dimensions.value.height;
+      if (px < minX) minX = px;
+      if (py < minY) minY = py;
+      if (px + w > maxX) maxX = px + w;
+      if (py + h > maxY) maxY = py + h;
+    });
+
+    const padding = 100;
+    minX -= padding;
+    minY -= padding;
+    maxX += padding;
+    maxY += padding;
+
+    const contentW = maxX - minX;
+    const contentH = maxY - minY;
+
+    const rect = canvasWrap.getBoundingClientRect();
+    const screenW = rect.width;
+    const screenH = rect.height;
+
+    if (screenW === 0 || screenH === 0) return;
+
+    const scaleX = screenW / contentW;
+    const scaleY = screenH / contentH;
+    let zoom = Math.min(scaleX, scaleY, 1.5);
+
+    const contentCenterX = minX + contentW / 2;
+    const contentCenterY = minY + contentH / 2;
+
+    const panX = screenW / 2 - contentCenterX * zoom;
+    const panY = screenH / 2 - contentCenterY * zoom;
+
+    const newVp = { zoom, pan: { x: panX, y: panY } };
+    viewport.setExternalState(newVp);
+    store.dispatch({ type: 'viewport-updated', viewport: newVp });
+  };
+
+  // ── Auto Readonly on Small Canvas and Resize Observer ─────────────────────
+  let canvasResizeDebounce: any = null;
+  const canvasResizeObserver = new ResizeObserver(entries => {
+    for (const entry of entries) {
+      const isSmall = entry.contentRect.width < 500 || entry.contentRect.height < 400;
+      if (isSmall !== isSmallCanvas) {
+        isSmallCanvas = isSmall;
+        // Optionally dispatch an event or rely on reactiveness. For now just update the flag.
+      }
+      
+      // Debounce the state update to avoid spamming Redux
+      if (canvasResizeDebounce) clearTimeout(canvasResizeDebounce);
+      canvasResizeDebounce = setTimeout(() => {
+        const st = store.get_state();
+        const activeCanvas = st.workspace.canvases[st.workspace.active_canvas_id];
+        if (activeCanvas && activeCanvas.viewport) {
+          store.dispatch({
+            type: 'viewport-updated',
+            viewport: {
+              ...activeCanvas.viewport,
+              container: { width: entry.contentRect.width, height: entry.contentRect.height }
+            }
+          });
+          
+          if (st.workspace.settings?.general?.autoFitOnResize !== false) {
+            doFitToScreen();
+          }
+        }
+      }, 300);
+    }
+  });
+  canvasResizeObserver.observe(canvasWrap);
+  cleanups.push(() => canvasResizeObserver.disconnect());
+
   // Mount Floating Toolbar
   const { bottomBar, topBurger, destroy: destroyToolbar } = createCanvasToolbar({
     instanceId,
     viewport,
     entityManager: getEntityManager(instanceId),
+    onFitToScreen: doFitToScreen,
     onSettings: () => {
       if (config?.headless) return;
       const st = store.get_state();
@@ -1074,52 +1128,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
       zoomIn: () => viewport.zoomBy(0.1),
       zoomOut: () => viewport.zoomBy(-0.1),
       fitToScreen: (immediate?: boolean) => {
-        const entitiesMap = workspace.workspaceState.value.entities;
-        if (entitiesMap.size === 0) {
-          viewport.reset();
-          return;
-        }
-
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        entitiesMap.forEach(e => {
-          const px = e.position.value.x;
-          const py = e.position.value.y;
-          const w = e.dimensions.value.width;
-          const h = e.dimensions.value.height;
-          if (px < minX) minX = px;
-          if (py < minY) minY = py;
-          if (px + w > maxX) maxX = px + w;
-          if (py + h > maxY) maxY = py + h;
-        });
-
-        const padding = 100;
-        minX -= padding;
-        minY -= padding;
-        maxX += padding;
-        maxY += padding;
-
-        const contentW = maxX - minX;
-        const contentH = maxY - minY;
-
-        const rect = canvasWrap.getBoundingClientRect();
-        const screenW = rect.width;
-        const screenH = rect.height;
-
-        if (screenW === 0 || screenH === 0) return;
-
-        const scaleX = screenW / contentW;
-        const scaleY = screenH / contentH;
-        let zoom = Math.min(scaleX, scaleY, 1.5);
-
-        const contentCenterX = minX + contentW / 2;
-        const contentCenterY = minY + contentH / 2;
-
-        const panX = screenW / 2 - contentCenterX * zoom;
-        const panY = screenH / 2 - contentCenterY * zoom;
-
-        const newVp = { zoom, pan: { x: panX, y: panY } };
-        viewport.setExternalState(newVp);
-        store.dispatch({ type: 'viewport-updated', viewport: newVp });
+        doFitToScreen();
       }
     }
   };

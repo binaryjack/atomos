@@ -2,6 +2,8 @@ import type { Signal } from '@atomos-web/prime'
 import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js'
 import { calculateSnappedPosition } from '../alignment/create-alignment-guides.js'
 import { getGeneralSettings } from '../../core/adapters/toolbox-config-manager.js'
+import { autoRouteLinks } from '../../core/application/dag-service.js'
+import { getEntityManager } from '../../core/presentation/entity-manager.js'
 
 export interface EntityDragBehaviorResult {
   readonly cleanup: () => void;
@@ -135,6 +137,16 @@ export const createEntityDragBehavior = function(
       
       position.set({ x: finalX, y: finalY });
       workspace.clearAlignmentGuides();
+
+      // Write the final position directly to EntityManager to bypass 100ms debounce race condition
+      const em = getEntityManager(workspace.instanceId);
+      em.moveEntity(entityId, { x: finalX, y: finalY });
+
+      // Auto-optimize connections on drop if enabled and snap is active
+      const settings = getGeneralSettings();
+      if (settings && settings.enableSnapping && settings.autoOptimizeConnections !== false) {
+        autoRouteLinks(em);
+      }
     } else {
       // Pure click — select this entity
       selected.set(true);

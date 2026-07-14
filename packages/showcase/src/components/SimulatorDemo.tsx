@@ -14,6 +14,7 @@ export function SimulatorDemo() {
   const [isHeadless, setIsHeadless] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [warnings, setWarnings] = useState<Warning[]>([]);
+  const [isMouseZoomEnabled, setIsMouseZoomEnabled] = useState(true);
 
   // We need to keep a ref to the latest state for the async telemetry
   const isExecutingRef = useRef(isExecuting);
@@ -349,10 +350,16 @@ export function SimulatorDemo() {
           <button className={btnClass} onClick={() => dispatchMcp('structura_set_zoom', { level: 'in' })}>Zoom In</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_set_zoom', { level: 'out' })}>Zoom Out</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_fit_to_screen', { padding: { right: 320, left: 100, top: 100, bottom: 100 } })}>Fit to Screen</button>
+          <button className={btnClass} onClick={() => {
+            const newState = !isMouseZoomEnabled;
+            setIsMouseZoomEnabled(newState);
+            dispatchMcp('structura_toggle_mouse_zoom', { enabled: newState });
+          }}>
+            {isMouseZoomEnabled ? 'Disable Scroll Zoom' : 'Enable Scroll Zoom'}
+          </button>
         </div>
 
         <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Actions</h3>
           <button className={btnClass} onClick={() => dispatchMcp('structura_undo')}>Undo</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_redo')}>Redo</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_auto_layout')}>Auto Layout Nodes</button>

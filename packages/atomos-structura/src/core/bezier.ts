@@ -27,26 +27,137 @@ const offsetForEdge = (
  * srcEdge defines the exit direction from src.
  * dstEdge defines the entry direction into dst (optional; if omitted, mirrors srcEdge).
  */
+export const getBezierControlPoints = (
+  src: { x: number; y: number },
+  srcEdge: EdgePosition,
+  dst: { x: number; y: number },
+  dstEdge: EdgePosition,
+  srcRect?: { x: number; y: number; width: number; height: number },
+  dstRect?: { x: number; y: number; width: number; height: number },
+  dist?: number,
+  obstacles?: { x: number; y: number; width: number; height: number }[]
+): { cp1: { x: number; y: number }; cp2: { x: number; y: number } } => {
+  const dVal = dist ?? Math.hypot(dst.x - src.x, dst.y - src.y);
+  const escapeOffset = Math.max(80, Math.min(150, dVal * 0.4));
+  const padding = 20;
+
+  // 1. cp1
+  let cp1: { x: number; y: number };
+  if (srcRect && (
+    (srcEdge === 'left' && dst.x > src.x) ||
+    (srcEdge === 'right' && dst.x < src.x) ||
+    (srcEdge === 'top' && dst.y > src.y) ||
+    (srcEdge === 'bottom' && dst.y < src.y)
+  )) {
+    if (srcEdge === 'left' || srcEdge === 'right') {
+      const dirX = srcEdge === 'left' ? -1 : 1;
+      const goTop = dst.y < src.y;
+      cp1 = {
+        x: src.x + dirX * escapeOffset,
+        y: goTop ? srcRect.y - padding : srcRect.y + srcRect.height + padding
+      };
+    } else {
+      const dirY = srcEdge === 'top' ? -1 : 1;
+      const goLeft = dst.x < src.x;
+      cp1 = {
+        x: goLeft ? srcRect.x - padding : srcRect.x + srcRect.width + padding,
+        y: src.y + dirY * escapeOffset
+      };
+    }
+  } else {
+    cp1 = offsetForEdge(src, srcEdge, dVal);
+  }
+
+  // 2. cp2
+  let cp2: { x: number; y: number };
+  if (dstRect && (
+    (dstEdge === 'left' && src.x > dst.x) ||
+    (dstEdge === 'right' && src.x < dst.x) ||
+    (dstEdge === 'top' && src.y > dst.y) ||
+    (dstEdge === 'bottom' && src.y < dst.y)
+  )) {
+    if (dstEdge === 'left' || dstEdge === 'right') {
+      const dirX = dstEdge === 'left' ? -1 : 1;
+      const goTop = src.y < dst.y;
+      cp2 = {
+        x: dst.x + dirX * escapeOffset,
+        y: goTop ? dstRect.y - padding : dstRect.y + dstRect.height + padding
+      };
+    } else {
+      const dirY = dstEdge === 'top' ? -1 : 1;
+      const goLeft = src.x < dst.x;
+      cp2 = {
+        x: goLeft ? dstRect.x - padding : dstRect.x + dstRect.width + padding,
+        y: dst.y + dirY * escapeOffset
+      };
+    }
+  } else {
+    cp2 = offsetForEdge(dst, dstEdge, dVal);
+  }
+  if (obstacles && obstacles.length > 0) {
+    const threshold = 50;
+    const getPoint = (t: number) => {
+      const mt = 1 - t;
+      return {
+        x: mt * mt * mt * src.x + 3 * mt * mt * t * cp1.x + 3 * mt * t * t * cp2.x + t * t * t * dst.x,
+        y: mt * mt * mt * src.y + 3 * mt * mt * t * cp1.y + 3 * mt * t * t * cp2.y + t * t * t * dst.y
+      };
+    };
+
+    let maxIterations = 5;
+    let hasCollision = true;
+
+    while (hasCollision && maxIterations > 0) {
+      hasCollision = false;
+      for (let t = 0.1; t < 1; t += 0.1) {
+        const p = getPoint(t);
+        for (const obs of obstacles) {
+          if (srcRect && Math.abs(obs.x - srcRect.x) < 1 && Math.abs(obs.y - srcRect.y) < 1) continue;
+          if (dstRect && Math.abs(obs.x - dstRect.x) < 1 && Math.abs(obs.y - dstRect.y) < 1) continue;
+
+          if (
+            p.x > obs.x - threshold && p.x < obs.x + obs.width + threshold &&
+            p.y > obs.y - threshold && p.y < obs.y + obs.height + threshold
+          ) {
+            hasCollision = true;
+            const pushAmount = 40;
+            
+            if (t <= 0.5) {
+              if (srcEdge === 'top') cp1.y -= pushAmount;
+              if (srcEdge === 'bottom') cp1.y += pushAmount;
+              if (srcEdge === 'left') cp1.x -= pushAmount;
+              if (srcEdge === 'right') cp1.x += pushAmount;
+            } else {
+              if (dstEdge === 'top') cp2.y -= pushAmount;
+              if (dstEdge === 'bottom') cp2.y += pushAmount;
+              if (dstEdge === 'left') cp2.x -= pushAmount;
+              if (dstEdge === 'right') cp2.x += pushAmount;
+            }
+          }
+        }
+      }
+      maxIterations--;
+    }
+  }
+
+  return { cp1, cp2 };
+};
+
 export const bezierPath = (
   src: { x: number; y: number },
   srcEdge: EdgePosition,
   dst: { x: number; y: number },
-  dstEdge?: EdgePosition
+  dstEdge?: EdgePosition,
+  srcRect?: { x: number; y: number; width: number; height: number },
+  dstRect?: { x: number; y: number; width: number; height: number },
+  obstacles?: { x: number; y: number; width: number; height: number }[]
 ): string => {
-  const dx = dst.x - src.x;
-  const dy = dst.y - src.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-
-  const cp1 = offsetForEdge(src, srcEdge, dist);
-
-  // If no dstEdge, infer the opposite of srcEdge for natural entry
   const inferredDstEdge: EdgePosition = dstEdge ?? (
     srcEdge === 'top'    ? 'bottom' :
     srcEdge === 'bottom' ? 'top'    :
     srcEdge === 'left'   ? 'right'  : 'left'
   );
-  const cp2 = offsetForEdge(dst, inferredDstEdge, dist);
-
+  const { cp1, cp2 } = getBezierControlPoints(src, srcEdge, dst, inferredDstEdge, srcRect, dstRect, undefined, obstacles);
   return (
     `M ${src.x} ${src.y} ` +
     `C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${dst.x} ${dst.y}`
@@ -63,35 +174,90 @@ export const linearPath = (
   return `M ${src.x} ${src.y} L ${dst.x} ${dst.y}`;
 };
 
-interface Box { minX: number; maxX: number; minY: number; maxY: number; }
+const routeHalf = (
+  start: { x: number; y: number },
+  edge: EdgePosition,
+  rect: { x: number; y: number; width: number; height: number } | undefined,
+  target: { x: number; y: number }
+): { x: number; y: number }[] => {
+  const pts: { x: number; y: number }[] = [start];
+  if (!rect) {
+    if (edge === 'left' || edge === 'right') {
+      pts.push({ x: target.x, y: start.y });
+    } else {
+      pts.push({ x: start.x, y: target.y });
+    }
+    pts.push(target);
+    return pts;
+  }
 
-const getBox = (pt: {x: number; y: number}, edge: EdgePosition, rect?: {x: number; y: number; width: number; height: number}): Box | null => {
-  if (!rect) return null;
-  const padding = 20; 
-  return {
-    minX: rect.x - padding,
-    maxX: rect.x + rect.width + padding,
-    minY: rect.y - padding,
-    maxY: rect.y + rect.height + padding
+  // Escape point
+  const escapeDist = 24;
+  let p1 = { x: start.x, y: start.y };
+  if (edge === 'top') p1.y -= escapeDist;
+  else if (edge === 'bottom') p1.y += escapeDist;
+  else if (edge === 'left') p1.x -= escapeDist;
+  else if (edge === 'right') p1.x += escapeDist;
+  pts.push(p1);
+
+  // Bounding box with padding
+  const padding = 12;
+  const bMinX = rect.x - padding;
+  const bMaxX = rect.x + rect.width + padding;
+  const bMinY = rect.y - padding;
+  const bMaxY = rect.y + rect.height + padding;
+
+  const intersectsBox = (a: {x: number; y: number}, b: {x: number; y: number}) => {
+    const minX = Math.min(a.x, b.x);
+    const maxX = Math.max(a.x, b.x);
+    const minY = Math.min(a.y, b.y);
+    const maxY = Math.max(a.y, b.y);
+    return (minX < bMaxX && maxX > bMinX && minY < bMaxY && maxY > bMinY);
   };
-};
 
-const routeToX = (p: {x: number; y: number}, edge: EdgePosition, targetX: number, box: Box | null): {x: number; y: number}[] => {
-  if (!box || (edge === 'left' && targetX <= p.x) || (edge === 'right' && targetX >= p.x)) {
-    return [{ x: targetX, y: p.y }];
-  }
-  const routeTop = Math.abs(p.y - box.minY) < Math.abs(p.y - box.maxY);
-  const yRoute = routeTop ? box.minY : box.maxY;
-  return [{ x: p.x, y: yRoute }, { x: targetX, y: yRoute }];
-};
+  const cornerA = { x: target.x, y: p1.y }; // horizontal first
+  const cornerB = { x: p1.x, y: target.y }; // vertical first
 
-const routeToY = (p: {x: number; y: number}, edge: EdgePosition, targetY: number, box: Box | null): {x: number; y: number}[] => {
-  if (!box || (edge === 'top' && targetY <= p.y) || (edge === 'bottom' && targetY >= p.y)) {
-    return [{ x: p.x, y: targetY }];
+  const pathAFree = !intersectsBox(p1, cornerA) && !intersectsBox(cornerA, target);
+  const pathBFree = !intersectsBox(p1, cornerB) && !intersectsBox(cornerB, target);
+
+  if (edge === 'left' || edge === 'right') {
+    if (pathAFree) {
+      pts.push(cornerA);
+    } else if (pathBFree) {
+      pts.push(cornerB);
+    } else {
+      // Wrap around the entity box boundaries
+      const goTop = target.y < rect.y + rect.height / 2;
+      const cornerY = goTop ? bMinY : bMaxY;
+      const escapeX = edge === 'left' ? bMinX : bMaxX;
+      const targetSideX = edge === 'left' ? bMaxX : bMinX;
+
+      pts.push({ x: escapeX, y: cornerY });
+      pts.push({ x: targetSideX, y: cornerY });
+      pts.push({ x: targetSideX, y: target.y });
+    }
+  } else {
+    // top or bottom
+    if (pathBFree) {
+      pts.push(cornerB);
+    } else if (pathAFree) {
+      pts.push(cornerA);
+    } else {
+      // Wrap around the entity box boundaries
+      const goLeft = target.x < rect.x + rect.width / 2;
+      const cornerX = goLeft ? bMinX : bMaxX;
+      const escapeY = edge === 'top' ? bMinY : bMaxY;
+      const targetSideY = edge === 'top' ? bMaxY : bMinY;
+
+      pts.push({ x: cornerX, y: escapeY });
+      pts.push({ x: cornerX, y: targetSideY });
+      pts.push({ x: target.x, y: targetSideY });
+    }
   }
-  const routeLeft = Math.abs(p.x - box.minX) < Math.abs(p.x - box.maxX);
-  const xRoute = routeLeft ? box.minX : box.maxX;
-  return [{ x: xRoute, y: p.y }, { x: xRoute, y: targetY }];
+
+  pts.push(target);
+  return pts;
 };
 
 export const getOrthogonalPoints = (
@@ -108,82 +274,16 @@ export const getOrthogonalPoints = (
     srcEdge === 'left'   ? 'right'  : 'left'
   );
 
-  const isSrcHorizontal = srcEdge === 'left' || srcEdge === 'right';
-  const isDstHorizontal = inferredDstEdge === 'left' || inferredDstEdge === 'right';
+  const midpoint = {
+    x: (src.x + dst.x) / 2,
+    y: (src.y + dst.y) / 2
+  };
 
-  const MIN_OFFSET = 20;
+  const firstHalf = routeHalf(src, srcEdge, srcRect, midpoint);
+  const secondHalf = routeHalf(dst, inferredDstEdge, dstRect, midpoint);
 
-  const p1 = { x: src.x, y: src.y };
-  if (srcEdge === 'top') p1.y -= MIN_OFFSET;
-  if (srcEdge === 'bottom') p1.y += MIN_OFFSET;
-  if (srcEdge === 'left') p1.x -= MIN_OFFSET;
-  if (srcEdge === 'right') p1.x += MIN_OFFSET;
-
-  const p2 = { x: dst.x, y: dst.y };
-  if (inferredDstEdge === 'top') p2.y -= MIN_OFFSET;
-  if (inferredDstEdge === 'bottom') p2.y += MIN_OFFSET;
-  if (inferredDstEdge === 'left') p2.x -= MIN_OFFSET;
-  if (inferredDstEdge === 'right') p2.x += MIN_OFFSET;
-
-  const srcBox = getBox(src, srcEdge, srcRect);
-  const dstBox = getBox(dst, inferredDstEdge, dstRect);
-
-  const pts = [{ x: src.x, y: src.y }, p1];
-
-  if (isSrcHorizontal && isDstHorizontal) {
-    let midX = (p1.x + p2.x) / 2;
-    if (srcEdge === 'right' && inferredDstEdge === 'left' && p2.x < p1.x) {
-      midX = (p1.x + p2.x) / 2;
-    } else if (srcEdge === inferredDstEdge) {
-      midX = srcEdge === 'right' ? Math.max(p1.x, p2.x) + MIN_OFFSET : Math.min(p1.x, p2.x) - MIN_OFFSET;
-    }
-    const pSrcHalf = routeToX(p1, srcEdge, midX, srcBox);
-    const pDstHalf = routeToX(p2, inferredDstEdge, midX, dstBox);
-    pts.push(...pSrcHalf);
-    pts.push(...pDstHalf.reverse());
-  } else if (!isSrcHorizontal && !isDstHorizontal) {
-    let midY = (p1.y + p2.y) / 2;
-    if (srcEdge === 'bottom' && inferredDstEdge === 'top' && p2.y < p1.y) {
-      midY = (p1.y + p2.y) / 2;
-    } else if (srcEdge === inferredDstEdge) {
-      midY = srcEdge === 'bottom' ? Math.max(p1.y, p2.y) + MIN_OFFSET : Math.min(p1.y, p2.y) - MIN_OFFSET;
-    }
-    const pSrcHalf = routeToY(p1, srcEdge, midY, srcBox);
-    const pDstHalf = routeToY(p2, inferredDstEdge, midY, dstBox);
-    pts.push(...pSrcHalf);
-    pts.push(...pDstHalf.reverse());
-  } else if (isSrcHorizontal && !isDstHorizontal) {
-    const targetX = (p1.x + p2.x) / 2;
-    const targetY = (p1.y + p2.y) / 2;
-    const pSrcHalf = routeToX(p1, srcEdge, targetX, srcBox);
-    const pDstHalf = routeToY(p2, inferredDstEdge, targetY, dstBox);
-    pts.push(...pSrcHalf);
-    const lastSrc = pSrcHalf[pSrcHalf.length - 1] || p1;
-    const lastDst = pDstHalf[pDstHalf.length - 1] || p2;
-    if (lastSrc.x !== targetX || lastDst.y !== targetY) {
-      pts.push({ x: targetX, y: targetY });
-    }
-    pts.push({ x: lastSrc.x, y: lastDst.y });
-    pts.push(...pDstHalf.reverse());
-  } else {
-    const targetX = (p1.x + p2.x) / 2;
-    const targetY = (p1.y + p2.y) / 2;
-    const pSrcHalf = routeToY(p1, srcEdge, targetY, srcBox);
-    const pDstHalf = routeToX(p2, inferredDstEdge, targetX, dstBox);
-    pts.push(...pSrcHalf);
-    const lastSrc = pSrcHalf[pSrcHalf.length - 1] || p1;
-    const lastDst = pDstHalf[pDstHalf.length - 1] || p2;
-    if (lastSrc.y !== targetY || lastDst.x !== targetX) {
-      pts.push({ x: targetX, y: targetY }); 
-    }
-    pts.push({ x: lastDst.x, y: lastSrc.y });
-    pts.push(...pDstHalf.reverse());
-  }
-
-  pts.push(p2);
-  pts.push({ x: dst.x, y: dst.y });
-
-  return cleanCollinearPoints(pts);
+  const combined = [...firstHalf, ...secondHalf.slice().reverse().slice(1)];
+  return cleanCollinearPoints(combined);
 };
 
 const cleanCollinearPoints = (pts: {x: number; y: number}[]): {x: number; y: number}[] => {
@@ -237,19 +337,17 @@ export const bezierMidpoint = (
   src: { x: number; y: number },
   srcEdge: EdgePosition,
   dst: { x: number; y: number },
-  dstEdge?: EdgePosition
+  dstEdge?: EdgePosition,
+  srcRect?: { x: number; y: number; width: number; height: number },
+  dstRect?: { x: number; y: number; width: number; height: number },
+  obstacles?: { x: number; y: number; width: number; height: number }[]
 ): { x: number; y: number } => {
-  const dx = dst.x - src.x;
-  const dy = dst.y - src.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-
-  const cp1 = offsetForEdge(src, srcEdge, dist);
   const inferredDstEdge: EdgePosition = dstEdge ?? (
     srcEdge === 'top'    ? 'bottom' :
     srcEdge === 'bottom' ? 'top'    :
     srcEdge === 'left'   ? 'right'  : 'left'
   );
-  const cp2 = offsetForEdge(dst, inferredDstEdge, dist);
+  const { cp1, cp2 } = getBezierControlPoints(src, srcEdge, dst, inferredDstEdge, srcRect, dstRect, undefined, obstacles);
 
   const t = 0.5;
   const mt = 1 - t;
@@ -321,9 +419,10 @@ export const getMidpoint = (
   dst: { x: number; y: number },
   dstEdge?: EdgePosition,
   srcRect?: { x: number; y: number; width: number; height: number },
-  dstRect?: { x: number; y: number; width: number; height: number }
+  dstRect?: { x: number; y: number; width: number; height: number },
+  obstacles?: { x: number; y: number; width: number; height: number }[]
 ): { x: number; y: number } => {
   if (renderType === 'linear') return linearMidpoint(src, dst);
   if (renderType === 'orthogonal') return orthogonalMidpoint(src, srcEdge, dst, dstEdge, srcRect, dstRect);
-  return bezierMidpoint(src, srcEdge, dst, dstEdge);
+  return bezierMidpoint(src, srcEdge, dst, dstEdge, srcRect, dstRect, obstacles);
 };

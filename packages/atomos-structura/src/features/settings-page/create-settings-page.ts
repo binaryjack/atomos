@@ -1,4 +1,4 @@
-﻿import { createButton } from '@atomos-web/prime'
+import { createButton } from '@atomos-web/prime'
 import { defaultToolboxConfig } from '../../core/default-toolbox.config.js'
 import { createVisualEditorTree } from './create-settings-tree.js'
 import { createShapesEditor } from './create-shapes-editor.js'
@@ -16,6 +16,7 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
     general: props.initialSettings?.general || {
       gridSize: 20,
       enableSnapping: true,
+      autoOptimizeConnections: true,
       defaultLinkStyle: 'bezier',
       gridPrimaryColor: '#334155',
       gridSecondaryColor: '#1e293b',
@@ -158,6 +159,44 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   snappingRow.appendChild(snappingCheckbox);
   snappingRow.appendChild(snappingLabel);
   genForm.appendChild(snappingRow);
+
+  // Auto-Optimize Connections Checkbox
+  const optimizeRow = document.createElement('div');
+  optimizeRow.className = 'flex items-center gap-3';
+  const optimizeCheckbox = document.createElement('input');
+  optimizeCheckbox.type = 'checkbox';
+  optimizeCheckbox.className = 'w-4 h-4 rounded border-slate-700 text-purple-600 focus:ring-purple-500 bg-slate-950';
+  optimizeCheckbox.checked = currentSettings.general?.autoOptimizeConnections !== false;
+  optimizeCheckbox.addEventListener('change', (e) => {
+    if (!currentSettings.general) currentSettings.general = {};
+    currentSettings.general.autoOptimizeConnections = (e.target as HTMLInputElement).checked;
+    markDirty();
+  });
+  const optimizeLabel = document.createElement('label');
+  optimizeLabel.className = 'text-sm font-medium text-slate-300';
+  optimizeLabel.textContent = 'Auto-Optimize Connections on Drop';
+  optimizeRow.appendChild(optimizeCheckbox);
+  optimizeRow.appendChild(optimizeLabel);
+  genForm.appendChild(optimizeRow);
+
+  // Auto-Fit to Screen on Resize Checkbox
+  const fitResizeRow = document.createElement('div');
+  fitResizeRow.className = 'flex items-center gap-3';
+  const fitResizeCheckbox = document.createElement('input');
+  fitResizeCheckbox.type = 'checkbox';
+  fitResizeCheckbox.className = 'w-4 h-4 rounded border-slate-700 text-purple-600 focus:ring-purple-500 bg-slate-950';
+  fitResizeCheckbox.checked = currentSettings.general?.autoFitOnResize !== false;
+  fitResizeCheckbox.addEventListener('change', (e) => {
+    if (!currentSettings.general) currentSettings.general = {};
+    currentSettings.general.autoFitOnResize = (e.target as HTMLInputElement).checked;
+    markDirty();
+  });
+  const fitResizeLabel = document.createElement('label');
+  fitResizeLabel.className = 'text-sm font-medium text-slate-300';
+  fitResizeLabel.textContent = 'Auto-Fit to Screen on Window Resize';
+  fitResizeRow.appendChild(fitResizeCheckbox);
+  fitResizeRow.appendChild(fitResizeLabel);
+  genForm.appendChild(fitResizeRow);
 
   // Default Link Style Select
   const linkStyleRow = document.createElement('div');

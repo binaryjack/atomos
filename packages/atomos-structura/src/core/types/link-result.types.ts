@@ -13,7 +13,8 @@ export interface LinkResult {
     renderType?: RenderType,
     srcRect?: { x: number; y: number; width: number; height: number },
     dstRect?: { x: number; y: number; width: number; height: number },
-    direction?: 'default' | 'left' | 'right'
+    direction?: 'default' | 'left' | 'right',
+    obstacles?: { x: number; y: number; width: number; height: number }[]
   ) => void;
   readonly setTemporary: (temporary: boolean) => void;
   readonly setValidity: (isValid: boolean) => void;

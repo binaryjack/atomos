@@ -115,6 +115,7 @@
 
   .vbs-entity.vbs-dragging {
     transition: none !important;
+    opacity: 0.7 !important;
   }
 
   .vbs-entity.vbs-dragging .vbs-scroll-body,

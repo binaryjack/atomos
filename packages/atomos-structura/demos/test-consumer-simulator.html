@@ -98,6 +98,7 @@
         <button onclick="dispatchMcp('structura_set_zoom', { level: 'in' })">Zoom In</button>
         <button onclick="dispatchMcp('structura_set_zoom', { level: 'out' })">Zoom Out</button>
         <button onclick="dispatchMcp('structura_fit_to_screen')">Fit to Screen</button>
+        <button id="toggle-zoom-btn">Disable Scroll Zoom</button>
       </div>
 
       <div class="control-group">
@@ -237,6 +238,13 @@
       isHeadless = e.target.checked;
       mountCanvas();
       seedSchema(); 
+    });
+
+    let mouseZoomEnabled = true;
+    document.getElementById('toggle-zoom-btn').addEventListener('click', (e) => {
+      mouseZoomEnabled = !mouseZoomEnabled;
+      e.target.textContent = mouseZoomEnabled ? 'Disable Scroll Zoom' : 'Enable Scroll Zoom';
+      dispatchMcp('structura_toggle_mouse_zoom', { enabled: mouseZoomEnabled });
     });
 
     // 5. Telemetry / Execution Simulator

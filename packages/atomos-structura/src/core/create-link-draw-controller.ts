@@ -2,6 +2,7 @@ import type { EdgePosition } from '../features/edge/types/edge-position.types.js
 import type { LinkFinalizer } from './create-link-finalizer.js'
 import type { InteractiveBehaviorManager } from './types/interactive-behavior-manager.types.js'
 import type { LinkManager } from './types/link-manager.types.js'
+import { getGeneralSettings } from './adapters/toolbox-config-manager.js'
 
 export interface LinkDrawController {
   readonly startLinkFromAnchor: (
@@ -83,12 +84,14 @@ export const createLinkDrawController = function(
     behaviorManager.startLinkCreation({ entityId, anchorId, position: anchorPos, event });
 
     const tempId = `temp-${Date.now()}`;
+    const defaultLinkStyle = getGeneralSettings()?.defaultLinkStyle || 'orthogonal';
     const tempLink = linkManager.createLink({
       id: tempId,
       sourceAnchorId: anchorId,
       sourcePosition: anchorPos,
       targetPosition: anchorPos,
       sourceEdge: srcEdge,
+      renderType: defaultLinkStyle as any,
       temporary: true,
       animated: true,
       strokeColor: reconnectMode ? '#a78bfa' : '#3b82f6'

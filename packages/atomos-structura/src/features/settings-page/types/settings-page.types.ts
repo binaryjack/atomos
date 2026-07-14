@@ -1,4 +1,4 @@
-﻿import type { ToolboxConfiguration } from '@atomos-web/prime'
+import type { ToolboxConfiguration } from '@atomos-web/prime'
 import type { SchemaGraphKernel } from '../../../core/create-schema-graph-kernel.js'
 
 export interface CustomShape {
@@ -37,6 +37,8 @@ export interface AppSettings {
   general?: {
     gridSize?: number;
     enableSnapping?: boolean;
+    autoOptimizeConnections?: boolean;
+    autoFitOnResize?: boolean;
     defaultLinkStyle?: string;
     gridPrimaryColor?: string;
     gridSecondaryColor?: string;

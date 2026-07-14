@@ -339,12 +339,16 @@ export const createLinkFinalizer = function(
     contentRoot.appendChild(permanentLink.element);
     linkEntityMap.set(linkId, { srcEntityId, dstEntityId });
 
-    // ── Label foreignObject ──────────────────────────────────────────────────
     const getCurSrc = () => computeAnchorWorldPos(workspaceState, srcEntityId, srcEdge);
     const getCurDst = () => computeAnchorWorldPos(workspaceState, dstEntityId, dstEdge);
 
+    const srcEntity = workspaceState.value.entities.get(srcEntityId);
+    const dstEntity = workspaceState.value.entities.get(dstEntityId);
+    const srcRect = srcEntity ? { ...srcEntity.position.value, ...srcEntity.dimensions.value } : undefined;
+    const dstRect = dstEntity ? { ...dstEntity.position.value, ...dstEntity.dimensions.value } : undefined;
+
     const fo = createLinkLabelFO(
-      getMidpoint(initialRenderType, srcPos, srcEdge, dstAnchorPos, dstEdge),
+      getMidpoint(initialRenderType, srcPos, srcEdge, dstAnchorPos, dstEdge, srcRect, dstRect),
       () => { openLinkSettingsModal(instanceId, linkId); },
       () => removeLinkById(linkId)
     );
@@ -357,8 +361,6 @@ export const createLinkFinalizer = function(
     }, 0);
 
     // ── Position subscriptions ───────────────────────────────────────────────
-    const srcEntity = workspaceState.value.entities.get(srcEntityId);
-    const dstEntity = workspaceState.value.entities.get(dstEntityId);
     if (srcEntity && dstEntity) {
       const recompute = () => {
         const s = getCurSrc();
@@ -369,12 +371,23 @@ export const createLinkFinalizer = function(
         const srcRect = { ...srcEntity.position.value, ...srcEntity.dimensions.value };
         const dstRect = { ...dstEntity.position.value, ...dstEntity.dimensions.value };
         
-        permanentLink.updatePath(s, d, srcEdge, dstEdge, currentRenderType, srcRect, dstRect, currentDirection);
+        const isReadonly = contentRoot.closest('.vbs-readonly-mode') !== null;
+        let obstacles: any[] | undefined = undefined;
+        if (isReadonly) {
+          obstacles = adapter.getAllEntities().map(e => ({
+            x: e.position.x,
+            y: e.position.y,
+            width: e.dimensions.width,
+            height: e.dimensions.height
+          }));
+        }
+
+        permanentLink.updatePath(s, d, srcEdge, dstEdge, currentRenderType, srcRect, dstRect, currentDirection, obstacles);
         
         const valid = currentLink?.isValid ?? true;
         permanentLink.setValidity(valid);
         
-        moveLinkLabelFO(fo, getMidpoint(currentRenderType, s, srcEdge, d, dstEdge, srcRect, dstRect));
+        moveLinkLabelFO(fo, getMidpoint(currentRenderType, s, srcEdge, d, dstEdge, srcRect, dstRect, obstacles));
       };
       linkSubscriptions.set(linkId, [
         srcEntity.position.subscribe(recompute),

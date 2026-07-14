@@ -17,12 +17,13 @@ export interface CanvasToolbarConfig {
   readonly onSettings: () => void;
   readonly getKernel: () => SchemaGraphKernel;
   readonly getSnapshot: () => SVGSVGElement;
+  readonly onFitToScreen?: () => void;
   /** Optional runtime menu control for toolbar item visibility / values. */
   readonly menuControl?: MenuControl;
 }
 
 export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bottomBar: HTMLElement; topBurger: HTMLElement; destroy: () => void } {
-  const { viewport, entityManager } = config;
+  const { viewport, entityManager, onFitToScreen } = config;
 
   const toolbar = document.createElement('div');
   toolbar.classList.add('vbs-bottom-toolbar');
@@ -102,6 +103,11 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
   };
 
   const fitToScreen = () => {
+    if (onFitToScreen) {
+      onFitToScreen();
+      return;
+    }
+
     console.log('[TOOLBAR-LOG] fitToScreen requested');
     const box = getBoundingBox();
     if (!box) {

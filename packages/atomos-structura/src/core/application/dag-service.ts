@@ -212,10 +212,5 @@ export const autoRouteLinks = function(entityManager: EntityManager): void {
         link.targetEntityId
       );
     }
-    
-    // 5. Force orthogonal routing so A* pathfinding is used
-    if (link.renderType !== 'orthogonal') {
-      entityManager.updateLinkProperties(link.id, { renderType: 'orthogonal' });
-    }
   });
 };

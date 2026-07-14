@@ -1,4 +1,4 @@
-﻿import type { ToolboxConfiguration } from '@atomos-web/prime'
+import type { ToolboxConfiguration } from '@atomos-web/prime'
 import type { AppSettings, CustomShape } from '../../features/settings-page/types/settings-page.types.js'
 import { defaultShapes, defaultToolboxConfig } from '../default-toolbox.config.js'
 
@@ -12,6 +12,7 @@ let currentShapes: CustomShape[] = JSON.parse(JSON.stringify(defaultShapes));
 let currentGeneral: AppSettings['general'] = {
   gridSize: 20,
   enableSnapping: true,
+  autoOptimizeConnections: true,
   defaultLinkStyle: 'bezier',
   gridPrimaryColor: '#334155',
   gridSecondaryColor: '#1e293b',
@@ -44,6 +45,7 @@ export const initToolboxConfigManager = (instanceId: string): void => {
   currentGeneral = {
     gridSize: 20,
     enableSnapping: true,
+    autoOptimizeConnections: true,
     defaultLinkStyle: 'bezier',
     gridPrimaryColor: '#334155',
     gridSecondaryColor: '#1e293b',

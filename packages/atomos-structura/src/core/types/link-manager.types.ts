@@ -1,4 +1,4 @@
-﻿import type { EdgePosition } from '../../features/edge/types/edge-position.types.js'
+import type { EdgePosition } from '../../features/edge/types/edge-position.types.js'
 import type { LinkProps } from './link-props.types.js'
 import type { LinkResult } from './link-result.types.js'
 import type { Signal } from './signal.types.js'
@@ -16,7 +16,8 @@ export interface LinkManager {
     dstEdge?: EdgePosition,
     renderType?: RenderType,
     srcRect?: { x: number; y: number; width: number; height: number },
-    dstRect?: { x: number; y: number; width: number; height: number }
+    dstRect?: { x: number; y: number; width: number; height: number },
+    direction?: 'default' | 'left' | 'right'
   ) => void;
   readonly removeLink: (linkId: string) => void;
   readonly getLink: (linkId: string) => LinkResult | undefined;
