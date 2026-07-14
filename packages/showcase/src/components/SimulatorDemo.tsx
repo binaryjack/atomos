@@ -148,10 +148,15 @@ export function SimulatorDemo() {
     
     // Reset visuals
     entities.forEach(en => {
-      em.updateEntityMetadata(en.id, { color: undefined });
       const el = document.querySelector(`[data-entity-id="${en.id}"]`) as HTMLElement;
       if (el) {
         el.style.filter = '';
+        const shape = el.querySelector('.svg-shape-base') as HTMLElement | null;
+        const header = el.querySelector('.vbs-entity-header') as HTMLElement | null;
+        const defaultColor = (en as any).color || 'var(--vbs-bg-panel, #111111)';
+        if (shape) shape.style.setProperty('--shape-custom-fill', defaultColor);
+        if (shape) shape.style.fill = defaultColor;
+        if (header) header.style.background = defaultColor;
         const badge = el.querySelector('.sim-check-badge');
         if (badge) badge.remove();
       }
@@ -174,11 +179,15 @@ export function SimulatorDemo() {
     while (queue.length > 0 && isExecutingRef.current) {
       // Glow (Processing state)
       for (const id of queue) {
-         em.updateEntityMetadata(id, { color: '#f59e0b' });
          const el = document.querySelector(`[data-entity-id="${id}"]`) as HTMLElement;
          if (el) {
            el.style.transition = 'filter 0.3s';
-           el.style.filter = 'drop-shadow(0 0 12px #f59e0b)';
+           el.style.filter = 'drop-shadow(0 0 16px #f59e0b)';
+           const shape = el.querySelector('.svg-shape-base') as HTMLElement | null;
+           const header = el.querySelector('.vbs-entity-header') as HTMLElement | null;
+           if (shape) shape.style.setProperty('--shape-custom-fill', '#f59e0b');
+           if (shape) shape.style.fill = '#f59e0b';
+           if (header) header.style.background = '#f59e0b';
          }
       }
       
@@ -200,10 +209,15 @@ export function SimulatorDemo() {
          if (roll > 0.8) state = states[2];
          if (roll > 0.9) state = states[3];
          
-         em.updateEntityMetadata(id, { color: state.color });
          const el = document.querySelector(`[data-entity-id="${id}"]`) as HTMLElement;
          if (el) {
            el.style.filter = state.shadow ? `drop-shadow(${state.shadow})` : '';
+           const shape = el.querySelector('.svg-shape-base') as HTMLElement | null;
+           const header = el.querySelector('.vbs-entity-header') as HTMLElement | null;
+           if (shape) shape.style.setProperty('--shape-custom-fill', state.color);
+           if (shape) shape.style.fill = state.color;
+           if (header) header.style.background = state.color;
+
            const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
            badge.setAttribute('class', 'sim-check-badge');
            const entity = em.getEntity(id);
@@ -323,7 +337,7 @@ export function SimulatorDemo() {
       `}} />
 
       {/* Floating Toggle Buttons (always visible when sidebars are closed) */}
-      <div className={`absolute top-4 left-4 z-40 transition-opacity duration-200 ${isLeftSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`absolute top-6 left-6 z-50 transition-opacity duration-200 ${isLeftSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button 
           onClick={() => setIsLeftSidebarOpen(true)}
           className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-800/90 hover:bg-slate-700 backdrop-blur rounded-md border border-slate-700 text-white shadow-lg transition-colors"
@@ -333,7 +347,7 @@ export function SimulatorDemo() {
         </button>
       </div>
 
-      <div className={`absolute top-4 right-4 z-40 transition-opacity duration-200 ${isRightSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`absolute top-6 right-6 z-50 transition-opacity duration-200 ${isRightSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button 
           onClick={() => setIsRightSidebarOpen(true)}
           className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-800/90 hover:bg-slate-700 backdrop-blur rounded-md border border-slate-700 text-white shadow-lg transition-colors"
@@ -394,6 +408,10 @@ export function SimulatorDemo() {
           <button className={btnClass} onClick={() => dispatchMcp('structura_set_zoom', { level: 'in' })}>Zoom In</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_set_zoom', { level: 'out' })}>Zoom Out</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_fit_to_screen', { padding: { right: 320, left: 100, top: 100, bottom: 100 } })}>Fit to Screen</button>
+          <button className={`${btnClass} !bg-red-900 !text-red-200 hover:!bg-red-800 mt-2`} onClick={() => {
+            localStorage.removeItem('structura-workspace-simulator-instance');
+            window.location.reload();
+          }}>Reset Demo (Fix Black Nodes)</button>
           <button className={btnClass} onClick={() => {
             const newState = !isMouseZoomEnabled;
             setIsMouseZoomEnabled(newState);
