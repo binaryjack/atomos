@@ -312,7 +312,7 @@ export function SimulatorDemo() {
   const btnClass = "bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-medium py-2 px-3 rounded transition-colors text-sm text-left w-full";
 
   return (
-    <div className="flex flex-col md:flex-row w-full h-[calc(100vh-100px)] md:h-[700px] border border-slate-800 rounded-xl overflow-hidden bg-slate-950 text-slate-200 relative">
+    <div className="flex w-full h-full overflow-hidden bg-slate-950 text-slate-200 relative">
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes vbs-dash {
           to { stroke-dashoffset: -10; }
@@ -322,28 +322,31 @@ export function SimulatorDemo() {
         }
       `}} />
 
-      {/* Mobile Header Toggle */}
-      <div className="md:hidden flex items-center justify-between p-3 bg-slate-900 border-b border-slate-800 z-30 shrink-0">
+      {/* Floating Toggle Buttons (always visible when sidebars are closed) */}
+      <div className={`absolute top-4 left-4 z-40 transition-opacity duration-200 ${isLeftSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button 
           onClick={() => setIsLeftSidebarOpen(true)}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-slate-800 hover:bg-slate-700 rounded-md text-white transition-colors"
+          className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-800/90 hover:bg-slate-700 backdrop-blur rounded-md border border-slate-700 text-white shadow-lg transition-colors"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
           Simulator
         </button>
+      </div>
+
+      <div className={`absolute top-4 right-4 z-40 transition-opacity duration-200 ${isRightSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button 
           onClick={() => setIsRightSidebarOpen(true)}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-red-900/30 hover:bg-red-900/50 text-red-200 rounded-md transition-colors"
+          className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-800/90 hover:bg-slate-700 backdrop-blur rounded-md border border-slate-700 text-white shadow-lg transition-colors"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
           Logs
         </button>
       </div>
 
-      {/* Mobile Backdrop */}
+      {/* Backdrop */}
       {(isLeftSidebarOpen || isRightSidebarOpen) && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+          className="absolute inset-0 bg-black/40 backdrop-blur-sm z-40"
           onClick={() => {
             setIsLeftSidebarOpen(false);
             setIsRightSidebarOpen(false);
@@ -353,14 +356,14 @@ export function SimulatorDemo() {
       
       {/* Left Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 md:z-10 md:relative w-72 md:w-[280px] md:min-w-[280px] 
-        bg-slate-900 border-r border-slate-800 flex flex-col p-4 gap-6 overflow-y-auto
-        transition-transform duration-300 ease-in-out shrink-0
-        ${isLeftSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        absolute inset-y-0 left-0 z-50 w-72 sm:w-[320px] 
+        bg-slate-900/95 backdrop-blur border-r border-slate-800 flex flex-col p-4 gap-6 overflow-y-auto
+        transition-transform duration-300 ease-in-out shadow-2xl
+        ${isLeftSidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Consumer Simulator</h2>
-          <button className="md:hidden p-1 text-slate-400 hover:text-white" onClick={() => setIsLeftSidebarOpen(false)}>
+          <button className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors" onClick={() => setIsLeftSidebarOpen(false)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
@@ -401,6 +404,7 @@ export function SimulatorDemo() {
         </div>
 
         <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Actions</h3>
           <button className={btnClass} onClick={() => dispatchMcp('structura_undo')}>Undo</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_redo')}>Redo</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_auto_layout')}>Auto Layout Nodes</button>
@@ -431,20 +435,20 @@ export function SimulatorDemo() {
       </div>
 
       {/* Main Canvas Area */}
-      <div className="flex-1 relative bg-slate-950 min-h-0 min-w-0" ref={containerRef}>
+      <div className="flex-1 w-full h-full relative bg-slate-950" ref={containerRef}>
         {/* Canvas is injected here */}
       </div>
 
       {/* Right Sidebar */}
       <div className={`
-        fixed inset-y-0 right-0 z-50 md:z-10 md:relative w-72 md:w-[300px] md:min-w-[300px] 
-        bg-slate-900 border-l border-slate-800 flex flex-col p-4 gap-4 overflow-y-auto
-        transition-transform duration-300 ease-in-out shrink-0
-        ${isRightSidebarOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"}
+        absolute inset-y-0 right-0 z-50 w-72 sm:w-[320px] 
+        bg-slate-900/95 backdrop-blur border-l border-slate-800 flex flex-col p-4 gap-4 overflow-y-auto
+        transition-transform duration-300 ease-in-out shadow-2xl
+        ${isRightSidebarOpen ? "translate-x-0" : "translate-x-full"}
       `}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Errors & Warnings</h2>
-          <button className="md:hidden p-1 text-slate-400 hover:text-white" onClick={() => setIsRightSidebarOpen(false)}>
+          <button className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors" onClick={() => setIsRightSidebarOpen(false)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
