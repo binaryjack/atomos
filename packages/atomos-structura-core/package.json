@@ -1,7 +1,7 @@
 {
   "name": "@atomos-web/structura-core",
-  "version": "2.3.4",
-  "license": "AGPL-3.0",
+  "version": "2.3.8",
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "publishConfig": {
     "access": "public"

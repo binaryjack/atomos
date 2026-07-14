@@ -42,20 +42,42 @@ export function SimulatorDemo() {
       if (!mounted) return;
 
       mountCanvas();
-      setTimeout(seedSchema, 100);
     };
 
     const mountCanvas = () => {
       if (!containerRef.current || !createCanvasPage) return;
       
+      let existingDag: any = null;
       if (canvasPageRef.current) {
+        const em = getEntityManager('simulator-instance');
+        existingDag = {
+          type: 'DAGExchange',
+          version: '1.0.0',
+          nodes: em.getAllEntities(),
+          edges: em.getAllLinks()
+        };
         canvasPageRef.current.cleanup.destroy();
       }
 
+      const canvasPage = createCanvasPage('simulator-instance', { 
+        readonly: isReadonly, 
+        headless: isHeadless, 
+        allow_multiple_schemas: false 
+      });
+      canvasPageRef.current = canvasPage;
       containerRef.current.innerHTML = '';
-      const page = createCanvasPage('simulator-instance', { readonly: isReadonly, headless: isHeadless, allow_multiple_schemas: false });
-      canvasPageRef.current = page;
-      containerRef.current.appendChild(page.element);
+      containerRef.current.appendChild(canvasPage.element);
+
+      if (existingDag) {
+        setTimeout(() => {
+          const em = getEntityManager('simulator-instance');
+          import('@atomos-web/structura/dist/core/application/dag-service.js').then(({ deserializeDAG }) => {
+             deserializeDAG(em, JSON.stringify(existingDag), false);
+          }).catch(console.error);
+        }, 100);
+      } else {
+        setTimeout(seedSchema, 100);
+      }
     };
 
     const seedSchema = () => {

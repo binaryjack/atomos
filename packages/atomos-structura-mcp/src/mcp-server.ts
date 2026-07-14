@@ -895,6 +895,24 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
           }
         },
         {
+          name: "structura_toggle_mouse_zoom",
+          description: "Enable or disable zooming via mouse wheel.",
+          inputSchema: {
+            type: "object",
+            properties: { enabled: { type: "boolean" } },
+            required: ["enabled"],
+          },
+        },
+        {
+          name: "structura_toggle_mouse_pan",
+          description: "Enable or disable canvas panning via mouse drag.",
+          inputSchema: {
+            type: "object",
+            properties: { enabled: { type: "boolean" } },
+            required: ["enabled"],
+          },
+        },
+        {
           name: "structura_set_pan",
           description: "Sets the pan coordinates of the canvas.",
           inputSchema: {

@@ -2,26 +2,42 @@ import type { DomainEntity, DomainLink } from '../domain/entity-aggregate.js';
 import type { EntityManager } from '../presentation/entity-manager.js';
 import { determineOptimalEdges } from '../math/anchor-routing.js';
 
+export interface SchemaCommand {
+  type: string;
+  [key: string]: any;
+}
+
 export interface DAGExchange {
   readonly type: 'DAGExchange';
   readonly version: string;
   readonly nodes: readonly DomainEntity[];
   readonly edges: readonly DomainLink[];
-  readonly applyAfterLoad?: string[];
+  readonly applyAfterLoad?: (string | SchemaCommand)[];
 }
 
-export const applySchemaCommands = async (entityManager: EntityManager, commands: string[]) => {
-  for (const cmd of commands) {
-    if (cmd === 'optimize-connections') {
+import { LayoutRegistry } from './layout/layout-strategy.js';
+import './layout/sugiyama-layout.js';
+import './layout/clear-layout.js';
+
+export const applySchemaCommands = async (entityManager: EntityManager, commands: (string | SchemaCommand)[]) => {
+  for (const rawCmd of commands) {
+    const cmd = typeof rawCmd === 'string' ? { type: rawCmd } : rawCmd;
+    if (cmd.type === 'optimize-connections') {
       autoRouteLinks(entityManager);
       await new Promise(r => setTimeout(r, 50));
-    } else if (cmd === 'auto-layout') {
-      autoLayoutDAG(entityManager);
+    } else if (cmd.type === 'auto-layout') {
+      const strategyName = cmd.strategy || 'sugiyama';
+      const strategy = LayoutRegistry.get(strategyName);
+      if (strategy) {
+        strategy.execute(entityManager, cmd);
+      } else {
+        console.warn(`[dag-service] Unknown layout strategy: ${strategyName}`);
+      }
       await new Promise(r => setTimeout(r, 50));
-    } else if (cmd === 'fit-to-screen') {
+    } else if (cmd.type === 'fit-to-screen') {
       window.dispatchEvent(new CustomEvent(`vbs-command-fit-${entityManager.instanceId}`));
       await new Promise(r => setTimeout(r, 50));
-    } else if (cmd === 'center-to-schema') {
+    } else if (cmd.type === 'center-to-schema') {
       window.dispatchEvent(new CustomEvent(`vbs-command-center-${entityManager.instanceId}`));
       await new Promise(r => setTimeout(r, 50));
     }
@@ -80,7 +96,8 @@ export const deserializeDAG = function(
     if (data.applyAfterLoad && Array.isArray(data.applyAfterLoad)) {
       applySchemaCommands(entityManager, data.applyAfterLoad);
     } else if (autoLayout) {
-      autoLayoutDAG(entityManager);
+      const strategy = LayoutRegistry.get('sugiyama');
+      if (strategy) strategy.execute(entityManager);
     }
   } catch (error) {
     console.error('[dag-service] Failed to deserialize DAG', error);
@@ -88,88 +105,6 @@ export const deserializeDAG = function(
   }
 };
 
-export const autoLayoutDAG = function(entityManager: EntityManager): void {
-  const nodes = entityManager.getAllEntities();
-  const edges = entityManager.getAllLinks();
-  
-  // 1. Calculate in-degrees and build adjacency list
-  const inDegree = new Map<string, number>();
-  const childrenList = new Map<string, string[]>();
-  
-  nodes.forEach(node => {
-    inDegree.set(node.id, 0);
-    childrenList.set(node.id, []);
-  });
-
-  edges.forEach(edge => {
-    const src = edge.sourceEntityId;
-    const tgt = edge.targetEntityId;
-    if (inDegree.has(tgt)) {
-      inDegree.set(tgt, inDegree.get(tgt)! + 1);
-    }
-    if (childrenList.has(src)) {
-      childrenList.get(src)!.push(tgt);
-    }
-  });
-
-  // 2. Topological sort by levels (Kahn's array approach)
-  const levels: string[][] = [];
-  let currentLevel = Array.from(inDegree.entries())
-    .filter(([, deg]) => deg === 0)
-    .map(([id]) => id);
-
-  // Fallback if graph has cycles (though topology system prevents them)
-  const processed = new Set<string>();
-
-  while (currentLevel.length > 0) {
-    levels.push(currentLevel);
-    currentLevel.forEach(id => processed.add(id));
-
-    const nextLevel: string[] = [];
-    currentLevel.forEach(id => {
-      const children = childrenList.get(id) || [];
-      children.forEach(child => {
-        const currentDeg = inDegree.get(child)! - 1;
-        inDegree.set(child, currentDeg);
-        if (currentDeg === 0 && !processed.has(child)) {
-          nextLevel.push(child);
-        }
-      });
-    });
-    currentLevel = nextLevel;
-  }
-
-  // Handle disconnected cycle nodes
-  const cyclics = nodes.filter(n => !processed.has(n.id)).map(n => n.id);
-  if (cyclics.length > 0) {
-    levels.push(cyclics);
-  }
-
-  // 3. Apply positions based on levels
-  const HORIZONTAL_SPACING = 350;
-  const VERTICAL_SPACING = 200;
-  const START_X = 100;
-  const START_Y = 100;
-
-  // Find the maximum height among all levels to use as a centering baseline
-  const maxNodesInLevel = Math.max(...levels.map(l => l.length));
-  const maxTotalHeight = maxNodesInLevel * VERTICAL_SPACING;
-  const baselineCenterY = Math.max(START_Y, (1000 - maxTotalHeight) / 2) + (maxTotalHeight / 2);
-
-  levels.forEach((levelNodes, levelIndex) => {
-    const x = START_X + (levelIndex * HORIZONTAL_SPACING);
-    
-    // Center vertically based on number of nodes in THIS level relative to the global baseline
-    const totalHeight = levelNodes.length * VERTICAL_SPACING;
-    const startY = baselineCenterY - (totalHeight / 2);
-
-    levelNodes.forEach((nodeId, nodeIndex) => {
-      // Add a small offset (half vertical spacing) to center the node block itself
-      const y = startY + (nodeIndex * VERTICAL_SPACING) + (VERTICAL_SPACING / 2) - 60; // 60 is approx half node height
-      entityManager.moveEntity(nodeId, { x, y });
-    });
-  });
-};
 
 export const autoRouteLinks = function(entityManager: EntityManager): void {
   const nodes = entityManager.getAllEntities();

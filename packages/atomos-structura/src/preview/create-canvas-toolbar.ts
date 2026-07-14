@@ -1,5 +1,6 @@
 import type { WorkspaceMenuConfig } from '@atomos-web/structura-core'
-import { autoLayoutDAG, autoRouteLinks, deserializeDAG, serializeDAG } from '../core/application/dag-service.js'
+import { autoRouteLinks, deserializeDAG, serializeDAG } from '../core/application/dag-service.js'
+import { LayoutRegistry } from '../core/application/layout/layout-strategy.js'
 import type { CanvasViewport } from '../core/create-canvas-viewport.js'
 import { getInstanceReduxStore } from '../core/create-redux-store.js'
 import type { SchemaGraphKernel } from '../core/create-schema-graph-kernel.js'
@@ -186,7 +187,7 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
   const autoLayoutBtn = createIconButton(
     `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>`,
     'Auto-Layout Nodes',
-    () => { autoLayoutDAG(entityManager); autoRouteLinks(entityManager); centerToSchema(); }
+    () => { LayoutRegistry.get('sugiyama')?.execute(entityManager); autoRouteLinks(entityManager); centerToSchema(); }
   );
 
   const optimizeConnectionsBtn = createIconButton(
@@ -576,7 +577,7 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
     const { action, sendResult } = (e as CustomEvent).detail;
     try {
       if (action === 'structura_auto_layout') {
-        autoLayoutDAG(entityManager);
+        LayoutRegistry.get('sugiyama')?.execute(entityManager);
         autoRouteLinks(entityManager);
         centerToSchema();
         if (sendResult) sendResult();
@@ -613,6 +614,12 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
         const args = (e as CustomEvent).detail.args || {};
         if (viewport.setMouseZoomEnabled) {
           viewport.setMouseZoomEnabled(args.enabled !== false);
+        }
+        if (sendResult) sendResult();
+      } else if (action === 'structura_toggle_mouse_pan') {
+        const args = (e as CustomEvent).detail.args || {};
+        if (viewport.setMousePanEnabled) {
+          viewport.setMousePanEnabled(args.enabled !== false);
         }
         if (sendResult) sendResult();
       }

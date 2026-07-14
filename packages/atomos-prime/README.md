@@ -100,4 +100,5 @@ import { lightTheme, darkTheme, colors, spacing } from '@atomos-web/prime-style'
 
 ## License
 
-AGPLv3
+This project is licensed under the AGPLv3 License - see the [LICENSE](LICENSE) file for details.
+

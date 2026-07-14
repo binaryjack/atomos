@@ -81,15 +81,20 @@
       </p>
 
       <div class="control-group">
-        <h3>Modes</h3>
-        <label class="toggle-row">
-          <input type="checkbox" id="readonly-toggle" />
-          <span>Read-Only Mode</span>
-        </label>
-        <label class="toggle-row">
-          <input type="checkbox" id="headless-toggle" />
-          <span>Headless (No UI)</span>
-        </label>
+         <div style="display: flex; gap: 8px; margin-top: 8px; flex-direction: column;">
+           <label style="color: white; font-size: 14px; display: flex; align-items: center; gap: 4px;">
+             <input type="checkbox" id="readonly-toggle" /> Read-Only Mode
+           </label>
+           <label style="color: white; font-size: 14px; display: flex; align-items: center; gap: 4px;">
+             <input type="checkbox" id="headless-toggle" /> Headless Mode
+           </label>
+           <label style="color: white; font-size: 14px; display: flex; align-items: center; gap: 4px;">
+             <input type="checkbox" id="mouse-zoom-toggle" checked /> Mouse Zoom Enabled
+           </label>
+           <label style="color: white; font-size: 14px; display: flex; align-items: center; gap: 4px;">
+             <input type="checkbox" id="mouse-drag-toggle" checked /> Mouse Drag Enabled
+           </label>
+         </div>
         <button id="telemetry-btn">Start Telemetry</button>
       </div>
 
@@ -98,7 +103,6 @@
         <button onclick="dispatchMcp('structura_set_zoom', { level: 'in' })">Zoom In</button>
         <button onclick="dispatchMcp('structura_set_zoom', { level: 'out' })">Zoom Out</button>
         <button onclick="dispatchMcp('structura_fit_to_screen')">Fit to Screen</button>
-        <button id="toggle-zoom-btn">Disable Scroll Zoom</button>
       </div>
 
       <div class="control-group">
@@ -108,6 +112,18 @@
         <button onclick="dispatchMcp('structura_auto_layout')">Auto Layout Nodes</button>
         <button onclick="dispatchMcp('structura_optimize_connections')">Optimize Connections</button>
         <button onclick="dispatchMcp('structura_load_schema_preset')">Load Schema Preset</button>
+      </div>
+
+      <div class="control-group">
+        <h3>Layout Templates</h3>
+        <div style="display:flex;gap:4px;flex-direction:column;">
+           <select id="layout-select" style="padding: 4px; border-radius: 4px; border: 1px solid #334155; background: #0f172a; color: white;">
+             <option value="horizontal">Sugiyama Horizontal</option>
+             <option value="vertical">Sugiyama Vertical</option>
+             <option value="clair">Clair (Clear Flow)</option>
+           </select>
+           <button onclick="applySelectedLayout()">Apply Layout Template</button>
+        </div>
       </div>
 
       <div class="control-group">
@@ -145,20 +161,57 @@
 
     function mountCanvas() {
       const container = document.getElementById('canvas-container');
-      container.innerHTML = '';
+      
+      let existingDag = null;
       if (canvasPage) {
+        const em = getEntityManager(instanceId);
+        existingDag = {
+          type: 'DAGExchange',
+          version: '1.0.0',
+          nodes: em.getAllEntities(),
+          edges: em.getAllLinks()
+        };
         canvasPage.cleanup.destroy();
       }
 
       // Re-mount with new config
       canvasPage = createCanvasPage(instanceId, { readonly: isReadonly, headless: isHeadless });
+      container.innerHTML = '';
       container.appendChild(canvasPage.element);
       
+      if (existingDag) {
+        setTimeout(() => {
+          const em = getEntityManager(instanceId);
+          import('../dist/core/application/dag-service.js').then(({ deserializeDAG }) => {
+             deserializeDAG(em, JSON.stringify(existingDag), false);
+          });
+        }, 100);
+      } else {
+        setTimeout(seedSchema, 100);
+      }
+
       return canvasPage;
     }
 
     // Initial mount
     mountCanvas();
+
+    window.applySelectedLayout = () => {
+      const em = getEntityManager(instanceId);
+      const val = document.getElementById('layout-select').value;
+      const dag = {
+        type: 'DAGExchange',
+        version: '1.0.0',
+        nodes: em.getAllEntities(),
+        edges: em.getAllLinks(),
+        applyAfterLoad: [
+          val === 'clair' ? { type: 'auto-layout', strategy: 'clair' } : { type: 'auto-layout', strategy: 'sugiyama', orientation: val },
+          { type: 'optimize-connections' },
+          { type: 'fit-to-screen' }
+        ]
+      };
+      dispatchMcp('structura_inject_schema', { dag });
+    };
 
     // 2. Setup a default schema with multiple nodes for layout/telemetry testing
     function seedSchema() {
@@ -188,42 +241,18 @@
       em.createLink('link3', 'bottom', 'bottom', 'node3', 'node1');
     }
     
-    // Slight delay to ensure Redux is ready
-    setTimeout(seedSchema, 100);
 
     // 3. MCP Simulator Dispatcher
     window.dispatchMcp = (action, args = {}) => {
-      console.log(`[Simulator] Dispatching external MCP action:`, action, args);
-      
-      // Dispatch the custom event that create-canvas-toolbar expects
-      window.dispatchEvent(new CustomEvent('vbs-mcp-action', {
-        detail: {
-          reqId: `sim-req-${Date.now()}`,
-          action,
-          args
-        }
-      }));
-    };
-
-    // Listen for the tool-result (simulating MCP intercepting the HTTP callback)
-    // The actual HTTP fetch will fail in the browser because the MCP server isn't running on this port,
-    // but we can intercept the vbs-mcp-action logic if we want, or just let it fail gracefully.
-    // For pure UI actions (Zoom, Undo), we can simulate them directly against the page's testApi or Redux if vbs-mcp-action doesn't cover it.
-
-    // Note: vbs-mcp-action covers AutoLayout, Optimize, and Exports. 
-    // Undo/Redo are covered by mcp-sync usually, but since the MCP Sync client isn't active without a server URL, we simulate it:
-    window.dispatchMcp = (action, args = {}) => {
       console.log(`[Simulator] Executing ${action}`);
       if (action === 'structura_undo') {
-        // Use keyboard event simulation or raw api if available
         document.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'z' }));
       } else if (action === 'structura_redo') {
         document.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'y' }));
       } else {
-        // Use the event for DOM-bound actions
         window.dispatchEvent(new CustomEvent('vbs-mcp-action', {
           detail: { reqId: `sim-req-${Date.now()}`, action, args },
-          sendResult: (data) => console.log('[Simulator] Received tool result payload:', data) // Mocking the SSE fetch callback
+          sendResult: (data) => console.log('[Simulator] Received tool result payload:', data)
         }));
       }
     };
@@ -232,19 +261,19 @@
     document.getElementById('readonly-toggle').addEventListener('change', (e) => {
       isReadonly = e.target.checked;
       mountCanvas();
-      seedSchema(); 
     });
+
     document.getElementById('headless-toggle').addEventListener('change', (e) => {
       isHeadless = e.target.checked;
       mountCanvas();
-      seedSchema(); 
     });
 
-    let mouseZoomEnabled = true;
-    document.getElementById('toggle-zoom-btn').addEventListener('click', (e) => {
-      mouseZoomEnabled = !mouseZoomEnabled;
-      e.target.textContent = mouseZoomEnabled ? 'Disable Scroll Zoom' : 'Enable Scroll Zoom';
-      dispatchMcp('structura_toggle_mouse_zoom', { enabled: mouseZoomEnabled });
+    document.getElementById('mouse-zoom-toggle').addEventListener('change', (e) => {
+      dispatchMcp('structura_toggle_mouse_zoom', { enabled: e.target.checked });
+    });
+
+    document.getElementById('mouse-drag-toggle').addEventListener('change', (e) => {
+      dispatchMcp('structura_toggle_mouse_pan', { enabled: e.target.checked });
     });
 
     // 5. Telemetry / Execution Simulator

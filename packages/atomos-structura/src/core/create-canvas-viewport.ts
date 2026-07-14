@@ -24,6 +24,7 @@ export interface CanvasViewport {
   /** Convert screen (clientX/Y) coords to canvas (world) coords */
   readonly screenToCanvas: (clientX: number, clientY: number, containerRect: DOMRect) => { x: number; y: number };
   readonly setMouseZoomEnabled: (enabled: boolean) => void;
+  readonly setMousePanEnabled: (enabled: boolean) => void;
   readonly cleanup: () => void;
 }
 
@@ -160,6 +161,11 @@ export const createCanvasViewport = function(
   };
 
   // --- Pan drag on background ---
+  let mousePanEnabled = true;
+  const setMousePanEnabled = (enabled: boolean) => {
+    mousePanEnabled = enabled;
+  };
+
   let panning = false;
   let panStart = { x: 0, y: 0 };
   let panOrigin = { x: 0, y: 0 };
@@ -167,6 +173,7 @@ export const createCanvasViewport = function(
   const onMouseDown = (e: MouseEvent) => {
     // Only pan on middle-button OR primary on the SVG background itself (not bubbled from entities)
     // Shift+drag is reserved for rubber-band multi-select — do not start panning
+    if (!mousePanEnabled) return;
     if (e.shiftKey) return;
     const targetIsSvgBg = svgElement
       ? (e.target === svgElement || (e.target as Element).tagName === 'svg')
@@ -224,6 +231,7 @@ export const createCanvasViewport = function(
     setExternalState,
     screenToCanvas,
     setMouseZoomEnabled,
+    setMousePanEnabled,
     cleanup: () => {
       cleanups.forEach(fn => fn());
       cleanups.length = 0;

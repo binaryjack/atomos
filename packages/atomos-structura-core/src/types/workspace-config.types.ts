@@ -16,6 +16,8 @@ export interface WorkspaceConfig {
   readonly validationMode?: 'strict' | 'passive';
   /** Allow zooming via the mouse wheel. Default is true. */
   readonly allowMouseZoom?: boolean;
+  /** Allow panning via dragging the mouse. Default is true. */
+  readonly allowPanDrag?: boolean;
   /** Fine-grained availability and value config for every canvas toolbar item. */
   readonly menu?: WorkspaceMenuConfig;
   /**
