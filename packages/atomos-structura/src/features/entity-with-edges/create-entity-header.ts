@@ -22,8 +22,8 @@ export interface EntityHeaderResult {
 export const createEntityHeader = function(props: EntityHeaderProps): EntityHeaderResult {
   const cleanups: Array<() => void> = [];
 
-  const bgColor   = props.color || 'var(--vbs-bg-panel, #111111)';
-  const contrast  = computeContrastColor(bgColor);
+  const bgColor   = 'var(--vbs-entity-color, var(--vbs-bg-panel, #111111))';
+  const contrast  = computeContrastColor(props.color || '#111111');
 
   const header = document.createElement('div');
   header.classList.add('vbs-entity-header');

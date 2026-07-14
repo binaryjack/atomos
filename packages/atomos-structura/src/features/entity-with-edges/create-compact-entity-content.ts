@@ -92,7 +92,7 @@ export const createCompactEntityContent = (props: {
     if (currentShape?.parentNode) {
       currentShape.parentNode.removeChild(currentShape);
     }
-    currentShape = createSVGShape(props.shape, width, height, props.color);
+    currentShape = createSVGShape(props.shape, width, height, undefined);
     shapeWrapper.appendChild(currentShape);
 
     textNode.setAttribute('x', (width / 2).toString());

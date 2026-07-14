@@ -161,12 +161,8 @@ export function SimulatorDemo() {
       const el = document.querySelector(`[data-entity-id="${en.id}"]`) as HTMLElement;
       if (el) {
         el.style.filter = '';
-        const shape = el.querySelector('.svg-shape-base') as HTMLElement | null;
-        const header = el.querySelector('.vbs-entity-header') as HTMLElement | null;
         const defaultColor = (en as any).color || 'var(--vbs-bg-panel, #111111)';
-        if (shape) shape.style.setProperty('--shape-custom-fill', defaultColor);
-        if (shape) shape.style.fill = defaultColor;
-        if (header) header.style.background = defaultColor;
+        el.style.setProperty('--vbs-entity-color', defaultColor);
         const badge = el.querySelector('.sim-check-badge');
         if (badge) badge.remove();
       }
@@ -193,11 +189,7 @@ export function SimulatorDemo() {
          if (el) {
            el.style.transition = 'filter 0.3s';
            el.style.filter = 'drop-shadow(0 0 16px #f59e0b)';
-           const shape = el.querySelector('.svg-shape-base') as HTMLElement | null;
-           const header = el.querySelector('.vbs-entity-header') as HTMLElement | null;
-           if (shape) shape.style.setProperty('--shape-custom-fill', '#f59e0b');
-           if (shape) shape.style.fill = '#f59e0b';
-           if (header) header.style.background = '#f59e0b';
+           el.style.setProperty('--vbs-entity-color', '#f59e0b');
          }
       }
       
@@ -222,11 +214,7 @@ export function SimulatorDemo() {
          const el = document.querySelector(`[data-entity-id="${id}"]`) as HTMLElement;
          if (el) {
            el.style.filter = state.shadow ? `drop-shadow(${state.shadow})` : '';
-           const shape = el.querySelector('.svg-shape-base') as HTMLElement | null;
-           const header = el.querySelector('.vbs-entity-header') as HTMLElement | null;
-           if (shape) shape.style.setProperty('--shape-custom-fill', state.color);
-           if (shape) shape.style.fill = state.color;
-           if (header) header.style.background = state.color;
+           el.style.setProperty('--vbs-entity-color', state.color);
 
            const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
            badge.setAttribute('class', 'sim-check-badge');

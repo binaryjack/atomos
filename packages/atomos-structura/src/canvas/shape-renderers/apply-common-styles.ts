@@ -11,7 +11,7 @@ export const applyCommonStyles = (element: SVGElement, color?: string | undefine
 
   // Modern SVG Styling Configuration
   // Fallbacks provided for enterprise dark-mode aesthetics
-  const fill = color || 'var(--shape-fill, rgba(15, 23, 42, 0.8))';
+  const fill = color || 'var(--vbs-entity-color, var(--shape-fill, rgba(15, 23, 42, 0.8)))';
   const stroke = 'var(--shape-stroke, rgba(59, 130, 246, 0.6))';
   const strokeWidth = 'var(--shape-stroke-width, 1.5px)';
   const shadow = 'var(--shape-shadow, drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4)))';

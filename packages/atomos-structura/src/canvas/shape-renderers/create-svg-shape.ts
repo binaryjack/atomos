@@ -36,7 +36,7 @@ export const createSVGShape = (shape: EntityShape, width: number, height: number
     if (svgEl) {
       svgEl.setAttribute('width', width.toString());
       svgEl.setAttribute('height', height.toString());
-      const finalColor = color || 'var(--vbs-bg-panel, #09090b)';
+      const finalColor = color || 'var(--vbs-entity-color, var(--vbs-bg-panel, #09090b))';
       // setAttribute('style') works on DOMParser elements before adoption into main document.
       // .style CSSStyleDeclaration is unavailable on cross-document XML nodes.
       // CSS var() resolves correctly inside inline style strings.

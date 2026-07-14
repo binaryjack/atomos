@@ -13,8 +13,8 @@ export interface EntityFooterResult {
 }
 
 export const createEntityFooter = function(props: EntityFooterProps): EntityFooterResult {
-  const bgColor  = props.color || 'var(--vbs-bg-panel, #111111)';
-  const contrast = computeContrastColor(bgColor);
+  const bgColor  = 'var(--vbs-entity-color, var(--vbs-bg-panel, #111111))';
+  const contrast = computeContrastColor(props.color || '#111111');
 
   const footer = document.createElement('div');
   footer.classList.add('vbs-entity-footer');

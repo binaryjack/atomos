@@ -96,7 +96,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   const isCollapsedSignal = createSignal(store.signal.value.collapsed ?? false);
 
   const header = createEntityHeader({
-    color: props.color,
+    color: undefined,
     label: labelSignal,
     isCollapsed: isCollapsedSignal,
     isReadonly: !!props.isReadonly,
@@ -338,7 +338,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
 
   // ─── footer ───────────────────────────────────────────────────────────────
   const footer = createEntityFooter({
-    color: props.color,
+    color: undefined,
     isReadonly: !!props.isReadonly,
     onAddProperty: async () => {
       console.log('[ENTITY-CONTENT] Adding new property via clean architecture bridge...');
@@ -405,7 +405,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
     if (currentShape && currentShape.parentNode) {
       currentShape.parentNode.removeChild(currentShape);
     }
-    currentShape = createSVGShape((props.shape || 'rectangle') as any, width, height, props.color);
+    currentShape = createSVGShape((props.shape || 'rectangle') as any, width, height, undefined);
     rootElement.insertBefore(currentShape, fo);
   };
 

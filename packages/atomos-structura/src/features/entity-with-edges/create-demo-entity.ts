@@ -21,6 +21,14 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
 
   const selected = createSignal(false);
 
+  // Sync color from Redux into a CSS variable on the root node
+  const updateRootColor = () => {
+    const color = props.entityStore.signal.value.color || 'var(--vbs-bg-panel, #111111)';
+    root.style.setProperty('--vbs-entity-color', color);
+  };
+  updateRootColor();
+  cleanups.push(props.entityStore.signal.subscribe(updateRootColor));
+
   // --- Entity appearance (Rectangle table vs Compact Shape) ---
   let contentElement: SVGElement | null = null;
   let dragHandleElement: HTMLElement | SVGElement | null = null;
