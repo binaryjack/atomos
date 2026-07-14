@@ -156,10 +156,13 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
     }
 
     // Prepend so it goes behind selection rings and resize handles
-    if (root.firstChild) {
-      root.insertBefore(contentElement, root.firstChild);
-    } else {
-      root.appendChild(contentElement);
+    if (contentElement) {
+      contentElement.classList.add('sim-telemetry-target');
+      if (root.firstChild) {
+        root.insertBefore(contentElement, root.firstChild);
+      } else {
+        root.appendChild(contentElement);
+      }
     }
 
     // Reattach drag behavior

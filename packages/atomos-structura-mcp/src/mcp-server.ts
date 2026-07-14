@@ -80,6 +80,19 @@ export const mcpWorkspaceStateSchema = f.object({
   toolbox_config: f.object({}).optional()
 });
 
+export const telemetrySchema = f.object({
+  entities: f.array(f.object({
+    id: f.string().nonempty(),
+    state: f.string().nonempty(),
+    color: f.string().optional(),
+    effect: f.string().optional()
+  })).optional(),
+  links: f.array(f.object({
+    id: f.string().nonempty(),
+    direction: f.string().nonempty()
+  })).optional()
+});
+
 export interface McpRequest {
   readonly method: string;
   readonly params: unknown;
@@ -1002,6 +1015,29 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
           inputSchema: { type: "object", properties: {} }
         },
         {
+          name: "structura_get_telemetry_assets",
+          description: "Get the list of available states and effects for telemetry reporting.",
+          inputSchema: { type: "object", properties: {} }
+        },
+        {
+          name: "structura_validate_telemetry",
+          description: "Validates a given JSON payload against the TelemetryReport schema.",
+          inputSchema: {
+            type: "object",
+            properties: { payload: { type: "object" } },
+            required: ["payload"]
+          }
+        },
+        {
+          name: "structura_report_progress",
+          description: "Report telemetry progress for entities and links.",
+          inputSchema: {
+            type: "object",
+            properties: { payload: { type: "object" } },
+            required: ["payload"]
+          }
+        },
+        {
           name: "structura_get_format",
           description: "Get the JSON Schema format for injection. Use this to understand what format to use for inject_schema.",
           inputSchema: {
@@ -1089,6 +1125,7 @@ const formatValidationErrors = (errors: any[]): string => {
 };
 
 const getTSFormat = (type: string): string => {
+  if (type === 'Telemetry') return `\n\`\`\`ts\ninterface TelemetryReport {\n  entities?: {\n    id: string;\n    state: 'not_started' | 'in_progress' | 'info' | 'warning' | 'error' | 'success' | 'cancelled' | 'escalation' | 'skipped' | 'paused';\n    color?: string;\n    effect?: 'none' | 'glow' | 'pulse' | 'blink' | 'shake';\n  }[];\n  links?: {\n    id: string;\n    direction: 'source-to-target' | 'target-to-source';\n  }[];\n}\n\`\`\`\n`;
   if (type === 'DAGExchange') return `\n\`\`\`ts\ninterface DAGExchange {\n  version: string;\n  nodes: Entity[];\n  edges: LinkProps[];\n  applyAfterLoad?: string[];\n}\n\ninterface Entity {\n  id: string;\n  name: string;\n  position: { x: number; y: number };\n  dimensions: { width: number; height: number };\n  shape?: string;\n  color?: string;\n  description?: string;\n  properties: Record<string, any>;\n}\n\ninterface LinkProps {\n  id: string;\n  sourceAnchorId: string;\n  targetAnchorId: string;\n  sourceEntityId: string;\n  targetEntityId: string;\n}\n\`\`\`\n`;
   if (type === 'SchemaModel') return `\n\`\`\`ts\ninterface SchemaModel {\n  id: string;\n  name: string;\n  entities: Entity[];\n  links: LinkProps[];\n}\n\ninterface Entity {\n  id: string;\n  name: string;\n  position: { x: number; y: number };\n  dimensions: { width: number; height: number };\n  shape?: string;\n  color?: string;\n  description?: string;\n  properties: Record<string, any>;\n}\n\ninterface LinkProps {\n  id: string;\n  sourceAnchorId: string;\n  targetAnchorId: string;\n  sourceEntityId: string;\n  targetEntityId: string;\n}\n\`\`\`\n`;
   return '';
@@ -1153,15 +1190,18 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
           return { result: { format: tsDef }, id: req.id };
         }
         let schemaDef;
-        if (type === 'DAGExchange') schemaDef = dagExchangeSchema.toJSONSchema();
+        if (type === 'Telemetry') schemaDef = telemetrySchema.toJSONSchema();
+        else if (type === 'DAGExchange') schemaDef = dagExchangeSchema.toJSONSchema();
         else if (type === 'SchemaModel') schemaDef = schemaModelSchema.toJSONSchema();
         else return { error: { code: 400, message: `Unsupported format type ${type}` }, id: req.id };
         return { result: { format: schemaDef }, id: req.id };
       }
-      case 'structura_validate_schema': {
-        const type = args.formatType;
+      case 'structura_validate_schema':
+      case 'structura_validate_telemetry': {
+        const type = name === 'structura_validate_telemetry' ? 'Telemetry' : args.formatType;
         let result;
-        if (type === 'DAGExchange') result = f.validateSchema(dagExchangeSchema, args.payload);
+        if (type === 'Telemetry') result = f.validateSchema(telemetrySchema, args.payload);
+        else if (type === 'DAGExchange') result = f.validateSchema(dagExchangeSchema, args.payload);
         else if (type === 'SchemaModel') result = f.validateSchema(schemaModelSchema, args.payload);
         else if (type === 'WorkspaceState') result = f.validateSchema(mcpWorkspaceStateSchema, { workspace: args.payload });
         else return { error: { code: 400, message: `Unsupported format type ${type}` }, id: req.id };
@@ -1171,6 +1211,24 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
             errors = formatValidationErrors(result.errors);
         }
         return { result: { valid: result.success, errors }, id: req.id };
+      }
+      case 'structura_get_telemetry_assets': {
+        return {
+          result: {
+            states: ['not_started', 'in_progress', 'info', 'warning', 'error', 'success', 'cancelled', 'escalation', 'skipped', 'paused'],
+            effects: ['none', 'glow', 'pulse', 'blink', 'shake'],
+            link_directions: ['source-to-target', 'target-to-source']
+          },
+          id: req.id
+        };
+      }
+      case 'structura_report_progress': {
+        const id = crypto.randomUUID();
+        return new Promise((resolve, reject) => {
+          srv._pendingRequests.set(id, { resolve, reject });
+          srv.broadcast_event('structura_report_progress', { id, payload: args.payload });
+          setTimeout(() => { if (srv._pendingRequests.has(id)) { srv._pendingRequests.delete(id); reject(new Error('Timeout')); } }, 5000);
+        });
       }
       case 'structura_inject_schema': {
         const type = args.formatType;

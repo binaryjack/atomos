@@ -10,6 +10,7 @@ import { getExportPlugins } from '../features/export/create-export-registry.js'
 import { createAboutModal } from '../features/modal/create-about-modal.js'
 import type { MenuControl } from '../types/menu-control.types.js'
 import type { ReduxState } from '../types/redux-state.types.js'
+import { applyTelemetry } from '../core/application/telemetry-manager.js'
 
 export interface CanvasToolbarConfig {
   readonly instanceId: string;
@@ -621,6 +622,10 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
         if (viewport.setMousePanEnabled) {
           viewport.setMousePanEnabled(args.enabled !== false);
         }
+        if (sendResult) sendResult();
+      } else if (action === 'structura_report_progress') {
+        const args = (e as CustomEvent).detail.args || {};
+        applyTelemetry(args.payload);
         if (sendResult) sendResult();
       }
     } catch (err) {

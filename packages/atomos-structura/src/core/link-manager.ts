@@ -74,6 +74,9 @@ export const createLinkManager = function(): LinkManager {
   const createLink = (props: LinkProps): LinkResult => {
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('id', `link-${props.id}`);
+    path.setAttribute('data-link-id', props.id);
+    path.setAttribute('data-source-id', props.sourceAnchorId);
+    if (props.targetAnchorId) path.setAttribute('data-target-id', props.targetAnchorId);
     path.setAttribute('stroke', props.strokeColor ?? '#374151');
     path.setAttribute('stroke-width', (props.strokeWidth ?? 2).toString());
     path.setAttribute('fill', 'none');

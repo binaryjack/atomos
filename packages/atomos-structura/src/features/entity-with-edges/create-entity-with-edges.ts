@@ -1,4 +1,4 @@
-﻿import type { EntityWithEdgesProps, EntityWithEdgesResult } from './types/entity-with-edges.types.js';
+import type { EntityWithEdgesProps, EntityWithEdgesResult } from './types/entity-with-edges.types.js';
 export type { EntityWithEdgesProps, EntityWithEdgesResult };
 import { createCard } from '@atomos-web/prime';
 import { createTypography } from '@atomos-web/prime';
@@ -12,9 +12,9 @@ export const createEntityWithEdges = function(props: EntityWithEdgesProps): Enti
   const container = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   const listeners: Array<{ target: EventTarget; type: string; listener: EventListener }> = [];
   const cleanupFunctions: Array<() => void> = [];
-  
   Object.defineProperty(container, 'id', { value: props.id, enumerable: false });
   Object.defineProperty(container, 'className', { value: 'entity-with-edges', enumerable: false });
+  container.setAttribute('data-entity-id', props.id);
   
   // Helper functions to get current values
   const getTitle = () => typeof props.title === 'string' ? props.title : props.title.value;

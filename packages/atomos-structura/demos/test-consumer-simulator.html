@@ -302,166 +302,58 @@
       });
       
       let queue = entities.filter(en => inDegree.get(en.id) === 0).map(en => en.id);
-      if (queue.length === 0 && entities.length > 0) queue = [entities[0].id]; // Handle cycles fallback
+      if (queue.length === 0 && entities.length > 0) queue = [entities[0].id];
       
       // Reset visuals
-      entities.forEach(en => {
-        em.updateEntityMetadata(en.id, { color: undefined });
-        const el = document.querySelector(`[data-entity-id="${en.id}"]`);
-        if (el) {
-          el.style.filter = '';
-          const badge = el.querySelector('.sim-check-badge');
-          if (badge) badge.remove();
-        }
-      });
-      links.forEach(l => {
-        const linkEl = document.getElementById(l.id);
-        if (linkEl) {
-          const p = linkEl.querySelector('path');
-          if (p) {
-            p.style.stroke = '';
-            p.style.strokeDasharray = '';
-            p.style.strokeDashoffset = '';
-          }
-          const progress = linkEl.querySelector('.sim-progress-path');
-          if (progress) progress.remove();
-          const dot = linkEl.querySelector('.sim-travel-dot');
-          if (dot) dot.remove();
+      dispatchMcp('structura_report_progress', {
+        payload: {
+          entities: entities.map(en => ({ id: en.id, state: 'not_started', effect: 'none' }))
         }
       });
 
       while (queue.length > 0 && isExecuting) {
-        // Glow (Processing state)
-        for (const id of queue) {
-           em.updateEntityMetadata(id, { color: '#f59e0b' });
-           const el = document.querySelector(`[data-entity-id="${id}"]`);
-           if (el) {
-             el.style.transition = 'filter 0.3s';
-             el.style.filter = 'drop-shadow(0 0 12px #f59e0b)';
-           }
-        }
+        // Processing state
+        dispatchMcp('structura_report_progress', {
+          payload: {
+            entities: queue.map(id => ({ id, state: 'in_progress' }))
+          }
+        });
         
         await new Promise(r => setTimeout(r, 800));
         if (!isExecuting) break;
         
         // Mark Completed with Random State
-        for (const id of queue) {
-           const states = [
-             { color: '#10b981', type: 'success', shadow: '0 0 16px #10b981' }, // Green
-             { color: '#ef4444', type: 'error', shadow: '0 0 16px #ef4444' }, // Red
-             { color: '#f59e0b', type: 'warning', shadow: '0 0 16px #f59e0b' }, // Orange
-             { color: '#64748b', type: 'skipped', shadow: 'none' } // Gray
-           ];
-           // Bias towards success (60% success, 40% others)
+        const completedEntities = queue.map(id => {
+           const states = ['success', 'error', 'warning', 'skipped'];
            const roll = Math.random();
            let state = states[0];
            if (roll > 0.6) state = states[1];
            if (roll > 0.8) state = states[2];
            if (roll > 0.9) state = states[3];
-           
-           em.updateEntityMetadata(id, { color: state.color });
-           const el = document.querySelector(`[data-entity-id="${id}"]`);
-           if (el) {
-             el.style.filter = state.shadow ? `drop-shadow(${state.shadow})` : '';
-             const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-             badge.setAttribute('class', 'sim-check-badge');
-             const entity = em.getEntity(id);
-             const w = entity.dimensions?.width ?? 200;
-             badge.setAttribute('transform', `translate(${w - 12}, -12)`);
-             
-             if (state.type === 'success') {
-               badge.innerHTML = `
-                 <circle cx="12" cy="12" r="12" fill="${state.color}" />
-                 <path d="M7 12l3 3l7-7" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-               `;
-             } else if (state.type === 'error') {
-               badge.innerHTML = `
-                 <circle cx="12" cy="12" r="12" fill="${state.color}" />
-                 <path d="M8 8l8 8M16 8l-8 8" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" />
-               `;
-             } else if (state.type === 'warning') {
-               badge.innerHTML = `
-                 <circle cx="12" cy="12" r="12" fill="${state.color}" />
-                 <path d="M12 6v6M12 16v2" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" />
-               `;
-             } else {
-               badge.innerHTML = `
-                 <circle cx="12" cy="12" r="12" fill="${state.color}" />
-                 <path d="M7 12h10" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" />
-               `;
-             }
-             el.appendChild(badge);
-           }
-        }
+           return { id, state };
+        });
+
+        dispatchMcp('structura_report_progress', {
+          payload: { entities: completedEntities }
+        });
         
         // Link Animations
         let nextQueue = [];
-        let linkPromises = [];
+        const activeLinks = [];
+        
         for (const id of queue) {
            const outgoing = adj.get(id);
            for (const out of outgoing) {
              nextQueue.push(out.target);
-             linkPromises.push(new Promise(resolve => {
-                const linkEl = document.getElementById(out.link.id);
-                if (!linkEl) return resolve(null);
-                
-                const mainPath = linkEl.querySelector('path');
-                if (!mainPath) return resolve(null);
-                
-                const pathLength = mainPath.getTotalLength();
-                
-                const progPath = mainPath.cloneNode(false);
-                progPath.setAttribute('class', 'sim-progress-path');
-                progPath.style.stroke = '#10b981';
-                progPath.style.strokeWidth = '4';
-                progPath.style.strokeDasharray = pathLength.toString();
-                progPath.style.strokeDashoffset = pathLength.toString();
-                progPath.style.transition = 'stroke-dashoffset 1s linear';
-                linkEl.appendChild(progPath);
-                
-                const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                dot.setAttribute('class', 'sim-travel-dot');
-                dot.setAttribute('r', '6');
-                dot.setAttribute('fill', '#fff');
-                dot.setAttribute('filter', 'drop-shadow(0 0 6px #10b981)');
-                
-                const motion = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
-                motion.setAttribute('dur', '1s');
-                motion.setAttribute('fill', 'freeze');
-                
-                const mpath = document.createElementNS('http://www.w3.org/2000/svg', 'mpath');
-                const pathId = 'path-' + out.link.id;
-                mainPath.setAttribute('id', pathId);
-                mpath.setAttribute('href', '#' + pathId);
-                mpath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#' + pathId);
-                
-                motion.appendChild(mpath);
-                dot.appendChild(motion);
-                linkEl.appendChild(dot);
-                
-                
-                // Allow browser to register initial state
-                setTimeout(() => {
-                  progPath.style.strokeDashoffset = '0';
-                }, 50);
-                
-                setTimeout(() => {
-                  progPath.style.transition = 'opacity 0.3s';
-                  progPath.style.opacity = '0';
-                  dot.style.transition = 'opacity 0.3s';
-                  dot.style.opacity = '0';
-                  setTimeout(() => { 
-                    progPath.remove(); 
-                    dot.remove(); 
-                    resolve(null); 
-                  }, 300);
-                }, 1000);
-             }));
+             activeLinks.push({ id: out.link.id, direction: 'source-to-target' });
            }
         }
         
-        if (linkPromises.length > 0) {
-          await Promise.all(linkPromises);
+        if (activeLinks.length > 0) {
+          dispatchMcp('structura_report_progress', {
+            payload: { links: activeLinks }
+          });
+          await new Promise(r => setTimeout(r, 1500));
         }
         
         queue = [...new Set(nextQueue)];
