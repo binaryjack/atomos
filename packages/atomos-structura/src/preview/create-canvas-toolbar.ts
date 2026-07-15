@@ -629,7 +629,9 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
         if (sendResult) sendResult();
       } else if (action === 'structura_report_progress') {
         const args = (e as CustomEvent).detail.args || {};
-        applyTelemetry(args.payload);
+        // Support both { schema_id, entities, links } or { payload: { entities, links } }
+        const telemetryPayload = args.payload ? args.payload : args;
+        applyTelemetry(telemetryPayload);
         if (sendResult) sendResult();
       }
     } catch (err) {

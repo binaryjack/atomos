@@ -1249,11 +1249,15 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
       }
 
       case 'structura_report_progress': {
-        const id = crypto.randomUUID();
-        return new Promise((resolve, reject) => {
-          srv._pendingRequests.set(id, { resolve, reject });
-          srv.broadcast_event('structura_report_progress', { id, payload: args.payload });
-          setTimeout(() => { if (srv._pendingRequests.has(id)) { srv._pendingRequests.delete(id); reject(new Error('Timeout')); } }, 5000);
+        return new Promise((resolve) => {
+          const reqId = crypto.randomUUID();
+          srv._pendingRequests.set(reqId, { resolve, reject: () => {} });
+          
+          srv.broadcast_event('frontend-action-request', {
+            action: 'structura_report_progress',
+            reqId: reqId,
+            args: args.payload ? args.payload : args
+          });
         });
       }
       case 'structura_inject_schema': {
