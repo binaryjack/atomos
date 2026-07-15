@@ -17,7 +17,7 @@ import { mermaidPlugin } from '../features/export/plugins/mermaid.plugin.js'
 import { prismaPlugin } from '../features/export/plugins/prisma.plugin.js'
 import { sqlDdlPlugin } from '../features/export/plugins/sql-ddl.plugin.js'
 import { typescriptPlugin } from '../features/export/plugins/typescript.plugin.js'
-import { createMcpSync } from '../features/mcp-sync/create-mcp-sync.js'
+import { createMcpSync, mcpEventTarget } from '../features/mcp-sync/create-mcp-sync.js'
 import { createMinimap } from '../features/minimap/create-minimap.js'
 import { createRubberBand } from '../features/rubber-band/create-rubber-band.js'
 import { createSchemaPanel } from '../features/schema-panel/index.js'
@@ -1132,6 +1132,34 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
       fitToScreen: (immediate?: boolean) => {
         doFitToScreen();
       }
+    },
+    handleMcpCall: async (toolName: string, args: Record<string, unknown>): Promise<{ content: Array<{ type: 'text'; text: string }> }> => {
+      return new Promise((resolve, reject) => {
+        if (toolName === 'structura_undo') {
+          store.undo();
+          resolve({ content: [{ type: 'text', text: '{}' }] });
+        } else if (toolName === 'structura_redo') {
+          store.redo();
+          resolve({ content: [{ type: 'text', text: '{}' }] });
+        } else {
+          const reqId = `inmem-${Date.now()}`;
+          mcpEventTarget.dispatchEvent(new CustomEvent('vbs-mcp-action', {
+            detail: {
+              action: toolName,
+              reqId,
+              args,
+              mcpUrl: 'in-memory',
+              sendResult: (result: any = {}, error?: string) => {
+                if (error) {
+                  reject(new Error(error));
+                } else {
+                  resolve({ content: [{ type: 'text', text: JSON.stringify(result) }] });
+                }
+              }
+            }
+          }));
+        }
+      });
     }
   };
 };

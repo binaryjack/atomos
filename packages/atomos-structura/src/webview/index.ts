@@ -54,6 +54,8 @@ export interface WebviewApp {
    * and programmatically interact with the canvas engine. 
    */
   readonly testApi?: Record<string, any>
+  /** In-memory MCP transport */
+  readonly handleMcpCall?: (toolName: string, args: Record<string, unknown>) => Promise<{ content: Array<{ type: 'text'; text: string }> }>
 }
 
 const generateInstanceId = (): string => {
@@ -145,5 +147,6 @@ export const initializeStructuraWebview = async (config: WebviewInitConfig): Pro
     },
     getState: () => page.getState(),
     testApi: page.testApi,
+    handleMcpCall: page.handleMcpCall,
   }
 }
