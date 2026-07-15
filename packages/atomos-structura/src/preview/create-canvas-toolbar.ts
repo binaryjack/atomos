@@ -11,6 +11,7 @@ import { createAboutModal } from '../features/modal/create-about-modal.js'
 import type { MenuControl } from '../types/menu-control.types.js'
 import type { ReduxState } from '../types/redux-state.types.js'
 import { applyTelemetry } from '../core/application/telemetry-manager.js'
+import { mcpEventTarget } from '../features/mcp-sync/create-mcp-sync.js'
 
 export interface CanvasToolbarConfig {
   readonly instanceId: string;
@@ -638,14 +639,14 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
       if (sendResult) sendResult(null, err instanceof Error ? err.message : String(err));
     }
   };
-  window.addEventListener('vbs-mcp-action', handleMcpAction);
+  mcpEventTarget.addEventListener('vbs-mcp-action', handleMcpAction as EventListener);
 
   return {
     bottomBar: toolbar,
     topBurger,
     destroy: () => { 
       if (unsub_menu) unsub_menu(); 
-      window.removeEventListener('vbs-mcp-action', handleMcpAction);
+      mcpEventTarget.removeEventListener('vbs-mcp-action', handleMcpAction as EventListener);
     },
   };
 };

@@ -370,7 +370,7 @@ export function SimulatorDemo() {
   const btnClass = "bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-medium py-2 px-3 rounded transition-colors text-sm text-left w-full";
 
   return (
-    <div className="flex w-full h-full overflow-hidden bg-slate-950 text-slate-200 relative">
+    <div className="flex w-full h-full overflow-hidden bg-[#020617] text-slate-200 relative">
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes vbs-dash {
           to { stroke-dashoffset: -10; }
@@ -381,7 +381,7 @@ export function SimulatorDemo() {
       `}} />
 
       {/* Floating Toggle Buttons (always visible when sidebars are closed) */}
-      <div className={`absolute top-6 left-6 z-50 transition-opacity duration-200 ${isLeftSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`md:hidden absolute top-6 left-6 z-50 transition-opacity duration-200 ${isLeftSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button 
           onClick={() => setIsLeftSidebarOpen(true)}
           className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-800/90 hover:bg-slate-700 backdrop-blur rounded-md border border-slate-700 text-white shadow-lg transition-colors"
@@ -391,7 +391,7 @@ export function SimulatorDemo() {
         </button>
       </div>
 
-      <div className={`absolute top-6 right-6 z-50 transition-opacity duration-200 ${isRightSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`md:hidden absolute top-6 right-6 z-50 transition-opacity duration-200 ${isRightSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button 
           onClick={() => setIsRightSidebarOpen(true)}
           className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-800/90 hover:bg-slate-700 backdrop-blur rounded-md border border-slate-700 text-white shadow-lg transition-colors"
@@ -404,13 +404,13 @@ export function SimulatorDemo() {
       {/* Left Sidebar */}
       <div className={`
         flex-none relative w-72 sm:w-[320px] 
-        bg-slate-900 border-r border-slate-800 flex flex-col p-4 gap-6 overflow-y-auto
+        bg-[#020617] border-r border-white/5 flex flex-col p-4 gap-6 overflow-y-auto
         transition-[margin] duration-300 ease-in-out
-        ${isLeftSidebarOpen ? "ml-0" : "-ml-72 sm:-ml-[320px]"}
+        ${isLeftSidebarOpen ? "ml-0" : "-ml-72 sm:-ml-[320px] md:ml-0"}
       `}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Consumer Simulator</h2>
-          <button className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors" onClick={() => setIsLeftSidebarOpen(false)}>
+          <button className="md:hidden p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors" onClick={() => setIsLeftSidebarOpen(false)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
@@ -488,20 +488,20 @@ export function SimulatorDemo() {
       </div>
 
       {/* Main Canvas Area */}
-      <div className="flex-1 w-full h-full relative bg-slate-950" ref={containerRef}>
+      <div className="flex-1 w-full h-full relative bg-[#020617]" ref={containerRef}>
         {/* Canvas is injected here */}
       </div>
 
       {/* Right Sidebar */}
       <div className={`
         flex-none relative w-72 sm:w-[320px] 
-        bg-slate-900 border-l border-slate-800 flex flex-col p-4 gap-4 overflow-y-auto
+        bg-[#020617] border-l border-white/5 flex flex-col p-4 gap-4 overflow-y-auto
         transition-[margin] duration-300 ease-in-out
-        ${isRightSidebarOpen ? "mr-0" : "-mr-72 sm:-mr-[320px]"}
+        ${isRightSidebarOpen ? "mr-0" : "-mr-72 sm:-mr-[320px] md:mr-0"}
       `}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Errors & Warnings</h2>
-          <button className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors" onClick={() => setIsRightSidebarOpen(false)}>
+          <button className="md:hidden p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors" onClick={() => setIsRightSidebarOpen(false)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>

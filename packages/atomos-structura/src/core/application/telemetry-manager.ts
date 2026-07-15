@@ -82,7 +82,7 @@ export const applyTelemetry = (report: TelemetryReport) => {
 
   if (report.entities) {
     report.entities.forEach(entity => {
-      const el = document.querySelector(`[data-entity-id="${entity.id}"]`);
+      const el = document.querySelector(`[data-testid="structura-canvas-svg"] [data-entity-id="${entity.id}"]`);
       if (!el) return;
 
       const targetEl = el.querySelector('.sim-telemetry-target') || el;
@@ -98,6 +98,14 @@ export const applyTelemetry = (report: TelemetryReport) => {
       // 3. Determine effect
       let effect = entity.effect;
       if (!effect) effect = DEFAULT_EFFECTS[entity.state] as any || 'none';
+      
+      // Update DOM Observability Attributes
+      el.setAttribute('data-entity-state', entity.state);
+      if (effect === 'none') {
+        el.removeAttribute('data-entity-effect');
+      } else {
+        el.setAttribute('data-entity-effect', effect as string);
+      }
       
       // 4. Determine color and CSS variable based color injection
       const baseClass = STATE_COLORS[entity.state] || 'text-gray-500';

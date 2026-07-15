@@ -1,6 +1,6 @@
 export default function CustomizationPage() {
   return (
-    <div className="flex flex-col gap-12 max-w-4xl relative">
+    <div className="p-4 md:p-8 flex flex-col gap-12 max-w-4xl relative">
       <header className="border-b border-white/5 pb-10">
         <h1 className="text-4xl font-extrabold tracking-tight text-white mb-6 drop-shadow-sm">
           Customizing the Workspace

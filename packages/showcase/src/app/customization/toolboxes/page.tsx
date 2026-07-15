@@ -2,7 +2,7 @@ import { ToolboxesSandbox } from "../../../components/ToolboxesSandbox";
 
 export default function ToolboxesPage() {
   return (
-    <div className="flex flex-col gap-10 w-full h-full pb-10">
+    <div className="p-4 md:p-8 flex flex-col gap-10 w-full h-full pb-10">
       <header className="border-b border-slate-800 pb-8 shrink-0">
         <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-orange-500 mb-4">Custom Toolboxes</h1>
         <p className="text-slate-400 leading-relaxed text-lg">Inject domain-specific tools into the builder palette like UML, Database Schemas, Workflows, and State Machines.</p>

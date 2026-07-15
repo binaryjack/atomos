@@ -1102,6 +1102,70 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
             },
             required: ["enabled"]
           }
+        },
+        {
+          name: "structura_load_workspace",
+          description: "Load a complete WorkspaceState to restore UI session (zoom, pan, schemas, themes).",
+          inputSchema: {
+            type: "object",
+            properties: { payload: { type: "object", description: "The WorkspaceState JSON payload" } },
+            required: ["payload"]
+          }
+        },
+        {
+          name: "structura_get_settings",
+          description: "Retrieve global workspace settings.",
+          inputSchema: { type: "object", properties: {} }
+        },
+        {
+          name: "structura_update_settings",
+          description: "Update global workspace settings.",
+          inputSchema: {
+            type: "object",
+            properties: { settings: { type: "object" } },
+            required: ["settings"]
+          }
+        },
+        {
+          name: "structura_list_schemas",
+          description: "List all schemas available in the active canvas.",
+          inputSchema: { type: "object", properties: {} }
+        },
+        {
+          name: "structura_create_schema",
+          description: "Create a new empty schema/tab in the active canvas.",
+          inputSchema: {
+            type: "object",
+            properties: { id: { type: "string" }, name: { type: "string" } },
+            required: ["name"]
+          }
+        },
+        {
+          name: "structura_rename_schema",
+          description: "Rename an existing schema/tab.",
+          inputSchema: {
+            type: "object",
+            properties: { id: { type: "string" }, name: { type: "string" } },
+            required: ["id", "name"]
+          }
+        },
+        {
+          name: "structura_delete_schema",
+          description: "Delete a schema/tab from the active canvas.",
+          inputSchema: {
+            type: "object",
+            properties: { id: { type: "string" } },
+            required: ["id"]
+          }
+        },
+        {
+          name: "structura_activate_schema",
+          description: "Switch the active schema/tab in the UI.",
+          inputSchema: {
+            type: "object",
+            properties: { id: { type: "string" } },
+            required: ["id"]
+          }
         }
       ]
     }
@@ -1184,9 +1248,18 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
         const topic = args.topic || 'all';
         const getFormats = () => ({
           Telemetry: { description: "JSON Schema for telemetry payloads.", schema: telemetrySchema.toJSONSchema() },
-          DAGExchange: { description: "JSON Schema for headless DAG building/import/export.", schema: dagExchangeSchema.toJSONSchema() },
+          DAGExchange: { description: "JSON Schema for headless DAG building/import/export. Used by structura_inject_schema.", schema: dagExchangeSchema.toJSONSchema() },
           SchemaModel: { description: "JSON Schema for strict Structura layout and properties.", schema: schemaModelSchema.toJSONSchema() },
-          WorkspaceState: { description: "JSON Schema for complete workspace persistence/restoration.", schema: mcpWorkspaceStateSchema.toJSONSchema() }
+          WorkspaceState: { description: "JSON Schema for complete workspace persistence/restoration. Used by structura_load_workspace.", schema: mcpWorkspaceStateSchema.toJSONSchema() }
+        });
+        const getToolsGuide = () => ({
+          description: "Guide to the new separation of concerns for Structura MCP tools.",
+          golden_rule: "ALL external communication must pass through MCP tools (JSON-RPC). Do not use local DOM events or side channels.",
+          injecting_data: "Use structura_inject_schema. It ONLY accepts a DAGExchange payload (nodes/edges). It will not alter the presentation state.",
+          loading_session: "Use structura_load_workspace. It ONLY accepts a WorkspaceState payload. It restores zoom, pan, themes, and all open tabs.",
+          presentation: "Use structura_set_zoom, structura_set_canvas_appearance, structura_auto_layout to adjust the view piecemeal.",
+          schema_tabs: "Use structura_create_schema, structura_activate_schema, etc., to manage tabs directly.",
+          telemetry: "Use structura_report_progress. It is purely fire-and-forget for maximum performance."
         });
         const getTelemetry = () => ({
           description: "Available states and effects for telemetry reporting.",
@@ -1228,6 +1301,7 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
         if (topic === 'formats') return { result: getFormats(), id: req.id };
         if (topic === 'telemetry') return { result: getTelemetry(), id: req.id };
         if (topic === 'enums') return { result: getEnums(), id: req.id };
+        if (topic === 'tools' || topic === 'all') return { result: { tools_guide: getToolsGuide(), formats: getFormats(), telemetry: getTelemetry(), enums: getEnums() }, id: req.id };
         
         return { error: { code: 400, message: `Unknown topic: ${topic}` }, id: req.id };
       }
@@ -1249,23 +1323,16 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
       }
 
       case 'structura_report_progress': {
-        return new Promise((resolve) => {
-          const reqId = crypto.randomUUID();
-          srv._pendingRequests.set(reqId, { resolve, reject: () => {} });
-          
-          srv.broadcast_event('frontend-action-request', {
-            action: 'structura_report_progress',
-            reqId: reqId,
-            args: args.payload ? args.payload : args
-          });
+        const reqId = crypto.randomUUID();
+        srv.broadcast_event('frontend-action-request', {
+          action: 'structura_report_progress',
+          reqId: reqId,
+          args: args.payload ? args.payload : args
         });
+        return { result: { success: true }, id: req.id };
       }
       case 'structura_inject_schema': {
-        const type = args.formatType;
-        let result;
-        if (type === 'DAGExchange') result = f.validateSchema(dagExchangeSchema, args.payload);
-        else if (type === 'WorkspaceState') result = f.validateSchema(mcpWorkspaceStateSchema, { workspace: args.payload });
-        else return { error: { code: 400, message: `Unsupported format type ${type}` }, id: req.id };
+        const result = f.validateSchema(dagExchangeSchema, args.payload);
         
         const mode = srv._state.workspace.config?.validationMode || 'passive';
         let formattedErrors: string | undefined;
@@ -1278,28 +1345,36 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
             }
         }
 
-        if (type === 'WorkspaceState') {
-          srv._state = { ...srv._state, workspace: args.payload };
-          emit_sse(srv._clients, 'workspace', { type: 'state-loaded', state: srv._state });
-        } else if (type === 'DAGExchange') {
-          // Send injection as a frontend action
-          const reqId = `structura_inject_schema-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-          emit_sse(srv._clients, 'frontend-action-request', { action: 'structura_inject_schema', reqId, args: { dag: args.payload } });
-          return new Promise<McpResponse>((resolve) => {
-            srv._pendingRequests.set(reqId, {
-              resolve: (res) => resolve({ result: { success: true, validationWarnings: mode === 'passive' ? (formattedErrors || undefined) : undefined }, id: String(req.id) }),
-              reject: (err) => resolve({ error: { code: 500, message: err.message }, id: String(req.id) })
-            });
-            setTimeout(() => {
-              if (srv._pendingRequests.has(reqId)) {
-                srv._pendingRequests.delete(reqId);
-                resolve({ error: { code: 504, message: `Injection timeout` }, id: String(req.id) });
-              }
-            }, 15000);
+        // Send injection as a frontend action
+        const reqId = `structura_inject_schema-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        emit_sse(srv._clients, 'frontend-action-request', { action: 'structura_inject_schema', reqId, args: { dag: args.payload } });
+        return new Promise<McpResponse>((resolve) => {
+          srv._pendingRequests.set(reqId, {
+            resolve: (res) => resolve({ result: { success: true, validationWarnings: mode === 'passive' ? (formattedErrors || undefined) : undefined }, id: String(req.id) }),
+            reject: (err) => resolve({ error: { code: 500, message: err.message }, id: String(req.id) })
           });
-        }
-        return { result: { success: true, validationWarnings: mode === 'passive' ? (formattedErrors ? [formattedErrors] : []) : [] }, id: req.id };
+          setTimeout(() => {
+            if (srv._pendingRequests.has(reqId)) {
+              srv._pendingRequests.delete(reqId);
+              resolve({ error: { code: 504, message: `Injection timeout` }, id: String(req.id) });
+            }
+          }, 15000);
+        });
       }
+      case 'structura_load_workspace': {
+        const result = f.validateSchema(mcpWorkspaceStateSchema, { workspace: args.payload });
+        if (!result.success) return { error: { code: 422, message: 'Invalid workspace state' }, id: req.id };
+        srv._state = { ...srv._state, workspace: args.payload };
+        emit_sse(srv._clients, 'workspace', { type: 'state-loaded', state: srv._state });
+        return { result: { success: true }, id: req.id };
+      }
+      case 'structura_get_settings':    return handle_get_settings(srv, { id: req.id, method: 'atomos-structura/get-settings', params: args });
+      case 'structura_update_settings': return handle_update_settings(srv, { id: req.id, method: 'atomos-structura/update-settings', params: args });
+      case 'structura_list_schemas':    return handle_list_schemas(srv, { id: req.id, method: 'atomos-structura/list-schemas', params: args });
+      case 'structura_create_schema':   return handle_create_schema(srv, { id: req.id, method: 'atomos-structura/create-schema', params: args });
+      case 'structura_rename_schema':   return handle_rename_schema(srv, { id: req.id, method: 'atomos-structura/rename-schema', params: args });
+      case 'structura_delete_schema':   return handle_delete_schema(srv, { id: req.id, method: 'atomos-structura/delete-schema', params: args });
+      case 'structura_activate_schema': return handle_activate_schema(srv, { id: req.id, method: 'atomos-structura/activate-schema', params: args });
       case 'structura_undo':
       case 'structura_redo':
       case 'structura_auto_layout':

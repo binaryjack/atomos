@@ -110,7 +110,7 @@ export function ThemesSandbox() {
       </div>
       
       {/* We use a key on StructuraCanvas to force a full re-mount when theme changes so the sandbox completely re-initializes with the new config */}
-      <div className="flex-1 relative w-full h-full bg-slate-950">
+      <div className="flex-1 relative w-full h-full bg-[#020617]">
         <StructuraCanvas 
           key={activeTheme.id} 
           preset="mvc" 

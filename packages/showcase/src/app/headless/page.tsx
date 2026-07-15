@@ -1,6 +1,6 @@
 export default function HeadlessPage() {
   return (
-    <div className="flex flex-col gap-10 max-w-3xl">
+    <div className="p-4 md:p-8 flex flex-col gap-10 max-w-3xl">
       <header className="border-b border-slate-800 pb-8">
         <h1 className="text-3xl font-bold text-white mb-4">ISO-42: Headless AST Pipeline</h1>
         <p className="text-slate-400 leading-relaxed text-lg">System definition for detaching browser painting from graph mutation operations.</p>
@@ -10,9 +10,9 @@ export default function HeadlessPage() {
         <h2 className="text-xl font-semibold text-blue-400 mb-6">1. Kernel Architecture</h2>
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-lg text-slate-300">
           <p className="mb-4 text-[15px] leading-7">
-            The core logic relies on a standalone <code className="text-emerald-400 bg-slate-950 px-1.5 py-0.5 rounded text-sm font-mono">SchemaGraphKernel</code>. The domain handles structural node relationships entirely without knowledge of the DOM. 
+            The core logic relies on a standalone <code className="text-emerald-400 bg-[#020617] px-1.5 py-0.5 rounded text-sm font-mono">SchemaGraphKernel</code>. The domain handles structural node relationships entirely without knowledge of the DOM. 
           </p>
-          <pre className="bg-slate-950 p-4 rounded border border-slate-800 overflow-hidden text-sm text-slate-300 font-mono leading-relaxed mt-4">
+          <pre className="bg-[#020617] p-4 rounded border border-slate-800 overflow-hidden text-sm text-slate-300 font-mono leading-relaxed mt-4">
 {`// Example: Kernel Adapter Bridge
 const kernel = createSchemaGraphKernel();
 const bridge = createKernelAdapter(kernel, getEntityManager());

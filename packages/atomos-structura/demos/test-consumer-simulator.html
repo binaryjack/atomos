@@ -243,17 +243,25 @@
     
 
     // 3. MCP Simulator Dispatcher
-    window.dispatchMcp = (action, args = {}) => {
-      console.log(`[Simulator] Executing ${action}`);
-      if (action === 'structura_undo') {
-        document.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'z' }));
-      } else if (action === 'structura_redo') {
-        document.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'y' }));
-      } else {
-        window.dispatchEvent(new CustomEvent('vbs-mcp-action', {
-          detail: { reqId: `sim-req-${Date.now()}`, action, args },
-          sendResult: (data) => console.log('[Simulator] Received tool result payload:', data)
-        }));
+    window.dispatchMcp = async (action, args = {}) => {
+      console.log(`[Simulator] Executing ${action} via MCP server`);
+      try {
+        const response = await fetch('http://localhost:9743', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            method: 'tools/call',
+            params: {
+              name: action,
+              arguments: args
+            },
+            id: `sim-req-${Date.now()}`
+          })
+        });
+        const data = await response.json();
+        console.log('[Simulator] Received tool result payload:', data);
+      } catch (err) {
+        console.error('[Simulator] Failed to execute tool over network:', err);
       }
     };
 

@@ -2,7 +2,7 @@ import { ExecutionDemoCanvas } from '@/components/ExecutionDemoCanvas'
 
 export default function ExecutionDemoPage() {
   return (
-    <div className="flex flex-col gap-10 max-w-5xl">
+    <div className="p-4 md:p-8 flex flex-col gap-10 max-w-5xl">
       <header className="border-b border-purple-800/30 pb-8">
         <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-200 mb-4">Real-time Execution Telemetry</h1>
         <p className="text-slate-400 leading-relaxed text-lg">

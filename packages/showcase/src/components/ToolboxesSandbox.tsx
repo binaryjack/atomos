@@ -92,7 +92,7 @@ export function ToolboxesSandbox() {
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 p-4 bg-slate-900/80 backdrop-blur border border-slate-700/50 rounded-xl shadow-2xl w-64">
         <label className="text-xs uppercase font-bold text-slate-400 tracking-wider">Select Domain</label>
         <select 
-          className="bg-slate-950 border border-slate-700 rounded-lg p-2 text-sm text-slate-200 outline-none focus:border-amber-500 transition-colors"
+          className="bg-[#020617] border border-slate-700 rounded-lg p-2 text-sm text-slate-200 outline-none focus:border-amber-500 transition-colors"
           value={activeDomain.id}
           onChange={(e) => {
             const domain = DOMAINS.find(d => d.id === e.target.value);
@@ -108,7 +108,7 @@ export function ToolboxesSandbox() {
         </p>
       </div>
 
-      <div className="flex-1 relative w-full h-full bg-slate-950">
+      <div className="flex-1 relative w-full h-full bg-[#020617]">
         {/* We use key to force a full re-initialization of the kernel & canvas when domain changes */}
         <StructuraCanvas 
           key={`sandbox-${activeDomain.id}`}

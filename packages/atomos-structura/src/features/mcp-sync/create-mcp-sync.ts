@@ -2,6 +2,8 @@ import type { Entity, LinkProps } from '@atomos-web/structura-core';
 import type { ReduxState, ReduxStore } from '../../types/redux-state.types.js';
 import type { AppSettings } from '../settings-page/types/settings-page.types.js';
 
+export const mcpEventTarget = new EventTarget();
+
 export interface McpSyncResult {
   readonly cleanup: () => void;
 }
@@ -196,13 +198,24 @@ export const createMcpSync = (
           store.redo();
           sendResult();
         } else {
-          // Dispatch custom event for toolbar/page to handle (SVG export, auto-layout, etc)
-          window.dispatchEvent(new CustomEvent('vbs-mcp-action', { 
+          // Dispatch custom event for toolbar/page to handle securely
+          mcpEventTarget.dispatchEvent(new CustomEvent('vbs-mcp-action', { 
             detail: { ...data, mcpUrl, sendResult } 
           }));
         }
       } catch { /* ignore malformed events */ }
     });
+    
+    // Fallback for older atomos-structura-mcp versions that emit this event directly
+    es.addEventListener('structura_report_progress', (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data);
+        mcpEventTarget.dispatchEvent(new CustomEvent('vbs-mcp-action', { 
+          detail: { action: 'structura_report_progress', reqId: data.reqId || '', args: data, mcpUrl, sendResult: () => {} } 
+        }));
+      } catch { /* ignore malformed events */ }
+    });
+    
     es.onerror = () => { /* MCP server may not be running — silent */ };
   } catch { /* EventSource not available or URL invalid */ }
 

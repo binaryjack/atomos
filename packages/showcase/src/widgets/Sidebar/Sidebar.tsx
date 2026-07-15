@@ -110,7 +110,7 @@ export function Sidebar() {
   return (
     <>
       {/* Barre d'en-tête pour Mobile/Tablette (md:hidden) */}
-      <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-30 shrink-0 w-full">
+      <div className="flex md:hidden items-center justify-between p-4 border-b border-white/5 bg-[#020617]/80 backdrop-blur-xl sticky top-0 z-30 shrink-0 w-full">
         <h1 className="text-lg font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 tracking-tight drop-shadow-sm">
           Atomos Structura
         </h1>
@@ -124,7 +124,7 @@ export function Sidebar() {
 
       {/* Barre latérale persistante pour Desktop (hidden md:flex) */}
       {/* Elle est statique dans le flux flex et ne se ferme jamais */}
-      <aside className="hidden md:flex flex-col w-72 h-screen sticky top-0 bg-slate-950/40 backdrop-blur-xl border-r border-white/5 p-6 overflow-y-auto shrink-0 z-20">
+      <aside className="hidden md:flex flex-col w-72 h-screen sticky top-0 bg-[#020617] border-r border-white/5 p-6 overflow-y-auto shrink-0 z-20">
         <SidebarContent />
       </aside>
 
@@ -139,7 +139,7 @@ export function Sidebar() {
       {/* Tiroir de menu pour Mobile (overlay) */}
       <aside className={`
         fixed top-0 left-0 h-screen z-50 md:hidden
-        w-72 bg-slate-950 border-r border-white/5 p-6 flex flex-col overflow-y-auto shrink-0 transition-transform duration-300 ease-in-out
+        w-72 bg-[#020617] border-r border-white/5 p-6 flex flex-col overflow-y-auto shrink-0 transition-transform duration-300 ease-in-out
         ${isMobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}
       `}>
         <SidebarContent />

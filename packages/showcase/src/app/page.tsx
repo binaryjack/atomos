@@ -4,7 +4,7 @@ import { Button } from '../shared/ui/Button';
 
 export default function Home() {
   return (
-    <div className="flex flex-col gap-12 max-w-4xl relative">
+    <div className="p-4 md:p-8 flex flex-col gap-12 max-w-4xl relative">
       <header className="border-b border-white/5 pb-10">
         <Badge active>v3.0 Released</Badge>
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-6 drop-shadow-sm">

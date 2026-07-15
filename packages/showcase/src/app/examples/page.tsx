@@ -2,7 +2,7 @@ import { CanvasSandbox } from "../../components/CanvasSandboxWrapper";
 
 export default function ExamplesPage() {
   return (
-    <div className="flex flex-col gap-10 max-w-4xl w-full h-full pb-10">
+    <div className="p-4 md:p-8 flex flex-col gap-10 max-w-4xl w-full h-full pb-10">
       <header className="border-b border-slate-800 pb-8 shrink-0">
         <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-4">Examples & Sandbox</h1>
         <p className="text-slate-400 leading-relaxed text-lg">Interactive demonstrations of the visual builder engine embedded as a native Next.js Client Component.</p>

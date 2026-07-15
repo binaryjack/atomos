@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function HeadlessMcpIntegrationPage() {
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-4 md:p-8 p-8 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Headless API & MCP Integration</h1>
       
       <p className="text-lg text-slate-300 mb-8">

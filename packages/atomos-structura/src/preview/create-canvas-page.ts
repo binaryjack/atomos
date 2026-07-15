@@ -64,6 +64,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   
   // Root — fills parent container natively
   const root = document.createElement('div');
+  root.setAttribute('data-testid', 'structura-canvas-root');
   root.style.cssText = 'position:relative;width:100%;height:100%;overflow:hidden;background:var(--vbs-bg-input, #09090b);container-type:inline-size;';
 
   // Schema tabs bar
@@ -108,6 +109,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
 
   // SVG — no viewBox, 1 unit = 1 CSS px
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('data-testid', 'structura-canvas-svg');
   svg.setAttribute('width', '100%');
   svg.setAttribute('height', '100%');
   svg.style.cssText = 'display:block;cursor:default;';
