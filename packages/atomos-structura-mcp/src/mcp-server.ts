@@ -1012,12 +1012,22 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
         {
           name: "structura_auto_layout",
           description: "Automatically layout all nodes on the canvas.",
-          inputSchema: { type: "object", properties: {} }
+          inputSchema: {
+            type: "object",
+            properties: {
+              layout_template: { type: "string", description: "The name of the layout template to force (e.g. 'sugiyama', 'clear')" }
+            }
+          }
         },
         {
-          name: "structura_get_telemetry_assets",
-          description: "Get the list of available states and effects for telemetry reporting.",
-          inputSchema: { type: "object", properties: {} }
+          name: "structura_discovery",
+          description: "Discover all available Structura enums, formats, templates, and configurations.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              topic: { type: "string", description: "Optional. 'telemetry', 'formats', 'enums', 'layouts', or omit for all." }
+            }
+          }
         },
         {
           name: "structura_validate_telemetry",
@@ -1037,18 +1047,7 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
             required: ["payload"]
           }
         },
-        {
-          name: "structura_get_format",
-          description: "Get the JSON Schema format for injection. Use this to understand what format to use for inject_schema.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              formatType: { type: "string", enum: ["DAGExchange", "SchemaModel"], description: "The format to get the schema for" },
-              outputFormat: { type: "string", enum: ["Default", "TSinMD"], description: "The requested output format. 'TSinMD' for Typescript in Markdown, 'Default' for JSON schema." }
-            },
-            required: ["formatType"]
-          }
-        },
+
         {
           name: "structura_validate_schema",
           description: "Validate a JSON payload against the specified Structura format.",
@@ -1181,20 +1180,56 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
         return handle_update_entity(srv, { id: req.id, method: 'atomos-structura/update-entity', params: args });
       case 'structura_create_link':
         return handle_create_link(srv, { id: req.id, method: 'atomos-structura/create-link', params: args });
-      case 'structura_get_format': {
-        const type = args.formatType;
-        const outFmt = args.outputFormat || 'Default';
-        if (outFmt === 'TSinMD') {
-          const tsDef = getTSFormat(type);
-          if (!tsDef) return { error: { code: 400, message: `Unsupported format type ${type}` }, id: req.id };
-          return { result: { format: tsDef }, id: req.id };
+      case 'structura_discovery': {
+        const topic = args.topic || 'all';
+        const getFormats = () => ({
+          Telemetry: { description: "JSON Schema for telemetry payloads.", schema: telemetrySchema.toJSONSchema() },
+          DAGExchange: { description: "JSON Schema for headless DAG building/import/export.", schema: dagExchangeSchema.toJSONSchema() },
+          SchemaModel: { description: "JSON Schema for strict Structura layout and properties.", schema: schemaModelSchema.toJSONSchema() },
+          WorkspaceState: { description: "JSON Schema for complete workspace persistence/restoration.", schema: mcpWorkspaceStateSchema.toJSONSchema() }
+        });
+        const getTelemetry = () => ({
+          description: "Available states and effects for telemetry reporting.",
+          states: ['not_started', 'in_progress', 'info', 'warning', 'error', 'success', 'cancelled', 'escalation', 'skipped', 'paused'],
+          effects: ['none', 'glow', 'pulse', 'blink', 'shake'],
+          link_directions: ['source-to-target', 'target-to-source']
+        });
+        const getEnums = () => ({
+          description: "Core enumerations used throughout Structura.",
+          data_types: ['string', 'number', 'integer', 'float', 'boolean', 'date', 'uuid', 'json', 'array', 'object'],
+          component_types: ['input', 'select', 'checkbox', 'textarea'],
+          cardinalities: ['1', '*', '0..1', '1..*']
+        });
+
+        if (topic === 'layouts' || topic === 'all') {
+          const reqId = `structura_get_layouts-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          emit_sse(srv._clients, 'frontend-action-request', { action: 'structura_get_layouts', reqId, args: {} });
+          return new Promise<McpResponse>((resolve, reject) => {
+            srv._pendingRequests.set(reqId, {
+              resolve: (result) => {
+                const layouts = result.layouts || [];
+                const layoutObj = { description: "Available layout templates/strategies.", layouts };
+                if (topic === 'layouts') resolve({ result: layoutObj, id: String(req.id) });
+                else resolve({ result: { formats: getFormats(), telemetry: getTelemetry(), enums: getEnums(), layouts: layoutObj }, id: String(req.id) });
+              },
+              reject: (err) => resolve({ error: { code: 500, message: err.message }, id: String(req.id) })
+            });
+            setTimeout(() => {
+              if (srv._pendingRequests.has(reqId)) {
+                srv._pendingRequests.delete(reqId);
+                const fallbackLayouts = { description: "Available layout templates/strategies.", layouts: ['sugiyama', 'clear'] };
+                if (topic === 'layouts') resolve({ result: fallbackLayouts, id: String(req.id) });
+                else resolve({ result: { formats: getFormats(), telemetry: getTelemetry(), enums: getEnums(), layouts: fallbackLayouts }, id: String(req.id) });
+              }
+            }, 5000);
+          });
         }
-        let schemaDef;
-        if (type === 'Telemetry') schemaDef = telemetrySchema.toJSONSchema();
-        else if (type === 'DAGExchange') schemaDef = dagExchangeSchema.toJSONSchema();
-        else if (type === 'SchemaModel') schemaDef = schemaModelSchema.toJSONSchema();
-        else return { error: { code: 400, message: `Unsupported format type ${type}` }, id: req.id };
-        return { result: { format: schemaDef }, id: req.id };
+
+        if (topic === 'formats') return { result: getFormats(), id: req.id };
+        if (topic === 'telemetry') return { result: getTelemetry(), id: req.id };
+        if (topic === 'enums') return { result: getEnums(), id: req.id };
+        
+        return { error: { code: 400, message: `Unknown topic: ${topic}` }, id: req.id };
       }
       case 'structura_validate_schema':
       case 'structura_validate_telemetry': {
@@ -1212,16 +1247,7 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
         }
         return { result: { valid: result.success, errors }, id: req.id };
       }
-      case 'structura_get_telemetry_assets': {
-        return {
-          result: {
-            states: ['not_started', 'in_progress', 'info', 'warning', 'error', 'success', 'cancelled', 'escalation', 'skipped', 'paused'],
-            effects: ['none', 'glow', 'pulse', 'blink', 'shake'],
-            link_directions: ['source-to-target', 'target-to-source']
-          },
-          id: req.id
-        };
-      }
+
       case 'structura_report_progress': {
         const id = crypto.randomUUID();
         return new Promise((resolve, reject) => {

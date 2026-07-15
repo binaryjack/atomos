@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import '@atomos-web/prime-style/dist/styles.css'
 
 interface Warning {
   rule: string;
@@ -459,7 +458,9 @@ export function SimulatorDemo() {
           <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Actions</h3>
           <button className={btnClass} onClick={() => dispatchMcp('structura_undo')}>Undo</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_redo')}>Redo</button>
-          <button className={btnClass} onClick={() => dispatchMcp('structura_auto_layout')}>Auto Layout Nodes</button>
+          <button className={btnClass} onClick={() => dispatchMcp('structura_auto_layout', { layout_template: 'sugiyama' })}>Auto Layout (Sugiyama)</button>
+          <button className={btnClass} onClick={() => dispatchMcp('structura_auto_layout', { layout_template: 'clear' })}>Auto Layout (Clear)</button>
+          <button className={`${btnClass} !bg-purple-700 hover:!bg-purple-600`} onClick={() => dispatchMcp('structura_discovery', { topic: 'all' })}>Discover Capabilities</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_optimize_connections')}>Optimize Connections</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_inject_schema', {
             formatType: 'DAGExchange',

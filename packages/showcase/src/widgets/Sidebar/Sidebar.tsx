@@ -6,11 +6,11 @@ import { useState, useEffect } from "react";
 
 export function Sidebar() {
   const pathname = usePathname() || "";
-  const [isOpen, setIsOpen] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  // Fermer le menu mobile lors d'un changement de page
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    setIsOpen(false);
+    setIsMobileOpen(false);
   }, [pathname]);
 
   const isActive = (path: string) => {
@@ -39,57 +39,23 @@ export function Sidebar() {
     }`;
   };
 
-  return (
+  const SidebarContent = () => (
     <>
-      {/* Desktop Floating Toggle (when sidebar is closed) */}
-      <button 
-        onClick={() => setIsOpen(true)}
-        className={`hidden md:flex fixed top-6 left-6 z-40 p-2 text-slate-300 hover:text-white bg-slate-900/80 hover:bg-slate-800 rounded-md border border-white/10 backdrop-blur-md shadow-xl transition-all duration-300 ${isOpen ? 'opacity-0 pointer-events-none -translate-x-10' : 'opacity-100 translate-x-0'}`}
-      >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-      </button>
-
-      {/* Mobile Header Toggle */}
-      <div className={`md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-30 shrink-0 ${isOpen ? 'hidden' : 'flex'}`}>
-        <div className="flex flex-col gap-0.5">
-          <h1 className="text-lg font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 tracking-tight drop-shadow-sm">Atomos Structura</h1>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 tracking-tight drop-shadow-sm">Atomos Structura</h1>
+          <p className="text-[11px] font-medium text-slate-500 uppercase tracking-widest mt-1">Enterprise Graph Engine</p>
         </div>
+        {/* Bouton de fermeture uniquement visible sur mobile */}
         <button 
-          onClick={() => setIsOpen(!isOpen)}
-          className="p-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-md transition-colors"
+          onClick={() => setIsMobileOpen(false)}
+          className="md:hidden p-1.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-md transition-colors"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
-
-      {/* Backdrop for mobile */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside className={`
-        fixed md:sticky top-0 left-0 h-screen z-50 md:z-20
-        w-72 bg-slate-950 md:bg-slate-950/40 backdrop-blur-xl border-r border-white/5 p-6 flex flex-col gap-6 overflow-y-auto shrink-0 transition-[transform,margin] duration-300 ease-in-out
-        ${isOpen ? "translate-x-0 md:ml-0 shadow-2xl" : "-translate-x-full md:translate-x-0 md:-ml-72 md:shadow-none"}
-      `}>
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 tracking-tight drop-shadow-sm">Atomos Structura</h1>
-            <p className="text-[11px] font-medium text-slate-500 uppercase tracking-widest mt-1">Enterprise Graph Engine</p>
-          </div>
-          <button 
-            onClick={() => setIsOpen(false)}
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-md transition-colors"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
-        </div>
-        
-        <nav className="flex flex-col gap-1.5 mt-2 md:mt-4">
+      
+      <nav className="flex flex-col gap-1.5 mt-2 md:mt-4">
         <div className="text-[10px] uppercase font-bold text-slate-500/80 mb-2 tracking-[0.2em] pl-3">Getting Started</div>
         <Link href="/" className={getLinkClasses("/")}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Overview
@@ -138,7 +104,46 @@ export function Sidebar() {
           GitHub Repository
         </a>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Barre d'en-tête pour Mobile/Tablette (md:hidden) */}
+      <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-30 shrink-0 w-full">
+        <h1 className="text-lg font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 tracking-tight drop-shadow-sm">
+          Atomos Structura
+        </h1>
+        <button 
+          onClick={() => setIsMobileOpen(true)}
+          className="p-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-md transition-colors"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+      </div>
+
+      {/* Barre latérale persistante pour Desktop (hidden md:flex) */}
+      {/* Elle est statique dans le flux flex et ne se ferme jamais */}
+      <aside className="hidden md:flex flex-col w-72 h-screen sticky top-0 bg-slate-950/40 backdrop-blur-xl border-r border-white/5 p-6 overflow-y-auto shrink-0 z-20">
+        <SidebarContent />
+      </aside>
+
+      {/* Fond sombre pour le menu Mobile en surimpression */}
+      {isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+      {/* Tiroir de menu pour Mobile (overlay) */}
+      <aside className={`
+        fixed top-0 left-0 h-screen z-50 md:hidden
+        w-72 bg-slate-950 border-r border-white/5 p-6 flex flex-col overflow-y-auto shrink-0 transition-transform duration-300 ease-in-out
+        ${isMobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}
+      `}>
+        <SidebarContent />
+      </aside>
     </>
   );
 }

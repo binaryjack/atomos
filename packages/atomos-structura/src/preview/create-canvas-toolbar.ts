@@ -578,10 +578,14 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
     const { action, sendResult } = (e as CustomEvent).detail;
     try {
       if (action === 'structura_auto_layout') {
-        LayoutRegistry.get('sugiyama')?.execute(entityManager);
+        const args = (e as CustomEvent).detail.args || {};
+        const strategyName = args.layout_template || 'sugiyama';
+        LayoutRegistry.get(strategyName)?.execute(entityManager);
         autoRouteLinks(entityManager);
         centerToSchema();
         if (sendResult) sendResult();
+      } else if (action === 'structura_get_layouts') {
+        if (sendResult) sendResult({ layouts: LayoutRegistry.getAllNames() });
       } else if (action === 'structura_optimize_connections') {
         autoRouteLinks(entityManager);
         if (sendResult) sendResult();
