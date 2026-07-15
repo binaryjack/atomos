@@ -1101,6 +1101,18 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
     if (zone === 'right' || zone === 'all') createZone(`right:0;top:0;bottom:0;width:${thickness};cursor:help;`);
   }
 
+  const handlePageMcpAction = (e: Event) => {
+    const { action, args, sendResult, mcpUrl: eventMcpUrl } = (e as CustomEvent).detail;
+    if (eventMcpUrl !== 'in-memory') return;
+    
+    if (action === 'structura_load_workspace') {
+      store.dispatch({ type: 'state-loaded', state: { workspace: args.payload } });
+      if (sendResult) sendResult({});
+    }
+  };
+  mcpEventTarget.addEventListener('vbs-mcp-action', handlePageMcpAction);
+  cleanups.push(() => mcpEventTarget.removeEventListener('vbs-mcp-action', handlePageMcpAction));
+
   return {
     element: root,
     cleanup: {

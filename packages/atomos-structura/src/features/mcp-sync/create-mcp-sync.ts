@@ -115,6 +115,26 @@ export const createMcpSync = (
     }
   };
 
+  // ── In-memory transport handler ─────────────────────────────────────────────
+  // Processes vbs-mcp-action events dispatched by handleMcpCall() directly,
+  // without requiring the HTTP MCP server to be running.
+  const handleInMemoryAction = (e: Event) => {
+    const { action, sendResult, mcpUrl: eventMcpUrl } = (e as CustomEvent).detail;
+    
+    // Only handle in-memory calls
+    if (eventMcpUrl !== 'in-memory') return;
+
+    // Route to internal handlers (undo/redo are normally handled here by SSE)
+    if (action === 'structura_undo') {
+      store.undo();
+      if (sendResult) sendResult({});
+    } else if (action === 'structura_redo') {
+      store.redo();
+      if (sendResult) sendResult({});
+    }
+  };
+  mcpEventTarget.addEventListener('vbs-mcp-action', handleInMemoryAction);
+
   try {
     es = new EventSource(`${mcpUrl}/events`);
     es.addEventListener('change', (e: MessageEvent) => {
@@ -220,7 +240,11 @@ export const createMcpSync = (
   } catch { /* EventSource not available or URL invalid */ }
 
   return {
-    cleanup: () => { es?.close(); es = null; },
+    cleanup: () => { 
+      mcpEventTarget.removeEventListener('vbs-mcp-action', handleInMemoryAction);
+      es?.close(); 
+      es = null; 
+    },
   };
 };
 
