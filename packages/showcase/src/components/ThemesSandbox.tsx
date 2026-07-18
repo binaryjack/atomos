@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import type { AppSettings } from "@atomos-web/structura/dist/features/settings-page/types/settings-page.types.js";
+import type { AppSettings } from "@atomos-web/structura";
 
 const StructuraCanvas = dynamic(() => import("./StructuraCanvas"), { ssr: false });
 

@@ -13,9 +13,9 @@ export function Button({ href, onClick, children, variant = 'primary', className
   const baseStyles = "inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all";
   
   const variants = {
-    primary: "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)]",
-    secondary: "bg-white/5 hover:bg-white/10 text-purple-300 border border-purple-500/20 hover:border-purple-500/40",
-    ghost: "text-slate-400 hover:text-white hover:bg-white/5"
+    primary: "bg-slate-900 border border-cyan-500/50 text-cyan-400 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(6,182,212,0.25)]",
+    secondary: "bg-slate-900 border border-indigo-500/50 text-indigo-400 hover:border-indigo-400 hover:shadow-[0_0_15px_rgba(99,102,241,0.25)]",
+    ghost: "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
   };
 
   const combinedStyles = `${baseStyles} ${variants[variant]} ${className}`;

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 // Import the Web Component registry code (this will define <atomos-structura-viewer>)
-import "@atomos-web/structura/dist/viewer/index.js";
+import "@atomos-web/structura";
 
 declare global {
   namespace JSX {

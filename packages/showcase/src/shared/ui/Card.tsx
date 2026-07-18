@@ -2,35 +2,34 @@ import React from 'react';
 
 interface CardProps {
   children: React.ReactNode;
-  color?: 'blue' | 'purple' | 'slate';
+  color?: 'cyan' | 'indigo' | 'slate';
 }
 
 const colorMap = {
-  blue: {
-    gradient: 'from-blue-600/10',
-    hoverShadow: 'hover:shadow-blue-500/10',
-    blob: 'bg-blue-500/10',
+  cyan: {
+    border: 'hover:border-cyan-500/50',
+    shadow: 'hover:shadow-[0_0_15px_rgba(6,182,212,0.15)]',
+    glow: 'bg-cyan-500/5',
   },
-  purple: {
-    gradient: 'from-purple-600/10',
-    hoverShadow: 'hover:shadow-purple-500/10',
-    blob: 'bg-purple-500/10',
+  indigo: {
+    border: 'hover:border-indigo-500/50',
+    shadow: 'hover:shadow-[0_0_15px_rgba(99,102,241,0.15)]',
+    glow: 'bg-indigo-500/5',
   },
   slate: {
-    gradient: 'from-slate-600/10',
-    hoverShadow: 'hover:shadow-slate-500/10',
-    blob: 'bg-slate-500/10',
+    border: 'hover:border-slate-500/50',
+    shadow: 'hover:shadow-[0_0_15px_rgba(100,116,139,0.15)]',
+    glow: 'bg-slate-500/5',
   },
 };
 
-export function Card({ children, color = 'blue' }: CardProps) {
+export function Card({ children, color = 'cyan' }: CardProps) {
   const styles = colorMap[color];
 
   return (
     <section className="flex flex-col group relative">
-      <div className={`absolute inset-0 bg-gradient-to-br ${styles.gradient} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl blur-xl`}></div>
-      <div className={`h-full bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-2xl p-8 shadow-2xl relative overflow-hidden transition-all duration-300 hover:border-white/10 ${styles.hoverShadow} hover:-translate-y-1`}>
-        <div className={`absolute top-0 right-0 w-64 h-64 ${styles.blob} rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4 pointer-events-none`}></div>
+      <div className={`h-full bg-[#0b1120] border border-slate-800 rounded-xl p-8 relative overflow-hidden transition-all duration-300 ${styles.border} ${styles.shadow}`}>
+        <div className={`absolute top-0 right-0 w-full h-full ${styles.glow} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}></div>
         {children}
       </div>
     </section>

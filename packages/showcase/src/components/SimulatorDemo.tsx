@@ -32,8 +32,8 @@ export function SimulatorDemo() {
 
     const init = async () => {
       // Dynamic imports to bypass SSR
-      const structuraEntity = await import('@atomos-web/structura/dist/core/presentation/entity-manager.js');
-      const structuraCanvas = await import('@atomos-web/structura/dist/preview/create-canvas-page.js');
+      const structuraEntity = await import('@atomos-web/structura');
+      const structuraCanvas = await import('@atomos-web/structura');
       
       createCanvasPage = structuraCanvas.createCanvasPage;
       getEntityManager = structuraEntity.getEntityManager;
@@ -70,7 +70,7 @@ export function SimulatorDemo() {
       if (existingDag) {
         setTimeout(() => {
           const em = getEntityManager('simulator-instance');
-          import('@atomos-web/structura/dist/core/application/dag-service.js').then(({ deserializeDAG }) => {
+          import('@atomos-web/structura').then(({ deserializeDAG }) => {
              deserializeDAG(em, JSON.stringify(existingDag), false);
           }).catch(console.error);
         }, 100);
@@ -171,7 +171,7 @@ export function SimulatorDemo() {
     isExecutingRef.current = true;
     
     // We dynamically import getEntityManager here to avoid SSR issues
-    const { getEntityManager } = await import('@atomos-web/structura/dist/core/presentation/entity-manager.js');
+    const { getEntityManager } = await import('@atomos-web/structura');
     const em = getEntityManager('simulator-instance');
     const entities = em.getAllEntities();
     const links = em.getAllLinks();

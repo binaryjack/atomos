@@ -25,10 +25,10 @@ pnpm add @atomos-web/prime-style`}
         </p>
         <pre className="bg-[#020617] p-5 rounded-xl border border-slate-800 overflow-hidden text-sm text-slate-300 font-mono leading-relaxed mt-4">
 {`import '@atomos-web/prime-style/dist/styles.css';
-import { createCanvasPage } from '@atomos-web/structura/dist/preview/create-canvas-page.js';
-import { getEntityManager } from '@atomos-web/structura/dist/core/presentation/entity-manager.js';
-import { createSchemaGraphKernel } from '@atomos-web/structura/dist/core/create-schema-graph-kernel.js';
-import { createKernelAdapter } from '@atomos-web/structura/dist/adapters/create-kernel-adapter.js';
+import { createCanvasPage } from '@atomos-web/structura';
+import { getEntityManager } from '@atomos-web/structura';
+import { createSchemaGraphKernel } from '@atomos-web/structura';
+import { createKernelAdapter } from '@atomos-web/structura';
 
 export function mountCanvas(containerDiv) {
   // 1. Create the UI page (v2.0.0 requires an instanceId)

@@ -29,14 +29,14 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
-      <body className="h-screen flex flex-col md:flex-row bg-[#030712] text-slate-200 relative overflow-x-hidden selection:bg-blue-500/30">
-        {/* Background ambient glowing orbs */}
+      <body className="h-screen flex bg-[#0b1120] text-slate-300 relative overflow-x-hidden selection:bg-cyan-500/30">
+        {/* Background ambient glowing orbs - Minimal Slate Neon */}
         <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px]" />
-          <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] rounded-full bg-purple-600/20 blur-[120px]" />
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-600/10 blur-[140px]" />
+          <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full bg-indigo-600/5 blur-[120px]" />
         </div>
 
-        {/* Glassmorphic Sidebar */}
+        {/* Minimal Slate Sidebar */}
         <Sidebar />
 
         {/* Main Content Area */}

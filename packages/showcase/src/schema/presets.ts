@@ -1,6 +1,6 @@
-import type { SchemaGraphKernel } from "@atomos-web/structura/dist/core/create-schema-graph-kernel.js";
-import type { EntityManager } from "@atomos-web/structura/dist/core/presentation/entity-manager.js";
-import { applySchemaCommands } from "@atomos-web/structura/dist/core/application/dag-service.js";
+import type { SchemaGraphKernel } from "@atomos-web/structura";
+import type { EntityManager } from "@atomos-web/structura";
+import { applySchemaCommands } from "@atomos-web/structura";
 
 export const load_preset = (kernel: SchemaGraphKernel, entityManager: EntityManager, preset: string) => {
   const presets: Record<string, { entities: any[]; links: any[]; applyAfterLoad?: string[] }> = {

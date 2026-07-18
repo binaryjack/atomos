@@ -1,17 +1,17 @@
 "use client";
 
-import { createKernelAdapter } from "@atomos-web/structura/dist/adapters/create-kernel-adapter.js";
-import { createSchemaGraphKernel } from "@atomos-web/structura/dist/core/create-schema-graph-kernel.js";
-import { getEntityManager, destroyEntityManager } from "@atomos-web/structura/dist/core/presentation/entity-manager.js";
-import { destroyLegacyCanvasAdapter } from "@atomos-web/structura/dist/core/adapters/canvas-adapter.js";
-import { destroyInstanceReduxStore } from "@atomos-web/structura/dist/core/create-redux-store.js";
-import { createCanvasPage } from "@atomos-web/structura/dist/preview/create-canvas-page.js";
+import { createKernelAdapter } from "@atomos-web/structura";
+import { createSchemaGraphKernel } from "@atomos-web/structura";
+import { getEntityManager, destroyEntityManager } from "@atomos-web/structura";
+import { destroyLegacyCanvasAdapter } from "@atomos-web/structura";
+import { destroyInstanceReduxStore } from "@atomos-web/structura";
+import { createCanvasPage } from "@atomos-web/structura";
 import { useEffect, useRef, useId } from "react";
 import { load_preset } from "../schema/presets";
 
-import { initToolboxConfigManager, setAppearanceSettings, setToolboxConfig, setCustomShapes } from "@atomos-web/structura/dist/core/adapters/toolbox-config-manager.js";
-import type { AppSettings, CustomShape } from "@atomos-web/structura/dist/features/settings-page/types/settings-page.types.js";
-import { applyAppearanceTokens } from "@atomos-web/structura/dist/core/presentation/design-system.js";
+import { initToolboxConfigManager, setAppearanceSettings, setToolboxConfig, setCustomShapes } from "@atomos-web/structura";
+import type { AppSettings, CustomShape } from "@atomos-web/structura";
+import { applyAppearanceTokens } from "@atomos-web/structura";
 
 import "@atomos-web/prime-style/dist/styles.css";
 
@@ -56,7 +56,7 @@ export default function StructuraCanvas({
       
       if (general) {
         // Need to import setGeneralSettings
-        const { setGeneralSettings } = require("@atomos-web/structura/dist/core/adapters/toolbox-config-manager.js");
+        const { setGeneralSettings } = require("@atomos-web/structura");
         setGeneralSettings(general);
         
         // Also inject immediately for the grid and background
