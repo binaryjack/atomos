@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
   },
+  transpilePackages: ['@atomos-web/structura', '@atomos-web/prime', '@atomos-web/structura-core', '@binaryjack/formular.dev'],
 };
 
 export default nextConfig;

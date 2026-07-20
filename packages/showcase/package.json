@@ -11,6 +11,7 @@
     "deploy": "next build && touch out/.nojekyll && gh-pages -d out -t true"
   },
   "dependencies": {
+    "@atomos-web/prime": "workspace:^",
     "@atomos-web/prime-style": "workspace:^",
     "@atomos-web/structura": "workspace:^",
     "@atomos-web/structura-core": "workspace:^",

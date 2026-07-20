@@ -8,7 +8,9 @@
       "@binaryjack/formular.dev": ["../formular-dev/dist/types/src"],
       "@atomos-web/structura-core": ["../atomos-structura-core/dist/types/src"]
     },
-    "noEmit": false
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true
   },
   "include": ["src/**/*"],
   "exclude": ["src/**/*.test.ts", "dist"],

@@ -176,10 +176,10 @@ export function SimulatorDemo() {
     const entities = em.getAllEntities();
     const links = em.getAllLinks();
     
-    const inDegree = new Map(entities.map(en => [en.id, 0]));
-    const adj = new Map(entities.map(en => [en.id, [] as any[]]));
+    const inDegree = new Map<string, number>(entities.map((en: any) => [en.id, 0]));
+    const adj = new Map<string, any[]>(entities.map((en: any) => [en.id, [] as any[]]));
     
-    links.forEach(l => {
+    links.forEach((l: any) => {
       if(inDegree.has(l.targetEntityId)) inDegree.set(l.targetEntityId, (inDegree.get(l.targetEntityId) || 0) + 1);
       if(adj.has(l.sourceEntityId)) adj.get(l.sourceEntityId)?.push({ link: l, target: l.targetEntityId });
     });
@@ -204,7 +204,7 @@ export function SimulatorDemo() {
       }
     });
     
-    links.forEach(l => {
+    links.forEach((l: any) => {
       const linkEl = document.getElementById(l.id);
       if (linkEl) {
         const p = linkEl.querySelector('path');

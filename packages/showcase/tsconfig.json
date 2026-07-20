@@ -19,18 +19,6 @@
     "jsx": "react-jsx",
     "incremental": true,
     "paths": {
-      "@binaryjack/formular.dev": [
-        "../../packages/formular-dev/dist/formular-dev.mjs"
-      ],
-      "@atomos-web/structura-core": [
-        "../../packages/atomos-structura-core/dist/index.js"
-      ],
-      "@atomos-web/prime": [
-        "../../packages/atomos-prime/dist/index.js"
-      ],
-      "@atomos-web/structura": [
-        "../../packages/atomos-structura/dist/index.js"
-      ],
       "@/*": [
         "./src/*"
       ]

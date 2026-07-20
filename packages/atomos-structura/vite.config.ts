@@ -1,9 +1,10 @@
-﻿import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { glob } from 'glob';
 import { createRequire } from 'module';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { defineConfig, PluginOption } from 'vite';
+import dts from 'vite-plugin-dts';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const pkg = createRequire(import.meta.url)('./package.json') as { version: string };
@@ -54,11 +55,34 @@ export default defineConfig({
       }
     : {
         outDir: 'dist',
-        emptyOutDir: true,
+        emptyOutDir: false,
+        lib: {
+          entry: resolve(__dirname, 'src/index.ts'),
+          name: 'Structura',
+          fileName: 'index',
+          formats: ['es']
+        },
+        rollupOptions: {
+          external: [
+            'react',
+            'react-dom',
+            'react-redux',
+            '@reduxjs/toolkit',
+            '@atomos-web/structura-core',
+            '@atomos-web/prime',
+            '@xyflow/react'
+          ]
+        }
       },
   plugins: [
-    stripBomPlugin()
+    stripBomPlugin(),
+    !isIife && dts({ insertTypesEntry: true, rollupTypes: false })
   ],
+  css: {
+    modules: {
+      generateScopedName: 'structura_[name]__[local]___[hash:base64:5]'
+    }
+  },
   server: {
     port: 4000,
     open: '/canvas.html',
@@ -72,10 +96,7 @@ export default defineConfig({
       '/atomos-prime-style': resolve(__dirname, '../atomos-prime-style'),
       '/atomos-structura-core': resolve(__dirname, '../atomos-structura-core'),
       '/atomos-structura': resolve(__dirname, '.'),
-      '/formular-dev': resolve(__dirname, '../formular-dev'),
-      '@atomos-web/structura-core': resolve(__dirname, '../atomos-structura-core/src/index.ts'),
-      '@atomos-web/prime-style': resolve(__dirname, '../atomos-prime-style/src/index.ts'),
-      '@atomos-web/prime': resolve(__dirname, '../atomos-prime/src/index.ts')
+      '/formular-dev': resolve(__dirname, '../formular-dev')
     }
   }
 });

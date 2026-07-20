@@ -9,7 +9,7 @@ import { createCanvasPage } from "@atomos-web/structura";
 import { useEffect, useRef, useId } from "react";
 import { load_preset } from "../schema/presets";
 
-import { initToolboxConfigManager, setAppearanceSettings, setToolboxConfig, setCustomShapes } from "@atomos-web/structura";
+import { initToolboxConfigManager, setAppearanceSettings, setToolboxConfig, setCustomShapes, setGeneralSettings } from "@atomos-web/structura";
 import type { AppSettings, CustomShape } from "@atomos-web/structura";
 import { applyAppearanceTokens } from "@atomos-web/structura";
 
@@ -55,8 +55,6 @@ export default function StructuraCanvas({
       }
       
       if (general) {
-        // Need to import setGeneralSettings
-        const { setGeneralSettings } = require("@atomos-web/structura");
         setGeneralSettings(general);
         
         // Also inject immediately for the grid and background
