@@ -138,7 +138,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   if (props.executionSignal) {
     const unsubExec = props.executionSignal.subscribe((exec) => {
       // 1. Frame glow
-      body.className = '';
+      body.classList.remove('vbs-exec-running', 'vbs-exec-success', 'vbs-exec-failed', 'vbs-exec-warning');
       if (exec.status === 'running') body.classList.add('vbs-exec-running');
       if (exec.status === 'success') body.classList.add('vbs-exec-success');
       if (exec.status === 'failed') body.classList.add('vbs-exec-failed');

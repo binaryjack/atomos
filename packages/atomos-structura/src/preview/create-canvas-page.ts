@@ -1113,6 +1113,11 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   mcpEventTarget.addEventListener('vbs-mcp-action', handlePageMcpAction);
   cleanups.push(() => mcpEventTarget.removeEventListener('vbs-mcp-action', handlePageMcpAction));
 
+  // Initial auto-fit
+  requestAnimationFrame(() => {
+    doFitToScreen();
+  });
+
   return {
     element: root,
     cleanup: {

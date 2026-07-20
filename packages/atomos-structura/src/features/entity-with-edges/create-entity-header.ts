@@ -34,8 +34,8 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
   const editableLabel = createEditableLabel({
     value: props.label,
     placeholder: 'Entity name',
-    className: 'text-sm font-semibold text-slate-100',
-    inputClassName: 'text-sm font-semibold text-slate-100',
+    className: '',
+    inputClassName: '',
     onChange: props.onLabelChange,
   });
   // Override text colour based on background contrast; font from appearance settings vars
