@@ -20,7 +20,9 @@
     },
     "./webview": {
       "types": "./dist/webview/index.d.ts",
-      "import": "./dist/webview/index.js"
+      "import": "./dist/webview/index.js",
+      "require": "./dist/webview/index.js",
+      "default": "./dist/webview/index.js"
     },
     "./*": "./*"
   },
