@@ -13,7 +13,7 @@
   "dependencies": {
     "@atomos-web/prime": "workspace:^2.3.10",
     "@atomos-web/prime-style": "workspace:^2.3.10",
-    "@atomos-web/structura": "2.3.28",
+    "@atomos-web/structura": "workspace:^2.3.29",
     "@atomos-web/structura-core": "workspace:^2.3.11",
     "next": "16.2.3",
     "react": "19.2.4",

@@ -208,8 +208,8 @@ importers:
         specifier: workspace:^2.3.10
         version: link:../atomos-prime-style
       '@atomos-web/structura':
-        specifier: 2.3.28
-        version: 2.3.28
+        specifier: workspace:^2.3.29
+        version: link:../atomos-structura
       '@atomos-web/structura-core':
         specifier: workspace:^2.3.11
         version: link:../atomos-structura-core
@@ -360,22 +360,6 @@ packages:
 
   '@asamuzakjp/nwsapi@2.3.9':
     resolution: {integrity: sha512-n8GuYSrI9bF7FFZ/SjhwevlHc8xaVlb/7HmHelnc/PZXBD2ZR49NnN9sMMuDdEGPeeRQ5d0hqlSlEpgCX3Wl0Q==}
-
-  '@atomos-web/prime-style@2.3.9':
-    resolution: {integrity: sha512-EDPOJVgFFzxSJmnbni25jaVLr9vATZugub6pXoq9Y9wPlp39II6gd01BNze6p+orFmi/mHf/2qeR2wiQ5mgGag==}
-
-  '@atomos-web/prime@2.3.9':
-    resolution: {integrity: sha512-k8YNU5QL8YgdUj9C9o3DhTVos6E5rk76nilD51Qje2SXJj+tOEvOXT2/v/WoBHE24+Ss+KECCQuD4PmtRvwLVw==}
-
-  '@atomos-web/structura-core@2.3.10':
-    resolution: {integrity: sha512-54B71T4C4laRlCwsvjseoJYFkB7vCjpc7NanK16Vxd33d3eRlKeeu5I9yQNoFYtJML8kKo4evDK0B1Jbgiay2Q==}
-
-  '@atomos-web/structura-mcp@2.3.18':
-    resolution: {integrity: sha512-Q19bmP/zLGPBMzAjBVLMz6XQtCgHVQKtV7I291pzyDjXlThJJii+lsTSv+eBwd0ntr+NKAsLxr9mhFVYON6TFA==}
-    hasBin: true
-
-  '@atomos-web/structura@2.3.28':
-    resolution: {integrity: sha512-aaSi3SfH6piizRMH8vhfBMeB2ZfUTJ3W+mV22FmUL1FE4b1zbj6Erg09VdyW3Vsn0t2ENCE3UX0mM3yhxUuRyw==}
 
   '@babel/code-frame@7.29.0':
     resolution: {integrity: sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw==}
@@ -558,9 +542,6 @@ packages:
 
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
-
-  '@binaryjack/formular.dev@2.3.9':
-    resolution: {integrity: sha512-fftHU5lQYX+2autAYUUYIgbRviQ280r34DOBEEDyGRfLeYxjAtOA+931hHr9aG8YlhEp9wA8HB9pbD2zmg29SQ==}
 
   '@braintree/sanitize-url@6.0.4':
     resolution: {integrity: sha512-s3jaWicZd0pkP0jf5ysyHUI/RE7MHos6qlToFcGWXVp+ykHOy77OUMrfbgJ9it2C5bow7OIQwYYaHjk9XlBQ2A==}
@@ -6544,34 +6525,6 @@ snapshots:
 
   '@asamuzakjp/nwsapi@2.3.9': {}
 
-  '@atomos-web/prime-style@2.3.9': {}
-
-  '@atomos-web/prime@2.3.9':
-    dependencies:
-      '@atomos-web/prime-style': 2.3.9
-      '@atomos-web/structura-core': 2.3.10
-      '@binaryjack/formular.dev': 2.3.9
-
-  '@atomos-web/structura-core@2.3.10':
-    dependencies:
-      '@binaryjack/formular.dev': 2.3.9
-
-  '@atomos-web/structura-mcp@2.3.18':
-    dependencies:
-      '@atomos-web/structura-core': 2.3.10
-      '@binaryjack/formular.dev': 2.3.9
-      '@types/dagre': 0.7.54
-      chokidar: 5.0.0
-      dagre: 0.8.5
-
-  '@atomos-web/structura@2.3.28':
-    dependencies:
-      '@atomos-web/prime': 2.3.9
-      '@atomos-web/prime-style': 2.3.9
-      '@atomos-web/structura-core': 2.3.10
-      '@atomos-web/structura-mcp': 2.3.18
-      '@binaryjack/formular.dev': 2.3.9
-
   '@babel/code-frame@7.29.0':
     dependencies:
       '@babel/helper-validator-identifier': 7.28.5
@@ -6773,8 +6726,6 @@ snapshots:
       '@babel/helper-validator-identifier': 7.29.7
 
   '@bcoe/v8-coverage@0.2.3': {}
-
-  '@binaryjack/formular.dev@2.3.9': {}
 
   '@braintree/sanitize-url@6.0.4':
     optional: true
