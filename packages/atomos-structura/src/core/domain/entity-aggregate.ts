@@ -22,6 +22,7 @@ export interface DomainEntity {
   readonly color?: string | undefined;
   readonly properties: readonly Property[];
   readonly collapsed?: boolean | undefined;
+  readonly defaultCollapsed?: boolean | undefined;
   readonly position: EntityPosition;
   readonly dimensions: EntityDimensions;
   readonly createdAt: number;
@@ -40,7 +41,7 @@ export const createEntityAggregate = function(
   name: string,
   position: EntityPosition = { x: 100, y: 100 },
   dimensions: EntityDimensions = { width: 200, height: 150 },
-  options?: { shape?: string; color?: string; description?: string }
+  options?: { shape?: string; color?: string; description?: string; defaultCollapsed?: boolean; collapsed?: boolean }
 ): DomainEntity {
   const now = Date.now();
   
@@ -51,6 +52,8 @@ export const createEntityAggregate = function(
     shape: options?.shape ?? 'box',
     color: options?.color ?? 'var(--vbs-bg-panel, #111111)',
     properties: [],
+    collapsed: options?.collapsed ?? options?.defaultCollapsed ?? false,
+    defaultCollapsed: options?.defaultCollapsed,
     position,
     dimensions, 
     createdAt: now,

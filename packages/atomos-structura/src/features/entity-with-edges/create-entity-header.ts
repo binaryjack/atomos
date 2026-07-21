@@ -6,6 +6,7 @@ import { createIcon } from '@atomos-web/prime';
 export interface EntityHeaderProps {
   readonly label: Signal<string>;
   readonly isCollapsed: Signal<boolean>;
+  readonly hasNoProperties?: Signal<boolean>;
   readonly onLabelChange: (value: string) => void;
   readonly onToggleCollapse: () => void;
   readonly onSettingsClick: () => void;
@@ -49,6 +50,28 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
   }
   cleanups.push(editableLabel.cleanup.destroy);
 
+  // Appearance updater for transparent header when expanded with no properties
+  const updateHeaderAppearance = (): void => {
+    const collapsed = props.isCollapsed.value;
+    const noProps = props.hasNoProperties ? props.hasNoProperties.value : false;
+    if (!collapsed && noProps) {
+      header.style.background = 'transparent';
+      header.style.borderBottom = 'none';
+      editableLabel.element.style.display = 'none';
+    } else {
+      header.style.background = bgColor;
+      header.style.borderBottom = '';
+      editableLabel.element.style.display = '';
+    }
+  };
+
+  if (props.hasNoProperties) {
+    const unsubNoProps = props.hasNoProperties.subscribe(() => {
+      updateHeaderAppearance();
+    });
+    cleanups.push(unsubNoProps);
+  }
+
   // Collapse button
   const collapseIcon = createIcon({ name: 'chevron-down', size: 'var(--vbs-entity-name-font-size, 14px)', color: 'var(--vbs-entity-muted-color, #94a3b8)' });
   const collapseBtn = document.createElement('button');
@@ -61,7 +84,10 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
   collapseBtn.addEventListener('mousedown', stopCollapseMd);
   const unsubCollapse = props.isCollapsed.subscribe(collapsed => {
     collapseBtn.style.transform = collapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+    updateHeaderAppearance();
   });
+  
+  updateHeaderAppearance();
   
   cleanups.push(() => {
     collapseBtn.removeEventListener('click', props.onToggleCollapse);

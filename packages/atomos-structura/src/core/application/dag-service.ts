@@ -71,7 +71,9 @@ export const deserializeDAG = function(
       entityManager.createEntity(node.id, node.name, node.position, node.dimensions, {
         shape: (node as any).shape,
         color: (node as any).color,
-        description: (node as any).description
+        description: (node as any).description,
+        collapsed: (node as any).collapsed,
+        defaultCollapsed: (node as any).defaultCollapsed
       });
       entityManager.updateEntityProperties(node.id, node.properties);
     });

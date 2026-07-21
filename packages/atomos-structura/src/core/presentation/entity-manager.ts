@@ -13,7 +13,7 @@ import { createEventBus, createPersistedEntityRepository, createPersistedLinkRep
 export interface EntityManager {
   readonly instanceId: string;
   // Entity Commands (UI Actions)
-  readonly createEntity: (id: string, name: string, position?: EntityPosition, dimensions?: EntityDimensions, metadata?: { shape?: string; color?: string; description?: string }) => void;
+  readonly createEntity: (id: string, name: string, position?: EntityPosition, dimensions?: EntityDimensions, metadata?: { shape?: string; color?: string; description?: string; defaultCollapsed?: boolean; collapsed?: boolean; }) => void;
   readonly moveEntity: (entityId: string, position: EntityPosition) => void;
   readonly resizeEntity: (entityId: string, dimensions: EntityDimensions) => void;
   readonly updateEntityProperties: (entityId: string, properties: readonly Property[]) => void;
@@ -81,7 +81,7 @@ export const createEntityManager = function(instanceId: string): EntityManager {
     name: string, 
     position?: EntityPosition, 
     dimensions?: EntityDimensions,
-    metadata?: { shape?: string; color?: string; description?: string }
+    metadata?: { shape?: string; color?: string; description?: string; defaultCollapsed?: boolean; collapsed?: boolean; }
   ): void {
     applicationService.executeCommand({
       type: 'CreateEntity',

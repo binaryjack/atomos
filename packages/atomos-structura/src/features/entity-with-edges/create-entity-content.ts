@@ -1,6 +1,6 @@
 import type { Signal } from '@atomos-web/prime'
+import { createEditableLabel, createSignal } from '@atomos-web/prime'
 import { createSVGShape } from '../../canvas/shape-renderers/create-svg-shape.js';
-import { createSignal } from '@atomos-web/prime'
 import type { ComponentType, DataType, Entity } from '@atomos-web/structura-core'
 import { createLegacyPropertyRepositoryBridge } from '../../core/adapters/legacy-property-bridge.js'
 import type { EntityStore } from '../../core/create-entity-store.js'
@@ -98,11 +98,13 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   // ─── header ───────────────────────────────────────────────────────────────
   const labelSignal = createSignal(store.signal.value.name);
   const isCollapsedSignal = createSignal(store.signal.value.collapsed ?? false);
+  const hasNoPropertiesSignal = createSignal(store.signal.value.properties.length === 0);
 
   const header = createEntityHeader({
     color: undefined,
     label: labelSignal,
     isCollapsed: isCollapsedSignal,
+    hasNoProperties: hasNoPropertiesSignal,
     isReadonly: !!props.isReadonly,
     onLabelChange: (v) => {
       store.updateLabel(v);
@@ -179,9 +181,59 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   // ─── scrollable body ──────────────────────────────────────────────────────
   const scrollBody = document.createElement('div');
   scrollBody.classList.add('vbs-scroll-body');
+  scrollBody.style.display = 'flex';
+  scrollBody.style.flexDirection = 'column';
+  scrollBody.style.height = '100%';
   body.appendChild(scrollBody);
 
-// Track existing rows by property key
+  // ─── State 2: Big Centered Title (when 0 properties) ─────────────────────
+  const emptyTitleContainer = document.createElement('div');
+  emptyTitleContainer.classList.add('vbs-empty-entity-title');
+  emptyTitleContainer.style.flex = '1';
+  emptyTitleContainer.style.width = '100%';
+  emptyTitleContainer.style.height = '100%';
+  emptyTitleContainer.style.minHeight = '60px';
+  emptyTitleContainer.style.display = 'none';
+  emptyTitleContainer.style.alignItems = 'center';
+  emptyTitleContainer.style.justifyContent = 'center';
+  emptyTitleContainer.style.textAlign = 'center';
+  emptyTitleContainer.style.padding = '12px 16px';
+  emptyTitleContainer.style.boxSizing = 'border-box';
+
+  const emptyTitleLabel = createEditableLabel({
+    value: labelSignal,
+    placeholder: 'Entity name',
+    className: '',
+    inputClassName: '',
+    onChange: (v) => store.updateLabel(v),
+  });
+  emptyTitleLabel.element.style.color = 'var(--vbs-entity-text-color, #ffffff)';
+  emptyTitleLabel.element.style.fontFamily = 'var(--vbs-entity-name-font-family, system-ui, sans-serif)';
+  emptyTitleLabel.element.style.fontSize = '16px';
+  emptyTitleLabel.element.style.fontWeight = 'bold';
+  emptyTitleLabel.element.style.textAlign = 'center';
+  emptyTitleLabel.element.style.width = '100%';
+  if (props.isReadonly) {
+    emptyTitleLabel.element.style.pointerEvents = 'none';
+  }
+  emptyTitleContainer.appendChild(emptyTitleLabel.element);
+  cleanups.push(emptyTitleLabel.cleanup.destroy);
+
+  // ─── State 3: Group SVG Print (Meta-canvas) ───────────────────────────────
+  const groupSvgContainer = document.createElement('div');
+  groupSvgContainer.classList.add('vbs-group-svg-container');
+  groupSvgContainer.style.display = 'none';
+  groupSvgContainer.style.width = '100%';
+  groupSvgContainer.style.height = '100%';
+  groupSvgContainer.style.padding = '8px';
+  groupSvgContainer.style.boxSizing = 'border-box';
+  groupSvgContainer.style.alignItems = 'center';
+  groupSvgContainer.style.justifyContent = 'center';
+
+  scrollBody.appendChild(emptyTitleContainer);
+  scrollBody.appendChild(groupSvgContainer);
+
+  // Track existing rows by property key
   const rowCache = new Map<string, {
     labelSignal: Signal<string>;
     typeSignal: Signal<DataType>;
@@ -192,6 +244,32 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   }>();
 
   const renderRows = (entity: Entity): void => {
+    const isGroup = (entity as any).isGroup || (entity.metadata as any)?.isGroup || false;
+    const svgPrint = (entity as any).svgPrint || (entity as any).svgContent || (entity.metadata as any)?.svgPrint || (entity.metadata as any)?.svgContent || null;
+    const hasProperties = entity.properties.length > 0;
+
+    const noProps = !hasProperties;
+    const isGroupSvgState = isGroup && !!svgPrint;
+
+    hasNoPropertiesSignal.set(noProps || isGroupSvgState);
+
+    if (isGroupSvgState) {
+      // State 3: Group SVG Print
+      groupSvgContainer.innerHTML = svgPrint;
+      groupSvgContainer.style.display = 'flex';
+      emptyTitleContainer.style.display = 'none';
+      if (footer.element) footer.element.style.display = 'none';
+    } else if (noProps) {
+      // State 2: No properties -> Big centered title
+      groupSvgContainer.style.display = 'none';
+      emptyTitleContainer.style.display = 'flex';
+      if (footer.element) footer.element.style.display = 'none';
+    } else {
+      // State 1: Has properties -> Standard property rows
+      groupSvgContainer.style.display = 'none';
+      emptyTitleContainer.style.display = 'none';
+      if (footer.element) footer.element.style.display = entity.collapsed ? 'none' : 'flex';
+    }
     const nextPropKeys = new Set(entity.properties.map(p => p.key));
 
     // 1. Remove rows that are no longer in the entity

@@ -12,11 +12,15 @@ export interface CreateEntityCommand {
   readonly id: string;
   readonly name: string;
   readonly position?: EntityPosition;
-  readonly dimensions?: EntityDimensions;  readonly metadata?: {
+  readonly dimensions?: EntityDimensions;
+  readonly metadata?: {
     readonly shape?: string;
     readonly color?: string;
     readonly description?: string;
-  };}
+    readonly defaultCollapsed?: boolean;
+    readonly collapsed?: boolean;
+  };
+}
 
 export interface MoveEntityCommand {
   readonly type: 'MoveEntity';

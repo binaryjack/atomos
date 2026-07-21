@@ -22,4 +22,5 @@ export interface Entity extends BaseEntity {
   readonly dimensions: Dimensions;
   readonly edges: EdgeProps[];
   readonly collapsed?: boolean;
+  readonly defaultCollapsed?: boolean;
 }
