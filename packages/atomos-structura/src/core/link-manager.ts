@@ -17,7 +17,7 @@ export interface LinkProps {
   readonly strokeWidth?: number;
   readonly animated?: boolean;
   readonly renderType?: RenderType;
-  readonly direction?: 'default' | 'left' | 'right';
+  readonly direction?: 'default' | 'left' | 'right' | 'both';
 }
 
 export interface LinkResult {
@@ -32,7 +32,7 @@ export interface LinkResult {
     renderType?: RenderType,
     srcRect?: { x: number; y: number; width: number; height: number },
     dstRect?: { x: number; y: number; width: number; height: number },
-    direction?: 'default' | 'left' | 'right'
+    direction?: 'default' | 'left' | 'right' | 'both'
   ) => void;
   readonly setTemporary: (temporary: boolean) => void;
   readonly setValidity: (isValid: boolean) => void;
@@ -54,7 +54,7 @@ export interface LinkManager {
     renderType?: RenderType,
     srcRect?: { x: number; y: number; width: number; height: number },
     dstRect?: { x: number; y: number; width: number; height: number },
-    direction?: 'default' | 'left' | 'right'
+    direction?: 'default' | 'left' | 'right' | 'both'
   ) => void;
   readonly removeLink: (linkId: string) => void;
   readonly getLink: (linkId: string) => LinkResult | undefined;
@@ -194,7 +194,7 @@ export const createLinkManager = function(): LinkManager {
       renderType?: RenderType,
       srcRect?: { x: number; y: number; width: number; height: number },
       dstRect?: { x: number; y: number; width: number; height: number },
-      direction?: 'default' | 'left' | 'right',
+      direction?: 'default' | 'left' | 'right' | 'both',
       obstacles?: { x: number; y: number; width: number; height: number }[]
     ) => {
       const src = srcEdge ?? props.sourceEdge ?? 'right';
@@ -222,6 +222,9 @@ export const createLinkManager = function(): LinkManager {
       } else if (dir === 'right') {
         path.setAttribute('marker-end', 'url(#vbs-arrow-right)');
         path.removeAttribute('marker-start');
+      } else if (dir === 'both') {
+        path.setAttribute('marker-start', 'url(#vbs-arrow-left)');
+        path.setAttribute('marker-end', 'url(#vbs-arrow-right)');
       } else {
         path.removeAttribute('marker-start');
         path.removeAttribute('marker-end');
@@ -294,7 +297,7 @@ export const createLinkManager = function(): LinkManager {
   };
 
   // Update existing link path
-  const updateLinkPath = (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }, direction?: 'default' | 'left' | 'right') => {
+  const updateLinkPath = (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }, direction?: 'default' | 'left' | 'right' | 'both') => {
     const link = links.value.get(linkId);
     if (link) link.updatePath(sourcePos, targetPos, srcEdge, dstEdge, renderType, srcRect, dstRect, direction);
   };

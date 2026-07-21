@@ -23,7 +23,7 @@ export interface CanvasAdapter {
   
   // Link Operations (Domain)
   readonly createLink: (id: string, sourceAnchorId: string, targetAnchorId: string, leftEntityId: string, rightEntityId: string) => void;
-  readonly updateLinkProperties: (linkId: string, properties: { sourceCardinality?: string | undefined; targetCardinality?: string | undefined; sourceProperty?: string | undefined; targetProperty?: string | undefined; renderType?: string | undefined; direction?: 'default' | 'left' | 'right' | undefined; }) => void;
+  readonly updateLinkProperties: (linkId: string, properties: { sourceCardinality?: string | undefined; targetCardinality?: string | undefined; sourceProperty?: string | undefined; targetProperty?: string | undefined; renderType?: string | undefined; direction?: 'default' | 'left' | 'right' | 'both' | undefined; }) => void;
   readonly updateLinkEndpoints: (linkId: string, sourceAnchorId: string, targetAnchorId: string, sourceEntityId: string, targetEntityId: string) => void;
   readonly removeLink: (linkId: string) => void;
   readonly getLink: (linkId: string) => any | undefined;
@@ -99,7 +99,7 @@ export const createCanvasAdapter = function(instanceId: string): CanvasAdapter {
     entityManager.createLink(id, sourceAnchorId, targetAnchorId, leftEntityId, rightEntityId);
   };
   
-  const updateLinkProperties = function(linkId: string, properties: { sourceCardinality?: string | undefined; targetCardinality?: string | undefined; sourceProperty?: string | undefined; targetProperty?: string | undefined; renderType?: string | undefined; direction?: 'default' | 'left' | 'right' | undefined; }): void {
+  const updateLinkProperties = function(linkId: string, properties: { sourceCardinality?: string | undefined; targetCardinality?: string | undefined; sourceProperty?: string | undefined; targetProperty?: string | undefined; renderType?: string | undefined; direction?: 'default' | 'left' | 'right' | 'both' | undefined; }): void {
     entityManager.updateLinkProperties(linkId, properties);
   };
 

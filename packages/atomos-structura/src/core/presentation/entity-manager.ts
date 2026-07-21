@@ -28,7 +28,7 @@ export interface EntityManager {
   
   // Link Commands (UI Actions)
   readonly createLink: (id: string, sourceAnchorId: string, targetAnchorId: string, sourceEntityId: string, targetEntityId: string) => void;
-  readonly updateLinkProperties: (linkId: string, properties: { sourceCardinality?: string | undefined; targetCardinality?: string | undefined; sourceProperty?: string | undefined; targetProperty?: string | undefined; renderType?: string | undefined; direction?: 'default' | 'left' | 'right' | undefined; }) => void;
+  readonly updateLinkProperties: (linkId: string, properties: { sourceCardinality?: string | undefined; targetCardinality?: string | undefined; sourceProperty?: string | undefined; targetProperty?: string | undefined; renderType?: string | undefined; direction?: 'default' | 'left' | 'right' | 'both' | undefined; }) => void;
   readonly updateLinkEndpoints: (linkId: string, sourceAnchorId: string, targetAnchorId: string, sourceEntityId: string, targetEntityId: string) => void;
   readonly removeLink: (linkId: string) => void;
   

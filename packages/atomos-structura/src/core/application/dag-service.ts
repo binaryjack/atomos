@@ -89,7 +89,8 @@ export const deserializeDAG = function(
         sourceCardinality: edge.sourceCardinality,
         targetCardinality: edge.targetCardinality,
         sourceProperty: edge.sourceProperty,
-        targetProperty: edge.targetProperty
+        targetProperty: edge.targetProperty,
+        direction: edge.direction
       });
     });
 

@@ -136,7 +136,7 @@ export interface DomainLink {
   readonly sourceProperty?: string | undefined;
   readonly targetProperty?: string | undefined;
   readonly renderType?: string | undefined;
-  readonly direction?: 'default' | 'left' | 'right' | undefined;
+  readonly direction?: 'default' | 'left' | 'right' | 'both' | undefined;
   readonly createdAt: number;
   readonly updatedAt: number;
 }
@@ -159,7 +159,7 @@ export const createLinkAggregate = function(
   sourceProperty?: string,
   targetProperty?: string,
   renderType?: string,
-  direction?: 'default' | 'left' | 'right'
+  direction?: 'default' | 'left' | 'right' | 'both'
 ): DomainLink {
   const now = Date.now();
 
@@ -188,7 +188,7 @@ export const updateLinkProperties = function(
     readonly sourceProperty?: string | undefined;
     readonly targetProperty?: string | undefined;
     readonly renderType?: string | undefined;
-    readonly direction?: 'default' | 'left' | 'right' | undefined;
+    readonly direction?: 'default' | 'left' | 'right' | 'both' | undefined;
   }
 ): DomainLink {
   return {

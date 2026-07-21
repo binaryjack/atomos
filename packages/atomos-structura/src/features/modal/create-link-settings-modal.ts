@@ -57,12 +57,14 @@ export const openLinkSettingsModal = function(instanceId: string, linkId: string
   const updateArrowText = () => {
     if (pendingDirection === 'left') arrowBtn.textContent = '<===';
     else if (pendingDirection === 'right') arrowBtn.textContent = '===>';
-    else arrowBtn.textContent = '---';
+    else if (pendingDirection === 'both') arrowBtn.textContent = '<==>';
+    else arrowBtn.textContent = '====';
   };
   
   arrowBtn.addEventListener('click', () => {
     if (pendingDirection === 'default') pendingDirection = 'left';
     else if (pendingDirection === 'left') pendingDirection = 'right';
+    else if (pendingDirection === 'right') pendingDirection = 'both';
     else pendingDirection = 'default';
     updateArrowText();
   });

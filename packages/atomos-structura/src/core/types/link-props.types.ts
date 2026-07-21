@@ -1,4 +1,4 @@
-﻿import type { EdgePosition } from '../../features/edge/types/edge-position.types.js';
+import type { EdgePosition } from '../../features/edge/types/edge-position.types.js';
 import type { RenderType } from '@atomos-web/structura-core';
 
 export interface LinkProps {
@@ -14,4 +14,5 @@ export interface LinkProps {
   readonly strokeWidth?: number;
   readonly animated?: boolean;
   readonly renderType?: RenderType;
+  readonly direction?: 'default' | 'left' | 'right' | 'both';
 }
