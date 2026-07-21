@@ -209,8 +209,10 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   });
   emptyTitleLabel.element.style.color = 'var(--vbs-entity-text-color, #ffffff)';
   emptyTitleLabel.element.style.fontFamily = 'var(--vbs-entity-name-font-family, system-ui, sans-serif)';
-  emptyTitleLabel.element.style.fontSize = '16px';
-  emptyTitleLabel.element.style.fontWeight = 'bold';
+  emptyTitleLabel.element.style.fontSize = '18px';
+  emptyTitleLabel.element.style.fontWeight = '800';
+  emptyTitleLabel.element.style.letterSpacing = '-0.01em';
+  emptyTitleLabel.element.style.lineHeight = '1.25';
   emptyTitleLabel.element.style.textAlign = 'center';
   emptyTitleLabel.element.style.width = '100%';
   if (props.isReadonly) {

@@ -57,10 +57,12 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
     if (!collapsed && noProps) {
       header.style.background = 'transparent';
       header.style.borderBottom = 'none';
+      header.style.boxShadow = 'none';
       editableLabel.element.style.display = 'none';
     } else {
       header.style.background = bgColor;
       header.style.borderBottom = '';
+      header.style.boxShadow = '';
       editableLabel.element.style.display = '';
     }
   };
