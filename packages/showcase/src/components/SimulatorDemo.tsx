@@ -367,7 +367,7 @@ export function SimulatorDemo() {
     }
   };
 
-  const btnClass = "bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-medium py-2 px-3 rounded transition-colors text-sm text-left w-full";
+  const btnClass = "vbs-btn vbs-btn-ghost text-sm text-left w-full justify-start mt-1";
 
   return (
     <div className="flex w-full h-full overflow-hidden bg-[#020617] text-slate-200 relative">
@@ -429,7 +429,7 @@ export function SimulatorDemo() {
             Headless (No UI)
           </label>
           <button 
-            className={`mt-2 py-2 px-3 rounded font-medium text-white transition-colors text-sm w-full ${isExecuting ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-500'}`}
+            className={`w-full mt-2 vbs-btn ${isExecuting ? '!bg-red-900 !text-red-200 hover:!bg-red-800' : 'vbs-btn-primary'}`}
             onClick={handleTelemetry}
           >
             {isExecuting ? 'Stop Telemetry' : 'Start Telemetry'}
@@ -441,7 +441,7 @@ export function SimulatorDemo() {
           <button className={btnClass} onClick={() => dispatchMcp('structura_set_zoom', { level: 'in' })}>Zoom In</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_set_zoom', { level: 'out' })}>Zoom Out</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_fit_to_screen', { padding: { right: 320, left: 100, top: 100, bottom: 100 } })}>Fit to Screen</button>
-          <button className={`${btnClass} !bg-red-900 !text-red-200 hover:!bg-red-800 mt-2`} onClick={() => {
+          <button className={`${btnClass} !bg-[#3f1616] !text-[#fca5a5] hover:!bg-[#5f2020]`} onClick={() => {
             localStorage.removeItem('structura-workspace-simulator-instance');
             window.location.reload();
           }}>Reset Demo (Fix Black Nodes)</button>

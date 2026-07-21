@@ -81,28 +81,28 @@ export const createEntitySettingsModal = function(instanceId: string, entityId: 
 
     const nameField = createFormularInput({
       fieldName: 'name',
-      form: form as unknown as IFormular<IObjectShape>,
+      form: form as any,
       label: 'Entity Name',
       placeholder: 'Enter entity name'
     });
 
     const descField = createFormularTextarea({
       fieldName: 'description',
-      form: form as unknown as IFormular<IObjectShape>,
+      form: form as any,
       label: 'Description',
       placeholder: 'Enter entity description'
     });
 
     const shapeField = createFormularDropdown({
       fieldName: 'shape',
-      form: form as unknown as IFormular<IObjectShape>,
+      form: form as any,
       label: 'Shape Type',
       options: uniqueShapeOptions
     });
 
     const colorField = createFormularInput({
       fieldName: 'color',
-      form: form as unknown as IFormular<IObjectShape>,
+      form: form as any,
       label: 'Background Color',
       type: 'color'
     });

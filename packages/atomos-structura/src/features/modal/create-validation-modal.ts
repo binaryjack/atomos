@@ -1,4 +1,4 @@
-﻿import type { IFormular, IObjectShape, IValidationOptions } from '@binaryjack/formular.dev';
+import type { IFormular, IObjectShape, IValidationOptions } from '@binaryjack/formular.dev';
 import { createForm, f } from '@binaryjack/formular.dev';
 import type { DataType } from '@atomos-web/structura-core';
 import { createButton } from '@atomos-web/prime';
@@ -92,7 +92,7 @@ export const createValidationModal = function(
 
     const requiredField = createFormularCheckbox({
       fieldName: 'required',
-      form,
+      form: form as any,
       label: 'Required',
       guide: 'Make this field mandatory',
       checkLabel: 'This field is required',
@@ -103,7 +103,7 @@ export const createValidationModal = function(
     if (props.dataType === 'string') {
       const minLengthField = createFormularInput({
         fieldName: 'minLength',
-        form,
+        form: form as any,
         label: 'Minimum Length',
         guide: 'Minimum number of characters',
         type: 'number',
@@ -113,7 +113,7 @@ export const createValidationModal = function(
 
       const maxLengthField = createFormularInput({
         fieldName: 'maxLength',
-        form,
+        form: form as any,
         label: 'Maximum Length',
         guide: 'Maximum number of characters',
         type: 'number',
@@ -123,7 +123,7 @@ export const createValidationModal = function(
 
       const patternField = createFormularInput({
         fieldName: 'pattern',
-        form,
+        form: form as any,
         label: 'Pattern (Regex)',
         guide: 'Regular expression for validation',
         placeholder: '[A-Z0-9]+',
@@ -133,7 +133,7 @@ export const createValidationModal = function(
     } else if (props.dataType === 'number' || props.dataType === 'integer' || props.dataType === 'float') {
       const minField = createFormularInput({
         fieldName: 'min',
-        form,
+        form: form as any,
         label: 'Minimum Value',
         guide: 'Minimum allowed value',
         type: 'number',
@@ -143,7 +143,7 @@ export const createValidationModal = function(
 
       const maxField = createFormularInput({
         fieldName: 'max',
-        form,
+        form: form as any,
         label: 'Maximum Value',
         guide: 'Maximum allowed value',
         type: 'number',
@@ -153,7 +153,7 @@ export const createValidationModal = function(
     } else if (props.dataType === 'date') {
       const minField = createFormularInput({
         fieldName: 'min',
-        form,
+        form: form as any,
         label: 'Minimum Date',
         guide: 'Earliest allowed date (YYYY-MM-DD)',
         placeholder: '2024-01-01',
@@ -163,7 +163,7 @@ export const createValidationModal = function(
 
       const maxField = createFormularInput({
         fieldName: 'max',
-        form,
+        form: form as any,
         label: 'Maximum Date',
         guide: 'Latest allowed date (YYYY-MM-DD)',
         placeholder: '2024-12-31',

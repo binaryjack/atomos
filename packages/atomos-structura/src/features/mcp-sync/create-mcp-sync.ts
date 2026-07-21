@@ -135,6 +135,20 @@ export const createMcpSync = (
   };
   mcpEventTarget.addEventListener('vbs-mcp-action', handleInMemoryAction);
 
+  // ── Window Proxy ────────────────────────────────────────────────────────────
+  // Allows external host applications (like the Consumer Simulator) to dispatch
+  // MCP actions directly on the window object.
+  const handleWindowProxy = (e: Event) => {
+    const detail = (e as CustomEvent).detail;
+    // Forward the external event to our internal target, marking it as in-memory
+    mcpEventTarget.dispatchEvent(new CustomEvent('vbs-mcp-action', {
+      detail: { ...detail, mcpUrl: 'in-memory' }
+    }));
+  };
+  if (typeof window !== 'undefined') {
+    window.addEventListener('vbs-mcp-action', handleWindowProxy);
+  }
+
   try {
     es = new EventSource(`${mcpUrl}/events`);
     es.addEventListener('change', (e: MessageEvent) => {
@@ -236,12 +250,22 @@ export const createMcpSync = (
       } catch { /* ignore malformed events */ }
     });
     
-    es.onerror = () => { /* MCP server may not be running — silent */ };
+    es.onerror = () => {
+      // Close the EventSource on error to prevent infinite ERR_CONNECTION_REFUSED spam
+      // in the browser console when the MCP server is not running. 
+      // The user will need to refresh the page if they start the server later.
+      if (es?.readyState === EventSource.CONNECTING || es?.readyState === EventSource.CLOSED) {
+        es.close();
+      }
+    };
   } catch { /* EventSource not available or URL invalid */ }
 
   return {
     cleanup: () => { 
       mcpEventTarget.removeEventListener('vbs-mcp-action', handleInMemoryAction);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('vbs-mcp-action', handleWindowProxy);
+      }
       es?.close(); 
       es = null; 
     },

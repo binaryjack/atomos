@@ -108,7 +108,7 @@ export const createPropertySettingsModal = function(
     // Label field
     const labelField = createFormularInput({
       fieldName: 'label',
-      form,
+      form: form as any,
       label: 'Label',
       guide: 'Display name for this property',
     });
@@ -118,7 +118,7 @@ export const createPropertySettingsModal = function(
     // Data Type dropdown
     const dataTypeField = createFormularDropdown({
       fieldName: 'dataType',
-      form,
+      form: form as any,
       label: 'Data Type',
       guide: 'Type of data stored',
       options: DATA_TYPES.map(type => ({ value: type, label: type })),
@@ -129,7 +129,7 @@ export const createPropertySettingsModal = function(
     // Component Type dropdown
     const componentTypeField = createFormularDropdown({
       fieldName: 'componentType',
-      form,
+      form: form as any,
       label: 'Component Type',
       guide: 'UI component for editing',
       options: COMPONENT_TYPES.map(type => ({ value: type, label: type })),

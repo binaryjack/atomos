@@ -1,6 +1,6 @@
 {
   "name": "@atomos-web/prime-style",
-  "version": "2.3.9",
+  "version": "2.3.10",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "publishConfig": {

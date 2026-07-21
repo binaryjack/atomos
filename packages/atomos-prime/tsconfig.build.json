@@ -4,10 +4,6 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": ".",
-    "paths": {
-      "@binaryjack/formular.dev": ["../formular-dev/dist/types/src"],
-      "@atomos-web/structura-core": ["../atomos-structura-core/dist/types/src"]
-    },
     "noEmit": false
   },
   "include": ["src/**/*"],

@@ -11,10 +11,10 @@
     "deploy": "next build && touch out/.nojekyll && gh-pages -d out -t true"
   },
   "dependencies": {
-    "@atomos-web/prime": "workspace:^",
-    "@atomos-web/prime-style": "workspace:^",
-    "@atomos-web/structura": "workspace:^",
-    "@atomos-web/structura-core": "workspace:^",
+    "@atomos-web/prime": "workspace:^2.3.10",
+    "@atomos-web/prime-style": "workspace:^2.3.10",
+    "@atomos-web/structura": "workspace:^2.3.23",
+    "@atomos-web/structura-core": "workspace:^2.3.11",
     "next": "16.2.3",
     "react": "19.2.4",
     "react-dom": "19.2.4"

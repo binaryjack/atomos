@@ -28,6 +28,9 @@ import { createValidationOverlay } from '../features/validation-overlay/create-v
 import { createCanvasToolbar } from './create-canvas-toolbar.js'
 import { createSchemaTabs } from './create-schema-tabs.js'
 
+// @ts-ignore - Vite will resolve this
+import primeStyleContent from '@atomos-web/prime-style/dist/styles.css?raw'
+
 // Register built-in export plugins once at module load
 registerExportPlugin(sqlDdlPlugin);
 registerExportPlugin(prismaPlugin);
@@ -62,10 +65,23 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   // Inject design system CSS variables
   injectDesignSystemTokens();
   
-  // Root — fills parent container natively
+  // Host element for Shadow DOM
+  const host = document.createElement('div');
+  host.setAttribute('data-testid', 'structura-canvas-root');
+  host.style.cssText = 'position:relative;width:100%;height:100%;overflow:hidden;container-type:inline-size;';
+  
+  // Attach Shadow DOM in open mode
+  const shadowRoot = host.attachShadow({ mode: 'open' });
+  
+  // Inject Prime Style CSS into Shadow DOM
+  const styleEl = document.createElement('style');
+  styleEl.textContent = primeStyleContent;
+  shadowRoot.appendChild(styleEl);
+
+  // Root container inside Shadow DOM
   const root = document.createElement('div');
-  root.setAttribute('data-testid', 'structura-canvas-root');
-  root.style.cssText = 'position:relative;width:100%;height:100%;overflow:hidden;background:var(--vbs-bg-input, #09090b);container-type:inline-size;';
+  root.style.cssText = 'position:relative;width:100%;height:100%;overflow:hidden;background:var(--vbs-bg-input, #09090b);display:flex;flex-direction:column;';
+  shadowRoot.appendChild(root);
 
   // Schema tabs bar
   let schemaTabs: any = null;
@@ -561,7 +577,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   }));
 
   // Responsive Styles for Auto-hiding toolbars
-  if (!document.getElementById('vbs-responsive-toolbars')) {
+  if (!shadowRoot.getElementById('vbs-responsive-toolbars')) {
     const style = document.createElement('style');
     style.id = 'vbs-responsive-toolbars';
     style.textContent = `
@@ -658,7 +674,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
       .vbs-hover-zone:hover[data-zone="left"]::after { transform: translateY(-50%) translateX(0); }
       .vbs-hover-zone:hover[data-zone="right"]::after { transform: translateY(-50%) translateX(0); }
     `;
-    document.head.appendChild(style);
+    shadowRoot.appendChild(style);
   }
 
   // Shortcuts panel
@@ -887,20 +903,20 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
       if (general.gridPrimaryColor) {
         root.style.setProperty('--vbs-grid-primary-color', general.gridPrimaryColor);
         // Also update the static svg grid paths if they rely on it
-        const largePath = document.getElementById('grid-large-path');
+        const largePath = shadowRoot.getElementById('grid-large-path');
         if (largePath) largePath.setAttribute('stroke', general.gridPrimaryColor);
       }
       if (general.gridSecondaryColor) {
         root.style.setProperty('--vbs-grid-secondary-color', general.gridSecondaryColor);
-        const smallPath = document.getElementById('grid-small-path');
+        const smallPath = shadowRoot.getElementById('grid-small-path');
         if (smallPath) smallPath.setAttribute('stroke', general.gridSecondaryColor);
       }
       if (general.gridSize) {
-        const largeGrid = document.getElementById('canvas-grid-large');
-        const smallGrid = document.getElementById('canvas-grid-small');
-        const largeRect = document.getElementById('grid-large-rect');
-        const smallPath = document.getElementById('grid-small-path');
-        const largePath = document.getElementById('grid-large-path');
+        const largeGrid = shadowRoot.getElementById('canvas-grid-large');
+        const smallGrid = shadowRoot.getElementById('canvas-grid-small');
+        const largeRect = shadowRoot.getElementById('grid-large-rect');
+        const smallPath = shadowRoot.getElementById('grid-small-path');
+        const largePath = shadowRoot.getElementById('grid-large-path');
         
         if (largeGrid && smallGrid && largeRect && smallPath && largePath) {
           smallGrid.setAttribute('width', general.gridSize.toString());
@@ -1119,7 +1135,7 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   });
 
   return {
-    element: root,
+    element: host,
     cleanup: {
       destroy: () => {
         cleanups.forEach(fn => fn());

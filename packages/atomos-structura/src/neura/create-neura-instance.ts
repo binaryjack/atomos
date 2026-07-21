@@ -164,7 +164,7 @@ export function createNeuraInstance(canvas: HTMLCanvasElement, workerUrl: string
         if (!el) {
           el = document.createElement('div');
           el.style.position = 'absolute';
-          el.style.fontFamily = 'sans-serif';
+          el.style.fontFamily = 'var(--vbs-font, system-ui, -apple-system, sans-serif)';
           el.style.textShadow = '0 2px 4px rgba(0,0,0,0.8)';
           el.style.transform = 'translate(-50%, -100%)'; // center above node
           el.style.marginTop = '-15px';
@@ -183,12 +183,12 @@ export function createNeuraInstance(canvas: HTMLCanvasElement, workerUrl: string
         
         if (node.id === focusId) {
            el.style.zIndex = '100';
-           el.style.color = '#ffcc00';
+           el.style.color = 'var(--vbs-accent, #3b82f6)';
            el.style.fontSize = '14px';
            el.style.fontWeight = 'bold';
         } else {
            el.style.zIndex = '10';
-           el.style.color = '#ffffff';
+           el.style.color = 'var(--vbs-text-primary, #f8fafc)';
            el.style.fontSize = '12px';
            el.style.fontWeight = 'normal';
         }

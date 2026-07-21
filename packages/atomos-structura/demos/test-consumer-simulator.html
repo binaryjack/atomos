@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Consumer Simulator</title>
-  <link rel="stylesheet" href="/atomos-prime-style/dist/styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/@atomos-web/prime-style@2.3.10/dist/styles.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; }
@@ -140,11 +140,13 @@
   <script type="importmap">
   {
     "imports": {
-      "@atomos-web/prime": "/atomos-prime/dist/index.js",
-      "@atomos-web/prime-style": "/atomos-prime-style/dist/index.js",
-      "@atomos-web/structura-core": "/atomos-structura-core/dist/index.js",
-      "@atomos-web/structura": "/atomos-structura/dist/index.js",
-      "@binaryjack/formular.dev": "/formular-dev/dist/formular-dev.mjs"
+      "react": "https://unpkg.com/react@19.2.4/index.js",
+      "react-dom": "https://unpkg.com/react-dom@19.2.4/index.js",
+      "@atomos-web/prime": "https://unpkg.com/@atomos-web/prime@2.3.10/dist/index.js",
+      "@atomos-web/prime-style": "https://unpkg.com/@atomos-web/prime-style@2.3.10/dist/index.js",
+      "@atomos-web/structura-core": "https://unpkg.com/@atomos-web/structura-core@2.3.11/dist/index.js",
+      "@atomos-web/structura": "https://unpkg.com/@atomos-web/structura@2.3.22/dist/index.js",
+      "@binaryjack/formular.dev": "https://unpkg.com/@binaryjack/formular.dev@2.3.11/dist/formular-dev.mjs"
     }
   }
   </script>

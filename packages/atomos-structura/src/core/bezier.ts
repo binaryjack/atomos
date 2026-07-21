@@ -1,4 +1,5 @@
-import type { EdgePosition } from '../features/edge/types/edge.types.js'
+import type { EdgePosition } from '../features/edge/types/edge.types.js';
+import { computeAStarOrthogonalRoute } from './math/a-star-routing.js';
 
 // Control-point offset as fraction of distance, clamped to [minOffset, maxOffset]
 const MIN_OFFSET = 80;
@@ -266,13 +267,19 @@ export const getOrthogonalPoints = (
   dst: { x: number; y: number },
   dstEdge?: EdgePosition,
   srcRect?: { x: number; y: number; width: number; height: number },
-  dstRect?: { x: number; y: number; width: number; height: number }
+  dstRect?: { x: number; y: number; width: number; height: number },
+  obstacles?: { x: number; y: number; width: number; height: number }[]
 ): { x: number; y: number }[] => {
   const inferredDstEdge: EdgePosition = dstEdge ?? (
     srcEdge === 'top'    ? 'bottom' :
     srcEdge === 'bottom' ? 'top'    :
     srcEdge === 'left'   ? 'right'  : 'left'
   );
+
+  if (obstacles && obstacles.length > 0) {
+    const route = computeAStarOrthogonalRoute(src, srcEdge, dst, inferredDstEdge, obstacles, srcRect, dstRect);
+    return cleanCollinearPoints(route);
+  }
 
   const midpoint = {
     x: (src.x + dst.x) / 2,
@@ -323,9 +330,10 @@ export const orthogonalPath = (
   dst: { x: number; y: number },
   dstEdge?: EdgePosition,
   srcRect?: { x: number; y: number; width: number; height: number },
-  dstRect?: { x: number; y: number; width: number; height: number }
+  dstRect?: { x: number; y: number; width: number; height: number },
+  obstacles?: { x: number; y: number; width: number; height: number }[]
 ): string => {
-  const pts = getOrthogonalPoints(src, srcEdge, dst, dstEdge, srcRect, dstRect);
+  const pts = getOrthogonalPoints(src, srcEdge, dst, dstEdge, srcRect, dstRect, obstacles);
   return `M ${pts[0]!.x} ${pts[0]!.y} ` + pts.slice(1).map((p: any) => `L ${p.x} ${p.y}`).join(' ');
 };
 
@@ -369,9 +377,10 @@ export const orthogonalMidpoint = (
   dst: { x: number; y: number },
   dstEdge?: EdgePosition,
   srcRect?: { x: number; y: number; width: number; height: number },
-  dstRect?: { x: number; y: number; width: number; height: number }
+  dstRect?: { x: number; y: number; width: number; height: number },
+  obstacles?: { x: number; y: number; width: number; height: number }[]
 ): { x: number; y: number } => {
-  const pts = getOrthogonalPoints(src, srcEdge, dst, dstEdge, srcRect, dstRect);
+  const pts = getOrthogonalPoints(src, srcEdge, dst, dstEdge, srcRect, dstRect, obstacles);
   
   // Calculate total path length
   let totalLength = 0;
@@ -423,6 +432,6 @@ export const getMidpoint = (
   obstacles?: { x: number; y: number; width: number; height: number }[]
 ): { x: number; y: number } => {
   if (renderType === 'linear') return linearMidpoint(src, dst);
-  if (renderType === 'orthogonal') return orthogonalMidpoint(src, srcEdge, dst, dstEdge, srcRect, dstRect);
+  if (renderType === 'orthogonal') return orthogonalMidpoint(src, srcEdge, dst, dstEdge, srcRect, dstRect, obstacles);
   return bezierMidpoint(src, srcEdge, dst, dstEdge, srcRect, dstRect, obstacles);
 };

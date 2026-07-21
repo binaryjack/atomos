@@ -2,6 +2,9 @@ import { createStructuraViewer } from './create-structura-viewer.js'
 import type { DAGExchange } from '../core/application/dag-service.js'
 import { injectDesignSystemTokens } from '../core/presentation/design-system.js'
 
+// @ts-ignore - Vite will resolve this
+import primeStyleContent from '@atomos-web/prime-style/dist/styles.css?raw'
+
 export class AtomosStructuraViewerElement extends HTMLElement {
   private svgContainer!: SVGSVGElement;
   private contentRoot!: SVGGElement;
@@ -75,6 +78,10 @@ export class AtomosStructuraViewerElement extends HTMLElement {
 
     // Ensure design tokens are in the document head so CSS vars resolve correctly
     injectDesignSystemTokens();
+
+    const styleEl = document.createElement('style');
+    styleEl.textContent = primeStyleContent;
+    this.shadowRoot!.appendChild(styleEl);
 
     this.svgContainer = this.shadowRoot!.querySelector('svg')!;
     this.contentRoot = this.shadowRoot!.querySelector('.viewport-group')!;
