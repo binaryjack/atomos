@@ -372,15 +372,15 @@ export const createLinkFinalizer = function(
         const dstRect = { ...dstEntity.position.value, ...dstEntity.dimensions.value };
         
         const isReadonly = contentRoot.closest('.vbs-readonly-mode') !== null;
-        let obstacles: any[] | undefined = undefined;
-        if (isReadonly) {
-          obstacles = adapter.getAllEntities().map(e => ({
-            x: e.position.x,
-            y: e.position.y,
-            width: e.dimensions.width,
-            height: e.dimensions.height
-          }));
-        }
+        void isReadonly; // retained for future use
+        // Always collect obstacles so edge routing avoids intermediate entities
+        // in both edit and readonly modes.
+        const obstacles = adapter.getAllEntities().map(e => ({
+          x: e.position.x,
+          y: e.position.y,
+          width: e.dimensions.width,
+          height: e.dimensions.height
+        }));
 
         permanentLink.updatePath(s, d, srcEdge, dstEdge, currentRenderType, srcRect, dstRect, currentDirection, obstacles);
         

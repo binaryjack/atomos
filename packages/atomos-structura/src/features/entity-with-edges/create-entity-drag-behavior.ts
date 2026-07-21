@@ -167,11 +167,18 @@ export const createEntityDragBehavior = function(
     }
   });
 
+  // Block the browser's native HTML5 drag ghost. When the user mousedowns on the
+  // entity body and starts moving, the browser may trigger a native 'dragstart'
+  // event on child text/image nodes inside the foreignObject, producing a floating
+  // ghost image. Calling preventDefault() on dragstart suppresses this completely.
+  const onDragStart = (e: Event): void => { e.preventDefault(); };
+  bodyElement.addEventListener('dragstart', onDragStart as EventListener);
   bodyElement.addEventListener('mousedown', onMouseDown as EventListener);
 
   return {
     cleanup: () => {
       unsubBehavior();
+      bodyElement.removeEventListener('dragstart', onDragStart as EventListener);
       bodyElement.removeEventListener('mousedown', onMouseDown as EventListener);
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);

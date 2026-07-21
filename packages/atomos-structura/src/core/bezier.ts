@@ -96,48 +96,88 @@ export const getBezierControlPoints = (
     cp2 = offsetForEdge(dst, dstEdge, dVal);
   }
   if (obstacles && obstacles.length > 0) {
-    const threshold = 50;
-    const getPoint = (t: number) => {
+    const PAD = 24; // tighter collision padding to avoid false positives
+
+    // Corridor bounding box: only obstacles that lie BETWEEN src and dst matter.
+    // Expand by PAD in all directions so nearby entities aren't wrongly flagged.
+    const corridorX1 = Math.min(src.x, dst.x) - PAD;
+    const corridorX2 = Math.max(src.x, dst.x) + PAD;
+    const corridorY1 = Math.min(src.y, dst.y) - PAD;
+    const corridorY2 = Math.max(src.y, dst.y) + PAD;
+
+    // Sample 9 interior points along the initial bezier to detect collisions
+    const sample = (t: number) => {
       const mt = 1 - t;
       return {
-        x: mt * mt * mt * src.x + 3 * mt * mt * t * cp1.x + 3 * mt * t * t * cp2.x + t * t * t * dst.x,
-        y: mt * mt * mt * src.y + 3 * mt * mt * t * cp1.y + 3 * mt * t * t * cp2.y + t * t * t * dst.y
+        x: mt*mt*mt*src.x + 3*mt*mt*t*cp1.x + 3*mt*t*t*cp2.x + t*t*t*dst.x,
+        y: mt*mt*mt*src.y + 3*mt*mt*t*cp1.y + 3*mt*t*t*cp2.y + t*t*t*dst.y,
       };
     };
 
-    let maxIterations = 5;
-    let hasCollision = true;
+    // Find the obstacle that the curve penetrates most (most sampled points inside)
+    let worstObs: { x: number; y: number; width: number; height: number } | undefined;
+    let worstOverlap = 0;
 
-    while (hasCollision && maxIterations > 0) {
-      hasCollision = false;
-      for (let t = 0.1; t < 1; t += 0.1) {
-        const p = getPoint(t);
-        for (const obs of obstacles) {
-          if (srcRect && Math.abs(obs.x - srcRect.x) < 1 && Math.abs(obs.y - srcRect.y) < 1) continue;
-          if (dstRect && Math.abs(obs.x - dstRect.x) < 1 && Math.abs(obs.y - dstRect.y) < 1) continue;
+    for (const obs of obstacles) {
+      // Skip source rect
+      if (srcRect &&
+          obs.x < srcRect.x + srcRect.width + 2 && obs.x + obs.width > srcRect.x - 2 &&
+          obs.y < srcRect.y + srcRect.height + 2 && obs.y + obs.height > srcRect.y - 2) continue;
+      // Skip destination rect
+      if (dstRect &&
+          obs.x < dstRect.x + dstRect.width + 2 && obs.x + obs.width > dstRect.x - 2 &&
+          obs.y < dstRect.y + dstRect.height + 2 && obs.y + obs.height > dstRect.y - 2) continue;
 
-          if (
-            p.x > obs.x - threshold && p.x < obs.x + obs.width + threshold &&
-            p.y > obs.y - threshold && p.y < obs.y + obs.height + threshold
-          ) {
-            hasCollision = true;
-            const pushAmount = 40;
-            
-            if (t <= 0.5) {
-              if (srcEdge === 'top') cp1.y -= pushAmount;
-              if (srcEdge === 'bottom') cp1.y += pushAmount;
-              if (srcEdge === 'left') cp1.x -= pushAmount;
-              if (srcEdge === 'right') cp1.x += pushAmount;
-            } else {
-              if (dstEdge === 'top') cp2.y -= pushAmount;
-              if (dstEdge === 'bottom') cp2.y += pushAmount;
-              if (dstEdge === 'left') cp2.x -= pushAmount;
-              if (dstEdge === 'right') cp2.x += pushAmount;
-            }
-          }
-        }
+      // Skip if obstacle lies fully outside the corridor between src and dst
+      if (obs.x + obs.width < corridorX1 || obs.x > corridorX2 ||
+          obs.y + obs.height < corridorY1 || obs.y > corridorY2) continue;
+
+      const ox1 = obs.x - PAD, ox2 = obs.x + obs.width + PAD;
+      const oy1 = obs.y - PAD, oy2 = obs.y + obs.height + PAD;
+
+      let hits = 0;
+      for (let i = 1; i <= 9; i++) {
+        const p = sample(i / 10);
+        if (p.x > ox1 && p.x < ox2 && p.y > oy1 && p.y < oy2) hits++;
       }
-      maxIterations--;
+      if (hits > worstOverlap) {
+        worstOverlap = hits;
+        worstObs = obs;
+      }
+    }
+
+    // If an obstacle was found in the corridor, compute a perpendicular bypass
+    if (worstObs) {
+      const obs = worstObs;
+      const BYPASS_PAD = 50; // clearance beyond the obstacle bounding box
+
+      // Midpoint X of the two anchor points — route the arc through there
+      const midX = (src.x + dst.x) / 2;
+
+      // Choose above or below the obstacle:
+      // - If both endpoints are clearly above centre → always go above
+      // - If both endpoints are clearly below centre → always go below
+      // - Otherwise pick whichever direction requires less vertical travel from src
+      const obsCenterY = obs.y + obs.height / 2;
+      let routeAbove: boolean;
+      if (src.y <= obsCenterY && dst.y <= obsCenterY) {
+        routeAbove = true;
+      } else if (src.y >= obsCenterY && dst.y >= obsCenterY) {
+        routeAbove = false;
+      } else {
+        // Mixed: pick the shorter detour
+        routeAbove =
+          Math.abs(src.y - (obs.y - BYPASS_PAD)) <
+          Math.abs(src.y - (obs.y + obs.height + BYPASS_PAD));
+      }
+
+      const bypassY = routeAbove
+        ? obs.y - BYPASS_PAD
+        : obs.y + obs.height + BYPASS_PAD;
+
+      // Redirect both control points through the bypass waypoint
+      cp1 = { x: midX, y: bypassY };
+      cp2 = { x: midX, y: bypassY };
     }
   }
 
@@ -289,8 +329,80 @@ export const getOrthogonalPoints = (
   const firstHalf = routeHalf(src, srcEdge, srcRect, midpoint);
   const secondHalf = routeHalf(dst, inferredDstEdge, dstRect, midpoint);
 
-  const combined = [...firstHalf, ...secondHalf.slice().reverse().slice(1)];
-  return cleanCollinearPoints(combined);
+  let combined = [...firstHalf, ...secondHalf.slice().reverse().slice(1)];
+  combined = cleanCollinearPoints(combined);
+
+  // Post-process: if any H or V segment crosses an obstacle, insert a bypass.
+  // Only check obstacles that are not src/dst rects.
+  if (obstacles && obstacles.length > 0) {
+    const PAD = 18;
+    const bypassPad = 36;
+    const filteredObs = obstacles.filter(obs => {
+      if (srcRect &&
+          obs.x < srcRect.x + srcRect.width + 2 && obs.x + obs.width > srcRect.x - 2 &&
+          obs.y < srcRect.y + srcRect.height + 2 && obs.y + obs.height > srcRect.y - 2) return false;
+      if (dstRect &&
+          obs.x < dstRect.x + dstRect.width + 2 && obs.x + obs.width > dstRect.x - 2 &&
+          obs.y < dstRect.y + dstRect.height + 2 && obs.y + obs.height > dstRect.y - 2) return false;
+      return true;
+    });
+
+    if (filteredObs.length > 0) {
+      const result: { x: number; y: number }[] = [];
+      for (let i = 0; i < combined.length - 1; i++) {
+        const a = combined[i]!;
+        const b = combined[i + 1]!;
+        result.push(a);
+
+        // Horizontal segment
+        if (Math.abs(a.y - b.y) < 1) {
+          const x1 = Math.min(a.x, b.x);
+          const x2 = Math.max(a.x, b.x);
+          const y = a.y;
+          for (const obs of filteredObs) {
+            const ox1 = obs.x - PAD, ox2 = obs.x + obs.width + PAD;
+            const oy1 = obs.y - PAD, oy2 = obs.y + obs.height + PAD;
+            if (x1 < ox2 && x2 > ox1 && y > oy1 && y < oy2) {
+              // Segment crosses this obstacle: route above or below
+              const aboveY = obs.y - bypassPad;
+              const belowY = obs.y + obs.height + bypassPad;
+              const detourY = Math.abs(y - aboveY) < Math.abs(y - belowY) ? aboveY : belowY;
+              const midX = (a.x + b.x) / 2;
+              result.push({ x: a.x, y: detourY });
+              result.push({ x: midX, y: detourY });
+              result.push({ x: b.x, y: detourY });
+              break; // one bypass per segment is enough
+            }
+          }
+        }
+
+        // Vertical segment
+        if (Math.abs(a.x - b.x) < 1) {
+          const y1 = Math.min(a.y, b.y);
+          const y2 = Math.max(a.y, b.y);
+          const x = a.x;
+          for (const obs of filteredObs) {
+            const ox1 = obs.x - PAD, ox2 = obs.x + obs.width + PAD;
+            const oy1 = obs.y - PAD, oy2 = obs.y + obs.height + PAD;
+            if (y1 < oy2 && y2 > oy1 && x > ox1 && x < ox2) {
+              const leftX = obs.x - bypassPad;
+              const rightX = obs.x + obs.width + bypassPad;
+              const detourX = Math.abs(x - leftX) < Math.abs(x - rightX) ? leftX : rightX;
+              const midY = (a.y + b.y) / 2;
+              result.push({ x: detourX, y: a.y });
+              result.push({ x: detourX, y: midY });
+              result.push({ x: detourX, y: b.y });
+              break;
+            }
+          }
+        }
+      }
+      result.push(combined[combined.length - 1]!);
+      return cleanCollinearPoints(result);
+    }
+  }
+
+  return combined;
 };
 
 const cleanCollinearPoints = (pts: {x: number; y: number}[]): {x: number; y: number}[] => {

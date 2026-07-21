@@ -71,7 +71,16 @@ export default defineConfig({
             '@atomos-web/structura-core',
             '@atomos-web/prime',
             '@xyflow/react'
-          ]
+          ],
+          output: {
+            // Preserve module structure so dist/ mirrors src/:
+            // canvas.html and demos import deep paths like
+            // dist/preview/create-canvas-page.js which must exist as
+            // individual files, not merged chunks.
+            preserveModules: true,
+            preserveModulesRoot: 'src',
+            entryFileNames: '[name].js',
+          }
         }
       },
   plugins: [
@@ -89,6 +98,18 @@ export default defineConfig({
     fs: {
       allow: ['..']
     }
+  },
+  optimizeDeps: {
+    // Only scan the working entry points — exclude demos that reference
+    // atomos-prime test bundles (test-decision-matrix.js, test-stepper.js,
+    // test-settings-page.js) which do not exist yet.
+    entries: [
+      'canvas.html',
+      'demos/test-consumer-simulator.html',
+      'demos/test-persistence.html',
+      'demos/test-property-persistence.html',
+      'demos/test-neura.html',
+    ],
   },
   resolve: {
     alias: {
