@@ -85,6 +85,10 @@ export function Sidebar() {
         <Link href="/customization/themes" className={getLinkClasses("/customization/themes", "fuchsia")}>Themes & Skins</Link>
         <Link href="/customization/toolboxes" className={getLinkClasses("/customization/toolboxes", "orange")}>Custom Toolboxes</Link>
 
+        <div className="text-[10px] uppercase font-bold text-slate-600 mt-6 mb-2 tracking-[0.2em] pl-3">Vector & Adapters</div>
+        <Link href="/presentation" className={getLinkClasses("/presentation", "cyan")}>Vector Presentation</Link>
+        <Link href="/mermaid" className={getLinkClasses("/mermaid", "emerald")}>Mermaid Adapter</Link>
+
         <div className="text-[10px] uppercase font-bold text-slate-600 mt-6 mb-2 tracking-[0.2em] pl-3">ISO Architecture</div>
         <Link href="/headless" className={getLinkClasses("/headless", "slate")}>Headless Pipeline</Link>
         <Link href="/mcp" className={getLinkClasses("/mcp", "indigo")}>MCP Protocol</Link>

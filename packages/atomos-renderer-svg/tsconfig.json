@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "noEmit": false
+  },
+  "include": ["./src/**/*"],
+  "exclude": ["./src/**/*.test.ts", "./dist"],
+  "references": [
+    { "path": "../atomos-structura-core" }
+  ]
+}

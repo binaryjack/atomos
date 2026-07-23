@@ -82,6 +82,16 @@ importers:
         specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.37)(jsdom@29.0.1)(lightningcss@1.32.0)
 
+  packages/atomos-renderer-svg:
+    dependencies:
+      '@atomos-web/structura-core':
+        specifier: workspace:*
+        version: link:../atomos-structura-core
+    devDependencies:
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+
   packages/atomos-structura:
     dependencies:
       '@atomos-web/prime':
@@ -90,6 +100,9 @@ importers:
       '@atomos-web/prime-style':
         specifier: workspace:*
         version: link:../atomos-prime-style
+      '@atomos-web/renderer-svg':
+        specifier: workspace:*
+        version: link:../atomos-renderer-svg
       '@atomos-web/structura-core':
         specifier: workspace:*
         version: link:../atomos-structura-core

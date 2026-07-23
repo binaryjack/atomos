@@ -41,6 +41,7 @@
     "@atomos-web/prime-style": "workspace:*",
     "@atomos-web/structura-core": "workspace:*",
     "@atomos-web/structura-mcp": "workspace:*",
+    "@atomos-web/renderer-svg": "workspace:*",
     "@binaryjack/formular.dev": "workspace:*"
   },
   "devDependencies": {
