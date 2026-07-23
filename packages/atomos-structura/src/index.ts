@@ -25,5 +25,6 @@ export { applySchemaCommands } from './core/application/dag-service.js';
 export { initToolboxConfigManager, setAppearanceSettings, setToolboxConfig, setCustomShapes, setGeneralSettings } from './core/adapters/toolbox-config-manager.js';
 export { applyAppearanceTokens } from './core/presentation/design-system.js';
 export * from './core/application/dag-service.js';
+export type { EntityManager } from './core/presentation/entity-manager.js';
 export { AtomosPresentationEngine } from './viewer/atomos-presentation-engine.js';
 export { toMermaid, fromMermaid } from './adapters/mermaid.js';

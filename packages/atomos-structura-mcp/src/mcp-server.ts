@@ -27,6 +27,7 @@ interface WorkspaceState {
   readonly name: string;
   readonly version: string;
   last_modified: string;
+  mode?: 1 | 2 | 3;
   settings?: Record<string, unknown>;
   config?: WorkspaceConfig;
   canvases: Record<string, CanvasModel>;
@@ -1166,6 +1167,26 @@ const handle_tools_list = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
             properties: { id: { type: "string" } },
             required: ["id"]
           }
+        },
+        {
+          name: "structura_set_workspace_mode",
+          description: "Sets the operating mode of Atomos Structura (1: Single Canvas, 2: Multi-Canvas, 3: Meta Canvas).",
+          inputSchema: {
+            type: "object",
+            properties: { mode: { type: "number", enum: [1, 2, 3] } },
+            required: ["mode"]
+          }
+        },
+        {
+          name: "structura_group_schema",
+          description: "Groups the current active schema into a reusable group with an SVG print preview.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              groupColor: { type: "string" },
+              depends_on: { type: "string" }
+            }
+          }
         }
       ]
     }
@@ -1375,6 +1396,31 @@ const handle_tools_call = (srv: VbsMcpServerInstance, req: McpRequest): McpRespo
       case 'structura_rename_schema':   return handle_rename_schema(srv, { id: req.id, method: 'atomos-structura/rename-schema', params: args });
       case 'structura_delete_schema':   return handle_delete_schema(srv, { id: req.id, method: 'atomos-structura/delete-schema', params: args });
       case 'structura_activate_schema': return handle_activate_schema(srv, { id: req.id, method: 'atomos-structura/activate-schema', params: args });
+      case 'structura_set_workspace_mode': {
+        const mode = Number(args.mode) as 1 | 2 | 3;
+        srv._state = {
+          ...srv._state,
+          workspace: { ...srv._state.workspace, mode }
+        };
+        emit_sse(srv._clients, 'workspace-mode-set', { mode });
+        return { result: { success: true, mode }, id: req.id };
+      }
+      case 'structura_group_schema': {
+        const reqId = `structura_group_schema-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        emit_sse(srv._clients, 'frontend-action-request', { action: 'structura_group_schema', reqId, args });
+        return new Promise<McpResponse>((resolve) => {
+          srv._pendingRequests.set(reqId, {
+            resolve: (res) => resolve({ result: { success: true, ...res }, id: String(req.id) }),
+            reject: (err) => resolve({ error: { code: 500, message: err.message }, id: String(req.id) })
+          });
+          setTimeout(() => {
+            if (srv._pendingRequests.has(reqId)) {
+              srv._pendingRequests.delete(reqId);
+              resolve({ error: { code: 504, message: `Tool execution timeout for structura_group_schema` }, id: String(req.id) });
+            }
+          }, 15000);
+        });
+      }
       case 'structura_undo':
       case 'structura_redo':
       case 'structura_auto_layout':

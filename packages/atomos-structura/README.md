@@ -1,288 +1,143 @@
 # @atomos-web/structura
 
-**Visual schema designer for TypeScript projects** — Build, edit, and export data-model schemas headlessly via API or with a full interactive canvas UI.
-
-## Breaking Changes in v2.0.0
-
-- **`instanceId` is now REQUIRED**: To support multi-instance isolation and prevent state collisions between multiple canvases (e.g. in VS Code webviews), you must provide a unique `instanceId` when creating a canvas page or initializing a webview.
-
-```typescript
-// v2.0.0 pattern
-const page = createCanvasPage('my-unique-instance-id', config);
-```
+High-performance visual schema builder and headless graph engine for TypeScript applications.
 
 ---
 
-## New Features
+## Technical Overview
 
-- **Fine-Grained Menu Control** — Runtime enable/disable of zoom, center, export, etc.
-- **Advanced Viewport API** — Programmatic zoom, pan, center-on-screen, fit-to-screen
-- **Session Lifecycle** — Clean memory wipe, graceful session termination
-- **Enhanced MCP Integration** — 20+ tools for AI agents with availability guards
-- **Multi-Schema Workspaces** — Create and switch between multiple diagrams
+`@atomos-web/structura` provides a comprehensive schema engineering platform supporting both headless programmatic API operation and interactive Web Component visual canvas rendering. Built with pure TypeScript, Shadow DOM isolation, and a Redux state container with reactive signals.
 
-## Install
+---
+
+## Core Features
+
+- **Multi-Mode Workspace Architecture**:
+  - **Mode 1 (Single Canvas)**: Optimized for embedded canvas integrations (Codernic default).
+  - **Mode 2 (Multi-Canvas)**: Flat diagram tabs management.
+  - **Mode 3 (Meta Canvas)**: Hierarchical nested schema grouping with SVG node prints and breadcrumb navigation.
+- **Vector Presentation Engine Integration**: Embedded `@atomos-web/renderer-svg` for presentation mode export and theme rendering.
+- **Mermaid.js Adapter**: Full support for `toMermaid` and `fromMermaid` conversions.
+- **Real-Time Telemetry**: Sub-millisecond animation patching (`patchEntity`, `patchLink`) bypassing Redux for 60fps execution visualizations.
+- **Multi-Instance Isolation**: Guaranteed DOM and Redux state isolation via mandatory `instanceId`.
+
+---
+
+## Installation
 
 ```bash
-pnpm add @atomos-web/structura
+npm install @atomos-web/structura
 # or
-npm i @atomos-web/structura
+pnpm add @atomos-web/structura
 ```
-
-> **Peer packages** — `@atomos-web/structura-core` is installed automatically.
 
 ---
 
-## Headless API — Complete Control
+## Usage
 
-### Basic Schema Creation
+### 1. Programmatic Builder API
+
 ```typescript
 import { createSchemaBuilder } from '@atomos-web/structura';
 
 const builder = createSchemaBuilder({
-  config: { 
-    headless: true,
-    allow_multiple_schemas: true,
-    menu: {
-      zoom: { available: true, value: 1.0 },
-      center_on_screen: { available: true },
-      fit_to_screen: { available: true },
-      export: { available: true }
-    }
-  }
+  config: { headless: true },
+  instanceId: 'tenant-workspace-1'
 });
 
-// Create entities with rich properties
+// Create Entity
 builder.addEntity({
-  id: 'user',
-  name: 'User', 
+  id: 'ent_user',
+  name: 'UserAccount',
+  position: { x: 100, y: 100 },
+  dimensions: { width: 220, height: 140 },
   properties: [
-    { name: 'id', dataType: 'UUID', nullable: false },
-    { name: 'email', dataType: 'VARCHAR(255)', nullable: false },
-    { name: 'created_at', dataType: 'TIMESTAMP', nullable: false }
-  ],
-  position: { x: 100, y: 50 },
-  dimensions: { width: 140, height: 100 }
+    { key: 'id', label: 'User ID', dataType: 'UUID' },
+    { key: 'email', label: 'Email', dataType: 'VARCHAR' }
+  ]
 });
 
-// Create relationships  
+// Add Relationship
 builder.addRelationship({
-  leftEntityId: 'user',
-  rightEntityId: 'order', 
+  id: 'rel_user_orders',
+  leftEntityId: 'ent_user',
+  rightEntityId: 'ent_order',
+  direction: 'right',
   leftCardinality: '1',
-  rightCardinality: '*',
-  renderType: 'bezier'
+  rightCardinality: '*'
+});
+
+// Export Code Artifacts
+const sqlCode = builder.exportSQL();
+const tsInterfaces = builder.exportTypeScript();
+```
+
+### 2. Interactive Canvas Mounting
+
+```typescript
+import { createCanvasPage } from '@atomos-web/structura';
+
+const container = document.getElementById('structura-root')!;
+
+// Mount visual canvas
+const { element, cleanup, getState } = createCanvasPage('canvas-instance-01', {
+  allow_multiple_schemas: true,
+  readonly: false
+});
+
+container.appendChild(element);
+```
+
+### 3. Custom Web Component Usage
+
+```html
+<atomos-structura-viewer id="viewer"></atomos-structura-viewer>
+
+<script type="module">
+  import '@atomos-web/structura';
+
+  const viewer = document.getElementById('viewer');
+  viewer.schema = {
+    entities: [ ... ],
+    links: [ ... ]
+  };
+</script>
+```
+
+---
+
+## API Reference
+
+### `createSchemaBuilder(options)`
+
+| Option | Type | Description |
+|---|---|---|
+| `instanceId` | `string` | **Required.** Unique identifier for multi-instance store isolation. |
+| `config` | `WorkspaceConfig` | Runtime feature toggles and operational mode overrides. |
+| `mcpUrl` | `string` | Optional URL of a running MCP server for real-time synchronization. |
+
+### Operational Mode Switch
+
+```typescript
+builder.store.dispatch({
+  type: 'workspace-mode-set',
+  mode: 3 // Mode 1: Single, Mode 2: Multi, Mode 3: Meta Canvas
 });
 ```
 
-### Advanced Viewport Control
-```typescript
-// Get current viewport state
-const viewport = builder.api.getViewport();
-console.log(viewport); // { zoom: 1, pan: { x: 0, y: 0 } }
-
-// Programmatic zoom (clamped 0.1x to 4x)
-builder.api.setZoom(2.5);
-
-// Manual positioning
-builder.api.setViewport({ zoom: 1.5, pan: { x: 100, y: 50 } });
-
-// Smart auto-layout
-builder.api.centerOnScreen({ width: 1200, height: 800 });
-builder.api.fitToScreen({ width: 1200, height: 800, padding: 100 });
-```
-
-### Real-time Execution Telemetry
-The Lightweight Viewer Engine exposes native patch methods to support real-time state machine execution and workflow orchestration animations. These bypass the Redux store entirely and write directly to DOM signals for 60fps performance.
-
-```typescript
-// Render an animated glowing border, a progress bar, and a running status badge
-viewer.patchEntity('user', { 
-  execution: { 
-    status: 'running', // 'idle' | 'running' | 'success' | 'warning' | 'failed'
-    progress: 45 // 0-100
-  } 
-});
-
-// Animate a relationship line with a glowing traveling dot and pulsing dash stroke
-viewer.patchLink('link-1', { 
-  execution: { 
-    active: true, 
-    animationType: 'flow', // 'flow' | 'pulse' | 'dash'
-    color: '#22c55e', 
-    duration: '1.5s' 
-  } 
-});
-```
-
-### Menu Control System
-```typescript
-// Runtime menu configuration
-builder.menuControl.setAvailable('zoom_in', false);  // Disable zoom in
-builder.menuControl.setAvailable('export', true);    // Enable export
-builder.menuControl.setValue('zoom', 1.5);           // Set zoom value
-
-// Subscribe to menu changes
-builder.menuControl.subscribe((config) => {
-  console.log('Menu updated:', config.zoom?.available);
-});
-```
-
-### Session Lifecycle
-```typescript
-// Clear all data while preserving config
-builder.clearMemory(); // Wipes entities + localStorage
-
-// Graceful shutdown
-builder.close(); // Stops subscribers + cleans up
-```
-
-### Multi-Schema Support
-```typescript
-// Create additional schemas
-const schemaId = builder.api.createSchema('E-commerce');
-builder.api.activateSchema(schemaId);
-
-// List all schemas
-const schemas = builder.api.listSchemas();
-schemas.forEach(s => console.log(`${s.name}: ${s.entityCount} entities`));
-```
-
 ---
 
-## Canvas UI — Visual Editor
+## Code Export Plugins
 
-```typescript
-import { createSchemaBuilder } from '@atomos-web/structura';
-
-// Full visual interface with drag-and-drop
-const builder = createSchemaBuilder();
-const container = document.getElementById('canvas')!;
-
-// Mount the full interactive canvas into the DOM
-const unmount = builder.mountUI(container);
-
-// Later — tear down
-unmount();
-```
-
----
-
-## API reference
-
-### `createSchemaBuilder(props?)`
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `config` | `WorkspaceConfig` | `{}` | Session-level policy flags |
-| `mcpUrl` | `string` | — | Connect to a running `@atomos-web/structura-mcp` server |
-| `onStateChange` | `(store) => void` | — | Called on every Redux state change |
-
-Returns a `SchemaBuilder` instance.
-
----
-
-### `SchemaBuilder`
-
-```ts
-interface SchemaBuilder {
-  // Low-level access
-  readonly store: ReduxStore;
-  readonly workspaceApi: WorkspaceApi;
-  readonly kernel: SchemaGraphKernel;
-
-  // Entity mutations (dispatched to the active schema)
-  addEntity(entity: Entity): void;
-  removeEntity(entityId: string): void;
-  updateEntity(entity: Entity): void;
-
-  // Schema management
-  createSchema(name: string): string;   // returns new schema id
-  deleteSchema(id: string): void;
-
-  // Persistence
-  save(): string;             // returns JSON string
-  load(json: string): void;   // restores from JSON
-
-  // UI
-  mountUI(container: HTMLElement): () => void;  // returns unmount fn
-}
-```
-
----
-
-### `WorkspaceConfig`
-
-```ts
-interface WorkspaceConfig {
-  /** Hide all settings panels. The settings-toggled Redux action becomes a no-op. */
-  headless?: boolean;
-
-  /**
-   * When false, createSchema() throws and the MCP create-schema command returns 403.
-   * Use for single-model sessions where schema sprawl is undesirable.
-   */
-  allow_multiple_schemas?: boolean;
-}
-```
-
----
-
-### MCP sync
-
-Connect a browser-side builder to a running `@atomos-web/structura-mcp` server:
-
-```ts
-import { createSchemaBuilder, createMcpSync } from '@atomos-web/structura';
-
-const builder = createSchemaBuilder({ mcpUrl: 'http://localhost:3001' });
-
-// Or wire manually
-const { disconnect } = createMcpSync(builder.store, 'http://localhost:3001');
-// disconnect() when done
-```
-
-State flows: browser Redux → POST `/` (`sync-state`) → MCP server.  
-SSE events flow back: `GET /events` → Redux dispatch in the browser.
-
----
-
-### Adapters
-
-Generate code from the active schema:
-
-```ts
-import { createSqlAdapter, createTypescriptAdapter, createPrismaAdapter } from '@atomos-web/structura';
-
-const sql  = createSqlAdapter(builder.kernel);
-const ts   = createTypescriptAdapter(builder.kernel);
-const prisma = createPrismaAdapter(builder.kernel);
-
-console.log(sql.generate());       // CREATE TABLE ...
-console.log(ts.generate());        // export interface User { ... }
-console.log(prisma.generate());    // model User { ... }
-```
-
----
-
-### Redux store (advanced)
-
-```ts
-import { getGlobalReduxStore, resetGlobalReduxStore, create_redux_store } from '@atomos-web/structura';
-
-// Singleton store (used by createCanvasPage)
-const store = getGlobalReduxStore({ headless: true });
-
-// Independent store per instance (used by createSchemaBuilder)
-const isolated = create_redux_store({ allow_multiple_schemas: false });
-
-// Reset singleton (useful in tests)
-resetGlobalReduxStore();
-```
+`@atomos-web/structura` includes native export adapters:
+- `sqlDdlPlugin`: Standard SQL DDL (`CREATE TABLE`)
+- `prismaPlugin`: Prisma schema definitions (`model Entity { ... }`)
+- `typescriptPlugin`: TypeScript interface definitions
+- `jsonSchemaPlugin`: JSON Schema Draft 7 format
+- `mermaidPlugin`: Mermaid.js flowchart DSL
 
 ---
 
 ## License
 
-This project is licensed under the AGPLv3 License - see the [LICENSE](LICENSE) file for details.
-
+Licensed under AGPLv3. See [LICENSE](LICENSE) for details.

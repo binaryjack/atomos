@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AtomosPresentationEngine } from "@atomos-web/structura";
 
 export default function PresentationPage() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -29,10 +28,38 @@ export default function PresentationPage() {
         code: "USER_DB",
         name: "User Store",
         shape: "circle" as const,
-        position: { x: 320, y: 50 },
-        dimensions: { width: 140, height: 100 },
+        position: { x: 340, y: 50 },
+        dimensions: { width: 160, height: 100 },
         properties: [
           { key: "engine", label: "Engine", value: "PostgreSQL", dataType: "string" as const, componentType: "input" as const }
+        ],
+        edges: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      },
+      {
+        id: "ent-3",
+        code: "CACHE_SVC",
+        name: "Redis Cache",
+        shape: "rectangle" as const,
+        position: { x: 50, y: 220 },
+        dimensions: { width: 180, height: 100 },
+        properties: [
+          { key: "ttl", label: "TTL", value: "3600s", dataType: "string" as const, componentType: "input" as const }
+        ],
+        edges: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      },
+      {
+        id: "ent-4",
+        code: "EVENT_BUS",
+        name: "Event Bus (Kafka)",
+        shape: "rectangle" as const,
+        position: { x: 340, y: 220 },
+        dimensions: { width: 160, height: 100 },
+        properties: [
+          { key: "cluster", label: "Cluster", value: "Prod-1", dataType: "string" as const, componentType: "input" as const }
         ],
         edges: [],
         createdAt: Date.now(),
@@ -42,11 +69,39 @@ export default function PresentationPage() {
     links: [
       {
         id: "link-1",
-        fromEntityId: "ent-1",
-        toEntityId: "ent-2",
-        label: "Queries",
-        thickness: 3 as const,
+        leftEntityId: "ent-1",
+        rightEntityId: "ent-2",
+        direction: "right",
+        label: "1. Right (-->)",
+        thickness: 3,
         isHighlighted: true
+      },
+      {
+        id: "link-2",
+        leftEntityId: "ent-1",
+        rightEntityId: "ent-3",
+        direction: "left",
+        label: "2. Left (<--)",
+        thickness: 2,
+        isHighlighted: false
+      },
+      {
+        id: "link-3",
+        leftEntityId: "ent-3",
+        rightEntityId: "ent-4",
+        direction: "both",
+        label: "3. Both (<-->)",
+        thickness: 2,
+        isHighlighted: true
+      },
+      {
+        id: "link-4",
+        leftEntityId: "ent-2",
+        rightEntityId: "ent-4",
+        direction: "none",
+        label: "4. None (---)",
+        thickness: 2,
+        isHighlighted: false
       }
     ],
     settings: {
@@ -58,21 +113,27 @@ export default function PresentationPage() {
 
   useEffect(() => {
     if (!containerRef.current) return;
-    
-    // Create a kernel mock compatible with Presentation Engine
-    const fakeKernel = {
-      getSnapshot: () => dummySnapshot,
-      subscribe: () => () => {}
-    } as any;
 
-    const engine = new AtomosPresentationEngine(containerRef.current, fakeKernel, {
-      theme: activeTheme,
-      padding: 30,
-      responsive: true
+    let engineInstance: any = null;
+
+    import("@atomos-web/structura").then(({ AtomosPresentationEngine }) => {
+      if (!containerRef.current) return;
+      const fakeKernel = {
+        getSnapshot: () => dummySnapshot,
+        subscribe: () => () => {}
+      } as any;
+
+      engineInstance = new AtomosPresentationEngine(containerRef.current, fakeKernel, {
+        theme: activeTheme,
+        padding: 30,
+        responsive: true
+      });
     });
 
     return () => {
-      engine.destroy();
+      if (engineInstance) {
+        engineInstance.destroy();
+      }
     };
   }, [activeTheme]);
 
@@ -114,17 +175,17 @@ export default function PresentationPage() {
       </div>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold text-cyan-400">Interactive SVG Preview</h2>
+        <h2 className="text-xl font-semibold text-cyan-400">Interactive SVG Preview (With 4 Relation Directions)</h2>
         <div 
           ref={containerRef} 
-          className="w-full h-96 bg-[#020617] border border-slate-800 rounded-xl overflow-hidden shadow-2xl flex items-center justify-center p-4"
+          className="w-full h-[450px] bg-[#020617] border border-slate-800 rounded-xl overflow-hidden shadow-2xl flex items-center justify-center p-4"
         />
       </section>
 
       <section className="bg-slate-900 border border-slate-800 p-6 rounded-lg text-slate-300">
         <h3 className="text-lg font-bold text-white mb-3">Integration Example</h3>
         <pre className="bg-[#020617] p-4 rounded border border-slate-800 text-xs text-slate-300 font-mono overflow-x-auto leading-relaxed">
-{`import { AtomosPresentationEngine } from '@atomos/structura';
+{`import { AtomosPresentationEngine } from '@atomos-web/structura';
 
 const engine = new AtomosPresentationEngine(kernel, {
   theme: 'sovereign-dark',

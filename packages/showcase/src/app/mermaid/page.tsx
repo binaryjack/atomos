@@ -1,36 +1,41 @@
 "use client";
 
-import { useState } from "react";
-import { toMermaid, fromMermaid } from "@atomos-web/structura";
+import { useState, useEffect } from "react";
 
 export default function MermaidPage() {
   const [mermaidText, setMermaidText] = useState<string>(
-    `graph TD\n  ent_1["Auth Service"] -->|Queries| ent_2["User Store"]\n  ent_1 -->|Logs| ent_3["Audit Log"]`
+    `graph TD\n  ent_1["Auth Service"] -->|"Queries"| ent_2["User Store"]\n  ent_1 -->|"Logs"| ent_3["Audit Log"]`
   );
 
   const [convertedSnapshot, setConvertedSnapshot] = useState<string>("");
+  const [exportedMermaid, setExportedMermaid] = useState<string>("");
 
-  const handleConvertFromMermaid = () => {
+  useEffect(() => {
+    import("@atomos-web/structura").then(({ toMermaid }) => {
+      const dummySnapshot = {
+        entities: [
+          { id: "A", code: "A", name: "Client Application", shape: "rectangle" as const, position: { x: 0, y: 0 }, dimensions: { width: 100, height: 50 }, properties: [], edges: [], createdAt: 0, updatedAt: 0 },
+          { id: "B", code: "B", name: "API Gateway", shape: "rectangle" as const, position: { x: 0, y: 0 }, dimensions: { width: 100, height: 50 }, properties: [], edges: [], createdAt: 0, updatedAt: 0 }
+        ],
+        links: [
+          { id: "L1", leftEntityId: "A", rightEntityId: "B", label: "HTTP REST", thickness: 3 as const, isHighlighted: false }
+        ],
+        settings: { theme: "sovereign-dark", grid: true, zoom: 1 }
+      };
+
+      setExportedMermaid(toMermaid(dummySnapshot as any));
+    });
+  }, []);
+
+  const handleConvertFromMermaid = async () => {
     try {
-      const snapshot = fromMermaid(mermaidText);
-      setConvertedSnapshot(JSON.stringify(snapshot, null, 2));
+      const { fromMermaid } = await import("@atomos-web/structura");
+      const kernel = fromMermaid(mermaidText);
+      setConvertedSnapshot(JSON.stringify(kernel.getSnapshot(), null, 2));
     } catch (e: any) {
       setConvertedSnapshot(`Error converting Mermaid: ${e.message}`);
     }
   };
-
-  const dummySnapshot = {
-    entities: [
-      { id: "A", code: "A", name: "Client Application", shape: "rectangle" as const, position: { x: 0, y: 0 }, dimensions: { width: 100, height: 50 }, properties: [], edges: [], createdAt: 0, updatedAt: 0 },
-      { id: "B", code: "B", name: "API Gateway", shape: "rectangle" as const, position: { x: 0, y: 0 }, dimensions: { width: 100, height: 50 }, properties: [], edges: [], createdAt: 0, updatedAt: 0 }
-    ],
-    links: [
-      { id: "L1", fromEntityId: "A", toEntityId: "B", label: "HTTP REST", thickness: 3 as const, isHighlighted: false }
-    ],
-    settings: { theme: "sovereign-dark", grid: true, zoom: 1 }
-  };
-
-  const exportedMermaid = toMermaid(dummySnapshot as any);
 
   return (
     <div className="p-4 md:p-8 flex flex-col gap-8 max-w-4xl">

@@ -1,3 +1,4 @@
+import { renderToSVG } from '@atomos-web/renderer-svg'
 import type { WorkspaceConfig } from '@atomos-web/structura-core'
 import { getCanvasAdapter } from '../core/adapters/canvas-adapter.js'
 import { createDAGObserver } from '../core/adapters/dag-observer.js'
@@ -25,6 +26,8 @@ import { createEntitySearch } from '../features/search/create-entity-search.js'
 import { createSettingsPage } from '../features/settings-page/create-settings-page.js'
 import { createShortcutsPanel } from '../features/shortcuts/create-shortcuts-panel.js'
 import { createValidationOverlay } from '../features/validation-overlay/create-validation-overlay.js'
+import { createBreadcrumb } from '../features/meta-canvas/create-breadcrumb.js'
+import { createGroupPalette } from '../features/meta-canvas/create-group-palette.js'
 import { createCanvasToolbar } from './create-canvas-toolbar.js'
 import { createSchemaTabs } from './create-schema-tabs.js'
 
@@ -93,11 +96,19 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
     TAB_H = schemaTabs.height;
   }
 
+  // Meta Canvas Breadcrumb
+  const breadcrumb = createBreadcrumb(root, store);
+  cleanups.push(breadcrumb.destroy);
+
   // ── Canvas Area ────────────────────────────────────────────────────────
   const mainArea = document.createElement('div');
-  mainArea.style.cssText = `position:absolute;top:${TAB_H}px;left:0;right:0;bottom:0;display:flex;flex-direction:row;min-height:0;min-width:0;overflow:hidden;`;
+  mainArea.style.cssText = `position:relative;flex:1;display:flex;flex-direction:row;min-height:0;min-width:0;overflow:hidden;`;
   root.appendChild(mainArea);
   
+  // Meta Canvas Group Palette
+  const groupPalette = createGroupPalette(mainArea, store);
+  cleanups.push(groupPalette.destroy);
+
   const canvasWrap = document.createElement('div');
   canvasWrap.classList.add('vbs-canvas-wrap');
   canvasWrap.style.cssText = 'position:relative;flex:1;min-width:0;min-height:0;overflow:hidden;background-color:var(--vbs-bg-canvas, #1e293b);';
@@ -391,13 +402,32 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
   canvasWrap.ondrop = (e) => {
     e.preventDefault();
     if (e.dataTransfer) {
+      const groupData = e.dataTransfer.getData('application/atomos-group');
+      if (groupData) {
+        const { schemaId, name, print, groupColor } = JSON.parse(groupData);
+        const rect = canvasWrap.getBoundingClientRect();
+        const pos = viewport.screenToCanvas(e.clientX, e.clientY, rect);
+        const id = `group-ent-${Date.now()}`;
+        getEntityManager(instanceId).createEntity(
+          id,
+          name,
+          { x: pos.x - 100, y: pos.y - 50 },
+          { width: 220, height: 160 },
+          {
+            nodeType: 'group',
+            isGroup: true,
+            print,
+            groupColor,
+            schemaId
+          }
+        );
+        return;
+      }
+
       const shapeType = e.dataTransfer.getData('application/vbs-shape');
       const shapeColor = e.dataTransfer.getData('application/vbs-color');
       if (shapeType) {
-        const v = viewport.state.value;
         const rect = canvasWrap.getBoundingClientRect();
-        // Mouse coordinates are implicitly handled by screenToCanvas using clientX/clientY
-        
         const pos = viewport.screenToCanvas(e.clientX, e.clientY, rect);
         const worldX = pos.x;
         const worldY = pos.y;
@@ -1124,6 +1154,42 @@ export const createCanvasPage = function(instanceId: string, config?: WorkspaceC
     if (action === 'structura_load_workspace') {
       store.dispatch({ type: 'state-loaded', state: { workspace: args.payload } });
       if (sendResult) sendResult({});
+    }
+
+    if (action === 'structura_group_schema') {
+      const state = store.get_state();
+      const activeCanvas = state.workspace.canvases[state.workspace.active_canvas_id];
+      const activeSchema = activeCanvas?.schemas[activeCanvas.active_schema_id];
+
+      if (activeSchema) {
+        const kernel = createSchemaGraphKernel({
+          entities: Object.fromEntries(activeSchema.entities.map(e => [e.id, e])),
+          links: Object.fromEntries(activeSchema.links.map(l => [l.id, l]))
+        });
+        const snapshot = kernel.getSnapshot();
+        const svgPrint = renderToSVG(snapshot, { theme: 'sovereign-dark', padding: 20, responsive: true });
+
+        const groupColor = args.groupColor || '#06b6d4'; // Cyan default
+        const depends_on = args.depends_on;
+
+        store.dispatch({
+          type: 'schema-grouped',
+          schema_id: activeSchema.id,
+          print: svgPrint,
+          groupColor,
+          depends_on
+        });
+
+        // Create a new schema to clear the active canvas
+        const newSchemaId = `schema-${Date.now()}`;
+        store.dispatch({
+          type: 'schema-created',
+          id: newSchemaId,
+          name: `Meta Canvas (${activeSchema.name})`
+        });
+      }
+
+      if (sendResult) sendResult({ success: true });
     }
   };
   mcpEventTarget.addEventListener('vbs-mcp-action', handlePageMcpAction);

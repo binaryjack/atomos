@@ -7,6 +7,10 @@ export interface SchemaModel {
   readonly name: string;
   readonly entities: readonly Entity[];
   readonly links: readonly LinkProps[];
+  readonly isGroup?: boolean;
+  readonly print?: string;
+  readonly depends_on?: string;
+  readonly groupColor?: string;
 }
 
 export interface ViewportState {
@@ -28,6 +32,7 @@ export interface WorkspaceState {
   readonly name: string;
   readonly version: string;
   readonly last_modified: string;
+  readonly mode?: 1 | 2 | 3;
   readonly settings?: AppSettings;
   readonly config?: WorkspaceConfig;
   readonly canvases: Record<string, CanvasModel>;
@@ -56,6 +61,8 @@ export type ReduxAction =
   | { type: 'schema-renamed'; id: string; name: string }
   | { type: 'schema-deleted'; id: string }
   | { type: 'schema-activated'; id: string }
+  | { type: 'schema-grouped'; schema_id: string; print?: string; groupColor?: string; depends_on?: string }
+  | { type: 'workspace-mode-set'; mode: 1 | 2 | 3 }
   | { type: 'canvas-created'; id: string; name: string }
   | { type: 'canvas-renamed'; id: string; name: string }
   | { type: 'canvas-deleted'; id: string }

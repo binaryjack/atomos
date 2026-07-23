@@ -465,11 +465,26 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
   moreMenu.appendChild(hDivider());
   moreMenu.appendChild(settingsBtn);
 
+  const groupSchemaBtn = createIconButton(
+    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M7 7l10 10"/></svg>`,
+    'Group Active Schema (Meta Canvas)',
+    () => {
+      mcpEventTarget.dispatchEvent(new CustomEvent('vbs-mcp-action', {
+        detail: {
+          action: 'structura_group_schema',
+          args: { groupColor: '#06b6d4' },
+          mcpUrl: 'in-memory'
+        }
+      }));
+    }
+  );
+
   const aboutBtn = createIconButton(
     `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
     'About',
     () => { menuOpen = false; closeMenu(); createAboutModal(document.body); }
   );
+  moreMenu.appendChild(groupSchemaBtn);
   moreMenu.appendChild(aboutBtn);
 
   // -- Custom Actions --

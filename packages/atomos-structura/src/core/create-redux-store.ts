@@ -241,6 +241,29 @@ const reduce_state = function(state: ReduxState, action: ReduxAction): ReduxStat
       });
     }
 
+    case 'schema-grouped': {
+      return updateActiveCanvas(state, canvas =>
+        updateSchemaInCanvas(canvas, action.schema_id, schema => ({
+          ...schema,
+          isGroup: true,
+          print: action.print ?? schema.print,
+          groupColor: action.groupColor ?? schema.groupColor,
+          depends_on: action.depends_on ?? schema.depends_on,
+        }))
+      );
+    }
+
+    case 'workspace-mode-set': {
+      return {
+        ...state,
+        workspace: {
+          ...state.workspace,
+          mode: action.mode,
+          last_modified: new Date().toISOString(),
+        },
+      };
+    }
+
     case 'canvas-created': {
       if (state.workspace.canvases[action.id]) return state;
       const newCanvas = makeDefaultCanvas(action.id, action.name);

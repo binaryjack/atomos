@@ -7,6 +7,7 @@ import type { EntityStore } from '../../core/create-entity-store.js'
 import type { IStorageProvider } from '../../core/storage/types/storage-provider.types.js'
 import type { GlobalConfig } from '../../core/types/global-config.types.js'
 import { createPropertySettingsModal } from '../modal/create-property-settings-modal.js'
+import { getInstanceReduxStore } from '../../core/create-redux-store.js'
 import { createEntityFooter } from './create-entity-footer.js'
 import { createEntityHeader } from './create-entity-header.js'
 import { createEntityPropertyRow } from './create-entity-property-row.js'
@@ -66,6 +67,22 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   const body = document.createElement('div');
   body.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
   body.classList.add('vbs-entity-content-body');
+
+  body.addEventListener('dblclick', (e) => {
+    const entity = store.signal.value;
+    const isGroup = entity.nodeType === 'group' || (entity as any).isGroup || (entity.metadata as any)?.isGroup;
+    const schemaId = (entity as any).schemaId || (entity.metadata as any)?.schemaId;
+
+    if (isGroup && schemaId) {
+      e.stopPropagation();
+      try {
+        const reduxStore = getInstanceReduxStore(props.instanceId);
+        reduxStore.dispatch({ type: 'schema-activated', id: schemaId });
+      } catch (err) {
+        console.error('[Meta-Canvas] Failed to navigate to schema on double click:', err);
+      }
+    }
+  });
 
   // Inject animation keyframes
   const styleTag = document.createElement('style');
@@ -246,8 +263,8 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   }>();
 
   const renderRows = (entity: Entity): void => {
-    const isGroup = (entity as any).isGroup || (entity.metadata as any)?.isGroup || false;
-    const svgPrint = (entity as any).svgPrint || (entity as any).svgContent || (entity.metadata as any)?.svgPrint || (entity.metadata as any)?.svgContent || null;
+    const isGroup = entity.nodeType === 'group' || (entity as any).isGroup || (entity.metadata as any)?.isGroup || false;
+    const svgPrint = (entity as any).print || (entity as any).svgPrint || (entity as any).svgContent || (entity.metadata as any)?.print || (entity.metadata as any)?.svgPrint || null;
     const hasProperties = entity.properties.length > 0;
 
     const noProps = !hasProperties;
