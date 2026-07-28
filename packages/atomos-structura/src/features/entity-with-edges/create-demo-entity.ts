@@ -71,8 +71,8 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
   // Call immediately on initialization to handle pre-collapsed entities
   updateVisualDimensions();
   
-  cleanups.push(props.dimensions.subscribe(updateVisualDimensions));
-  cleanups.push(props.entityStore.signal.subscribe(updateVisualDimensions));
+  if (props.dimensions?.subscribe) cleanups.push(props.dimensions.subscribe(updateVisualDimensions));
+  if (props.entityStore?.signal?.subscribe) cleanups.push(props.entityStore.signal.subscribe(updateVisualDimensions));
 
   const buildContent = (shape?: string, color?: string) => {
     if (contentCleanup) {
@@ -214,9 +214,9 @@ export const createDemoEntity = function(props: DemoEntityProps): DemoEntityResu
   cleanups.push(resizeHandles.cleanup);
 
   // Wire geometry sync after sub-factories are constructed
-  cleanups.push(props.position.subscribe(syncPosition));
-  cleanups.push(visualDimensions.subscribe(syncSizeAndSelection));
-  cleanups.push(selected.subscribe(syncSizeAndSelection));
+  if (props.position?.subscribe) cleanups.push(props.position.subscribe(syncPosition));
+  if (visualDimensions?.subscribe) cleanups.push(visualDimensions.subscribe(syncSizeAndSelection));
+  if (selected?.subscribe) cleanups.push(selected.subscribe(syncSizeAndSelection));
 
   // --- Edges ---
   const anchorIds: Record<EdgePosition, string> = {

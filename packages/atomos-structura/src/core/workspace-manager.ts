@@ -263,11 +263,11 @@ export const createWorkspaceManager = function(
         );
       };
       linkSubscriptions.set(linkId, [
-        srcEntity.position.subscribe(recompute),
-        srcEntity.dimensions.subscribe(recompute),
-        dstEntity.position.subscribe(recompute),
-        dstEntity.dimensions.subscribe(recompute),
-      ]);
+        srcEntity.position?.subscribe?.(recompute),
+        srcEntity.dimensions?.subscribe?.(recompute),
+        dstEntity.position?.subscribe?.(recompute),
+        dstEntity.dimensions?.subscribe?.(recompute),
+      ].filter(Boolean) as Array<() => void>);
       
       // Fire immediately
       recompute();

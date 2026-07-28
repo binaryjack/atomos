@@ -390,11 +390,11 @@ export const createLinkFinalizer = function(
         moveLinkLabelFO(fo, getMidpoint(currentRenderType, s, srcEdge, d, dstEdge, srcRect, dstRect, obstacles));
       };
       linkSubscriptions.set(linkId, [
-        srcEntity.position.subscribe(recompute),
-        srcEntity.dimensions.subscribe(recompute),
-        dstEntity.position.subscribe(recompute),
-        dstEntity.dimensions.subscribe(recompute),
-      ]);
+        srcEntity.position?.subscribe?.(recompute),
+        srcEntity.dimensions?.subscribe?.(recompute),
+        dstEntity.position?.subscribe?.(recompute),
+        dstEntity.dimensions?.subscribe?.(recompute),
+      ].filter(Boolean) as Array<() => void>);
       
       // Perform initial computation
       recompute();
