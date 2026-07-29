@@ -1,4 +1,4 @@
-﻿import type { Entity, LinkProps } from '@atomos-web/structura-core';
+import type { Entity, LinkProps } from '@atomos-web/structura-core';
 import { createEntityStore } from './create-entity-store.js';
 import { createLinkStore } from './create-link-store.js';
 import { registry } from './create-signal-registry.js';
@@ -157,7 +157,7 @@ export const createSchemaStore = function(schema: SchemaModel): SchemaStore {
     }
     
     console.log(`[schema-store] SUBSCRIBING entity ${entity.id} to schema ${schema.id}`);
-    const unsub = entityStore.signal.subscribe((updated: Entity) => {
+    const unsub = entityStore?.signal?.subscribe((updated: Entity) => {
       console.log(`[schema-store] 🔄 Entity ${updated.id} changed, syncing to schema signal and Redux`);
       console.log(`[schema-store] Updated properties:`, updated.properties?.map(p => `${p.key}:${p.dataType}`));
       
@@ -188,7 +188,7 @@ export const createSchemaStore = function(schema: SchemaModel): SchemaStore {
         });
         console.log(`[schema-store] ✅ Redux dispatch completed for property changes`);
       }
-    });
+    }) ?? (() => {});
     _entitySubs.set(subKey, unsub);
   };
 
