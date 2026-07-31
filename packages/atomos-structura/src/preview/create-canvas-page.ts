@@ -163,6 +163,7 @@ export const createCanvasPage = function (
     viewportGroup.setAttribute('transform', t);
   };
 
+  console.log("viewport", viewport);
   cleanups.push(viewport.state.subscribe(applyViewport));
   applyViewport();
   cleanups.push(viewport.cleanup);
