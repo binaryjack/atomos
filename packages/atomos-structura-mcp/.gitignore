@@ -1,0 +1,14 @@
+# TypeScript build outputs
+dist/
+*.tsbuildinfo
+
+# MCP server runtime files
+*.log
+logs/
+
+# Development files
+.eslintcache
+
+# Editor files
+.vscode/settings.json
+.idea/

@@ -1,0 +1,11 @@
+# TypeScript build outputs
+dist/
+*.tsbuildinfo
+
+# Development files
+*.log
+.eslintcache
+
+# Editor files
+.vscode/settings.json
+.idea/

@@ -1,0 +1,16 @@
+# TypeScript build outputs
+dist/
+*.tsbuildinfo
+
+# Development server logs
+*.log
+
+# Demo/preview server files
+.cache/
+
+# Development files
+.eslintcache
+
+# Editor files
+.vscode/settings.json
+.idea/

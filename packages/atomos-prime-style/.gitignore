@@ -1,0 +1,15 @@
+# TypeScript build outputs
+dist/
+*.tsbuildinfo
+
+# Tailwind CSS outputs
+*.css.map
+src/styles/output.css
+
+# Development files
+*.log
+.eslintcache
+
+# Editor files
+.vscode/settings.json
+.idea/

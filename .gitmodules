@@ -1,0 +1,3 @@
+[submodule "packages/formular-dev"]
+	path = packages/formular-dev
+	url = https://github.com/binaryjack/formular.dev.git
