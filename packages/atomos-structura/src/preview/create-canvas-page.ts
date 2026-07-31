@@ -459,7 +459,9 @@ export const createCanvasPage = function (
   sidebarContainer.style.cssText = 'display:contents;';
   sidebarContainer.appendChild(schemaPanel.element);
   sidebarContainer.appendChild(settingsPage.element);
-  mainArea.appendChild(sidebarContainer);
+  if (!config?.headless) {
+    mainArea.appendChild(sidebarContainer);
+  }
 
   // Toggle settings page visibility based on Redux store
   settingsPage.element.style.display = store.get_state().is_settings_open ? 'flex' : 'none';
