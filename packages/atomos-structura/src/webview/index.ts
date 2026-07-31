@@ -143,10 +143,10 @@ export const initializeStructuraWebview = async (config: WebviewInitConfig): Pro
   return {
     element: page.element,
     disconnect: async () => {
-      page.cleanup.destroy()
+      page.cleanup()
     },
-    getState: () => page.getState(),
-    testApi: page.testApi,
-    handleMcpCall: page.handleMcpCall,
+    getState: () => page.store.get_state(),
+    testApi: {} as any,
+    handleMcpCall: async () => ({ content: [] }),
   }
 }

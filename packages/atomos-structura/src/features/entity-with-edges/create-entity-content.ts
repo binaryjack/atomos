@@ -70,8 +70,8 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
 
   body.addEventListener('dblclick', (e) => {
     const entity = store.signal.value;
-    const isGroup = entity.nodeType === 'group' || (entity as any).isGroup || (entity.metadata as any)?.isGroup;
-    const schemaId = (entity as any).schemaId || (entity.metadata as any)?.schemaId;
+    const isGroup = entity.nodeType === 'group' || (entity as any).isGroup || ((entity as any).metadata)?.isGroup;
+    const schemaId = (entity as any).schemaId || ((entity as any).metadata)?.schemaId;
 
     if (isGroup && schemaId) {
       e.stopPropagation();
@@ -263,8 +263,8 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   }>();
 
   const renderRows = (entity: Entity): void => {
-    const isGroup = entity.nodeType === 'group' || (entity as any).isGroup || (entity.metadata as any)?.isGroup || false;
-    const svgPrint = (entity as any).print || (entity as any).svgPrint || (entity as any).svgContent || (entity.metadata as any)?.print || (entity.metadata as any)?.svgPrint || null;
+    const isGroup = entity.nodeType === 'group' || (entity as any).isGroup || ((entity as any).metadata)?.isGroup || false;
+    const svgPrint = (entity as any).print || (entity as any).svgPrint || (entity as any).svgContent || ((entity as any).metadata)?.print || ((entity as any).metadata)?.svgPrint || null;
     const hasProperties = entity.properties.length > 0;
 
     const noProps = !hasProperties;

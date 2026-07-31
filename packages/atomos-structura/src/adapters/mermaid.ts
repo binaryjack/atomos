@@ -51,6 +51,7 @@ export function fromMermaid(mermaidSyntax: string): SchemaGraphKernel {
         const edgeWithLabelMatch = line.match(edgeWithLabelRegex);
         if (edgeWithLabelMatch) {
             const [, sourceId, sourceLabel, label, targetId, targetLabel] = edgeWithLabelMatch;
+            if (!sourceId || !targetId) continue;
 
             if (!kernel.getSnapshot().entities[sourceId]) {
                 kernel.addEntity({
@@ -79,6 +80,7 @@ export function fromMermaid(mermaidSyntax: string): SchemaGraphKernel {
                 rightAnchorId: 'left',
                 leftCardinality: '1',
                 rightCardinality: '1',
+                renderType: 'linear',
                 label
             } as any);
             continue;
@@ -87,6 +89,7 @@ export function fromMermaid(mermaidSyntax: string): SchemaGraphKernel {
         const edgeMatch = line.match(edgeRegex);
         if (edgeMatch) {
             const [, sourceId, sourceLabel, targetId, targetLabel] = edgeMatch;
+            if (!sourceId || !targetId) continue;
 
             if (!kernel.getSnapshot().entities[sourceId]) {
                 kernel.addEntity({
@@ -114,7 +117,8 @@ export function fromMermaid(mermaidSyntax: string): SchemaGraphKernel {
                 leftAnchorId: 'right',
                 rightAnchorId: 'left',
                 leftCardinality: '1',
-                rightCardinality: '1'
+                rightCardinality: '1',
+                renderType: 'linear'
             });
             continue;
         }
@@ -122,6 +126,7 @@ export function fromMermaid(mermaidSyntax: string): SchemaGraphKernel {
         const nodeMatch = line.match(nodeRegex);
         if (nodeMatch) {
             const [, nodeId, nodeLabel] = nodeMatch;
+            if (!nodeId) continue;
             if (!kernel.getSnapshot().entities[nodeId]) {
                 kernel.addEntity({
                     id: nodeId,

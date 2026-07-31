@@ -17,7 +17,7 @@ export interface LinkManager {
     renderType?: RenderType,
     srcRect?: { x: number; y: number; width: number; height: number },
     dstRect?: { x: number; y: number; width: number; height: number },
-    direction?: 'default' | 'left' | 'right'
+    direction?: 'default' | 'left' | 'right' | 'both'
   ) => void;
   readonly removeLink: (linkId: string) => void;
   readonly getLink: (linkId: string) => LinkResult | undefined;

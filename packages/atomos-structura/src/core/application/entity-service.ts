@@ -103,7 +103,7 @@ export interface CreateLinkCommand {
   readonly sourceProperty?: string | undefined;
   readonly targetProperty?: string | undefined;
   readonly renderType?: string | undefined;
-  readonly direction?: 'default' | 'left' | 'right' | undefined;
+  readonly direction?: 'default' | 'left' | 'right' | 'both' | undefined;
 }
 
 export interface RemoveLinkCommand {
@@ -120,7 +120,7 @@ export interface UpdateLinkPropertiesCommand {
     readonly sourceProperty?: string | undefined;
     readonly targetProperty?: string | undefined;
     readonly renderType?: string | undefined;
-    readonly direction?: 'default' | 'left' | 'right' | undefined;
+    readonly direction?: 'default' | 'left' | 'right' | 'both' | undefined;
   };
 }
 
@@ -229,7 +229,7 @@ export interface LinkPropertiesUpdatedEvent {
     readonly sourceProperty?: string | undefined;
     readonly targetProperty?: string | undefined;
     readonly renderType?: string | undefined;
-    readonly direction?: 'default' | 'left' | 'right' | undefined;
+    readonly direction?: 'default' | 'left' | 'right' | 'both' | undefined;
   };
 }
 

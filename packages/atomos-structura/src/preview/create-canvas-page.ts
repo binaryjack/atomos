@@ -216,7 +216,7 @@ export const createCanvasPage = function (
             print,
             groupColor,
             schemaId
-          }
+          } as any
         );
         return;
       }
@@ -337,6 +337,15 @@ export const createCanvasPage = function (
   canvasResizeObserver.observe(canvasWrap);
   cleanups.push(() => canvasResizeObserver.disconnect());
 
+  const getKernel = () => {
+    const st = store.get_state();
+    const canvas = st.workspace.canvases[st.workspace.active_canvas_id];
+    const schema = canvas?.schemas[canvas?.active_schema_id ?? ''];
+    const entities = Object.fromEntries((schema?.entities ?? []).map(e => [e.id, e]));
+    const links = Object.fromEntries((schema?.links ?? []).map(l => [l.id, l]));
+    return createSchemaGraphKernel({ entities, links });
+  };
+
   // Mount Floating Toolbar
   const { bottomBar, topBurger, destroy: destroyToolbar } = createCanvasToolbar({
     instanceId,
@@ -348,14 +357,7 @@ export const createCanvasPage = function (
       const st = store.get_state();
       store.dispatch({ type: 'settings-toggled', is_open: !st.is_settings_open });
     },
-    getKernel: () => {
-      const st = store.get_state();
-      const canvas = st.workspace.canvases[st.workspace.active_canvas_id];
-      const schema = canvas?.schemas[canvas?.active_schema_id ?? ''];
-      const entities = Object.fromEntries((schema?.entities ?? []).map(e => [e.id, e]));
-      const links = Object.fromEntries((schema?.links ?? []).map(l => [l.id, l]));
-      return createSchemaGraphKernel({ entities, links });
-    },
+    getKernel,
     getSnapshot: () => canvasWrap.querySelector('svg') as SVGSVGElement
   });
   cleanups.push(destroyToolbar);
@@ -423,14 +425,50 @@ export const createCanvasPage = function (
   }
 
   // Settings & Schema Panel Sidebars
-  const schemaPanel = createSchemaPanel(getEntityManager(instanceId), viewport, store, instanceId);
-  const settingsPage = createSettingsPage(store, instanceId);
+  const dagObserver = createDAGObserver(getEntityManager(instanceId));
+  cleanups.push(dagObserver.cleanup);
+  const schemaPanel = createSchemaPanel({
+    instanceId,
+    dagObserver,
+    viewport,
+    behaviorManager: workspace.behaviorManager,
+    canvasContainer: canvasWrap
+  });
+  const settingsPage = createSettingsPage({
+    initialSettings: {
+      toolbox: getToolboxConfig(),
+      general: getGeneralSettings() || undefined,
+      appearance: getAppearanceSettings() || undefined,
+      shapes: getCustomShapes()
+    } as any,
+    onClose: (hasUnsavedChanges) => {
+      if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Discard them?')) return;
+      store.dispatch({ type: 'settings-toggled', is_open: false });
+    },
+    onSave: (settings) => {
+      setToolboxConfig(settings.toolbox);
+      if (settings.general) setGeneralSettings(settings.general);
+      if (settings.appearance) setAppearanceSettings(settings.appearance as any);
+      if (settings.shapes) setCustomShapes(settings.shapes);
+      window.alert('Settings saved. Reload may be required for some changes to take effect.');
+    },
+    getKernel
+  });
 
   const sidebarContainer = document.createElement('div');
   sidebarContainer.style.cssText = 'display:contents;';
   sidebarContainer.appendChild(schemaPanel.element);
   sidebarContainer.appendChild(settingsPage.element);
   mainArea.appendChild(sidebarContainer);
+
+  // Toggle settings page visibility based on Redux store
+  settingsPage.element.style.display = store.get_state().is_settings_open ? 'flex' : 'none';
+  cleanups.push(
+    store.subscribe(() => {
+      const state = store.get_state();
+      settingsPage.element.style.display = state.is_settings_open ? 'flex' : 'none';
+    })
+  );
 
   cleanups.push(schemaPanel.cleanup.destroy);
   cleanups.push(settingsPage.cleanup.destroy);

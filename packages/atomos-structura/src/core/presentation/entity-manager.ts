@@ -170,7 +170,7 @@ export const createEntityManager = function(instanceId: string): EntityManager {
     console.log('[ENTITY-MANAGER] ✅ Link command executed');
   };
   
-  const updateLinkProperties = function(linkId: string, properties: { sourceCardinality?: string | undefined; targetCardinality?: string | undefined; sourceProperty?: string | undefined; targetProperty?: string | undefined; renderType?: string | undefined; direction?: 'default' | 'left' | 'right' | undefined; }): void {
+  const updateLinkProperties = function(linkId: string, properties: { sourceCardinality?: string | undefined; targetCardinality?: string | undefined; sourceProperty?: string | undefined; targetProperty?: string | undefined; renderType?: string | undefined; direction?: 'default' | 'left' | 'right' | 'both' | undefined; }): void {
     applicationService.executeCommand({
       type: 'UpdateLinkProperties',
       linkId,

@@ -249,7 +249,7 @@ const reduce_state = function(state: ReduxState, action: ReduxAction): ReduxStat
           print: action.print ?? schema.print,
           groupColor: action.groupColor ?? schema.groupColor,
           depends_on: action.depends_on ?? schema.depends_on,
-        }))
+        } as unknown as SchemaModel))
       );
     }
 

@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "deploy": "next build && touch out/.nojekyll && gh-pages -d out -t true"
+    "deploy": "next build && touch out/.nojekyll && gh-pages -d out -t"
   },
   "dependencies": {
     "@atomos-web/prime": "workspace:^2.3.10",

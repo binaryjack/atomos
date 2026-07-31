@@ -1,4 +1,4 @@
-﻿import type { WorkspaceConfig } from '@atomos-web/structura-core';
+import type { WorkspaceConfig } from '@atomos-web/structura-core';
 import { createCanvasPage } from '../preview/create-canvas-page.js';
 
 /**
@@ -16,7 +16,7 @@ export const mountCanvasPage = function(instanceId: string, container: HTMLEleme
   const page = createCanvasPage(instanceId, config, mcpServerUrl);
   container.appendChild(page.element);
   return () => {
-    page.cleanup.destroy();
+    page.cleanup();
     if (page.element.parentElement === container) {
       container.removeChild(page.element);
     }
