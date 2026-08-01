@@ -55,7 +55,11 @@ export function SimulatorDemo() {
           nodes: em.getAllEntities(),
           edges: em.getAllLinks()
         };
-        canvasPageRef.current.cleanup.destroy();
+        if (typeof canvasPageRef.current.cleanup === 'function') {
+          canvasPageRef.current.cleanup();
+        } else if (canvasPageRef.current.cleanup?.destroy) {
+          canvasPageRef.current.cleanup.destroy();
+        }
       }
 
       const canvasPage = createCanvasPage('simulator-instance', { 
@@ -123,7 +127,11 @@ export function SimulatorDemo() {
     return () => {
       mounted = false;
       if (canvasPageRef.current) {
-        canvasPageRef.current.cleanup.destroy();
+        if (typeof canvasPageRef.current.cleanup === 'function') {
+          canvasPageRef.current.cleanup();
+        } else if (canvasPageRef.current.cleanup?.destroy) {
+          canvasPageRef.current.cleanup.destroy();
+        }
         canvasPageRef.current = null;
       }
     };

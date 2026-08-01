@@ -1,4 +1,4 @@
-﻿export default function UsagePage() {
+export default function UsagePage() {
   return (
     <div className="p-4 md:p-8 flex flex-col gap-10 max-w-3xl">
       <header className="border-b border-slate-800 pb-8">
@@ -43,7 +43,11 @@ export function mountCanvas(containerDiv) {
 
   return () => {
     bridge.destroy();
-    page.cleanup.destroy();
+    if (typeof page.cleanup === 'function') {
+      page.cleanup();
+    } else if (page.cleanup?.destroy) {
+      page.cleanup.destroy();
+    }
   };
 }`}
         </pre>

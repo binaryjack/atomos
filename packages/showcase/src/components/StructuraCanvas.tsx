@@ -103,7 +103,11 @@ export default function StructuraCanvas({
     return () => {
       try {
         if (bridge) bridge.destroy();
-        if (page?.cleanup) page.cleanup.destroy();
+        if (typeof page?.cleanup === 'function') {
+          page.cleanup();
+        } else if (page?.cleanup?.destroy) {
+          page.cleanup.destroy();
+        }
         // Immediately destroy isolated Redux instance so Fast Refresh doesn't cause state bleeding
         destroyInstanceReduxStore(instanceId);
         // Destroy clean architecture singletons tied to this instance
