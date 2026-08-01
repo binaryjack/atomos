@@ -15,8 +15,8 @@ export function SimulatorDemo() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [warnings, setWarnings] = useState<Warning[]>([]);
   const [isMouseZoomEnabled, setIsMouseZoomEnabled] = useState(true);
-  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
-  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
 
   // We need to keep a ref to the latest state for the async telemetry
   const isExecutingRef = useRef(isExecuting);
@@ -375,7 +375,7 @@ export function SimulatorDemo() {
     }
   };
 
-  const btnClass = "vbs-btn vbs-btn-ghost text-sm text-left w-full justify-start mt-1";
+  const btnClass = "px-3 py-2 text-sm text-left w-full justify-start mt-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md border border-slate-700 transition-colors";
 
   return (
     <div className="flex w-full h-full overflow-hidden bg-[#020617] text-slate-200 relative">
@@ -388,8 +388,8 @@ export function SimulatorDemo() {
         }
       `}} />
 
-      {/* Floating Toggle Buttons (always visible when sidebars are closed) */}
-      <div className={`md:hidden absolute top-6 left-6 z-50 transition-opacity duration-200 ${isLeftSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      {/* Floating Toggle Buttons */}
+      <div className={`absolute top-6 left-6 z-50 transition-opacity duration-200 ${isLeftSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button 
           onClick={() => setIsLeftSidebarOpen(true)}
           className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-800/90 hover:bg-slate-700 backdrop-blur rounded-md border border-slate-700 text-white shadow-lg transition-colors"
@@ -399,7 +399,7 @@ export function SimulatorDemo() {
         </button>
       </div>
 
-      <div className={`md:hidden absolute top-6 right-6 z-50 transition-opacity duration-200 ${isRightSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`absolute top-6 right-6 z-50 transition-opacity duration-200 ${isRightSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button 
           onClick={() => setIsRightSidebarOpen(true)}
           className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-800/90 hover:bg-slate-700 backdrop-blur rounded-md border border-slate-700 text-white shadow-lg transition-colors"
@@ -414,11 +414,11 @@ export function SimulatorDemo() {
         flex-none relative w-72 sm:w-[320px] 
         bg-[#020617] border-r border-white/5 flex flex-col p-4 gap-6 overflow-y-auto
         transition-[margin] duration-300 ease-in-out
-        ${isLeftSidebarOpen ? "ml-0" : "-ml-72 sm:-ml-[320px] md:ml-0"}
+        ${isLeftSidebarOpen ? "ml-0" : "-ml-72 sm:-ml-[320px]"}
       `}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Consumer Simulator</h2>
-          <button className="md:hidden p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors" onClick={() => setIsLeftSidebarOpen(false)}>
+          <button className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors" onClick={() => setIsLeftSidebarOpen(false)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
@@ -437,7 +437,7 @@ export function SimulatorDemo() {
             Headless (No UI)
           </label>
           <button 
-            className={`w-full mt-2 vbs-btn ${isExecuting ? '!bg-red-900 !text-red-200 hover:!bg-red-800' : 'vbs-btn-primary'}`}
+            className={`w-full mt-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isExecuting ? 'bg-red-900 text-red-200 hover:bg-red-800' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
             onClick={handleTelemetry}
           >
             {isExecuting ? 'Stop Telemetry' : 'Start Telemetry'}
@@ -505,11 +505,11 @@ export function SimulatorDemo() {
         flex-none relative w-72 sm:w-[320px] 
         bg-[#020617] border-l border-white/5 flex flex-col p-4 gap-4 overflow-y-auto
         transition-[margin] duration-300 ease-in-out
-        ${isRightSidebarOpen ? "mr-0" : "-mr-72 sm:-mr-[320px] md:mr-0"}
+        ${isRightSidebarOpen ? "mr-0" : "-mr-72 sm:-mr-[320px]"}
       `}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Errors & Warnings</h2>
-          <button className="md:hidden p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors" onClick={() => setIsRightSidebarOpen(false)}>
+          <button className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors" onClick={() => setIsRightSidebarOpen(false)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>

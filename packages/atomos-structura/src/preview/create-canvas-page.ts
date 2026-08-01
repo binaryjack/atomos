@@ -161,6 +161,12 @@ export const createCanvasPage = function (
   const applyViewport = () => {
     const t = viewport.transform();
     viewportGroup.setAttribute('transform', t);
+
+    // Rétablissement du suivi de la grille (cassé lors du refactoring du 23 Juillet)
+    const smallGrid = svg.querySelector('#canvas-grid-small');
+    const largeGrid = svg.querySelector('#canvas-grid-large');
+    if (smallGrid) smallGrid.setAttribute('patternTransform', t);
+    if (largeGrid) largeGrid.setAttribute('patternTransform', t);
   };
 
   console.log("viewport", viewport);
