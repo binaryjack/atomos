@@ -14,14 +14,9 @@ export default function ExamplesPage() {
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             Live Default Canvas
           </h2>
-          <a 
-            href="http://127.0.0.1:4002/atomos-structura/canvas.html" 
-            target="_blank" 
-            rel="noreferrer"
-            className="text-xs px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-          >
-            Open in new tab ?
-          </a>
+          <span className="text-xs px-3 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+            Interactive Editor
+          </span>
         </div>
         
         <div className="flex-1 w-full bg-slate-900 border border-slate-700 rounded-xl overflow-hidden relative shadow-2xl min-h-[500px]">

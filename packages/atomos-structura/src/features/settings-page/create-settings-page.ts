@@ -29,6 +29,7 @@ export const createSettingsPage = function(props: SettingsPageProps): SettingsPa
   // Base Container (Full screen)
   const container = document.createElement('div');
   container.className = 'absolute inset-0 bg-slate-900 z-50 flex flex-col h-full w-full text-slate-200';
+  container.style.display = 'none';
 
   // Header 
   const header = document.createElement('header');

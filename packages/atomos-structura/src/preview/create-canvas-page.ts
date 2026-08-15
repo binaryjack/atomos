@@ -486,14 +486,27 @@ export const createCanvasPage = function (
     store,
     viewport,
     workspace,
-    cleanup: () => {
-      cleanups.forEach(fn => {
-        try {
-          fn();
-        } catch {
-          /* noop */
+    cleanup: Object.assign(
+      () => {
+        cleanups.forEach(fn => {
+          try {
+            fn();
+          } catch {
+            /* noop */
+          }
+        });
+      },
+      {
+        destroy: () => {
+          cleanups.forEach(fn => {
+            try {
+              fn();
+            } catch {
+              /* noop */
+            }
+          });
         }
-      });
-    }
+      }
+    )
   };
 };

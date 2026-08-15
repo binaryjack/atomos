@@ -25,6 +25,7 @@ const make_initial_state = (config?: WorkspaceConfig): ReduxState => ({
     canvases: { [DEFAULT_CANVAS_ID]: makeDefaultCanvas() },
     active_canvas_id: DEFAULT_CANVAS_ID,
   },
+  is_settings_open: false,
 });
 
 const initial_state: ReduxState = make_initial_state();
@@ -449,7 +450,10 @@ export const create_redux_store = function(options: { instanceId: string; config
           });
         }
         
-        current_state = loaded_state;
+        current_state = {
+          ...loaded_state,
+          is_settings_open: false
+        };
       }
     } catch (error) {
       console.error('❌ Failed to load Redux state:', error);
@@ -460,6 +464,7 @@ export const create_redux_store = function(options: { instanceId: string; config
       current_state = make_initial_state(config);
       return;
     }
+    current_state.is_settings_open = false;
     
     // Runtime config always wins over persisted config
     if (config !== undefined) {

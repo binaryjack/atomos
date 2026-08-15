@@ -82,6 +82,7 @@ export function Sidebar() {
         <div className="text-[10px] uppercase font-bold text-slate-600 mt-6 mb-2 tracking-[0.2em] pl-3">Extensibility</div>
         <Link href="/customization/themes" className={getLinkClasses("/customization/themes", "fuchsia")}>Themes & Skins</Link>
         <Link href="/customization/toolboxes" className={getLinkClasses("/customization/toolboxes", "orange")}>Custom Toolboxes</Link>
+        <Link href="/customization/headless-mcp-integration" className={getLinkClasses("/customization/headless-mcp-integration", "blue")}>Headless & MCP</Link>
 
         <div className="text-[10px] uppercase font-bold text-slate-600 mt-6 mb-2 tracking-[0.2em] pl-3">Vector & Adapters</div>
         <Link href="/presentation" className={getLinkClasses("/presentation", "cyan")}>Vector Presentation</Link>
