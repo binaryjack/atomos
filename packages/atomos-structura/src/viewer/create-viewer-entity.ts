@@ -21,8 +21,8 @@ export const createViewerEntity = function(props: ViewerEntityProps): EntityInst
   root.dataset.entityId = props.id;
   const cleanups: Array<() => void> = [];
 
-  const positionSignal = createSignal(props.position);
-  const dimensionsSignal = createSignal(props.dimensions);
+  const positionSignal = createSignal(props.position || { x: 0, y: 0 });
+  const dimensionsSignal = createSignal(props.dimensions || { width: 220, height: 120 });
   const executionSignal = createSignal(props.execution || { status: 'idle' });
   
   // Dummy store for createEntityContent to read collapsed state etc
@@ -60,8 +60,9 @@ export const createViewerEntity = function(props: ViewerEntityProps): EntityInst
         onDelete: () => {},
         onSettingsClick: () => {},
         onHeightChange: (h) => {
-          if (h > dimensionsSignal.value.height) {
-            dimensionsSignal.set({ width: dimensionsSignal.value.width, height: h });
+          const currentDim = dimensionsSignal.value || { width: 220, height: 120 };
+          if (h > currentDim.height) {
+            dimensionsSignal.set({ width: currentDim.width, height: h });
           }
         },
         isReadonly: true,
