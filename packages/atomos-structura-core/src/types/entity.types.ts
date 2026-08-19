@@ -23,4 +23,22 @@ export interface Entity extends BaseEntity {
   readonly edges: EdgeProps[];
   readonly collapsed?: boolean;
   readonly defaultCollapsed?: boolean;
+  readonly metadata?: Record<string, unknown>;
+}
+
+export type BoundaryType = 'vpc' | 'cluster' | 'subnet' | 'domain' | 'custom';
+
+export interface ZoneEntity extends Entity {
+  readonly nodeType: 'zone';
+  readonly boundaryType: BoundaryType;
+  readonly tintColor: string;
+  readonly containedEntityIds: string[];
+  readonly isLocked?: boolean;
+}
+
+export interface StickyNoteEntity extends Entity {
+  readonly nodeType: 'sticky-note';
+  readonly noteColor: string;
+  readonly content: string;
+  readonly author?: string;
 }

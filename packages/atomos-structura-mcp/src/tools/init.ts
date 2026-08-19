@@ -1,4 +1,6 @@
+import { registerDiffTools } from './handlers/diff-tools.js';
 import { registerEntityTools } from './handlers/entity-tools.js';
+import { registerInteropTools } from './handlers/interop-tools.js';
 import { registerSchemaTools } from './handlers/schema-tools.js';
 import { registerSessionTools } from './handlers/session-tools.js';
 import { registerTelemetryTools } from './handlers/telemetry-tools.js';
@@ -15,4 +17,6 @@ export function initializeToolRegistry(): void {
   registerViewportTools();
   registerTelemetryTools();
   registerSessionTools();
+  registerDiffTools();
+  registerInteropTools();
 }

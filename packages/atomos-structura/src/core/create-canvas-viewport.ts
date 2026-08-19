@@ -175,9 +175,11 @@ export const createCanvasViewport = function(
     // Shift+drag is reserved for rubber-band multi-select — do not start panning
     if (!mousePanEnabled) return;
     if (e.shiftKey) return;
-    const targetIsSvgBg = svgElement
-      ? (e.target === svgElement || (e.target as Element).tagName === 'svg')
-      : (e.target as Element).tagName === 'svg';
+    const targetElement = e.target as Element | null;
+    const isInteractiveChild = targetElement?.closest?.(
+      '.vbs-entity, .vbs-link, .vbs-palette, .vbs-bottom-toolbar, .vbs-schema-tabs, .vbs-burger-menu, button, input, select, textarea, [data-anchor], .resize-handle'
+    ) != null;
+    const targetIsSvgBg = !isInteractiveChild;
     if (e.button === 1 || (e.button === 0 && targetIsSvgBg)) {
       e.preventDefault();
       panning = true;

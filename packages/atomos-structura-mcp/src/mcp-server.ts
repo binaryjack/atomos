@@ -126,6 +126,11 @@ const METHOD_ALIASES: Record<string, string> = {
   'atomos-structura/inject-schema': 'structura_inject_schema',
   'atomos-structura/set-workspace-mode': 'structura_set_workspace_mode',
   'atomos-structura/group-schema': 'structura_group_schema',
+  'atomos-structura/propose-diff': 'structura_propose_diff',
+  'atomos-structura/apply-diff': 'structura_apply_diff',
+  'atomos-structura/reject-diff': 'structura_reject_diff',
+  'atomos-structura/import-schema': 'structura_import_schema',
+  'atomos-structura/detect-cycles': 'structura_detect_cycles',
 };
 
 // Method Normalizer

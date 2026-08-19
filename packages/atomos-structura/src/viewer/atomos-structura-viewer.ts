@@ -208,9 +208,9 @@ export class AtomosStructuraViewerElement extends HTMLElement {
       // getBBox can throw on empty/hidden SVGs in some browsers
     }
 
-    this.tx = clampedTx;
-    this.ty = clampedTy;
-    this.scale = scale;
+    this.tx = Number.isFinite(clampedTx) ? clampedTx : 0;
+    this.ty = Number.isFinite(clampedTy) ? clampedTy : 0;
+    this.scale = Number.isFinite(scale) && scale > 0 ? scale : 1;
     this.updateTransform();
   }
 

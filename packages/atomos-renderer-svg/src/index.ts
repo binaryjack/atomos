@@ -1,9 +1,11 @@
 import type { Entity, LinkProps } from '@atomos-web/structura-core';
+import { computeLinkSvgPath } from './routing/render-link-paths.js';
 import { themes } from './themes.js';
 import type { ThemeMode } from './themes.js';
 
 export { themes };
 export type { ThemeMode };
+export { computeLinkSvgPath } from './routing/render-link-paths.js';
 
 export interface RenderOptions {
     theme?: ThemeMode;
@@ -60,7 +62,7 @@ export function renderToSVG(snapshot: GraphSnapshot, options: RenderOptions = {}
 
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}" ${options.responsive ? 'width="100%" height="100%"' : `width="${viewBoxWidth}" height="${viewBoxHeight}"`} style="background-color: ${theme.background}; font-family: 'Inter', system-ui, sans-serif;">\n`;
 
-    // Definitions for gradients & arrow markers for directions
+    // Definitions for arrow markers
     svg += `
     <defs>
         <!-- Arrowhead Right (End) -->
@@ -73,6 +75,28 @@ export function renderToSVG(snapshot: GraphSnapshot, options: RenderOptions = {}
         </marker>
     </defs>\n`;
 
+    // Draw Zones first (Background layer)
+    const zones = entities.filter(e => e.nodeType === 'zone' || (e as any).metadata?.isZone);
+    if (zones.length > 0) {
+        svg += `<g class="atomos-zones">\n`;
+        zones.forEach(zone => {
+            const x = zone.position?.x ?? 0;
+            const y = zone.position?.y ?? 0;
+            const width = zone.dimensions?.width ?? 400;
+            const height = zone.dimensions?.height ?? 300;
+            const tint = (zone as any).tintColor || 'rgba(59, 130, 246, 0.08)';
+            const bType = ((zone as any).boundaryType || 'VPC').toUpperCase();
+
+            svg += `  <g transform="translate(${x}, ${y})" class="atomos-zone">\n`;
+            svg += `    <rect width="${width}" height="${height}" rx="12" fill="${tint}" stroke="#3b82f6" stroke-width="2" stroke-dasharray="6 4" />\n`;
+            svg += `    <rect x="12" y="10" width="60" height="20" rx="10" fill="#1e40af" />\n`;
+            svg += `    <text x="42" y="24" fill="#93c5fd" font-size="10" font-weight="bold" text-anchor="middle">${bType}</text>\n`;
+            svg += `    <text x="80" y="25" fill="${theme.entityText}" font-size="12" font-weight="600">${zone.name}</text>\n`;
+            svg += `  </g>\n`;
+        });
+        svg += `</g>\n`;
+    }
+
     // Draw Links
     svg += `<g class="atomos-edges">\n`;
     links.forEach(link => {
@@ -83,11 +107,18 @@ export function renderToSVG(snapshot: GraphSnapshot, options: RenderOptions = {}
         const target = entityMap.get(rightId);
         if (!source || !target) return;
 
-        // Straight line calculation from centers
-        const sx = (source.position?.x ?? 0) + (source.dimensions?.width ?? 250) / 2;
+        const sx = (source.position?.x ?? 0) + (source.dimensions?.width ?? 250);
         const sy = (source.position?.y ?? 0) + (source.dimensions?.height ?? 150) / 2;
-        const tx = (target.position?.x ?? 0) + (target.dimensions?.width ?? 250) / 2;
+        const tx = (target.position?.x ?? 0);
         const ty = (target.position?.y ?? 0) + (target.dimensions?.height ?? 150) / 2;
+
+        const linkStyle = link.style || (link.renderType === 'orthogonal' ? 'orthogonal' : link.renderType === 'linear' ? 'straight' : 'bezier');
+        const { pathData, midX, midY } = computeLinkSvgPath({
+            src: { x: sx, y: sy },
+            dst: { x: tx, y: ty },
+            style: linkStyle,
+            ...(link.waypoints ? { waypoints: link.waypoints } : {}),
+        });
 
         const direction = link.direction || (link as any).direction || 'right';
         let markerAttrs = '';
@@ -103,13 +134,11 @@ export function renderToSVG(snapshot: GraphSnapshot, options: RenderOptions = {}
         const edgeColor = (link as any).isHighlighted ? '#F59E0B' : theme.edgeColor;
 
         svg += `  <g class="atomos-link" id="link-${link.id}">\n`;
-        svg += `    <path d="M ${sx} ${sy} L ${tx} ${ty}" stroke="${edgeColor}" stroke-width="${edgeWidth}" fill="none" ${markerAttrs} />\n`;
+        svg += `    <path d="${pathData}" stroke="${edgeColor}" stroke-width="${edgeWidth}" fill="none" ${markerAttrs} />\n`;
 
         // Render Link Label if present
         const label = (link as any).label || (link as any).name || (link as any).leftProperty;
         if (label) {
-            const midX = (sx + tx) / 2;
-            const midY = (sy + ty) / 2 - 8;
             svg += `    <rect x="${midX - 35}" y="${midY - 10}" width="70" height="18" rx="4" fill="${theme.entityBg}" stroke="${theme.entityBorder}" stroke-width="1" />\n`;
             svg += `    <text x="${midX}" y="${midY + 3}" fill="${theme.propertyText}" font-size="10" font-weight="600" text-anchor="middle">${label}</text>\n`;
         }
@@ -118,14 +147,28 @@ export function renderToSVG(snapshot: GraphSnapshot, options: RenderOptions = {}
     });
     svg += `</g>\n`;
 
-    // Draw Entities
+    // Draw Entities (excluding zones)
+    const standardEntities = entities.filter(e => e.nodeType !== 'zone' && !(e as any).metadata?.isZone);
     svg += `<g class="atomos-nodes">\n`;
-    entities.forEach(entity => {
+    standardEntities.forEach(entity => {
         const x = entity.position?.x ?? 0;
         const y = entity.position?.y ?? 0;
         const width = entity.dimensions?.width ?? 250;
         const height = entity.dimensions?.height ?? 150;
+        const isStickyNote = entity.nodeType === 'sticky-note' || (entity as any).metadata?.isStickyNote;
         const isGroup = entity.nodeType === 'group' || (entity as any).isGroup;
+
+        if (isStickyNote) {
+            const noteBg = (entity as any).noteColor || '#fef08a';
+            const noteContent = (entity as any).content || entity.name;
+            svg += `  <g transform="translate(${x}, ${y})" class="atomos-sticky-note">\n`;
+            svg += `    <rect width="${width}" height="${height}" rx="6" fill="${noteBg}" stroke="rgba(0,0,0,0.15)" stroke-width="1" />\n`;
+            svg += `    <rect width="${width}" height="24" rx="6" fill="rgba(0,0,0,0.06)" />\n`;
+            svg += `    <text x="10" y="16" fill="#475569" font-size="10" font-weight="bold">📌 ${entity.name}</text>\n`;
+            svg += `    <text x="10" y="44" fill="#0f172a" font-size="11">${noteContent.slice(0, 40)}</text>\n`;
+            svg += `  </g>\n`;
+            return;
+        }
 
         svg += `  <g transform="translate(${x}, ${y})" class="atomos-entity">\n`;
         svg += `    <rect width="${width}" height="${height}" rx="8" fill="${theme.entityBg}" stroke="${isGroup ? '#06b6d4' : theme.entityBorder}" stroke-width="${isGroup ? '3' : '2'}" />\n`;

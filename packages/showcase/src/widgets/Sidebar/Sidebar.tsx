@@ -52,6 +52,10 @@ export function Sidebar() {
         <Link href="/customization" className={getLinkClasses("/customization")}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M12 2v2"/><path d="M12 22v-2"/><path d="m17 20.66-1-1.73"/><path d="M11 5.07 10 3.34"/><path d="m20.66 17-1.73-1"/><path d="m3.34 10 1.73 1"/><path d="M14 12h8"/><path d="M2 12h2"/><path d="m20.66 7-1.73 1"/><path d="m3.34 14 1.73-1"/><path d="m17 3.34-1 1.73"/><path d="m11 18.93-1 1.73"/></svg> Customization
         </Link>
+        <Link href="/playground" className={getLinkClasses("/playground", "blue")}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Live Playground
+          <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300">NEW</span>
+        </Link>
         <Link href="/examples" className={getLinkClasses("/examples")}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> Examples
         </Link>

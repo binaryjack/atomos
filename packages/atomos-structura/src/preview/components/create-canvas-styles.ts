@@ -4,7 +4,7 @@ export function injectCanvasResponsiveStyles(shadowRoot: ShadowRoot): void {
   const style = document.createElement('style');
   style.id = 'vbs-responsive-toolbars';
   style.textContent = `
-    @container (max-width: 768px) {
+    @media (max-width: 768px) {
       .vbs-palette {
         opacity: 0.3;
         transform: translateY(-50%) scale(0.85) !important;
@@ -25,14 +25,6 @@ export function injectCanvasResponsiveStyles(shadowRoot: ShadowRoot): void {
       .vbs-bottom-toolbar:hover, .vbs-bottom-toolbar:focus-within {
         opacity: 1;
         transform: translateX(-50%) scale(1) !important;
-      }
-    }
-    @container (max-width: 400px) {
-      .vbs-palette, .vbs-bottom-toolbar, .vbs-schema-tabs, .vbs-burger-menu {
-        display: none !important;
-      }
-      #vbs-viewport > g, .vbs-entity, .vbs-link {
-        pointer-events: none !important;
       }
     }
     

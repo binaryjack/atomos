@@ -279,10 +279,10 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
       emptyTitleContainer.style.display = 'none';
       if (footer.element) footer.element.style.display = 'none';
     } else if (noProps) {
-      // State 2: No properties -> Big centered title
+      // State 2: No properties -> Big centered title with Add property footer
       groupSvgContainer.style.display = 'none';
       emptyTitleContainer.style.display = 'flex';
-      if (footer.element) footer.element.style.display = 'none';
+      if (footer.element) footer.element.style.display = entity.collapsed ? 'none' : 'flex';
     } else {
       // State 1: Has properties -> Standard property rows
       groupSvgContainer.style.display = 'none';

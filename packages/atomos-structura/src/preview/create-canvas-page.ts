@@ -79,7 +79,7 @@ export const createCanvasPage = function (
   // Host element for Shadow DOM
   const host = document.createElement('div');
   host.setAttribute('data-testid', 'structura-canvas-root');
-  host.style.cssText = 'position:relative;width:100%;height:100%;overflow:hidden;container-type:inline-size;';
+  host.style.cssText = 'position:relative;width:100%;height:100%;overflow:hidden;';
 
   const shadowRoot = host.attachShadow({ mode: 'open' });
 
@@ -118,7 +118,7 @@ export const createCanvasPage = function (
   const canvasWrap = document.createElement('div');
   canvasWrap.classList.add('vbs-canvas-wrap');
   canvasWrap.style.cssText =
-    'position:relative;flex:1;min-width:0;min-height:0;overflow:hidden;background-color:var(--vbs-bg-canvas, #1e293b);';
+    'position:relative;flex:1;min-width:0;min-height:0;overflow:hidden;background-color:var(--vbs-bg-canvas, #1e293b);-webkit-backface-visibility:hidden;backface-visibility:hidden;';
   mainArea.appendChild(canvasWrap);
 
   // SVG Canvas Stage
@@ -126,7 +126,7 @@ export const createCanvasPage = function (
   svg.setAttribute('data-testid', 'structura-canvas-svg');
   svg.setAttribute('width', '100%');
   svg.setAttribute('height', '100%');
-  svg.style.cssText = 'display:block;cursor:default;';
+  svg.style.cssText = 'display:block;cursor:default;-webkit-transform:translateZ(0);transform:translateZ(0);';
 
   // Sub-component: Grid background
   createGridBackground(svg);

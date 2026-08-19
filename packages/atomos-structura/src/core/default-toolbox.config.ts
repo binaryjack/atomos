@@ -1,4 +1,5 @@
-﻿import type { ToolboxConfiguration } from '@atomos-web/prime';
+import type { ToolboxConfiguration } from '@atomos-web/prime';
+import type { CustomShape } from '../features/settings-page/types/settings-page.types.js';
 
 export const defaultToolboxConfig: ToolboxConfiguration = {
   toolsets: [
@@ -58,11 +59,34 @@ export const defaultToolboxConfig: ToolboxConfiguration = {
           properties: []
         }
       ]
+    },
+    {
+      name: 'containers',
+      icon: '<rect x="3" y="3" width="18" height="18" rx="3" stroke-width="2" stroke-dasharray="3 3"/>',
+      tools: [
+        {
+          id: 'zone-vpc',
+          name: 'VPC Zone',
+          shape: 'zone' as any,
+          baseColor: 'rgba(59, 130, 246, 0.1)',
+          icon: '<rect x="3" y="3" width="18" height="18" rx="3" stroke-width="2" stroke-dasharray="3 3"/>',
+          description: 'VPC / Cloud Boundary Container',
+          properties: []
+        },
+        {
+          id: 'sticky-note',
+          name: 'Sticky Note',
+          shape: 'sticky-note' as any,
+          baseColor: '#fef08a',
+          icon: '<path d="M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3z"/>',
+          description: 'Architecture Sticky Note & ADR',
+          properties: []
+        }
+      ]
     }
   ]
-};
+};
 
-import type { CustomShape } from '../features/settings-page/types/settings-page.types.js';
 export const defaultShapes: CustomShape[] = [
   { id: 'rectangle', name: 'Rectangle', svg: '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><rect width="100" height="100" /></svg>' },
   { id: 'circle', name: 'Circle', svg: '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><ellipse cx="50" cy="50" rx="50" ry="50" /></svg>' },

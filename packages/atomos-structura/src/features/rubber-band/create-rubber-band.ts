@@ -39,12 +39,8 @@ export const createRubberBand = (
     if (e.button !== 0) return;
     // Only activate with Shift held — normal drag pans the canvas
     if (!e.shiftKey) return;
-    // Only start on direct SVG canvas background (empty space)
-    const target = e.target as Element;
-    const tag = target.tagName.toLowerCase();
-    if (tag !== 'svg' && tag !== 'rect' && !target.id.startsWith('canvas-grid')) return;
-    // Ignore if it's an entity element
-    if (target.closest('[data-entity-id]')) return;
+    // Ignore clicks on entities, links, toolbars, or interactive UI elements
+    if (target.closest('[data-entity-id], .vbs-entity, .vbs-link, .vbs-palette, .vbs-bottom-toolbar, button, foreignObject')) return;
 
     // Prevent the viewport pan handler from also activating
     e.stopPropagation();
