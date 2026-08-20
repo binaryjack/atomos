@@ -2,25 +2,42 @@
 
 import { useEffect, useState } from "react";
 import StructuraCanvas from "./StructuraCanvas";
-import { createPrismaAdapter, createSqlAdapter, createSchemaGraphKernel, toMermaid } from "@atomos-web/structura";
+import {
+  createPrismaAdapter,
+  createSqlAdapter,
+  toMermaid,
+} from "@atomos-web/structura";
+import {
+  generateDockerCompose,
+  generateKubernetesManifests,
+  generateOpenApiSpec,
+  generateTerraformHCL,
+} from "@atomos-web/structura-core";
 
 interface LiveCodePlaygroundProps {
   readonly initialPreset?: string;
 }
 
 export default function LiveCodePlayground({ initialPreset = "database" }: LiveCodePlaygroundProps) {
-  const [activeFormat, setActiveFormat] = useState<"prisma" | "sql" | "typescript" | "mermaid">("prisma");
+  const [activeFormat, setActiveFormat] = useState<
+    "prisma" | "sql" | "typescript" | "mermaid" | "terraform" | "kubernetes" | "docker" | "openapi"
+  >("prisma");
   const [activePreset, setActivePreset] = useState<string>(initialPreset);
-  const [codeOutput, setCodeOutput] = useState<string>("// Drag, drop, or edit entities on the left canvas to see live generated code here.");
+  const [codeOutput, setCodeOutput] = useState<string>(
+    "// Drag, drop, or edit entities on the left canvas to see live generated code here."
+  );
   const [copied, setCopied] = useState<boolean>(false);
 
   useEffect(() => {
-    // Poll or hook into window.__kernel to update generated code in real time
+    // Poll window.__kernel to update generated code in real time
     const interval = setInterval(() => {
       const win = window as unknown as { __kernel?: { getSnapshot: () => any } };
       if (win.__kernel) {
         try {
           const snapshot = win.__kernel.getSnapshot();
+          const entities = Object.values(snapshot.entities || {});
+          const links = Object.values(snapshot.links || {});
+
           if (activeFormat === "prisma") {
             const adapter = createPrismaAdapter(win.__kernel as any);
             setCodeOutput(adapter.generatePrismaSchema());
@@ -29,14 +46,29 @@ export default function LiveCodePlayground({ initialPreset = "database" }: LiveC
             setCodeOutput(adapter.generateDDL());
           } else if (activeFormat === "mermaid") {
             setCodeOutput(toMermaid(snapshot));
+          } else if (activeFormat === "terraform") {
+            setCodeOutput(generateTerraformHCL(entities as any, links as any));
+          } else if (activeFormat === "kubernetes") {
+            setCodeOutput(generateKubernetesManifests(entities as any, links as any));
+          } else if (activeFormat === "docker") {
+            setCodeOutput(generateDockerCompose(entities as any, links as any));
+          } else if (activeFormat === "openapi") {
+            setCodeOutput(generateOpenApiSpec(entities as any, links as any));
           } else if (activeFormat === "typescript") {
             let ts = "// Auto-generated TypeScript Definitions\n\n";
-            Object.values(snapshot.entities || {}).forEach((ent: any) => {
+            entities.forEach((ent: any) => {
               ts += `export interface ${ent.name} {\n`;
               ts += `  id: string;\n`;
               (ent.properties || []).forEach((prop: any) => {
                 const opt = prop.validation?.required ? "" : "?";
-                const typeStr = prop.dataType === "integer" || prop.dataType === "float" ? "number" : prop.dataType === "boolean" ? "boolean" : prop.dataType === "date" ? "Date" : "string";
+                const typeStr =
+                  prop.dataType === "integer" || prop.dataType === "float"
+                    ? "number"
+                    : prop.dataType === "boolean"
+                    ? "boolean"
+                    : prop.dataType === "date"
+                    ? "Date"
+                    : "string";
                 ts += `  ${prop.key}${opt}: ${typeStr};\n`;
               });
               ts += `}\n\n`;
@@ -47,7 +79,7 @@ export default function LiveCodePlayground({ initialPreset = "database" }: LiveC
           // Keep previous output if parsing error
         }
       }
-    }, 500);
+    }, 400);
 
     return () => clearInterval(interval);
   }, [activeFormat, activePreset]);
@@ -59,7 +91,16 @@ export default function LiveCodePlayground({ initialPreset = "database" }: LiveC
   };
 
   const handleDownload = () => {
-    const extMap = { prisma: "prisma", sql: "sql", typescript: "ts", mermaid: "mmd" };
+    const extMap = {
+      prisma: "prisma",
+      sql: "sql",
+      typescript: "ts",
+      mermaid: "mmd",
+      terraform: "tf",
+      kubernetes: "yaml",
+      docker: "yml",
+      openapi: "json",
+    };
     const blob = new Blob([codeOutput], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -75,7 +116,7 @@ export default function LiveCodePlayground({ initialPreset = "database" }: LiveC
       <header className="h-14 border-b border-slate-800 bg-slate-900/90 backdrop-blur px-6 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-3">
           <span className="font-bold text-sm bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-            ⚡ Live Code Generation Playground
+            ⚡ Live Polyglot & IaC Architecture Playground
           </span>
           <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-mono">
             Bidirectional AST
@@ -88,12 +129,13 @@ export default function LiveCodePlayground({ initialPreset = "database" }: LiveC
           <select
             value={activePreset}
             onChange={(e) => setActivePreset(e.target.value)}
-            className="bg-slate-800 border border-slate-700 text-xs rounded-lg px-3 py-1.5 text-slate-200 outline-none focus:border-blue-500"
+            className="bg-slate-800 border border-slate-700 text-xs rounded-lg px-3 py-1.5 text-slate-200 outline-none focus:border-blue-500 font-medium"
           >
             <option value="database">PostgreSQL Database</option>
             <option value="mvc">MVC Architecture</option>
             <option value="cqrs">CQRS Pattern</option>
             <option value="security-schema">Security Architecture</option>
+            <option value="massive">Microservices Cloud</option>
           </select>
         </div>
       </header>
@@ -108,33 +150,54 @@ export default function LiveCodePlayground({ initialPreset = "database" }: LiveC
         {/* Right Side: Live Generated Code */}
         <div className="w-1/2 h-full flex flex-col bg-slate-900/60">
           {/* Format Tabs & Action Buttons */}
-          <div className="h-12 border-b border-slate-800/80 px-4 flex items-center justify-between shrink-0 bg-slate-900">
+          <div className="h-12 border-b border-slate-800/80 px-4 flex items-center justify-between shrink-0 bg-slate-900 overflow-x-auto gap-2">
             <div className="flex items-center gap-1">
-              {(["prisma", "sql", "typescript", "mermaid"] as const).map((fmt) => (
+              {(
+                [
+                  "prisma",
+                  "sql",
+                  "typescript",
+                  "mermaid",
+                  "terraform",
+                  "kubernetes",
+                  "docker",
+                  "openapi",
+                ] as const
+              ).map((fmt) => (
                 <button
                   key={fmt}
                   onClick={() => setActiveFormat(fmt)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all ${
+                  className={`px-2.5 py-1 rounded text-[11px] font-semibold uppercase tracking-wider transition-all shrink-0 ${
                     activeFormat === fmt
                       ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
                       : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
                   }`}
                 >
-                  {fmt === "sql" ? "PostgreSQL DDL" : fmt}
+                  {fmt === "sql"
+                    ? "Postgres"
+                    : fmt === "terraform"
+                    ? "Terraform"
+                    : fmt === "kubernetes"
+                    ? "K8s"
+                    : fmt === "docker"
+                    ? "Compose"
+                    : fmt === "openapi"
+                    ? "OpenAPI"
+                    : fmt}
                 </button>
               ))}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={handleCopy}
-                className="px-3 py-1 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md border border-slate-700 transition"
+                className="px-2.5 py-1 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md border border-slate-700 transition"
               >
                 {copied ? "✓ Copied!" : "📋 Copy"}
               </button>
               <button
                 onClick={handleDownload}
-                className="px-3 py-1 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-md transition"
+                className="px-2.5 py-1 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-md transition"
               >
                 ⬇ Download
               </button>

@@ -1,3 +1,4 @@
+import { registerAuditTools } from './handlers/audit-tools.js';
 import { registerDiffTools } from './handlers/diff-tools.js';
 import { registerEntityTools } from './handlers/entity-tools.js';
 import { registerInteropTools } from './handlers/interop-tools.js';
@@ -19,4 +20,5 @@ export function initializeToolRegistry(): void {
   registerSessionTools();
   registerDiffTools();
   registerInteropTools();
+  registerAuditTools();
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
+import { load_preset } from '../schema/presets'
 
 interface Warning {
   rule: string;
@@ -10,6 +11,10 @@ interface Warning {
 export function SimulatorDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasPageRef = useRef<any>(null);
+  const kernelRef = useRef<any>(null);
+  const bridgeRef = useRef<any>(null);
+
+  const [selectedPreset, setSelectedPreset] = useState<string>('mvc');
   const [isReadonly, setIsReadonly] = useState(false);
   const [isHeadless, setIsHeadless] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
@@ -18,7 +23,7 @@ export function SimulatorDemo() {
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
 
-  // We need to keep a ref to the latest state for the async telemetry
+  // Keep a ref to latest execution state for async loops
   const isExecutingRef = useRef(isExecuting);
   useEffect(() => {
     isExecutingRef.current = isExecuting;
@@ -27,99 +32,54 @@ export function SimulatorDemo() {
   // Dynamically load Structura API
   useEffect(() => {
     let mounted = true;
-    let createCanvasPage: any;
-    let getEntityManager: any;
 
     const init = async () => {
-      // Dynamic imports to bypass SSR
-      const structuraEntity = await import('@atomos-web/structura');
-      const structuraCanvas = await import('@atomos-web/structura');
-      
-      createCanvasPage = structuraCanvas.createCanvasPage;
-      getEntityManager = structuraEntity.getEntityManager;
+      const structura = await import('@atomos-web/structura');
+      if (!mounted || !containerRef.current) return;
 
-      if (!mounted) return;
+      const instanceId = 'simulator-instance';
 
-      mountCanvas();
-    };
-
-    const mountCanvas = () => {
-      if (!containerRef.current || !createCanvasPage) return;
-      
-      let existingDag: any = null;
+      // Clean up previous canvas page if it exists
       if (canvasPageRef.current) {
-        const em = getEntityManager('simulator-instance');
-        existingDag = {
-          type: 'DAGExchange',
-          version: '1.0.0',
-          nodes: em.getAllEntities(),
-          edges: em.getAllLinks()
-        };
         if (typeof canvasPageRef.current.cleanup === 'function') {
           canvasPageRef.current.cleanup();
         } else if (canvasPageRef.current.cleanup?.destroy) {
           canvasPageRef.current.cleanup.destroy();
         }
+        if (bridgeRef.current?.destroy) {
+          bridgeRef.current.destroy();
+        }
       }
 
-      const canvasPage = createCanvasPage('simulator-instance', { 
+      structura.initToolboxConfigManager(instanceId);
+
+      const canvasPage = structura.createCanvasPage(instanceId, { 
         readonly: isReadonly, 
         headless: isHeadless, 
         allow_multiple_schemas: false 
       });
+      
+      canvasPage.element.style.position = 'absolute';
+      canvasPage.element.style.inset = '0';
       canvasPageRef.current = canvasPage;
+
       containerRef.current.innerHTML = '';
       containerRef.current.appendChild(canvasPage.element);
 
-      if (existingDag) {
-        setTimeout(() => {
-          const em = getEntityManager('simulator-instance');
-          import('@atomos-web/structura').then(({ deserializeDAG }) => {
-             deserializeDAG(em, JSON.stringify(existingDag), false);
-          }).catch(console.error);
-        }, 100);
-      } else {
-        setTimeout(seedSchema, 100);
-      }
-    };
+      const em = structura.getEntityManager(instanceId);
+      const kernel = structura.createSchemaGraphKernel();
+      const bridge = structura.createKernelAdapter(kernel, em);
 
-    const seedSchema = () => {
-      if (!getEntityManager) return;
-      const em = getEntityManager('simulator-instance');
-      
-      if (em.getAllEntities().length > 0) {
-        // Auto-heal logic: If entities exist but lack color (due to the telemetry bug), restore them
-        const entities = em.getAllEntities();
-        const n1 = entities.find((e: any) => e.name === 'View');
-        if (n1 && !n1.color) em.updateEntityMetadata(n1.id, { color: '#3b82f6' });
-        const n2 = entities.find((e: any) => e.name === 'Controller');
-        if (n2 && !n2.color) em.updateEntityMetadata(n2.id, { color: '#10b981' });
-        const n3 = entities.find((e: any) => e.name === 'Model');
-        if (n3 && !n3.color) em.updateEntityMetadata(n3.id, { color: '#f59e0b' });
-        return;
-      }
+      kernelRef.current = kernel;
+      bridgeRef.current = bridge;
 
-      em.createEntity('node1', 'View', { x: -300, y: -100 }, { width: 220, height: 180 }, { shape: 'rectangle', color: '#3b82f6' });
-      em.updateEntityProperties('node1', [
-        { key: 'render', label: 'render()', dataType: 'function', componentType: 'input', value: '' },
-        { key: 'template', label: 'template', dataType: 'string', componentType: 'input', value: 'html' }
-      ]);
-      
-      em.createEntity('node2', 'Controller', { x: 0, y: -100 }, { width: 220, height: 180 }, { shape: 'rectangle', color: '#10b981' });
-      em.updateEntityProperties('node2', [
-        { key: 'handleInput', label: 'handleInput()', dataType: 'function', componentType: 'input', value: '' },
-        { key: 'updateModel', label: 'updateModel()', dataType: 'function', componentType: 'input', value: '' }
-      ]);
+      // Seed with selected preset
+      load_preset(kernel, em, selectedPreset);
 
-      em.createEntity('node3', 'Model', { x: 300, y: -100 }, { width: 220, height: 180 }, { shape: 'cylinder', color: '#f59e0b' });
-      em.updateEntityProperties('node3', [
-        { key: 'data', label: 'data', dataType: 'object', componentType: 'input', value: '{}' },
-        { key: 'notifyObservers', label: 'notify()', dataType: 'function', componentType: 'input', value: '' }
-      ]);
-      
-      em.createLink('link1', 'right', 'left', 'node1', 'node2');
-      em.createLink('link2', 'right', 'left', 'node2', 'node3');
-      em.createLink('link3', 'bottom', 'bottom', 'node3', 'node1');
+      // Center and fit canvas
+      setTimeout(() => {
+        dispatchMcp('structura_fit_to_screen', { padding: { top: 100, bottom: 100, left: 100, right: 100 } });
+      }, 200);
     };
 
     init();
@@ -134,8 +94,12 @@ export function SimulatorDemo() {
         }
         canvasPageRef.current = null;
       }
+      if (bridgeRef.current?.destroy) {
+        bridgeRef.current.destroy();
+        bridgeRef.current = null;
+      }
     };
-  }, [isReadonly, isHeadless]);
+  }, [isReadonly, isHeadless, selectedPreset]);
 
   // Listen for warnings
   useEffect(() => {
@@ -162,7 +126,6 @@ export function SimulatorDemo() {
 
   // Re-center canvas when sidebars open/close
   useEffect(() => {
-    // Wait for the CSS transition to finish before fitting
     const timer = setTimeout(() => {
       dispatchMcp('structura_fit_to_screen', { padding: { top: 100, bottom: 100, left: 100, right: 100 } });
     }, 350);
@@ -178,18 +141,22 @@ export function SimulatorDemo() {
     setIsExecuting(true);
     isExecutingRef.current = true;
     
-    // We dynamically import getEntityManager here to avoid SSR issues
     const { getEntityManager } = await import('@atomos-web/structura');
     const em = getEntityManager('simulator-instance');
     const entities = em.getAllEntities();
     const links = em.getAllLinks();
     
+    if (entities.length === 0) {
+      setIsExecuting(false);
+      return;
+    }
+
     const inDegree = new Map<string, number>(entities.map((en: any) => [en.id, 0]));
     const adj = new Map<string, any[]>(entities.map((en: any) => [en.id, [] as any[]]));
     
     links.forEach((l: any) => {
-      if(inDegree.has(l.targetEntityId)) inDegree.set(l.targetEntityId, (inDegree.get(l.targetEntityId) || 0) + 1);
-      if(adj.has(l.sourceEntityId)) adj.get(l.sourceEntityId)?.push({ link: l, target: l.targetEntityId });
+      if (inDegree.has(l.targetEntityId)) inDegree.set(l.targetEntityId, (inDegree.get(l.targetEntityId) || 0) + 1);
+      if (adj.has(l.sourceEntityId)) adj.get(l.sourceEntityId)?.push({ link: l, target: l.targetEntityId });
     });
     
     let queue = entities.filter((en: any) => inDegree.get(en.id) === 0).map((en: any) => en.id);
@@ -245,7 +212,7 @@ export function SimulatorDemo() {
       await new Promise(r => setTimeout(r, 800));
       if (!isExecutingRef.current) break;
       
-      // Mark Completed with Random State
+      // Mark Completed with Success/Warning/Error states
       for (const id of queue) {
          const states = [
            { color: '#10b981', type: 'success', shadow: '0 0 16px #10b981' }, // Green
@@ -255,10 +222,10 @@ export function SimulatorDemo() {
          ];
          
          const roll = Math.random();
-         let state = states[0];
-         if (roll > 0.6) state = states[1];
-         if (roll > 0.8) state = states[2];
-         if (roll > 0.9) state = states[3];
+         let state = states[0]!;
+         if (roll > 0.7) state = states[1]!;
+         if (roll > 0.85) state = states[2]!;
+         if (roll > 0.95) state = states[3]!;
          
          const el = document.querySelector(`[data-entity-id="${id}"]`) as HTMLElement;
          if (el) {
@@ -302,7 +269,7 @@ export function SimulatorDemo() {
       }
       
       let nextQueue: string[] = [];
-      let linkPromises = [];
+      let linkPromises: Promise<unknown>[] = [];
       for (const id of queue) {
          const outgoing = adj.get(id) || [];
          for (const out of outgoing) {
@@ -413,7 +380,7 @@ export function SimulatorDemo() {
       <div className={`
         flex-none relative w-72 sm:w-[320px] 
         bg-[#020617] border-r border-white/5 flex flex-col p-4 gap-6 overflow-y-auto
-        transition-[margin] duration-300 ease-in-out
+        transition-[margin] duration-300 ease-in-out z-30
         ${isLeftSidebarOpen ? "ml-0" : "-ml-72 sm:-ml-[320px]"}
       `}>
         <div className="flex items-center justify-between">
@@ -423,11 +390,28 @@ export function SimulatorDemo() {
           </button>
         </div>
         <div className="border-b border-slate-700 pb-2 -mt-4">
-          <p className="text-xs text-slate-400">This panel imitates an external consumer controlling Structura via MCP tools.</p>
+          <p className="text-xs text-slate-400">Control Structura in real-time via simulated MCP commands & telemetry.</p>
+        </div>
+
+        {/* Preset Selector */}
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Architecture Preset</h3>
+          <select
+            value={selectedPreset}
+            onChange={(e) => setSelectedPreset(e.target.value)}
+            className="w-full bg-slate-800 border border-slate-700 text-xs rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-medium"
+          >
+            <option value="mvc">MVC Architecture</option>
+            <option value="cqrs">CQRS Pattern</option>
+            <option value="flux">FLUX Architecture</option>
+            <option value="database">Relational Database</option>
+            <option value="security-schema">Security Architecture</option>
+            <option value="activity-workflow">Activity Workflow</option>
+          </select>
         </div>
 
         <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Modes</h3>
+          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Execution Simulation</h3>
           <label className="flex items-center gap-2 cursor-pointer text-sm">
             <input type="checkbox" className="w-4 h-4 rounded border-slate-600" checked={isReadonly} onChange={e => setIsReadonly(e.target.checked)} />
             Read-Only Mode
@@ -437,89 +421,71 @@ export function SimulatorDemo() {
             Headless (No UI)
           </label>
           <button 
-            className={`w-full mt-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isExecuting ? 'bg-red-900 text-red-200 hover:bg-red-800' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
+            className={`w-full mt-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isExecuting ? 'bg-red-900 text-red-200 hover:bg-red-800' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20'}`}
             onClick={handleTelemetry}
           >
-            {isExecuting ? 'Stop Telemetry' : 'Start Telemetry'}
+            {isExecuting ? '⏹ Stop Telemetry' : '▶ Start Telemetry'}
           </button>
         </div>
 
         <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Viewport</h3>
-          <button className={btnClass} onClick={() => dispatchMcp('structura_set_zoom', { level: 'in' })}>Zoom In</button>
-          <button className={btnClass} onClick={() => dispatchMcp('structura_set_zoom', { level: 'out' })}>Zoom Out</button>
-          <button className={btnClass} onClick={() => dispatchMcp('structura_fit_to_screen', { padding: { right: 320, left: 100, top: 100, bottom: 100 } })}>Fit to Screen</button>
-          <button className={`${btnClass} !bg-[#3f1616] !text-[#fca5a5] hover:!bg-[#5f2020]`} onClick={() => {
-            localStorage.removeItem('structura-workspace-simulator-instance');
-            window.location.reload();
-          }}>Reset Demo (Fix Black Nodes)</button>
+          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Viewport & Layout</h3>
+          <div className="grid grid-cols-2 gap-2">
+            <button className={btnClass} onClick={() => dispatchMcp('structura_set_zoom', { level: 'in' })}>🔍 Zoom In</button>
+            <button className={btnClass} onClick={() => dispatchMcp('structura_set_zoom', { level: 'out' })}>🔍 Zoom Out</button>
+          </div>
+          <button className={btnClass} onClick={() => dispatchMcp('structura_fit_to_screen', { padding: { right: 100, left: 100, top: 100, bottom: 100 } })}>🎯 Fit to Screen</button>
+          <button className={btnClass} onClick={() => dispatchMcp('structura_auto_layout', { layout_template: 'sugiyama' })}>⚡ Auto Layout (Sugiyama)</button>
+          <button className={btnClass} onClick={() => dispatchMcp('structura_optimize_connections')}>🔗 Optimize Connections</button>
           <button className={btnClass} onClick={() => {
             const newState = !isMouseZoomEnabled;
             setIsMouseZoomEnabled(newState);
             dispatchMcp('structura_toggle_mouse_zoom', { enabled: newState });
           }}>
-            {isMouseZoomEnabled ? 'Disable Scroll Zoom' : 'Enable Scroll Zoom'}
+            {isMouseZoomEnabled ? '🖱 Disable Scroll Zoom' : '🖱 Enable Scroll Zoom'}
           </button>
         </div>
 
         <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Actions</h3>
-          <button className={btnClass} onClick={() => dispatchMcp('structura_undo')}>Undo</button>
-          <button className={btnClass} onClick={() => dispatchMcp('structura_redo')}>Redo</button>
-          <button className={btnClass} onClick={() => dispatchMcp('structura_auto_layout', { layout_template: 'sugiyama' })}>Auto Layout (Sugiyama)</button>
-          <button className={btnClass} onClick={() => dispatchMcp('structura_auto_layout', { layout_template: 'clear' })}>Auto Layout (Clear)</button>
-          <button className={`${btnClass} !bg-purple-700 hover:!bg-purple-600`} onClick={() => dispatchMcp('structura_discovery', { topic: 'all' })}>Discover Capabilities</button>
-          <button className={btnClass} onClick={() => dispatchMcp('structura_optimize_connections')}>Optimize Connections</button>
-          <button className={btnClass} onClick={() => dispatchMcp('structura_inject_schema', {
-            formatType: 'DAGExchange',
-            dag: {
-              nodes: [
-                { id: 'node1', type: 'View', width: 220, height: 180, position: { x: -300, y: -100 }, data: { shape: 'rectangle', color: '#3b82f6', properties: [] } },
-                { id: 'node2', type: 'Controller', width: 220, height: 180, position: { x: 0, y: -100 }, data: { shape: 'rectangle', color: '#10b981', properties: [] } },
-                { id: 'node3', type: 'Model', width: 220, height: 180, position: { x: 300, y: -100 }, data: { shape: 'cylinder', color: '#f59e0b', properties: [] } }
-              ],
-              edges: [
-                { id: 'link1', source: 'node1', target: 'node2', sourceHandle: 'right', targetHandle: 'left' },
-                { id: 'link2', source: 'node2', target: 'node3', sourceHandle: 'right', targetHandle: 'left' },
-                { id: 'link3', source: 'node3', target: 'node1', sourceHandle: 'bottom', targetHandle: 'bottom' }
-              ]
-            }
-          })}>Inject DAG Schema</button>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Export</h3>
-          <button className={btnClass} onClick={() => dispatchMcp('structura_export_svg')}>Export SVG</button>
-          <button className={btnClass} onClick={() => dispatchMcp('structura_export_png')}>Export PNG</button>
-          <button className={btnClass} onClick={() => dispatchMcp('structura_export_dag')}>Export DAG JSON</button>
+          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">MCP Protocol</h3>
+          <div className="grid grid-cols-2 gap-2">
+            <button className={btnClass} onClick={() => dispatchMcp('structura_undo')}>↩ Undo</button>
+            <button className={btnClass} onClick={() => dispatchMcp('structura_redo')}>↪ Redo</button>
+          </div>
+          <button className={`${btnClass} !bg-purple-700 hover:!bg-purple-600 text-white`} onClick={() => dispatchMcp('structura_discovery', { topic: 'all' })}>🔮 Discover Capabilities</button>
+          <button className={btnClass} onClick={() => dispatchMcp('structura_export_svg')}>📐 Export SVG</button>
+          <button className={btnClass} onClick={() => dispatchMcp('structura_export_dag')}>💾 Export DAG JSON</button>
         </div>
       </div>
 
       {/* Main Canvas Area */}
-      <div className="flex-1 w-full h-full relative bg-[#020617]" ref={containerRef}>
-        {/* Canvas is injected here */}
+      <div className="flex-1 w-full h-full relative bg-[#020617] overflow-hidden" ref={containerRef}>
+        {/* Structura Canvas is injected here */}
       </div>
 
       {/* Right Sidebar */}
       <div className={`
         flex-none relative w-72 sm:w-[320px] 
         bg-[#020617] border-l border-white/5 flex flex-col p-4 gap-4 overflow-y-auto
-        transition-[margin] duration-300 ease-in-out
+        transition-[margin] duration-300 ease-in-out z-30
         ${isRightSidebarOpen ? "mr-0" : "-mr-72 sm:-mr-[320px]"}
       `}>
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Errors & Warnings</h2>
+          <h2 className="text-lg font-semibold text-white">Diagnostics & Events</h2>
           <button className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors" onClick={() => setIsRightSidebarOpen(false)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
         <div className="border-b border-slate-700 pb-2 -mt-2">
-          <p className="text-xs text-slate-400">Headless validation events propagated via MCP/DOM events.</p>
+          <p className="text-xs text-slate-400">Real-time telemetry and validation events emitted from Structura kernel.</p>
         </div>
         
         <div className="flex flex-col gap-2">
           {warnings.length === 0 ? (
-            <p className="text-sm text-slate-500 italic">No warnings</p>
+            <div className="p-4 rounded-lg bg-slate-900/50 border border-slate-800 text-center">
+              <p className="text-xs text-slate-400">✓ Graph topology healthy</p>
+              <p className="text-[10px] text-slate-500 mt-1">No violations or deadlocks detected</p>
+            </div>
           ) : (
             warnings.map((w, idx) => (
               <div key={idx} className="bg-red-900/20 border-l-4 border-red-500 p-3 rounded text-sm text-red-200">

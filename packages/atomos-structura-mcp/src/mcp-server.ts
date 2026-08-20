@@ -131,6 +131,10 @@ const METHOD_ALIASES: Record<string, string> = {
   'atomos-structura/reject-diff': 'structura_reject_diff',
   'atomos-structura/import-schema': 'structura_import_schema',
   'atomos-structura/detect-cycles': 'structura_detect_cycles',
+  'atomos-structura/audit-architecture': 'structura_audit_architecture',
+  'atomos-structura/get-graph-metrics': 'structura_get_graph_metrics',
+  'atomos-structura/stream-operations': 'structura_stream_operations',
+  'atomos-structura/step-execution': 'structura_step_execution',
 };
 
 // Method Normalizer

@@ -26,7 +26,16 @@ export { parseSqlDDL } from './adapters/parsers/sql-ddl-parser.js';
 export { parseTypeScriptAST } from './adapters/parsers/typescript-parser.js';
 export type { ParsedSchemaResult } from './adapters/parsers/prisma-parser.js';
 
-// Graph Analytics
+// Polyglot & IaC Generators
+export { generateTerraformHCL } from './adapters/generators/terraform-generator.js';
+export { generateKubernetesManifests, generateDockerCompose } from './adapters/generators/kubernetes-generator.js';
+export { generateOpenApiSpec } from './adapters/generators/openapi-generator.js';
+
+// Graph Analytics & Architecture Linter
 export { findCycles } from './analysis/cycle-detector.js';
 export type { CycleDetectionResult } from './analysis/cycle-detector.js';
+export { auditArchitecture } from './analysis/architecture-linter.js';
+export type { ArchitectureAuditResult, ArchitectureViolation } from './analysis/architecture-linter.js';
+export { computeGraphMetrics } from './analysis/graph-metrics.js';
+export type { GraphMetrics } from './analysis/graph-metrics.js';
 
