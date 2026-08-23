@@ -37,12 +37,12 @@ const alphaMin = 0.001;
 
 let params = {
   attractionForce: 0.05,
-  appartenanceGravity: 0.1,
+  appartenanceGravity: 0.08,
   repulsionForce: 0.02,
-  restingDistance: 40,
-  idealRadius: 600,
-  globalGravity: 0.001,
-  alphaDecay: 0.96
+  restingDistance: 35,
+  idealRadius: 160,
+  globalGravity: 0.0005,
+  alphaDecay: 0.97
 };
 
 const calculateAppartenanceCenters = () => {
@@ -171,7 +171,7 @@ export function createNeuraInstance(
   const webgl = new WebGLEngine(canvas);
   if (opts.theme) webgl.setTheme(opts.theme);
 
-  const culling = new CullingSystem(200);
+  const culling = new CullingSystem(600);
 
   // Initialize Worker
   let worker: Worker;
@@ -279,14 +279,14 @@ export function createNeuraInstance(
       const worldY = offsetY / state.viewport.zoom - state.viewport.y;
 
       let closestNodeId: string | null = null;
-      let minDistance = 20 / state.viewport.zoom;
+      let minDistance = 24 / state.viewport.zoom;
 
       for (const key in state.nodes) {
         const n = state.nodes[key]!;
         const dx = worldX - n.x;
         const dy = worldY - n.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const hitRadius = minDistance + (n.weight * 20) / state.viewport.zoom;
+        const hitRadius = minDistance + (Math.min(20, n.weight) * 4) / state.viewport.zoom;
 
         if (dist < hitRadius && dist < minDistance) {
           minDistance = dist;
@@ -312,17 +312,34 @@ export function createNeuraInstance(
     }
   });
 
+  // Mouse Wheel: Zoom centered precisely at mouse pointer
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
     const state = store.value;
-    const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newZoom = Math.max(0.05, Math.min(state.viewport.zoom * zoomDelta, 8.0));
-    setViewport({ zoom: newZoom });
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    const zoomDelta = e.deltaY < 0 ? 1.15 : 0.85;
+    const oldZoom = state.viewport.zoom;
+    const newZoom = Math.max(0.02, Math.min(oldZoom * zoomDelta, 8.0));
+
+    if (newZoom === oldZoom) return;
+
+    // Preserve world coordinate under mouse cursor
+    const newX = state.viewport.x + mouseX * (1 / newZoom - 1 / oldZoom);
+    const newY = state.viewport.y + mouseY * (1 / newZoom - 1 / oldZoom);
+
+    setViewport({
+      x: newX,
+      y: newY,
+      zoom: newZoom,
+    });
   });
 
   // Camera Fly-To with cubic ease-out
   let animationRaf: number | null = null;
-  const flyToNode = (nodeId: string, targetZoom = 1.8, durationMs = 600) => {
+  const flyToNode = (nodeId: string, targetZoom = 1.2, durationMs = 600) => {
     const state = store.value;
     const node = state.nodes[nodeId];
     if (!node) return;
@@ -402,24 +419,35 @@ export function createNeuraInstance(
     // 3. Render WebGL
     webgl.render(visibleNodes, visibleEdges, state.viewport, activeNodeIds, activeEdgeIds, !!focusId);
 
-    // 4. HTML Overlay Labels for high-degree hubs or focused node
+    // 4. HTML Overlay Labels: Show for hovered/selected node or major files when zoomed in
     const renderedIds = new Set<string>();
+    const isZoomedIn = state.viewport.zoom >= 0.7;
+
     for (const node of visibleNodes) {
-      if (node.weight >= 0.95 || node.id === focusId) {
+      const isFocused = node.id === focusId;
+      const isMajorFile = isZoomedIn && node.metadata?.kind === 'file';
+
+      if (isFocused || isMajorFile) {
         renderedIds.add(node.id);
         let el = labelsMap.get(node.id);
         if (!el) {
           el = document.createElement('div');
           el.style.position = 'absolute';
-          el.style.fontFamily = 'var(--vbs-font, system-ui, -apple-system, sans-serif)';
-          el.style.textShadow = '0 2px 6px rgba(0,0,0,0.9)';
+          el.style.fontFamily = 'system-ui, -apple-system, sans-serif';
           el.style.transform = 'translate(-50%, -100%)';
-          el.style.marginTop = '-14px';
+          el.style.marginTop = '-12px';
           el.style.whiteSpace = 'nowrap';
-          el.innerText = node.metadata?.name || `Node ${node.id}`;
+          el.style.pointerEvents = 'none';
+          el.style.borderRadius = '4px';
+          el.style.padding = '2px 6px';
+          el.style.backdropFilter = 'blur(6px)';
+          el.style.transition = 'opacity 0.15s ease';
           overlay.appendChild(el);
           labelsMap.set(node.id, el);
         }
+
+        const labelText = node.metadata?.label || node.metadata?.name || node.id;
+        el.innerText = labelText;
 
         const screenX = (node.x + state.viewport.x) * state.viewport.zoom;
         const screenY = (node.y + state.viewport.y) * state.viewport.zoom;
@@ -427,16 +455,22 @@ export function createNeuraInstance(
         el.style.left = `${screenX}px`;
         el.style.top = `${screenY}px`;
 
-        if (node.id === focusId) {
+        if (isFocused) {
           el.style.zIndex = '100';
           el.style.color = '#38bdf8';
-          el.style.fontSize = '13px';
+          el.style.background = 'rgba(15, 23, 42, 0.85)';
+          el.style.border = '1px solid rgba(56, 189, 248, 0.4)';
+          el.style.fontSize = '12px';
           el.style.fontWeight = 'bold';
+          el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.6)';
         } else {
           el.style.zIndex = '10';
-          el.style.color = '#e2e8f0';
+          el.style.color = '#cbd5e1';
+          el.style.background = 'rgba(15, 23, 42, 0.7)';
+          el.style.border = '1px solid rgba(148, 163, 184, 0.2)';
           el.style.fontSize = '11px';
           el.style.fontWeight = '500';
+          el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)';
         }
       }
     }
@@ -456,12 +490,26 @@ export function createNeuraInstance(
     for (const n of nodes) nodeMap[n.id] = n;
     for (const e of edges) edgeMap[e.id] = e;
 
+    const canvasW = canvas.width || 1200;
+    const canvasH = canvas.height || 800;
+
+    // Centered wide-angle constellation view
+    const initialZoom = nodes.length > 400 ? 0.35 : nodes.length > 100 ? 0.5 : 0.75;
+    const initialX = canvasW / 2 / initialZoom;
+    const initialY = canvasH / 2 / initialZoom;
+
     store.set({
       ...state,
       nodes: nodeMap,
       edges: edgeMap,
       hoveredNodeId: null,
       selectedNodeId: null,
+      viewport: {
+        ...state.viewport,
+        x: initialX,
+        y: initialY,
+        zoom: initialZoom,
+      },
     });
 
     worker.postMessage({ type: 'STOP' });
@@ -538,23 +586,45 @@ export function createNeuraInstance(
         weight: 0,
         appartenanceId: `cluster_${clusterIdx}`,
         metadata: {
-          name: `Service #${i}`,
-          cluster: `Zone ${clusterIdx + 1}`,
+          label: `Node ${i}`,
+          appartenance: `Cluster ${clusterIdx}`,
         },
         visible: true,
       });
     }
 
+    // Normalize degrees
     let maxDegree = 1;
-    for (const key in degrees) {
-      if (degrees[key]! > maxDegree) maxDegree = degrees[key]!;
+    for (const id in degrees) {
+      if (degrees[id]! > maxDegree) maxDegree = degrees[id]!;
     }
-    for (const n of nodes) {
-      const degree = degrees[n.id] || 0;
-      n.weight = Math.max(0.08, degree / maxDegree);
+    for (const node of nodes) {
+      node.weight = degrees[node.id]! / maxDegree;
     }
 
     loadGraph(nodes, edges);
+  };
+
+  const setPhysicsParams = (params: Partial<PhysicsParams>) => {
+    worker.postMessage({ type: 'SET_PARAMS', payload: params });
+  };
+
+  const setShaderTheme = (theme: ShaderTheme) => {
+    webgl.setTheme(theme);
+  };
+
+  const reheatPhysics = (alpha = 0.8) => {
+    worker.postMessage({ type: 'REHEAT', payload: { alpha } });
+  };
+
+  const getFPS = () => currentFPS;
+
+  const destroy = () => {
+    resizeObserver.disconnect();
+    webgl.destroy();
+    worker.terminate();
+    if (animationRaf !== null) cancelAnimationFrame(animationRaf);
+    overlay.remove();
   };
 
   return {
@@ -564,22 +634,10 @@ export function createNeuraInstance(
     loadGraph,
     generateMockData,
     flyToNode,
-    setPhysicsParams: (params: Partial<PhysicsParams>) => {
-      worker.postMessage({ type: 'SET_PARAMS', payload: params });
-    },
-    setShaderTheme: (theme: ShaderTheme) => {
-      webgl.setTheme(theme);
-    },
-    reheatPhysics: (alpha = 0.9) => {
-      worker.postMessage({ type: 'REHEAT', payload: { alpha } });
-    },
-    getFPS: () => currentFPS,
-    destroy: () => {
-      if (animationRaf !== null) cancelAnimationFrame(animationRaf);
-      resizeObserver.disconnect();
-      webgl.destroy();
-      worker.terminate();
-      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-    },
+    setPhysicsParams,
+    setShaderTheme,
+    reheatPhysics,
+    getFPS,
+    destroy,
   };
 }

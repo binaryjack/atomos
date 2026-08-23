@@ -23,11 +23,11 @@ const nodeVertexShaderSource = `
     vec2 clipSpace = zeroToTwo - 1.0;
     
     // WebGL Y is flipped
-    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+    gl_Position = vec4(clipSpace * vec2(1.0, -1.0), 0.0, 1.0);
     
-    // Size is scaled by zoom and by the node's weight score
-    float clampedZoom = max(0.4, min(u_zoom, 6.0));
-    gl_PointSize = (8.0 + (a_size_attr * 36.0)) / clampedZoom;
+    // Point size scales smoothly with zoom, min 2.5px to max 32.0px
+    float baseSize = clamp(a_size_attr, 3.0, 20.0);
+    gl_PointSize = clamp(baseSize * pow(u_zoom, 0.45), 2.5, 32.0);
     
     v_color = a_color;
   }
@@ -47,8 +47,8 @@ const nodeFragmentShaderSource = `
     
     // Soft outer glow for cyber / neon / pulse
     if (u_theme_mode == 2 || u_theme_mode == 3 || u_theme_mode == 4) {
-      float glow = 1.0 - smoothstep(0.3, 0.5, dist);
-      gl_FragColor = vec4(v_color.rgb * (1.0 + glow * 0.5), v_color.a * glow);
+      float glow = 1.0 - smoothstep(0.25, 0.5, dist);
+      gl_FragColor = vec4(v_color.rgb * (1.0 + glow * 0.4), v_color.a * glow);
     } else {
       gl_FragColor = v_color;
     }
@@ -71,7 +71,7 @@ const edgeVertexShaderSource = `
     vec2 zeroToOne = position / u_resolution;
     vec2 zeroToTwo = zeroToOne * 2.0;
     vec2 clipSpace = zeroToTwo - 1.0;
-    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+    gl_Position = vec4(clipSpace * vec2(1.0, -1.0), 0.0, 1.0);
     
     v_color = a_color;
     v_world_pos = a_position;
@@ -86,13 +86,13 @@ const edgeFragmentShaderSource = `
   uniform int u_theme_mode;
   
   void main() {
-    float pulseSpeed = (u_theme_mode == 3 || u_theme_mode == 4) ? 6.0 : 2.5;
-    float pulse = 0.5 + 0.5 * sin(u_time * pulseSpeed + (v_world_pos.x + v_world_pos.y) * 0.04);
+    float pulseSpeed = (u_theme_mode == 3 || u_theme_mode == 4) ? 4.0 : 2.0;
+    float pulse = 0.5 + 0.5 * sin(u_time * pulseSpeed + (v_world_pos.x + v_world_pos.y) * 0.02);
     
     if (u_theme_mode == 4) { // Cyber mode
-      gl_FragColor = vec4(v_color.rgb * (0.8 + 0.4 * pulse), v_color.a * (0.4 + 0.6 * pulse));
+      gl_FragColor = vec4(v_color.rgb * (0.8 + 0.3 * pulse), v_color.a * (0.35 + 0.45 * pulse));
     } else {
-      gl_FragColor = vec4(v_color.rgb, v_color.a * (0.5 + 0.5 * pulse));
+      gl_FragColor = vec4(v_color.rgb, v_color.a * (0.4 + 0.4 * pulse));
     }
   }
 `;
@@ -255,20 +255,20 @@ export class WebGLEngine {
         edgePositions[edgeCount * 4 + 2] = target.x;
         edgePositions[edgeCount * 4 + 3] = target.y;
 
-        let r = 0.3, g = 0.35, b = 0.45, a = 0.35;
+        let r = 0.2, g = 0.45, b = 0.8, a = 0.25;
         if (this.theme === 'cyber') {
-          r = 0.0; g = 0.85; b = 1.0; a = 0.3;
+          r = 0.0; g = 0.75; b = 1.0; a = 0.25;
         } else if (this.theme === 'neon') {
-          r = 0.2; g = 1.0; b = 0.4; a = 0.3;
+          r = 0.2; g = 1.0; b = 0.4; a = 0.25;
         } else if (this.theme === 'pulse') {
-          r = 0.8; g = 0.2; b = 0.9; a = 0.35;
+          r = 0.8; g = 0.2; b = 0.9; a = 0.3;
         }
 
         if (hasActiveFocus) {
           if (activeEdgeIds.has(edge.id)) {
             r = 0.9; g = 0.95; b = 1.0; a = 0.95;
           } else {
-            a = 0.03;
+            a = 0.02;
           }
         }
 
@@ -317,9 +317,9 @@ export class WebGLEngine {
       if (this.theme === 'cyber') {
         const palettes = [
           [0.0, 0.94, 1.0], // cyan
-          [1.0, 0.0, 0.5],  // magenta
-          [1.0, 0.9, 0.0],  // yellow
-          [0.5, 0.1, 0.9],  // purple
+          [0.0, 0.47, 1.0], // cobalt
+          [0.55, 0.36, 0.96], // indigo
+          [0.06, 0.72, 0.51], // emerald
         ];
         return palettes[Math.abs(hash) % palettes.length] as [number, number, number];
       }
@@ -343,18 +343,30 @@ export class WebGLEngine {
       positions[i * 2] = node.x;
       positions[i * 2 + 1] = node.y;
 
-      const [r, g, b] = getColor(node.appartenanceId);
+      let r = 0.0, g = 0.47, b = 1.0;
+      if (node.metadata?.color && typeof node.metadata.color === 'string' && node.metadata.color.startsWith('#')) {
+        const hex = node.metadata.color.replace('#', '');
+        if (hex.length === 6) {
+          r = parseInt(hex.substring(0, 2), 16) / 255;
+          g = parseInt(hex.substring(2, 4), 16) / 255;
+          b = parseInt(hex.substring(4, 6), 16) / 255;
+        } else {
+          [r, g, b] = getColor(node.appartenanceId);
+        }
+      } else {
+        [r, g, b] = getColor(node.appartenanceId);
+      }
 
-      let brightness = 0.6 + (node.weight * 0.7);
-      let opacity = 0.3 + (node.weight * 0.7);
+      let brightness = 0.75 + (Math.min(1.0, node.weight / 15.0) * 0.4);
+      let opacity = 0.5 + (Math.min(1.0, node.weight / 15.0) * 0.5);
 
       if (hasActiveFocus) {
         if (activeNodeIds.has(node.id)) {
-          brightness = 1.2;
+          brightness = 1.3;
           opacity = 1.0;
         } else {
           opacity = 0.04;
-          brightness *= 0.4;
+          brightness *= 0.25;
         }
       }
 
