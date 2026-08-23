@@ -50,7 +50,15 @@ export const createCompactEntityContent = (props: {
   propsNode.style.fill = 'var(--vbs-entity-muted-color, #94a3b8)';
   
   const updateLabel = () => {
-    textNode.textContent = props.entitySignal.value.name || props.shape;
+    const rawName = props.entitySignal.value.name || props.shape;
+    textNode.textContent = rawName;
+    if (rawName.length > 28) {
+      textNode.style.fontSize = '10px';
+    } else if (rawName.length > 16) {
+      textNode.style.fontSize = '11px';
+    } else {
+      textNode.style.fontSize = '';
+    }
     const propCount = (props.entitySignal.value.properties || []).length;
     propsNode.textContent = propCount === 1 ? '1 prop' : `${propCount} props`;
   };

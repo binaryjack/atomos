@@ -79,7 +79,7 @@ export function SimulatorDemo() {
       // Center and fit canvas
       setTimeout(() => {
         dispatchMcp('structura_fit_to_screen', { padding: { top: 100, bottom: 100, left: 100, right: 100 } });
-      }, 200);
+      }, 250);
     };
 
     init();
@@ -173,7 +173,7 @@ export function SimulatorDemo() {
           const contrast = computeContrastColor(defaultColor);
           el.style.setProperty('--vbs-entity-text-color', contrast.textColor);
           el.style.setProperty('--vbs-entity-muted-color', contrast.mutedColor);
-        });
+        }).catch(() => {});
         const badge = el.querySelector('.sim-check-badge');
         if (badge) badge.remove();
       }
@@ -205,27 +205,25 @@ export function SimulatorDemo() {
              const contrast = computeContrastColor('#f59e0b');
              el.style.setProperty('--vbs-entity-text-color', contrast.textColor);
              el.style.setProperty('--vbs-entity-muted-color', contrast.mutedColor);
-           });
+           }).catch(() => {});
          }
       }
       
       await new Promise(r => setTimeout(r, 800));
       if (!isExecutingRef.current) break;
       
-      // Mark Completed with Success/Warning/Error states
+      // Mark Completed with Success states
       for (const id of queue) {
          const states = [
            { color: '#10b981', type: 'success', shadow: '0 0 16px #10b981' }, // Green
-           { color: '#ef4444', type: 'error', shadow: '0 0 16px #ef4444' }, // Red
-           { color: '#f59e0b', type: 'warning', shadow: '0 0 16px #f59e0b' }, // Orange
-           { color: '#64748b', type: 'skipped', shadow: 'none' } // Gray
+           { color: '#10b981', type: 'success', shadow: '0 0 16px #10b981' }, // Green
+           { color: '#f59e0b', type: 'warning', shadow: '0 0 16px #f59e0b' }, // Amber
+           { color: '#10b981', type: 'success', shadow: '0 0 16px #10b981' }
          ];
          
          const roll = Math.random();
          let state = states[0]!;
-         if (roll > 0.7) state = states[1]!;
          if (roll > 0.85) state = states[2]!;
-         if (roll > 0.95) state = states[3]!;
          
          const el = document.querySelector(`[data-entity-id="${id}"]`) as HTMLElement;
          if (el) {
@@ -235,7 +233,10 @@ export function SimulatorDemo() {
              const contrast = computeContrastColor(state.color);
              el.style.setProperty('--vbs-entity-text-color', contrast.textColor);
              el.style.setProperty('--vbs-entity-muted-color', contrast.mutedColor);
-           });
+           }).catch(() => {});
+
+           const existingBadge = el.querySelector('.sim-check-badge');
+           if (existingBadge) existingBadge.remove();
 
            const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
            badge.setAttribute('class', 'sim-check-badge');
@@ -248,28 +249,18 @@ export function SimulatorDemo() {
                <circle cx="12" cy="12" r="12" fill="${state.color}" />
                <path d="M7 12l3 3l7-7" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
              `;
-           } else if (state.type === 'error') {
-             badge.innerHTML = `
-               <circle cx="12" cy="12" r="12" fill="${state.color}" />
-               <path d="M8 8l8 8M16 8l-8 8" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" />
-             `;
-           } else if (state.type === 'warning') {
-             badge.innerHTML = `
-               <circle cx="12" cy="12" r="12" fill="${state.color}" />
-               <path d="M12 6v6M12 16v2" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" />
-             `;
            } else {
              badge.innerHTML = `
                <circle cx="12" cy="12" r="12" fill="${state.color}" />
-               <path d="M7 12h10" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" />
+               <path d="M12 6v6M12 16v2" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" />
              `;
            }
            el.appendChild(badge);
          }
       }
       
-      let nextQueue: string[] = [];
-      let linkPromises: Promise<unknown>[] = [];
+      const nextQueue: string[] = [];
+      const linkPromises: Promise<unknown>[] = [];
       for (const id of queue) {
          const outgoing = adj.get(id) || [];
          for (const out of outgoing) {
@@ -436,6 +427,7 @@ export function SimulatorDemo() {
           </div>
           <button className={btnClass} onClick={() => dispatchMcp('structura_fit_to_screen', { padding: { right: 100, left: 100, top: 100, bottom: 100 } })}>🎯 Fit to Screen</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_auto_layout', { layout_template: 'sugiyama' })}>⚡ Auto Layout (Sugiyama)</button>
+          <button className={btnClass} onClick={() => dispatchMcp('structura_auto_layout', { layout_template: 'clear' })}>🧹 Auto Layout (Clear)</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_optimize_connections')}>🔗 Optimize Connections</button>
           <button className={btnClass} onClick={() => {
             const newState = !isMouseZoomEnabled;
@@ -454,6 +446,7 @@ export function SimulatorDemo() {
           </div>
           <button className={`${btnClass} !bg-purple-700 hover:!bg-purple-600 text-white`} onClick={() => dispatchMcp('structura_discovery', { topic: 'all' })}>🔮 Discover Capabilities</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_export_svg')}>📐 Export SVG</button>
+          <button className={btnClass} onClick={() => dispatchMcp('structura_export_png')}>🖼 Export PNG</button>
           <button className={btnClass} onClick={() => dispatchMcp('structura_export_dag')}>💾 Export DAG JSON</button>
         </div>
       </div>
@@ -483,7 +476,7 @@ export function SimulatorDemo() {
         <div className="flex flex-col gap-2">
           {warnings.length === 0 ? (
             <div className="p-4 rounded-lg bg-slate-900/50 border border-slate-800 text-center">
-              <p className="text-xs text-slate-400">✓ Graph topology healthy</p>
+              <p className="text-xs text-emerald-400 font-medium">✓ Graph topology healthy</p>
               <p className="text-[10px] text-slate-500 mt-1">No violations or deadlocks detected</p>
             </div>
           ) : (

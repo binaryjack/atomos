@@ -153,6 +153,13 @@ export const load_preset = (kernel: SchemaGraphKernel, entityManager: EntityMana
   const p = presets[preset];
   if (!p) return;
 
+  // Clear existing links and entities cleanly before applying new preset
+  entityManager.getAllLinks().forEach((l: any) => entityManager.removeLink(l.id));
+  entityManager.getAllEntities().forEach((e: any) => entityManager.removeEntity(e.id));
+  if (kernel && typeof (kernel as any).clear === 'function') {
+    (kernel as any).clear();
+  }
+
   p.entities.forEach((e: any) => {
     entityManager.createEntity(
       e.id,

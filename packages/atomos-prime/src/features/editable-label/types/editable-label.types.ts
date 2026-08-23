@@ -6,6 +6,9 @@ export interface EditableLabelProps {
   readonly className?: string;
   readonly inputClassName?: string;
   readonly onChange: (value: string) => void;
+  readonly multiline?: boolean;
+  readonly maxLines?: number;
+  readonly enablePopover?: boolean;
 }
 
 export interface EditableLabelResult {

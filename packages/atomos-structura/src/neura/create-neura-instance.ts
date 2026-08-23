@@ -181,10 +181,10 @@ export function createNeuraInstance(
     try {
       worker = new Worker(opts.worker, { type: 'module' });
     } catch {
-      worker = createDefaultWorker();
+      worker = createNeuraPhysicsWorker();
     }
   } else {
-    worker = createDefaultWorker();
+    worker = createNeuraPhysicsWorker();
   }
 
   if (opts.physicsParams) {

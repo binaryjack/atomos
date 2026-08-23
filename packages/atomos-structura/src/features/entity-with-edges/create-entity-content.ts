@@ -223,6 +223,9 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
     className: '',
     inputClassName: '',
     onChange: (v) => store.updateLabel(v),
+    multiline: true,
+    maxLines: 4,
+    enablePopover: true,
   });
   emptyTitleLabel.element.style.color = 'var(--vbs-entity-text-color, #ffffff)';
   emptyTitleLabel.element.style.fontFamily = 'var(--vbs-entity-name-font-family, system-ui, sans-serif)';
@@ -428,14 +431,27 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   };
 
   const recalcHeight = (entity: Entity): void => {
+    const currentHeaderH = Math.max(HEADER_H, header.element.offsetHeight || HEADER_H);
     if (entity.collapsed) {
-      props.onHeightChange(HEADER_H);
+      props.onHeightChange(currentHeaderH);
       return;
     }
     const bodyRows = Math.max(entity.properties.length, MIN_BODY_ROWS);
-    const total = HEADER_H + bodyRows * ROW_H + FOOTER_H;
+    const total = currentHeaderH + bodyRows * ROW_H + FOOTER_H;
     props.onHeightChange(total);
   };
+
+  let headerObserver: ResizeObserver | null = null;
+  if (typeof ResizeObserver !== 'undefined') {
+    headerObserver = new ResizeObserver(() => {
+      recalcHeight(store.signal.value);
+    });
+    headerObserver.observe(header.element);
+    cleanups.push(() => {
+      headerObserver?.disconnect();
+      headerObserver = null;
+    });
+  }
 
   // ─── footer ───────────────────────────────────────────────────────────────
   const footer = createEntityFooter({

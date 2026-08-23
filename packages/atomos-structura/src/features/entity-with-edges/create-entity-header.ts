@@ -38,15 +38,19 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
     className: '',
     inputClassName: '',
     onChange: props.onLabelChange,
+    multiline: true,
+    maxLines: 3,
+    enablePopover: true,
   });
   // Override text colour based on background contrast; font from appearance settings vars
   editableLabel.element.style.color = 'var(--vbs-entity-text-color, #ffffff)';
   editableLabel.element.style.fontFamily = 'var(--vbs-entity-name-font-family, system-ui, sans-serif)';
-  editableLabel.element.style.fontSize = 'var(--vbs-entity-name-font-size, 14px)';
   editableLabel.element.style.fontWeight = 'var(--vbs-entity-name-font-weight, bold)';
+  editableLabel.element.style.maxWidth = '100%';
+  editableLabel.element.style.minWidth = '0';
   
   if (props.isReadonly) {
-    editableLabel.element.style.pointerEvents = 'none';
+    editableLabel.element.style.pointerEvents = 'auto'; // allow click on popover
   }
   cleanups.push(editableLabel.cleanup.destroy);
 
