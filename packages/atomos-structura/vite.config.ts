@@ -69,6 +69,7 @@ export default defineConfig({
           external: [
             'react',
             'react-dom',
+            'react/jsx-runtime',
             'react-redux',
             '@reduxjs/toolkit',
             '@atomos-web/structura-core',

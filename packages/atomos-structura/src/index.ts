@@ -30,3 +30,6 @@ export { AtomosPresentationEngine } from './viewer/atomos-presentation-engine.js
 export { toMermaid, fromMermaid } from './adapters/mermaid.js';
 export { createMinimap } from './features/minimap/create-minimap.js';
 export { createViewportCuller, type ViewportCuller } from './core/viewport-culler.js';
+
+// Neura 3D WebGL Graph Engine
+export * from './neura/index.js';
