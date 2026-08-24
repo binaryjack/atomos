@@ -126,6 +126,7 @@ function mat4Multiply(out: Float32Array, a: Float32Array, b: Float32Array): Floa
 
 /** Node vertex shader with activity-driven pulsation */
 const nodeVertexShaderSource = `
+  precision mediump float;
   attribute vec3 a_position;
   attribute vec4 a_color;
   attribute float a_size_attr;
@@ -210,6 +211,7 @@ const nodeFragmentShaderSource = `
 `;
 
 const edgeVertexShaderSource = `
+  precision mediump float;
   attribute vec3 a_position;
   attribute vec4 a_color;
 
@@ -252,6 +254,7 @@ const edgeFragmentShaderSource = `
 
 /** Beam particle vertex shader — renders glowing energy orbs traveling along edges */
 const beamVertexShaderSource = `
+  precision mediump float;
   attribute vec3 a_position;
   attribute vec4 a_color;
   attribute float a_size_attr;
