@@ -2,40 +2,143 @@ import type { NeuraNode, NeuraEdge, NeuraViewport } from '../core/neura-store.js
 
 export type ShaderTheme = 'normal' | 'dark' | 'neon' | 'pulse' | 'cyber';
 
+// 4x4 Column-Major Matrix Math Helpers
+function mat4Create(): Float32Array {
+  const out = new Float32Array(16);
+  out[0] = 1; out[5] = 1; out[10] = 1; out[15] = 1;
+  return out;
+}
+
+function mat4Perspective(out: Float32Array, fovy: number, aspect: number, near: number, far: number): Float32Array {
+  const f = 1.0 / Math.tan(fovy / 2);
+  const nf = 1 / (near - far);
+  out[0] = f / aspect;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 0;
+  out[4] = 0;
+  out[5] = f;
+  out[6] = 0;
+  out[7] = 0;
+  out[8] = 0;
+  out[9] = 0;
+  out[10] = (far + near) * nf;
+  out[11] = -1;
+  out[12] = 0;
+  out[13] = 0;
+  out[14] = (2 * far * near) * nf;
+  out[15] = 0;
+  return out;
+}
+
+function mat4LookAt(out: Float32Array, eye: [number, number, number], center: [number, number, number], up: [number, number, number]): Float32Array {
+  let x0: number, x1: number, x2: number;
+  let y0: number, y1: number, y2: number;
+  let z0: number, z1: number, z2: number;
+  let len: number;
+  const eyex = eye[0], eyey = eye[1], eyez = eye[2];
+  const upx = up[0], upy = up[1], upz = up[2];
+  const centerx = center[0], centery = center[1], centerz = center[2];
+
+  z0 = eyex - centerx;
+  z1 = eyey - centery;
+  z2 = eyez - centerz;
+  len = 1 / Math.hypot(z0, z1, z2);
+  z0 *= len; z1 *= len; z2 *= len;
+
+  x0 = upy * z2 - upz * z1;
+  x1 = upz * z0 - upx * z2;
+  x2 = upx * z1 - upy * z0;
+  len = Math.hypot(x0, x1, x2);
+  if (!len) {
+    x0 = 0; x1 = 0; x2 = 0;
+  } else {
+    len = 1 / len;
+    x0 *= len; x1 *= len; x2 *= len;
+  }
+
+  y0 = z1 * x2 - z2 * x1;
+  y1 = z2 * x0 - z0 * x2;
+  y2 = z0 * x1 - z1 * x0;
+  len = Math.hypot(y0, y1, y2);
+  if (!len) {
+    y0 = 0; y1 = 0; y2 = 0;
+  } else {
+    len = 1 / len;
+    y0 *= len; y1 *= len; y2 *= len;
+  }
+
+  out[0] = x0; out[1] = y0; out[2] = z0; out[3] = 0;
+  out[4] = x1; out[5] = y1; out[6] = z1; out[7] = 0;
+  out[8] = x2; out[9] = y2; out[10] = z2; out[11] = 0;
+  out[12] = -(x0 * eyex + x1 * eyey + x2 * eyez);
+  out[13] = -(y0 * eyex + y1 * eyey + y2 * eyez);
+  out[14] = -(z0 * eyex + z1 * eyey + z2 * eyez);
+  out[15] = 1;
+  return out;
+}
+
+function mat4Multiply(out: Float32Array, a: Float32Array, b: Float32Array): Float32Array {
+  const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
+  const a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
+  const a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
+  const a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
+
+  let b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3];
+  out[0] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+  out[1] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+  out[2] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+  out[3] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+  b0 = b[4]; b1 = b[5]; b2 = b[6]; b3 = b[7];
+  out[4] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+  out[5] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+  out[6] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+  out[7] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+  b0 = b[8]; b1 = b[9]; b2 = b[10]; b3 = b[11];
+  out[8] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+  out[9] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+  out[10] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+  out[11] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+  b0 = b[12]; b1 = b[13]; b2 = b[14]; b3 = b[15];
+  out[12] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+  out[13] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+  out[14] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+  out[15] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+  return out;
+}
+
 const nodeVertexShaderSource = `
-  attribute vec2 a_position;
+  attribute vec3 a_position;
   attribute vec4 a_color;
   attribute float a_size_attr;
   
-  uniform vec2 u_resolution;
-  uniform vec2 u_translation;
-  uniform float u_zoom;
+  uniform mat4 u_mvp_matrix;
+  uniform float u_viewport_height;
 
   varying vec4 v_color;
+  varying float v_depth;
 
   void main() {
-    // Apply pan and zoom
-    vec2 position = (a_position + u_translation) * u_zoom;
+    vec4 clipPos = u_mvp_matrix * vec4(a_position, 1.0);
+    gl_Position = clipPos;
     
-    // Convert from pixel space to clip space (-1.0 to 1.0)
-    vec2 zeroToOne = position / u_resolution;
-    vec2 zeroToTwo = zeroToOne * 2.0;
-    vec2 clipSpace = zeroToTwo - 1.0;
-    
-    // WebGL Y is flipped
-    gl_Position = vec4(clipSpace * vec2(1.0, -1.0), 0.0, 1.0);
-    
-    // Point size scales smoothly with zoom, min 2.5px to max 32.0px
+    // Perspective point sizing based on distance and node weight
     float baseSize = clamp(a_size_attr, 3.0, 20.0);
-    gl_PointSize = clamp(baseSize * pow(u_zoom, 0.45), 2.5, 32.0);
+    float pointScale = (baseSize * u_viewport_height * 0.75) / max(0.1, clipPos.w);
+    gl_PointSize = clamp(pointScale, 2.5, 36.0);
     
     v_color = a_color;
+    v_depth = clamp((clipPos.z / max(0.1, clipPos.w)) * 0.5 + 0.5, 0.0, 1.0);
   }
 `;
 
 const nodeFragmentShaderSource = `
   precision mediump float;
   varying vec4 v_color;
+  varying float v_depth;
   uniform int u_theme_mode;
 
   void main() {
@@ -45,54 +148,56 @@ const nodeFragmentShaderSource = `
       discard;
     }
     
+    // Cosmic Fog: gently fade distant nodes in depth
+    float fog = 1.0 - smoothstep(0.45, 1.0, v_depth) * 0.5;
+    
     // Soft outer glow for cyber / neon / pulse
     if (u_theme_mode == 2 || u_theme_mode == 3 || u_theme_mode == 4) {
       float glow = 1.0 - smoothstep(0.25, 0.5, dist);
-      gl_FragColor = vec4(v_color.rgb * (1.0 + glow * 0.4), v_color.a * glow);
+      gl_FragColor = vec4(v_color.rgb * (1.0 + glow * 0.4), v_color.a * glow * fog);
     } else {
-      gl_FragColor = v_color;
+      gl_FragColor = vec4(v_color.rgb, v_color.a * fog);
     }
   }
 `;
 
 const edgeVertexShaderSource = `
-  attribute vec2 a_position;
+  attribute vec3 a_position;
   attribute vec4 a_color;
   
-  uniform vec2 u_resolution;
-  uniform vec2 u_translation;
-  uniform float u_zoom;
+  uniform mat4 u_mvp_matrix;
 
   varying vec4 v_color;
-  varying vec2 v_world_pos;
+  varying vec3 v_world_pos;
+  varying float v_depth;
 
   void main() {
-    vec2 position = (a_position + u_translation) * u_zoom;
-    vec2 zeroToOne = position / u_resolution;
-    vec2 zeroToTwo = zeroToOne * 2.0;
-    vec2 clipSpace = zeroToTwo - 1.0;
-    gl_Position = vec4(clipSpace * vec2(1.0, -1.0), 0.0, 1.0);
+    vec4 clipPos = u_mvp_matrix * vec4(a_position, 1.0);
+    gl_Position = clipPos;
     
     v_color = a_color;
     v_world_pos = a_position;
+    v_depth = clamp((clipPos.z / max(0.1, clipPos.w)) * 0.5 + 0.5, 0.0, 1.0);
   }
 `;
 
 const edgeFragmentShaderSource = `
   precision mediump float;
   varying vec4 v_color;
-  varying vec2 v_world_pos;
+  varying vec3 v_world_pos;
+  varying float v_depth;
   uniform float u_time;
   uniform int u_theme_mode;
   
   void main() {
     float pulseSpeed = (u_theme_mode == 3 || u_theme_mode == 4) ? 4.0 : 2.0;
-    float pulse = 0.5 + 0.5 * sin(u_time * pulseSpeed + (v_world_pos.x + v_world_pos.y) * 0.02);
-    
+    float pulse = 0.5 + 0.5 * sin(u_time * pulseSpeed + (v_world_pos.x + v_world_pos.y + v_world_pos.z) * 0.02);
+    float fog = 1.0 - smoothstep(0.45, 1.0, v_depth) * 0.55;
+
     if (u_theme_mode == 4) { // Cyber mode
-      gl_FragColor = vec4(v_color.rgb * (0.8 + 0.3 * pulse), v_color.a * (0.35 + 0.45 * pulse));
+      gl_FragColor = vec4(v_color.rgb * (0.8 + 0.3 * pulse), v_color.a * (0.35 + 0.45 * pulse) * fog);
     } else {
-      gl_FragColor = vec4(v_color.rgb, v_color.a * (0.4 + 0.4 * pulse));
+      gl_FragColor = vec4(v_color.rgb, v_color.a * (0.4 + 0.4 * pulse) * fog);
     }
   }
 `;
@@ -127,7 +232,11 @@ export class WebGLEngine {
   private edgeColorBuffer: WebGLBuffer | null = null;
   
   private animationFrameId: number | null = null;
-  private theme: ShaderTheme = 'normal';
+  private theme: ShaderTheme = 'cyber';
+
+  private projMatrix = mat4Create();
+  private viewMatrix = mat4Create();
+  private mvpMatrix = mat4Create();
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -154,6 +263,8 @@ export class WebGLEngine {
     this.gl.clearColor(bg[0], bg[1], bg[2], bg[3]);
     this.gl.enable(this.gl.BLEND);
     this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+    this.gl.enable(this.gl.DEPTH_TEST);
+    this.gl.depthFunc(this.gl.LEQUAL);
 
     this.nodeProgram = this.createProgram(nodeVertexShaderSource, nodeFragmentShaderSource);
     if (!this.nodeProgram) throw new Error('Failed to create node program');
@@ -207,6 +318,31 @@ export class WebGLEngine {
     this.gl.viewport(0, 0, width, height);
   }
 
+  public computeMVPMatrix(viewport: NeuraViewport): Float32Array {
+    const aspect = (this.canvas.width || 800) / (this.canvas.height || 600);
+    mat4Perspective(this.projMatrix, (45 * Math.PI) / 180, aspect, 1, 20000);
+
+    const zoom = Math.max(0.01, viewport.zoom);
+    const radius = 950 / zoom;
+    const yaw = viewport.yaw ?? 0;
+    const pitch = Math.max(-1.45, Math.min(1.45, viewport.pitch ?? 0));
+
+    // Target pan center in world coordinates
+    const targetX = viewport.x;
+    const targetY = viewport.y;
+    const targetZ = 0;
+
+    // Eye position calculated from spherical coordinates around target
+    const eyeX = targetX + radius * Math.cos(pitch) * Math.sin(yaw);
+    const eyeY = targetY + radius * Math.sin(pitch);
+    const eyeZ = targetZ + radius * Math.cos(pitch) * Math.cos(yaw);
+
+    mat4LookAt(this.viewMatrix, [eyeX, eyeY, eyeZ], [targetX, targetY, targetZ], [0, 1, 0]);
+    mat4Multiply(this.mvpMatrix, this.projMatrix, this.viewMatrix);
+
+    return this.mvpMatrix;
+  }
+
   public render(
     nodes: NeuraNode[],
     edges: NeuraEdge[],
@@ -219,24 +355,21 @@ export class WebGLEngine {
 
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-    const modeId = THEME_MODE_ID[this.theme] ?? 0;
+    const modeId = THEME_MODE_ID[this.theme] ?? 4;
+    const mvp = this.computeMVPMatrix(viewport);
 
     // --- RENDER EDGES ---
     this.gl.useProgram(this.edgeProgram);
 
-    const eRes = this.gl.getUniformLocation(this.edgeProgram, 'u_resolution');
-    const eTrans = this.gl.getUniformLocation(this.edgeProgram, 'u_translation');
-    const eZoom = this.gl.getUniformLocation(this.edgeProgram, 'u_zoom');
+    const eMvp = this.gl.getUniformLocation(this.edgeProgram, 'u_mvp_matrix');
     const eTime = this.gl.getUniformLocation(this.edgeProgram, 'u_time');
     const eTheme = this.gl.getUniformLocation(this.edgeProgram, 'u_theme_mode');
 
-    this.gl.uniform2f(eRes, this.canvas.width, this.canvas.height);
-    this.gl.uniform2f(eTrans, viewport.x, viewport.y);
-    this.gl.uniform1f(eZoom, viewport.zoom);
+    this.gl.uniformMatrix4fv(eMvp, false, mvp);
     this.gl.uniform1f(eTime, performance.now() / 1000.0);
     this.gl.uniform1i(eTheme, modeId);
 
-    const edgePositions = new Float32Array(edges.length * 4);
+    const edgePositions = new Float32Array(edges.length * 6);
     const edgeColors = new Float32Array(edges.length * 8);
 
     const nodeLookup = new Map<string, NeuraNode>();
@@ -250,15 +383,15 @@ export class WebGLEngine {
       const source = nodeLookup.get(edge.sourceId);
       const target = nodeLookup.get(edge.targetId);
       if (source && target) {
-        edgePositions[edgeCount * 4] = source.x;
-        edgePositions[edgeCount * 4 + 1] = source.y;
-        edgePositions[edgeCount * 4 + 2] = target.x;
-        edgePositions[edgeCount * 4 + 3] = target.y;
+        edgePositions[edgeCount * 6] = source.x;
+        edgePositions[edgeCount * 6 + 1] = source.y;
+        edgePositions[edgeCount * 6 + 2] = source.z ?? 0;
+        edgePositions[edgeCount * 6 + 3] = target.x;
+        edgePositions[edgeCount * 6 + 4] = target.y;
+        edgePositions[edgeCount * 6 + 5] = target.z ?? 0;
 
-        let r = 0.2, g = 0.45, b = 0.8, a = 0.25;
-        if (this.theme === 'cyber') {
-          r = 0.0; g = 0.75; b = 1.0; a = 0.25;
-        } else if (this.theme === 'neon') {
+        let r = 0.0, g = 0.75, b = 1.0, a = 0.25;
+        if (this.theme === 'neon') {
           r = 0.2; g = 1.0; b = 0.4; a = 0.25;
         } else if (this.theme === 'pulse') {
           r = 0.8; g = 0.2; b = 0.9; a = 0.3;
@@ -285,7 +418,7 @@ export class WebGLEngine {
     this.gl.bufferData(this.gl.ARRAY_BUFFER, edgePositions, this.gl.DYNAMIC_DRAW);
     const ePosAttr = this.gl.getAttribLocation(this.edgeProgram, 'a_position');
     this.gl.enableVertexAttribArray(ePosAttr);
-    this.gl.vertexAttribPointer(ePosAttr, 2, this.gl.FLOAT, false, 0, 0);
+    this.gl.vertexAttribPointer(ePosAttr, 3, this.gl.FLOAT, false, 0, 0);
 
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.edgeColorBuffer);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, edgeColors, this.gl.DYNAMIC_DRAW);
@@ -298,17 +431,15 @@ export class WebGLEngine {
     // --- RENDER NODES ---
     this.gl.useProgram(this.nodeProgram);
 
-    const uResolution = this.gl.getUniformLocation(this.nodeProgram, 'u_resolution');
-    const uTranslation = this.gl.getUniformLocation(this.nodeProgram, 'u_translation');
-    const uZoom = this.gl.getUniformLocation(this.nodeProgram, 'u_zoom');
+    const uMvp = this.gl.getUniformLocation(this.nodeProgram, 'u_mvp_matrix');
+    const uVh = this.gl.getUniformLocation(this.nodeProgram, 'u_viewport_height');
     const uTheme = this.gl.getUniformLocation(this.nodeProgram, 'u_theme_mode');
 
-    this.gl.uniform2f(uResolution, this.canvas.width, this.canvas.height);
-    this.gl.uniform2f(uTranslation, viewport.x, viewport.y);
-    this.gl.uniform1f(uZoom, viewport.zoom);
+    this.gl.uniformMatrix4fv(uMvp, false, mvp);
+    this.gl.uniform1f(uVh, this.canvas.height || 600);
     this.gl.uniform1i(uTheme, modeId);
 
-    const positions = new Float32Array(nodes.length * 2);
+    const positions = new Float32Array(nodes.length * 3);
     const colors = new Float32Array(nodes.length * 4);
     const sizes = new Float32Array(nodes.length);
 
@@ -340,8 +471,9 @@ export class WebGLEngine {
 
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i]!;
-      positions[i * 2] = node.x;
-      positions[i * 2 + 1] = node.y;
+      positions[i * 3] = node.x;
+      positions[i * 3 + 1] = node.y;
+      positions[i * 3 + 2] = node.z ?? 0;
 
       let r = 0.0, g = 0.47, b = 1.0;
       if (node.metadata?.color && typeof node.metadata.color === 'string' && node.metadata.color.startsWith('#')) {
@@ -382,7 +514,7 @@ export class WebGLEngine {
     this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.DYNAMIC_DRAW);
     const aPosition = this.gl.getAttribLocation(this.nodeProgram, 'a_position');
     this.gl.enableVertexAttribArray(aPosition);
-    this.gl.vertexAttribPointer(aPosition, 2, this.gl.FLOAT, false, 0, 0);
+    this.gl.vertexAttribPointer(aPosition, 3, this.gl.FLOAT, false, 0, 0);
 
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodeColorBuffer);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, colors, this.gl.DYNAMIC_DRAW);

@@ -4,6 +4,7 @@ export interface NeuraNode {
   id: string;
   x: number;
   y: number;
+  z?: number;
   weight: number;
   appartenanceId: string;
   metadata: Record<string, any>;
@@ -22,6 +23,10 @@ export interface NeuraViewport {
   x: number;
   y: number;
   zoom: number;
+  yaw?: number;   // Horizontal 3D rotation angle in radians (0 to 2*PI)
+  pitch?: number; // Vertical 3D rotation angle in radians (-PI/2 to PI/2)
+  autoRotate?: boolean;
+  autoRotateSpeed?: number;
   width: number;
   height: number;
 }
@@ -38,16 +43,26 @@ export function createNeuraStore() {
   const store = createSignal<NeuraState>({
     nodes: {},
     edges: {},
-    viewport: { x: 0, y: 0, zoom: 1, width: 800, height: 600 },
+    viewport: {
+      x: 0,
+      y: 0,
+      zoom: 1,
+      yaw: 0,
+      pitch: 0,
+      autoRotate: false,
+      autoRotateSpeed: 0.5,
+      width: 800,
+      height: 600,
+    },
     hoveredNodeId: null,
-    selectedNodeId: null
+    selectedNodeId: null,
   });
 
   const setViewport = (viewport: Partial<NeuraViewport>) => {
     const state = store.value;
     store.set({
       ...state,
-      viewport: { ...state.viewport, ...viewport }
+      viewport: { ...state.viewport, ...viewport },
     });
   };
 
@@ -73,6 +88,6 @@ export function createNeuraStore() {
     store,
     setViewport,
     addNodes,
-    addEdges
+    addEdges,
   };
 }
