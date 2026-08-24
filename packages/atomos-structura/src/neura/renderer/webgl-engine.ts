@@ -1,8 +1,18 @@
-import type { NeuraNode, NeuraEdge, NeuraViewport } from '../core/neura-store.js';
+import type {
+  NeuraNode,
+  NeuraEdge,
+  NeuraEnergyBeam,
+  NeuraViewport,
+  NodeActivityState,
+} from '../core/neura-store.js';
+import { STATE_HALO_COLORS } from '../core/neura-store.js';
 
 export type ShaderTheme = 'normal' | 'dark' | 'neon' | 'pulse' | 'cyber';
 
+// ---------------------------------------------------------------------------
 // 4x4 Column-Major Matrix Math Helpers
+// ---------------------------------------------------------------------------
+
 function mat4Create(): Float32Array {
   const out = new Float32Array(16);
   out[0] = 1; out[5] = 1; out[10] = 1; out[15] = 1;
@@ -110,36 +120,53 @@ function mat4Multiply(out: Float32Array, a: Float32Array, b: Float32Array): Floa
   return out;
 }
 
+// ---------------------------------------------------------------------------
+// GLSL Shader Sources
+// ---------------------------------------------------------------------------
+
+/** Node vertex shader with activity-driven pulsation */
 const nodeVertexShaderSource = `
   attribute vec3 a_position;
   attribute vec4 a_color;
   attribute float a_size_attr;
-  
+  attribute float a_activity;
+  attribute vec3 a_halo_color;
+
   uniform mat4 u_mvp_matrix;
   uniform float u_viewport_height;
+  uniform float u_time;
 
   varying vec4 v_color;
   varying float v_depth;
+  varying float v_activity;
+  varying vec3 v_halo_color;
 
   void main() {
     vec4 clipPos = u_mvp_matrix * vec4(a_position, 1.0);
     gl_Position = clipPos;
-    
-    // Perspective point sizing based on distance and node weight
-    float baseSize = clamp(a_size_attr, 3.0, 20.0);
+
+    // Pulse modulation: active nodes grow 20%-50% via sinusoidal breathing
+    float pulseScale = 1.0 + a_activity * (0.2 + 0.3 * (0.5 + 0.5 * sin(u_time * 4.0)));
+    float baseSize = clamp(a_size_attr, 3.0, 20.0) * pulseScale;
     float pointScale = (baseSize * u_viewport_height * 0.75) / max(0.1, clipPos.w);
-    gl_PointSize = clamp(pointScale, 2.5, 36.0);
-    
+    gl_PointSize = clamp(pointScale, 2.5, 48.0);
+
     v_color = a_color;
     v_depth = clamp((clipPos.z / max(0.1, clipPos.w)) * 0.5 + 0.5, 0.0, 1.0);
+    v_activity = a_activity;
+    v_halo_color = a_halo_color;
   }
 `;
 
+/** Node fragment shader with coronal halo effect */
 const nodeFragmentShaderSource = `
   precision mediump float;
   varying vec4 v_color;
   varying float v_depth;
+  varying float v_activity;
+  varying vec3 v_halo_color;
   uniform int u_theme_mode;
+  uniform float u_time;
 
   void main() {
     vec2 coord = gl_PointCoord - vec2(0.5);
@@ -147,24 +174,45 @@ const nodeFragmentShaderSource = `
     if (dist > 0.5) {
       discard;
     }
-    
+
     // Cosmic Fog: gently fade distant nodes in depth
     float fog = 1.0 - smoothstep(0.45, 1.0, v_depth) * 0.5;
-    
-    // Soft outer glow for cyber / neon / pulse
+
+    // Base color with theme glow
+    vec4 baseColor;
     if (u_theme_mode == 2 || u_theme_mode == 3 || u_theme_mode == 4) {
       float glow = 1.0 - smoothstep(0.25, 0.5, dist);
-      gl_FragColor = vec4(v_color.rgb * (1.0 + glow * 0.4), v_color.a * glow * fog);
+      baseColor = vec4(v_color.rgb * (1.0 + glow * 0.4), v_color.a * glow * fog);
     } else {
-      gl_FragColor = vec4(v_color.rgb, v_color.a * fog);
+      baseColor = vec4(v_color.rgb, v_color.a * fog);
     }
+
+    // Coronal Halo: bright inner core + pulsating outer corona ring
+    if (v_activity > 0.1) {
+      float haloIntensity = v_activity;
+
+      // Inner core brightening
+      float innerGlow = smoothstep(0.35, 0.0, dist) * haloIntensity;
+
+      // Corona ring — bright band between inner core and outer edge
+      float coronaRing = smoothstep(0.5, 0.3, dist) * smoothstep(0.15, 0.3, dist) * haloIntensity;
+      float pulse = 0.7 + 0.3 * sin(u_time * 6.0);
+
+      vec3 coronaColor = v_halo_color * pulse;
+
+      baseColor.rgb += coronaColor * coronaRing * 0.6;
+      baseColor.rgb += vec3(1.0) * innerGlow * 0.3;
+      baseColor.a = max(baseColor.a, haloIntensity * 0.9);
+    }
+
+    gl_FragColor = baseColor;
   }
 `;
 
 const edgeVertexShaderSource = `
   attribute vec3 a_position;
   attribute vec4 a_color;
-  
+
   uniform mat4 u_mvp_matrix;
 
   varying vec4 v_color;
@@ -174,7 +222,7 @@ const edgeVertexShaderSource = `
   void main() {
     vec4 clipPos = u_mvp_matrix * vec4(a_position, 1.0);
     gl_Position = clipPos;
-    
+
     v_color = a_color;
     v_world_pos = a_position;
     v_depth = clamp((clipPos.z / max(0.1, clipPos.w)) * 0.5 + 0.5, 0.0, 1.0);
@@ -188,7 +236,7 @@ const edgeFragmentShaderSource = `
   varying float v_depth;
   uniform float u_time;
   uniform int u_theme_mode;
-  
+
   void main() {
     float pulseSpeed = (u_theme_mode == 3 || u_theme_mode == 4) ? 4.0 : 2.0;
     float pulse = 0.5 + 0.5 * sin(u_time * pulseSpeed + (v_world_pos.x + v_world_pos.y + v_world_pos.z) * 0.02);
@@ -201,6 +249,52 @@ const edgeFragmentShaderSource = `
     }
   }
 `;
+
+/** Beam particle vertex shader — renders glowing energy orbs traveling along edges */
+const beamVertexShaderSource = `
+  attribute vec3 a_position;
+  attribute vec4 a_color;
+  attribute float a_size_attr;
+
+  uniform mat4 u_mvp_matrix;
+  uniform float u_viewport_height;
+
+  varying vec4 v_color;
+
+  void main() {
+    vec4 clipPos = u_mvp_matrix * vec4(a_position, 1.0);
+    gl_Position = clipPos;
+
+    float pointScale = (a_size_attr * u_viewport_height * 0.75) / max(0.1, clipPos.w);
+    gl_PointSize = clamp(pointScale, 3.0, 40.0);
+
+    v_color = a_color;
+  }
+`;
+
+/** Beam particle fragment shader — radial gradient with soft glow for additive blending */
+const beamFragmentShaderSource = `
+  precision mediump float;
+  varying vec4 v_color;
+
+  void main() {
+    vec2 coord = gl_PointCoord - vec2(0.5);
+    float dist = length(coord);
+    if (dist > 0.5) {
+      discard;
+    }
+
+    // Radial intensity — bright center, soft falloff
+    float intensity = 1.0 - smoothstep(0.0, 0.5, dist);
+    float glow = intensity * intensity;
+
+    gl_FragColor = vec4(v_color.rgb * glow, v_color.a * glow);
+  }
+`;
+
+// ---------------------------------------------------------------------------
+// Theme Constants
+// ---------------------------------------------------------------------------
 
 const THEME_BG: Record<ShaderTheme, [number, number, number, number]> = {
   normal: [0.05, 0.05, 0.08, 1.0],
@@ -218,19 +312,52 @@ const THEME_MODE_ID: Record<ShaderTheme, number> = {
   cyber: 4,
 };
 
+/** Number of trailing particles per energy beam */
+const BEAM_TRAIL_COUNT = 5;
+
+// ---------------------------------------------------------------------------
+// Hex color parsing utility
+// ---------------------------------------------------------------------------
+
+function parseHexColor(hex: string): [number, number, number] {
+  const clean = hex.replace('#', '');
+  if (clean.length === 6) {
+    return [
+      parseInt(clean.substring(0, 2), 16) / 255,
+      parseInt(clean.substring(2, 4), 16) / 255,
+      parseInt(clean.substring(4, 6), 16) / 255,
+    ];
+  }
+  return [0.0, 0.83, 1.0]; // default cyan
+}
+
+// ---------------------------------------------------------------------------
+// WebGL Engine
+// ---------------------------------------------------------------------------
+
 export class WebGLEngine {
   private canvas: HTMLCanvasElement;
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
-  
+
+  // Node render resources
   private nodeProgram: WebGLProgram | null = null;
   private nodePositionBuffer: WebGLBuffer | null = null;
   private nodeColorBuffer: WebGLBuffer | null = null;
   private nodeSizeBuffer: WebGLBuffer | null = null;
-  
+  private nodeActivityBuffer: WebGLBuffer | null = null;
+  private nodeHaloColorBuffer: WebGLBuffer | null = null;
+
+  // Edge render resources
   private edgeProgram: WebGLProgram | null = null;
   private edgePositionBuffer: WebGLBuffer | null = null;
   private edgeColorBuffer: WebGLBuffer | null = null;
-  
+
+  // Beam render resources
+  private beamProgram: WebGLProgram | null = null;
+  private beamPositionBuffer: WebGLBuffer | null = null;
+  private beamColorBuffer: WebGLBuffer | null = null;
+  private beamSizeBuffer: WebGLBuffer | null = null;
+
   private animationFrameId: number | null = null;
   private theme: ShaderTheme = 'cyber';
 
@@ -266,17 +393,31 @@ export class WebGLEngine {
     this.gl.enable(this.gl.DEPTH_TEST);
     this.gl.depthFunc(this.gl.LEQUAL);
 
+    // Compile shader programs
     this.nodeProgram = this.createProgram(nodeVertexShaderSource, nodeFragmentShaderSource);
     if (!this.nodeProgram) throw new Error('Failed to create node program');
 
     this.edgeProgram = this.createProgram(edgeVertexShaderSource, edgeFragmentShaderSource);
     if (!this.edgeProgram) throw new Error('Failed to create edge program');
 
+    this.beamProgram = this.createProgram(beamVertexShaderSource, beamFragmentShaderSource);
+    if (!this.beamProgram) throw new Error('Failed to create beam program');
+
+    // Node buffers
     this.nodePositionBuffer = this.gl.createBuffer();
     this.nodeColorBuffer = this.gl.createBuffer();
     this.nodeSizeBuffer = this.gl.createBuffer();
+    this.nodeActivityBuffer = this.gl.createBuffer();
+    this.nodeHaloColorBuffer = this.gl.createBuffer();
+
+    // Edge buffers
     this.edgePositionBuffer = this.gl.createBuffer();
     this.edgeColorBuffer = this.gl.createBuffer();
+
+    // Beam buffers
+    this.beamPositionBuffer = this.gl.createBuffer();
+    this.beamColorBuffer = this.gl.createBuffer();
+    this.beamSizeBuffer = this.gl.createBuffer();
   }
 
   private compileShader(type: number, source: string): WebGLShader | null {
@@ -343,22 +484,53 @@ export class WebGLEngine {
     return this.mvpMatrix;
   }
 
+  // ---------------------------------------------------------------------------
+  // Main Render Pass
+  // ---------------------------------------------------------------------------
+
   public render(
     nodes: NeuraNode[],
     edges: NeuraEdge[],
     viewport: NeuraViewport,
     activeNodeIds: Set<string>,
     activeEdgeIds: Set<string>,
-    hasActiveFocus: boolean
+    hasActiveFocus: boolean,
+    energyBeams: NeuraEnergyBeam[] = []
   ) {
-    if (!this.nodeProgram || !this.edgeProgram) return;
+    if (!this.nodeProgram || !this.edgeProgram || !this.beamProgram) return;
 
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
     const modeId = THEME_MODE_ID[this.theme] ?? 4;
     const mvp = this.computeMVPMatrix(viewport);
+    const now = performance.now() / 1000.0;
 
-    // --- RENDER EDGES ---
+    // Build node lookup for edge and beam rendering
+    const nodeLookup = new Map<string, NeuraNode>();
+    for (const node of nodes) {
+      nodeLookup.set(node.id, node);
+    }
+
+    this.renderEdges(edges, nodeLookup, mvp, now, modeId, activeEdgeIds, hasActiveFocus);
+    this.renderNodes(nodes, mvp, now, modeId, activeNodeIds, hasActiveFocus);
+    this.renderBeams(energyBeams, nodeLookup, mvp, now);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Edge Rendering
+  // ---------------------------------------------------------------------------
+
+  private renderEdges(
+    edges: NeuraEdge[],
+    nodeLookup: Map<string, NeuraNode>,
+    mvp: Float32Array,
+    now: number,
+    modeId: number,
+    activeEdgeIds: Set<string>,
+    hasActiveFocus: boolean
+  ) {
+    if (!this.edgeProgram) return;
+
     this.gl.useProgram(this.edgeProgram);
 
     const eMvp = this.gl.getUniformLocation(this.edgeProgram, 'u_mvp_matrix');
@@ -366,16 +538,11 @@ export class WebGLEngine {
     const eTheme = this.gl.getUniformLocation(this.edgeProgram, 'u_theme_mode');
 
     this.gl.uniformMatrix4fv(eMvp, false, mvp);
-    this.gl.uniform1f(eTime, performance.now() / 1000.0);
+    this.gl.uniform1f(eTime, now);
     this.gl.uniform1i(eTheme, modeId);
 
     const edgePositions = new Float32Array(edges.length * 6);
     const edgeColors = new Float32Array(edges.length * 8);
-
-    const nodeLookup = new Map<string, NeuraNode>();
-    for (const node of nodes) {
-      nodeLookup.set(node.id, node);
-    }
 
     let edgeCount = 0;
     for (let i = 0; i < edges.length; i++) {
@@ -427,47 +594,39 @@ export class WebGLEngine {
     this.gl.vertexAttribPointer(eColorAttr, 4, this.gl.FLOAT, false, 0, 0);
 
     this.gl.drawArrays(this.gl.LINES, 0, edgeCount * 2);
+  }
 
-    // --- RENDER NODES ---
+  // ---------------------------------------------------------------------------
+  // Node Rendering with Activity & Halo
+  // ---------------------------------------------------------------------------
+
+  private renderNodes(
+    nodes: NeuraNode[],
+    mvp: Float32Array,
+    now: number,
+    modeId: number,
+    activeNodeIds: Set<string>,
+    hasActiveFocus: boolean
+  ) {
+    if (!this.nodeProgram) return;
+
     this.gl.useProgram(this.nodeProgram);
 
     const uMvp = this.gl.getUniformLocation(this.nodeProgram, 'u_mvp_matrix');
     const uVh = this.gl.getUniformLocation(this.nodeProgram, 'u_viewport_height');
     const uTheme = this.gl.getUniformLocation(this.nodeProgram, 'u_theme_mode');
+    const uTime = this.gl.getUniformLocation(this.nodeProgram, 'u_time');
 
     this.gl.uniformMatrix4fv(uMvp, false, mvp);
     this.gl.uniform1f(uVh, this.canvas.height || 600);
     this.gl.uniform1i(uTheme, modeId);
+    this.gl.uniform1f(uTime, now);
 
     const positions = new Float32Array(nodes.length * 3);
     const colors = new Float32Array(nodes.length * 4);
     const sizes = new Float32Array(nodes.length);
-
-    const getColor = (id: string): [number, number, number] => {
-      const hash = id.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
-      if (this.theme === 'cyber') {
-        const palettes = [
-          [0.0, 0.94, 1.0], // cyan
-          [0.0, 0.47, 1.0], // cobalt
-          [0.55, 0.36, 0.96], // indigo
-          [0.06, 0.72, 0.51], // emerald
-        ];
-        return palettes[Math.abs(hash) % palettes.length] as [number, number, number];
-      }
-      if (this.theme === 'neon') {
-        const palettes = [
-          [0.22, 1.0, 0.08], // neon green
-          [1.0, 0.03, 0.23], // neon pink
-          [0.0, 0.9, 1.0],   // electric blue
-          [0.74, 0.07, 1.0], // neon purple
-        ];
-        return palettes[Math.abs(hash) % palettes.length] as [number, number, number];
-      }
-      const r = ((hash >> 16) & 0xFF) / 255;
-      const g = ((hash >> 8) & 0xFF) / 255;
-      const b = (hash & 0xFF) / 255;
-      return [r, g, b];
-    };
+    const activities = new Float32Array(nodes.length);
+    const haloColors = new Float32Array(nodes.length * 3);
 
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i]!;
@@ -475,19 +634,7 @@ export class WebGLEngine {
       positions[i * 3 + 1] = node.y;
       positions[i * 3 + 2] = node.z ?? 0;
 
-      let r = 0.0, g = 0.47, b = 1.0;
-      if (node.metadata?.color && typeof node.metadata.color === 'string' && node.metadata.color.startsWith('#')) {
-        const hex = node.metadata.color.replace('#', '');
-        if (hex.length === 6) {
-          r = parseInt(hex.substring(0, 2), 16) / 255;
-          g = parseInt(hex.substring(2, 4), 16) / 255;
-          b = parseInt(hex.substring(4, 6), 16) / 255;
-        } else {
-          [r, g, b] = getColor(node.appartenanceId);
-        }
-      } else {
-        [r, g, b] = getColor(node.appartenanceId);
-      }
+      const [r, g, b] = this.getNodeColor(node);
 
       let brightness = 0.75 + (Math.min(1.0, node.weight / 15.0) * 0.4);
       let opacity = 0.5 + (Math.min(1.0, node.weight / 15.0) * 0.5);
@@ -502,34 +649,225 @@ export class WebGLEngine {
         }
       }
 
+      // Boost brightness for active nodes even outside hover/select focus
+      const activity = node.activity ?? 0;
+      if (activity > 0.1 && !hasActiveFocus) {
+        brightness = Math.max(brightness, 0.9 + activity * 0.4);
+        opacity = Math.max(opacity, 0.7 + activity * 0.3);
+      }
+
       colors[i * 4] = Math.min(1.0, r * brightness);
       colors[i * 4 + 1] = Math.min(1.0, g * brightness);
       colors[i * 4 + 2] = Math.min(1.0, b * brightness);
       colors[i * 4 + 3] = opacity;
 
       sizes[i] = node.weight;
+      activities[i] = activity;
+
+      // Halo color from node state
+      const state: NodeActivityState = node.state ?? 'idle';
+      const halo = STATE_HALO_COLORS[state];
+      haloColors[i * 3] = halo[0];
+      haloColors[i * 3 + 1] = halo[1];
+      haloColors[i * 3 + 2] = halo[2];
     }
 
+    // Position buffer
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodePositionBuffer);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.DYNAMIC_DRAW);
     const aPosition = this.gl.getAttribLocation(this.nodeProgram, 'a_position');
     this.gl.enableVertexAttribArray(aPosition);
     this.gl.vertexAttribPointer(aPosition, 3, this.gl.FLOAT, false, 0, 0);
 
+    // Color buffer
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodeColorBuffer);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, colors, this.gl.DYNAMIC_DRAW);
     const aColor = this.gl.getAttribLocation(this.nodeProgram, 'a_color');
     this.gl.enableVertexAttribArray(aColor);
     this.gl.vertexAttribPointer(aColor, 4, this.gl.FLOAT, false, 0, 0);
 
+    // Size buffer
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodeSizeBuffer);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, sizes, this.gl.DYNAMIC_DRAW);
     const aSizeAttr = this.gl.getAttribLocation(this.nodeProgram, 'a_size_attr');
     this.gl.enableVertexAttribArray(aSizeAttr);
     this.gl.vertexAttribPointer(aSizeAttr, 1, this.gl.FLOAT, false, 0, 0);
 
+    // Activity buffer
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodeActivityBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, activities, this.gl.DYNAMIC_DRAW);
+    const aActivity = this.gl.getAttribLocation(this.nodeProgram, 'a_activity');
+    this.gl.enableVertexAttribArray(aActivity);
+    this.gl.vertexAttribPointer(aActivity, 1, this.gl.FLOAT, false, 0, 0);
+
+    // Halo color buffer
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodeHaloColorBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, haloColors, this.gl.DYNAMIC_DRAW);
+    const aHaloColor = this.gl.getAttribLocation(this.nodeProgram, 'a_halo_color');
+    this.gl.enableVertexAttribArray(aHaloColor);
+    this.gl.vertexAttribPointer(aHaloColor, 3, this.gl.FLOAT, false, 0, 0);
+
     this.gl.drawArrays(this.gl.POINTS, 0, nodes.length);
   }
+
+  // ---------------------------------------------------------------------------
+  // Energy Beam Rendering (Additive Blending)
+  // ---------------------------------------------------------------------------
+
+  private renderBeams(
+    beams: NeuraEnergyBeam[],
+    nodeLookup: Map<string, NeuraNode>,
+    mvp: Float32Array,
+    now: number
+  ) {
+    if (!this.beamProgram || beams.length === 0) return;
+
+    // Switch to additive blending for luminous beam effect
+    this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE);
+    this.gl.depthMask(false);
+
+    this.gl.useProgram(this.beamProgram);
+
+    const uMvp = this.gl.getUniformLocation(this.beamProgram, 'u_mvp_matrix');
+    const uVh = this.gl.getUniformLocation(this.beamProgram, 'u_viewport_height');
+
+    this.gl.uniformMatrix4fv(uMvp, false, mvp);
+    this.gl.uniform1f(uVh, this.canvas.height || 600);
+
+    // Maximum particles = beams * trailing particles
+    const maxParticles = beams.length * BEAM_TRAIL_COUNT;
+    const positions = new Float32Array(maxParticles * 3);
+    const colors = new Float32Array(maxParticles * 4);
+    const sizes = new Float32Array(maxParticles);
+
+    let particleCount = 0;
+
+    for (const beam of beams) {
+      const source = nodeLookup.get(beam.sourceId);
+      const target = nodeLookup.get(beam.targetId);
+      if (!source || !target) continue;
+
+      const elapsed = (now * 1000 - beam.startedAt);
+      const progress = Math.min(1.0, elapsed / beam.durationMs);
+      const [br, bg, bb] = parseHexColor(beam.color);
+
+      // Generate trailing particles behind the beam head
+      for (let t = 0; t < BEAM_TRAIL_COUNT; t++) {
+        const trailOffset = t * 0.06; // spacing between trail particles
+        const p = Math.max(0, progress - trailOffset);
+
+        // Interpolate position along source → target
+        const px = source.x + (target.x - source.x) * p;
+        const py = source.y + (target.y - source.y) * p;
+        const pz = (source.z ?? 0) + ((target.z ?? 0) - (source.z ?? 0)) * p;
+
+        positions[particleCount * 3] = px;
+        positions[particleCount * 3 + 1] = py;
+        positions[particleCount * 3 + 2] = pz;
+
+        // Trail particles fade and shrink behind the head
+        const trailFade = 1.0 - (t / BEAM_TRAIL_COUNT);
+        colors[particleCount * 4] = br;
+        colors[particleCount * 4 + 1] = bg;
+        colors[particleCount * 4 + 2] = bb;
+        colors[particleCount * 4 + 3] = trailFade * 0.9;
+
+        // Head is largest, trail particles shrink
+        sizes[particleCount] = 6.0 * trailFade + 2.0;
+
+        particleCount++;
+      }
+    }
+
+    if (particleCount === 0) {
+      this.restoreBlending();
+      return;
+    }
+
+    // Position buffer
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.beamPositionBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, positions.subarray(0, particleCount * 3), this.gl.DYNAMIC_DRAW);
+    const aPos = this.gl.getAttribLocation(this.beamProgram, 'a_position');
+    this.gl.enableVertexAttribArray(aPos);
+    this.gl.vertexAttribPointer(aPos, 3, this.gl.FLOAT, false, 0, 0);
+
+    // Color buffer
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.beamColorBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, colors.subarray(0, particleCount * 4), this.gl.DYNAMIC_DRAW);
+    const aColor = this.gl.getAttribLocation(this.beamProgram, 'a_color');
+    this.gl.enableVertexAttribArray(aColor);
+    this.gl.vertexAttribPointer(aColor, 4, this.gl.FLOAT, false, 0, 0);
+
+    // Size buffer
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.beamSizeBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, sizes.subarray(0, particleCount), this.gl.DYNAMIC_DRAW);
+    const aSize = this.gl.getAttribLocation(this.beamProgram, 'a_size_attr');
+    this.gl.enableVertexAttribArray(aSize);
+    this.gl.vertexAttribPointer(aSize, 1, this.gl.FLOAT, false, 0, 0);
+
+    this.gl.drawArrays(this.gl.POINTS, 0, particleCount);
+
+    // Restore standard blending
+    this.restoreBlending();
+  }
+
+  /** Restore standard alpha blending after beam additive pass */
+  private restoreBlending() {
+    this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+    this.gl.depthMask(true);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Node Color Helpers
+  // ---------------------------------------------------------------------------
+
+  private getNodeColor(node: NeuraNode): [number, number, number] {
+    if (
+      node.metadata?.color &&
+      typeof node.metadata.color === 'string' &&
+      (node.metadata.color as string).startsWith('#')
+    ) {
+      const hex = (node.metadata.color as string).replace('#', '');
+      if (hex.length === 6) {
+        return [
+          parseInt(hex.substring(0, 2), 16) / 255,
+          parseInt(hex.substring(2, 4), 16) / 255,
+          parseInt(hex.substring(4, 6), 16) / 255,
+        ];
+      }
+    }
+    return this.getThemeColor(node.appartenanceId);
+  }
+
+  private getThemeColor(id: string): [number, number, number] {
+    const hash = id.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
+    if (this.theme === 'cyber') {
+      const palettes: [number, number, number][] = [
+        [0.0, 0.94, 1.0],     // cyan
+        [0.0, 0.47, 1.0],     // cobalt
+        [0.55, 0.36, 0.96],   // indigo
+        [0.06, 0.72, 0.51],   // emerald
+      ];
+      return palettes[Math.abs(hash) % palettes.length]!;
+    }
+    if (this.theme === 'neon') {
+      const palettes: [number, number, number][] = [
+        [0.22, 1.0, 0.08],    // neon green
+        [1.0, 0.03, 0.23],    // neon pink
+        [0.0, 0.9, 1.0],      // electric blue
+        [0.74, 0.07, 1.0],    // neon purple
+      ];
+      return palettes[Math.abs(hash) % palettes.length]!;
+    }
+    const r = ((hash >> 16) & 0xFF) / 255;
+    const g = ((hash >> 8) & 0xFF) / 255;
+    const b = (hash & 0xFF) / 255;
+    return [r, g, b];
+  }
+
+  // ---------------------------------------------------------------------------
+  // Loop Control
+  // ---------------------------------------------------------------------------
 
   public startLoop(renderCallback: () => void) {
     const loop = () => {
@@ -548,12 +886,21 @@ export class WebGLEngine {
 
   public destroy() {
     this.stopLoop();
+    // Node resources
     if (this.nodeProgram) this.gl.deleteProgram(this.nodeProgram);
-    if (this.edgeProgram) this.gl.deleteProgram(this.edgeProgram);
     if (this.nodePositionBuffer) this.gl.deleteBuffer(this.nodePositionBuffer);
     if (this.nodeColorBuffer) this.gl.deleteBuffer(this.nodeColorBuffer);
     if (this.nodeSizeBuffer) this.gl.deleteBuffer(this.nodeSizeBuffer);
+    if (this.nodeActivityBuffer) this.gl.deleteBuffer(this.nodeActivityBuffer);
+    if (this.nodeHaloColorBuffer) this.gl.deleteBuffer(this.nodeHaloColorBuffer);
+    // Edge resources
+    if (this.edgeProgram) this.gl.deleteProgram(this.edgeProgram);
     if (this.edgePositionBuffer) this.gl.deleteBuffer(this.edgePositionBuffer);
     if (this.edgeColorBuffer) this.gl.deleteBuffer(this.edgeColorBuffer);
+    // Beam resources
+    if (this.beamProgram) this.gl.deleteProgram(this.beamProgram);
+    if (this.beamPositionBuffer) this.gl.deleteBuffer(this.beamPositionBuffer);
+    if (this.beamColorBuffer) this.gl.deleteBuffer(this.beamColorBuffer);
+    if (this.beamSizeBuffer) this.gl.deleteBuffer(this.beamSizeBuffer);
   }
 }

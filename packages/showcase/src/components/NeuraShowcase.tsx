@@ -406,16 +406,17 @@ export function NeuraShowcase() {
               <div className="flex flex-col bg-slate-900/60 p-2 rounded border border-slate-800/60">
                 <span className="text-[10px] text-slate-500">Service Label</span>
                 <span className="text-slate-200 font-bold">
-                  {(selectedNode || hoveredNode)?.metadata?.name || `Node ${(selectedNode || hoveredNode)?.id}`}
+                  {String((selectedNode || hoveredNode)?.metadata?.name ?? '') || `Node ${(selectedNode || hoveredNode)?.id}`}
                 </span>
               </div>
 
               <div className="flex flex-col bg-slate-900/60 p-2 rounded border border-slate-800/60">
                 <span className="text-[10px] text-slate-500">Cluster Zone</span>
                 <span className="text-indigo-300 font-bold">
-                  {(selectedNode || hoveredNode)?.metadata?.cluster || (selectedNode || hoveredNode)?.appartenanceId}
+                  {String((selectedNode || hoveredNode)?.metadata?.cluster ?? '') || (selectedNode || hoveredNode)?.appartenanceId}
                 </span>
               </div>
+
 
               <div className="flex flex-col bg-slate-900/60 p-2 rounded border border-slate-800/60">
                 <span className="text-[10px] text-slate-500">Weight (Centrality)</span>

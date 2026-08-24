@@ -2,6 +2,7 @@ import { registerAuditTools } from './handlers/audit-tools.js';
 import { registerDiffTools } from './handlers/diff-tools.js';
 import { registerEntityTools } from './handlers/entity-tools.js';
 import { registerInteropTools } from './handlers/interop-tools.js';
+import { registerNeuraTools } from './handlers/neura-tools.js';
 import { registerSchemaTools } from './handlers/schema-tools.js';
 import { registerSessionTools } from './handlers/session-tools.js';
 import { registerTelemetryTools } from './handlers/telemetry-tools.js';
@@ -21,4 +22,6 @@ export function initializeToolRegistry(): void {
   registerDiffTools();
   registerInteropTools();
   registerAuditTools();
+  registerNeuraTools();
 }
+

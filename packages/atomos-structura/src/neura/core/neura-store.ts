@@ -1,5 +1,7 @@
 import { createSignal } from '@atomos-web/prime';
 
+export type NodeActivityState = 'idle' | 'routing' | 'active' | 'firing' | 'verifying' | 'learning';
+
 export interface NeuraNode {
   id: string;
   x: number;
@@ -7,8 +9,11 @@ export interface NeuraNode {
   z?: number;
   weight: number;
   appartenanceId: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   visible: boolean; // Managed by culling system
+  activity?: number;           // 0.0 = idle, 1.0 = maximum luminosity
+  state?: NodeActivityState;   // semantic state for color coding
+  pulseFrequency?: number;     // Hz, default ~2.0
 }
 
 export interface NeuraEdge {
@@ -17,6 +22,16 @@ export interface NeuraEdge {
   targetId: string;
   weight: number;
   visible: boolean; // Managed by culling system
+}
+
+export interface NeuraEnergyBeam {
+  id: string;
+  sourceId: string;
+  targetId: string;
+  progress: number;      // 0.0 → 1.0 interpolation along edge
+  color: string;         // hex color, e.g. '#00d4ff'
+  durationMs: number;    // total travel time in ms
+  startedAt: number;     // performance.now() timestamp
 }
 
 export interface NeuraViewport {
@@ -37,7 +52,18 @@ export interface NeuraState {
   viewport: NeuraViewport;
   hoveredNodeId: string | null;
   selectedNodeId: string | null;
+  energyBeams: NeuraEnergyBeam[];
 }
+
+/** Color mapping for NodeActivityState coronal halos */
+export const STATE_HALO_COLORS: Record<NodeActivityState, [number, number, number]> = {
+  idle:      [0.0, 0.0, 0.0],
+  routing:   [0.0, 0.83, 1.0],    // cyan #00d4ff
+  active:    [0.23, 0.51, 0.96],   // blue #3b82f6
+  firing:    [1.0, 0.42, 0.0],     // orange #ff6b00
+  verifying: [0.13, 0.77, 0.37],   // green #22c55e
+  learning:  [0.66, 0.33, 0.97],   // purple #a855f7
+};
 
 export function createNeuraStore() {
   const store = createSignal<NeuraState>({
@@ -56,6 +82,7 @@ export function createNeuraStore() {
     },
     hoveredNodeId: null,
     selectedNodeId: null,
+    energyBeams: [],
   });
 
   const setViewport = (viewport: Partial<NeuraViewport>) => {
@@ -84,10 +111,61 @@ export function createNeuraStore() {
     store.set({ ...state, edges: newEdges });
   };
 
+  const setNodeActivity = (nodeId: string, activity: number, nodeState?: NodeActivityState) => {
+    const state = store.value;
+    const node = state.nodes[nodeId];
+    if (!node) return;
+    store.set({
+      ...state,
+      nodes: {
+        ...state.nodes,
+        [nodeId]: {
+          ...node,
+          activity: Math.max(0, Math.min(1, activity)),
+          state: nodeState ?? node.state ?? 'idle',
+        },
+      },
+    });
+  };
+
+  const addEnergyBeam = (beam: NeuraEnergyBeam) => {
+    const state = store.value;
+    store.set({
+      ...state,
+      energyBeams: [...state.energyBeams, beam],
+    });
+  };
+
+  const removeBeam = (beamId: string) => {
+    const state = store.value;
+    store.set({
+      ...state,
+      energyBeams: state.energyBeams.filter(b => b.id !== beamId),
+    });
+  };
+
+  const resetAllActivities = () => {
+    const state = store.value;
+    const nextNodes: Record<string, NeuraNode> = {};
+    for (const key in state.nodes) {
+      const n = state.nodes[key]!;
+      nextNodes[key] = { ...n, activity: 0, state: 'idle' };
+    }
+    store.set({
+      ...state,
+      nodes: nextNodes,
+      energyBeams: [],
+    });
+  };
+
   return {
     store,
     setViewport,
     addNodes,
     addEdges,
+    setNodeActivity,
+    addEnergyBeam,
+    removeBeam,
+    resetAllActivities,
   };
 }

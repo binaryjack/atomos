@@ -1,5 +1,11 @@
 import { createNeuraStore } from './core/neura-store.js';
-import type { NeuraEdge, NeuraNode, NeuraViewport } from './core/neura-store.js';
+import type {
+  NeuraEdge,
+  NeuraEnergyBeam,
+  NeuraNode,
+  NeuraViewport,
+  NodeActivityState,
+} from './core/neura-store.js';
 import { CullingSystem } from './renderer/culling-system.js';
 import { type ShaderTheme, WebGLEngine } from './renderer/webgl-engine.js';
 import type { PhysicsParams } from './physics/worker.js';
@@ -28,6 +34,13 @@ export interface NeuraInstance {
   reheatPhysics: (alpha?: number) => void;
   getFPS: () => number;
   destroy: () => void;
+
+  // Telemetry & Illumination API
+  setNodeActivity: (nodeId: string, activity: number, state?: NodeActivityState) => void;
+  triggerEnergyBeam: (sourceId: string, targetId: string, color?: string, durationMs?: number) => void;
+  pulseNode: (nodeId: string, durationMs?: number, color?: string) => void;
+  resetAllActivities: () => void;
+  highlightRoute: (sourceId: string, targetId: string, keepActive?: boolean) => void;
 }
 
 // Inline Web Worker script for 3D physics simulation
@@ -176,6 +189,65 @@ export const createNeuraPhysicsWorker = (): Worker => {
   return new Worker(url);
 };
 
+// ---------------------------------------------------------------------------
+// BFS Shortest Path Helper
+// ---------------------------------------------------------------------------
+
+function bfsShortestPath(
+  sourceId: string,
+  targetId: string,
+  edges: Record<string, NeuraEdge>
+): string[] | null {
+  const adjacency = new Map<string, Array<{ neighborId: string; edgeId: string }>>();
+
+  for (const key in edges) {
+    const edge = edges[key]!;
+    if (!adjacency.has(edge.sourceId)) adjacency.set(edge.sourceId, []);
+    if (!adjacency.has(edge.targetId)) adjacency.set(edge.targetId, []);
+    adjacency.get(edge.sourceId)!.push({ neighborId: edge.targetId, edgeId: edge.id });
+    adjacency.get(edge.targetId)!.push({ neighborId: edge.sourceId, edgeId: edge.id });
+  }
+
+  if (!adjacency.has(sourceId) || !adjacency.has(targetId)) return null;
+
+  const visited = new Set<string>();
+  const queue: Array<{ nodeId: string; path: string[] }> = [
+    { nodeId: sourceId, path: [] },
+  ];
+  visited.add(sourceId);
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const neighbors = adjacency.get(current.nodeId) ?? [];
+
+    for (const { neighborId, edgeId } of neighbors) {
+      if (visited.has(neighborId)) continue;
+      const newPath = [...current.path, edgeId];
+
+      if (neighborId === targetId) return newPath;
+
+      visited.add(neighborId);
+      queue.push({ nodeId: neighborId, path: newPath });
+    }
+  }
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Beam ID Generator
+// ---------------------------------------------------------------------------
+
+let beamCounter = 0;
+function generateBeamId(): string {
+  beamCounter++;
+  return `beam_${beamCounter}_${Date.now()}`;
+}
+
+// ---------------------------------------------------------------------------
+// Create Neura Instance
+// ---------------------------------------------------------------------------
+
 export function createNeuraInstance(
   canvas: HTMLCanvasElement,
   options: NeuraInstanceOptions | string | URL = {}
@@ -185,7 +257,15 @@ export function createNeuraInstance(
       ? { worker: options }
       : options;
 
-  const { store, setViewport } = createNeuraStore();
+  const {
+    store,
+    setViewport,
+    setNodeActivity: storeSetNodeActivity,
+    addEnergyBeam,
+    removeBeam,
+    resetAllActivities: storeResetAllActivities,
+  } = createNeuraStore();
+
   const webgl = new WebGLEngine(canvas);
   if (opts.theme) webgl.setTheme(opts.theme);
 
@@ -288,85 +368,93 @@ export function createNeuraInstance(
 
   canvas.addEventListener('mousemove', (e) => {
     if (isDragging) {
-      const dx = e.clientX - lastX;
-      const dy = e.clientY - lastY;
-      lastX = e.clientX;
-      lastY = e.clientY;
-
-      const state = store.value;
-
-      if (isPanning) {
-        // 3D Camera Pan in screen space
-        const zoom = Math.max(0.01, state.viewport.zoom);
-        const panSpeed = (950 / zoom) / (canvas.clientHeight || 600);
-        const yaw = state.viewport.yaw ?? 0;
-
-        const panX = - (dx * Math.cos(yaw) * panSpeed);
-        const panY = dy * panSpeed;
-
-        setViewport({
-          x: state.viewport.x + panX,
-          y: state.viewport.y + panY,
-        });
-      } else {
-        // 3D Orbital Rotation (Left Click Drag)
-        const currentYaw = state.viewport.yaw ?? 0;
-        const currentPitch = state.viewport.pitch ?? 0;
-
-        const newYaw = currentYaw - dx * 0.007;
-        const newPitch = Math.max(-1.4, Math.min(1.4, currentPitch + dy * 0.007));
-
-        setViewport({
-          yaw: newYaw,
-          pitch: newPitch,
-        });
-      }
+      handleDragMove(e);
     } else {
-      // 3D Ray-cast hover detection using computed MVP matrix
-      const state = store.value;
-      const mvp = webgl.computeMVPMatrix(state.viewport);
-      const canvasW = canvas.width || 800;
-      const canvasH = canvas.height || 600;
+      handleHoverDetection(e);
+    }
+  });
 
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
+  function handleDragMove(e: MouseEvent) {
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
 
-      let closestNodeId: string | null = null;
-      let minDistance = 22;
+    const state = store.value;
 
-      for (const key in state.nodes) {
-        const n = state.nodes[key]!;
-        const nx = n.x;
-        const ny = n.y;
-        const nz = n.z ?? 0;
+    if (isPanning) {
+      // 3D Camera Pan in screen space
+      const zoom = Math.max(0.01, state.viewport.zoom);
+      const panSpeed = (950 / zoom) / (canvas.clientHeight || 600);
+      const yaw = state.viewport.yaw ?? 0;
 
-        const clipX = mvp[0]! * nx + mvp[4]! * ny + mvp[8]! * nz + mvp[12]!;
-        const clipY = mvp[1]! * nx + mvp[5]! * ny + mvp[9]! * nz + mvp[13]!;
-        const clipW = mvp[3]! * nx + mvp[7]! * ny + mvp[11]! * nz + mvp[15]!;
+      const panX = - (dx * Math.cos(yaw) * panSpeed);
+      const panY = dy * panSpeed;
 
-        if (clipW > 0.1) {
-          const sx = (clipX / clipW * 0.5 + 0.5) * canvasW;
-          const sy = (1.0 - (clipY / clipW * 0.5 + 0.5)) * canvasH;
+      setViewport({
+        x: state.viewport.x + panX,
+        y: state.viewport.y + panY,
+      });
+    } else {
+      // 3D Orbital Rotation (Left Click Drag)
+      const currentYaw = state.viewport.yaw ?? 0;
+      const currentPitch = state.viewport.pitch ?? 0;
 
-          const dist = Math.hypot(mouseX - sx, mouseY - sy);
-          const hitRadius = minDistance + (Math.min(20, n.weight) * 2);
+      const newYaw = currentYaw - dx * 0.007;
+      const newPitch = Math.max(-1.4, Math.min(1.4, currentPitch + dy * 0.007));
 
-          if (dist < hitRadius && dist < minDistance) {
-            minDistance = dist;
-            closestNodeId = n.id;
-          }
-        }
-      }
+      setViewport({
+        yaw: newYaw,
+        pitch: newPitch,
+      });
+    }
+  }
 
-      if (state.hoveredNodeId !== closestNodeId) {
-        store.set({ ...state, hoveredNodeId: closestNodeId });
-        if (opts.onNodeHover) {
-          opts.onNodeHover(closestNodeId ? state.nodes[closestNodeId] ?? null : null);
+  function handleHoverDetection(e: MouseEvent) {
+    // 3D Ray-cast hover detection using computed MVP matrix
+    const state = store.value;
+    const mvp = webgl.computeMVPMatrix(state.viewport);
+    const canvasW = canvas.width || 800;
+    const canvasH = canvas.height || 600;
+
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    let closestNodeId: string | null = null;
+    let minDistance = 22;
+
+    for (const key in state.nodes) {
+      const n = state.nodes[key]!;
+      const nx = n.x;
+      const ny = n.y;
+      const nz = n.z ?? 0;
+
+      const clipX = mvp[0]! * nx + mvp[4]! * ny + mvp[8]! * nz + mvp[12]!;
+      const clipY = mvp[1]! * nx + mvp[5]! * ny + mvp[9]! * nz + mvp[13]!;
+      const clipW = mvp[3]! * nx + mvp[7]! * ny + mvp[11]! * nz + mvp[15]!;
+
+      if (clipW > 0.1) {
+        const sx = (clipX / clipW * 0.5 + 0.5) * canvasW;
+        const sy = (1.0 - (clipY / clipW * 0.5 + 0.5)) * canvasH;
+
+        const dist = Math.hypot(mouseX - sx, mouseY - sy);
+        const hitRadius = minDistance + (Math.min(20, n.weight) * 2);
+
+        if (dist < hitRadius && dist < minDistance) {
+          minDistance = dist;
+          closestNodeId = n.id;
         }
       }
     }
-  });
+
+    if (state.hoveredNodeId !== closestNodeId) {
+      store.set({ ...state, hoveredNodeId: closestNodeId });
+      if (opts.onNodeHover) {
+        opts.onNodeHover(closestNodeId ? state.nodes[closestNodeId] ?? null : null);
+      }
+    }
+  }
 
   canvas.addEventListener('click', () => {
     const state = store.value;
@@ -455,7 +543,10 @@ export function createNeuraInstance(
     });
   };
 
-  // Render loop
+  // ---------------------------------------------------------------------------
+  // Render Loop (with beam progress management)
+  // ---------------------------------------------------------------------------
+
   webgl.startLoop(() => {
     const state = store.value;
 
@@ -474,6 +565,12 @@ export function createNeuraInstance(
       frameCount = 0;
       lastFrameTime = now;
       if (opts.onFPS) opts.onFPS(currentFPS);
+    }
+
+    // Advance beam progress and prune completed beams
+    const liveBeams = pruneCompletedBeams(state.energyBeams, now);
+    if (liveBeams.length !== state.energyBeams.length) {
+      store.set({ ...store.value, energyBeams: liveBeams });
     }
 
     // 1. Cull off-screen items
@@ -496,10 +593,41 @@ export function createNeuraInstance(
       }
     }
 
-    // 3. Render WebGL 3D
-    webgl.render(visibleNodes, visibleEdges, state.viewport, activeNodeIds, activeEdgeIds, !!focusId);
+    // 3. Render WebGL 3D (with energy beams)
+    webgl.render(
+      visibleNodes,
+      visibleEdges,
+      state.viewport,
+      activeNodeIds,
+      activeEdgeIds,
+      !!focusId,
+      liveBeams
+    );
 
     // 4. HTML Overlay Labels projected in 3D
+    renderOverlayLabels(visibleNodes, state, focusId);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Beam Lifecycle
+  // ---------------------------------------------------------------------------
+
+  function pruneCompletedBeams(beams: NeuraEnergyBeam[], nowMs: number): NeuraEnergyBeam[] {
+    return beams.filter(beam => {
+      const elapsed = nowMs - beam.startedAt;
+      return elapsed < beam.durationMs;
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Overlay Labels (extracted from render loop)
+  // ---------------------------------------------------------------------------
+
+  function renderOverlayLabels(
+    visibleNodes: NeuraNode[],
+    state: { viewport: NeuraViewport; hoveredNodeId: string | null; selectedNodeId: string | null },
+    focusId: string | null
+  ) {
     const renderedIds = new Set<string>();
     const isZoomedIn = state.viewport.zoom >= 0.7;
     const mvp = webgl.computeMVPMatrix(state.viewport);
@@ -509,8 +637,9 @@ export function createNeuraInstance(
     for (const node of visibleNodes) {
       const isFocused = node.id === focusId;
       const isMajorFile = isZoomedIn && node.metadata?.kind === 'file';
+      const isActive = (node.activity ?? 0) > 0.3;
 
-      if (isFocused || isMajorFile) {
+      if (isFocused || isMajorFile || isActive) {
         const nx = node.x;
         const ny = node.y;
         const nz = node.z ?? 0;
@@ -541,7 +670,7 @@ export function createNeuraInstance(
             labelsMap.set(node.id, el);
           }
 
-          const labelText = node.metadata?.label || node.metadata?.name || node.id;
+          const labelText = (node.metadata?.label ?? node.metadata?.name ?? node.id) as string;
           el.innerText = labelText;
 
           el.style.left = `${screenX}px`;
@@ -555,6 +684,15 @@ export function createNeuraInstance(
             el.style.fontSize = '12px';
             el.style.fontWeight = 'bold';
             el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.6)';
+          } else if (isActive) {
+            // Active telemetry nodes get highlighted labels
+            el.style.zIndex = '50';
+            el.style.color = '#fbbf24';
+            el.style.background = 'rgba(15, 23, 42, 0.8)';
+            el.style.border = '1px solid rgba(251, 191, 36, 0.4)';
+            el.style.fontSize = '11px';
+            el.style.fontWeight = '600';
+            el.style.boxShadow = '0 3px 8px rgba(0,0,0,0.5)';
           } else {
             el.style.zIndex = '10';
             el.style.color = '#cbd5e1';
@@ -574,7 +712,11 @@ export function createNeuraInstance(
         labelsMap.delete(id);
       }
     }
-  });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Graph Loading & Mock Data
+  // ---------------------------------------------------------------------------
 
   const loadGraph = (nodes: NeuraNode[], edges: NeuraEdge[]) => {
     const state = store.value;
@@ -595,6 +737,7 @@ export function createNeuraInstance(
       edges: edgeMap,
       hoveredNodeId: null,
       selectedNodeId: null,
+      energyBeams: [],
       viewport: {
         ...state.viewport,
         x: 0,
@@ -703,6 +846,98 @@ export function createNeuraInstance(
     loadGraph(nodes, edges);
   };
 
+  // ---------------------------------------------------------------------------
+  // Telemetry & Illumination API
+  // ---------------------------------------------------------------------------
+
+  const setNodeActivity = (nodeId: string, activity: number, nodeState?: NodeActivityState) => {
+    storeSetNodeActivity(nodeId, activity, nodeState);
+  };
+
+  const triggerEnergyBeam = (
+    sourceId: string,
+    targetId: string,
+    color = '#00d4ff',
+    durationMs = 800
+  ) => {
+    const beam: NeuraEnergyBeam = {
+      id: generateBeamId(),
+      sourceId,
+      targetId,
+      progress: 0,
+      color,
+      durationMs,
+      startedAt: performance.now(),
+    };
+    addEnergyBeam(beam);
+  };
+
+  const pulseNode = (nodeId: string, durationMs = 400, _color?: string) => {
+    const state = store.value;
+    const node = state.nodes[nodeId];
+    if (!node) return;
+
+    const previousActivity = node.activity ?? 0;
+    storeSetNodeActivity(nodeId, 1.0, node.state ?? 'firing');
+
+    // Decay back to previous level
+    const startTime = performance.now();
+    const decayLoop = () => {
+      const elapsed = performance.now() - startTime;
+      const progress = Math.min(1.0, elapsed / durationMs);
+      const ease = 1 - Math.pow(1 - progress, 2); // quadratic ease-out
+      const currentActivity = 1.0 - (1.0 - previousActivity) * ease;
+
+      storeSetNodeActivity(nodeId, currentActivity);
+
+      if (progress < 1.0) {
+        requestAnimationFrame(decayLoop);
+      }
+    };
+    requestAnimationFrame(decayLoop);
+  };
+
+  const resetAllActivities = () => {
+    storeResetAllActivities();
+  };
+
+  const highlightRoute = (sourceId: string, targetId: string, keepActive = false) => {
+    const state = store.value;
+    const edgePath = bfsShortestPath(sourceId, targetId, state.edges);
+    if (!edgePath || edgePath.length === 0) return;
+
+    // Activate source and target nodes
+    storeSetNodeActivity(sourceId, 0.8, 'routing');
+    storeSetNodeActivity(targetId, 0.8, 'active');
+
+    // Fire sequential beams along the path
+    let delay = 0;
+    const beamDuration = 600;
+    const stepDelay = 300;
+
+    for (const edgeId of edgePath) {
+      const edge = state.edges[edgeId];
+      if (!edge) continue;
+
+      const capturedSourceId = edge.sourceId;
+      const capturedTargetId = edge.targetId;
+
+      setTimeout(() => {
+        triggerEnergyBeam(capturedSourceId, capturedTargetId, '#00d4ff', beamDuration);
+        if (keepActive) {
+          storeSetNodeActivity(capturedSourceId, 0.6, 'routing');
+          storeSetNodeActivity(capturedTargetId, 0.6, 'routing');
+        }
+      }, delay);
+
+      delay += stepDelay;
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Standard Controls
+  // ---------------------------------------------------------------------------
+
   const setPhysicsParams = (params: Partial<PhysicsParams>) => {
     worker.postMessage({ type: 'SET_PARAMS', payload: params });
   };
@@ -740,5 +975,11 @@ export function createNeuraInstance(
     reheatPhysics,
     getFPS,
     destroy,
+    // Telemetry API
+    setNodeActivity,
+    triggerEnergyBeam,
+    pulseNode,
+    resetAllActivities,
+    highlightRoute,
   };
 }
