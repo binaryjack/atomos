@@ -5,6 +5,7 @@ import type {
   NeuraNode,
   NeuraViewport,
   NodeActivityState,
+  ThinkingPulseState,
 } from './core/neura-store.js';
 import { CullingSystem } from './renderer/culling-system.js';
 import { type ShaderTheme, WebGLEngine } from './renderer/webgl-engine.js';
@@ -41,6 +42,11 @@ export interface NeuraInstance {
   pulseNode: (nodeId: string, durationMs?: number, color?: string) => void;
   resetAllActivities: () => void;
   highlightRoute: (sourceId: string, targetId: string, keepActive?: boolean) => void;
+
+  // Empathic Listening & Synaptic Charge API
+  setCognitiveCharge: (level: number, originSlotId?: number) => void;
+  fireThinkingPulse: (color?: string) => void;
+  releaseCognitiveCharge: (activeSlotId: number) => void;
 }
 
 // Inline Web Worker script for 3D physics simulation
@@ -262,7 +268,8 @@ export function createNeuraInstance(
     setViewport,
     setNodeActivity: storeSetNodeActivity,
     addEnergyBeam,
-    removeBeam,
+    setCognitiveChargeStore,
+    setThinkingPulseStore,
     resetAllActivities: storeResetAllActivities,
   } = createNeuraStore();
 
@@ -544,7 +551,7 @@ export function createNeuraInstance(
   };
 
   // ---------------------------------------------------------------------------
-  // Render Loop (with beam progress management)
+  // Render Loop (with beam progress management & cognitive state)
   // ---------------------------------------------------------------------------
 
   webgl.startLoop(() => {
@@ -573,6 +580,16 @@ export function createNeuraInstance(
       store.set({ ...store.value, energyBeams: liveBeams });
     }
 
+    // Prune expired thinking pulse
+    let currentPulse = state.thinkingPulse;
+    if (currentPulse && currentPulse.active) {
+      const elapsed = now - currentPulse.startTime;
+      if (elapsed > currentPulse.durationMs) {
+        currentPulse = null;
+        setThinkingPulseStore(null);
+      }
+    }
+
     // 1. Cull off-screen items
     const { visibleNodes, visibleEdges } = culling.cull(state.nodes, state.edges, state.viewport);
 
@@ -593,7 +610,7 @@ export function createNeuraInstance(
       }
     }
 
-    // 3. Render WebGL 3D (with energy beams)
+    // 3. Render WebGL 3D (with energy beams, cognitive charge & thinking pulse)
     webgl.render(
       visibleNodes,
       visibleEdges,
@@ -601,7 +618,9 @@ export function createNeuraInstance(
       activeNodeIds,
       activeEdgeIds,
       !!focusId,
-      liveBeams
+      liveBeams,
+      state.cognitiveCharge,
+      currentPulse
     );
 
     // 4. HTML Overlay Labels projected in 3D
@@ -620,7 +639,7 @@ export function createNeuraInstance(
   }
 
   // ---------------------------------------------------------------------------
-  // Overlay Labels (extracted from render loop)
+  // Overlay Labels
   // ---------------------------------------------------------------------------
 
   function renderOverlayLabels(
@@ -738,6 +757,8 @@ export function createNeuraInstance(
       hoveredNodeId: null,
       selectedNodeId: null,
       energyBeams: [],
+      cognitiveCharge: 0.0,
+      thinkingPulse: null,
       viewport: {
         ...state.viewport,
         x: 0,
@@ -935,6 +956,104 @@ export function createNeuraInstance(
   };
 
   // ---------------------------------------------------------------------------
+  // Empathic Listening & Synaptic Charge API
+  // ---------------------------------------------------------------------------
+
+  const setCognitiveCharge = (level: number, originSlotId?: number) => {
+    const clamped = Math.max(0.0, Math.min(1.0, level));
+    setCognitiveChargeStore(clamped);
+
+    // If active charge accumulates, trigger micro-impulses on ALTYN center / origin slot edges
+    if (clamped > 0.05) {
+      const state = store.value;
+      const centralNodeId = originSlotId !== undefined
+        ? (`slot-${originSlotId}` in state.nodes ? `slot-${originSlotId}` : `n${originSlotId}`)
+        : (state.nodes['n0'] ? 'n0' : Object.keys(state.nodes)[0]);
+
+      if (centralNodeId && state.nodes[centralNodeId]) {
+        // Find connected edges to central node
+        const connectedEdges = Object.values(state.edges).filter(
+          e => e.sourceId === centralNodeId || e.targetId === centralNodeId
+        );
+
+        if (connectedEdges.length > 0) {
+          // Select 1-2 edges for micro-pulses proportional to charge
+          const edge = connectedEdges[Math.floor(Math.random() * connectedEdges.length)];
+          if (edge) {
+            triggerEnergyBeam(edge.sourceId, edge.targetId, '#38bdf8', 600);
+          }
+        }
+      }
+    }
+  };
+
+  const fireThinkingPulse = (color = '#38bdf8') => {
+    const state = store.value;
+    // Calculate max 3D radius from graph nodes
+    let maxR = 1200;
+    for (const key in state.nodes) {
+      const n = state.nodes[key]!;
+      const r = Math.hypot(n.x, n.y, n.z ?? 0);
+      if (r > maxR) maxR = r;
+    }
+
+    setThinkingPulseStore({
+      active: true,
+      startTime: performance.now(),
+      durationMs: 1200,
+      color,
+      origin: [0, 0, 0],
+      maxRadius: maxR * 1.2,
+    });
+  };
+
+  const releaseCognitiveCharge = (activeSlotId: number) => {
+    const state = store.value;
+
+    // Resolve target specialist slot node ID
+    const targetSlotId = `slot-${activeSlotId}` in state.nodes
+      ? `slot-${activeSlotId}`
+      : `n${activeSlotId}` in state.nodes
+      ? `n${activeSlotId}`
+      : Object.keys(state.nodes)[0];
+
+    if (targetSlotId && state.nodes[targetSlotId]) {
+      // Find neighboring nodes connecting to the active specialist slot
+      const connectedEdges = Object.values(state.edges).filter(
+        e => e.sourceId === targetSlotId || e.targetId === targetSlotId
+      );
+
+      // Fire converging energy beams towards the active slot
+      for (const edge of connectedEdges) {
+        const source = edge.sourceId === targetSlotId ? edge.targetId : edge.sourceId;
+        triggerEnergyBeam(source, targetSlotId, '#f59e0b', 700);
+      }
+
+      // Highlight active specialist slot node
+      storeSetNodeActivity(targetSlotId, 1.0, 'active');
+    }
+
+    // Smoothly decay cognitive charge back to 0.0 rest level over 800ms
+    const startCharge = state.cognitiveCharge;
+    const startTime = performance.now();
+
+    const decayLoop = () => {
+      const elapsed = performance.now() - startTime;
+      const progress = Math.min(1.0, elapsed / 800);
+      const ease = 1 - Math.pow(1 - progress, 2); // quadratic ease-out
+      const currentCharge = startCharge * (1.0 - ease);
+
+      setCognitiveChargeStore(currentCharge);
+
+      if (progress < 1.0) {
+        requestAnimationFrame(decayLoop);
+      }
+    };
+
+    requestAnimationFrame(decayLoop);
+  };
+
+  // ---------------------------------------------------------------------------
   // Standard Controls
   // ---------------------------------------------------------------------------
 
@@ -981,5 +1100,9 @@ export function createNeuraInstance(
     pulseNode,
     resetAllActivities,
     highlightRoute,
+    // Empathic Listening & Synaptic Charge API
+    setCognitiveCharge,
+    fireThinkingPulse,
+    releaseCognitiveCharge,
   };
 }

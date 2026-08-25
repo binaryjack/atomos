@@ -161,4 +161,80 @@ export function registerNeuraTools(): void {
       return { result: { success: true }, id: reqId };
     }
   );
+
+  // 5. neura_set_cognitive_charge
+  toolRegistry.registerTool(
+    {
+      name: 'neura_set_cognitive_charge',
+      description: 'Set user speech dictation cognitive charge level (0.0 rest -> 1.0 max charge) for empathic non-verbal listening feedback.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          level: { type: 'number', description: 'Cognitive charge level from 0.0 to 1.0' },
+          originSlotId: { type: 'number', description: 'Optional origin slot ID for micro-impulses (e.g. ALTYN slot 0)' },
+        },
+        required: ['level'],
+      },
+    },
+    (srv: VbsMcpServerInstance, reqId: string, args: Record<string, unknown>): McpResponse => {
+      emit_sse(srv._clients, 'neura-telemetry', {
+        type: 'set-cognitive-charge',
+        payload: {
+          level: args.level,
+          originSlotId: args.originSlotId,
+        },
+      });
+
+      return { result: { success: true, level: args.level }, id: reqId };
+    }
+  );
+
+  // 6. neura_fire_thinking_pulse
+  toolRegistry.registerTool(
+    {
+      name: 'neura_fire_thinking_pulse',
+      description: 'Fire a 3D spherical shockwave (thinking pulse / synaptic ripple) across Neura WebGL when deliberation starts.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          color: { type: 'string', description: 'Hex color string (e.g. #f59e0b amber or #38bdf8 cyan)' },
+        },
+      },
+    },
+    (srv: VbsMcpServerInstance, reqId: string, args: Record<string, unknown>): McpResponse => {
+      emit_sse(srv._clients, 'neura-telemetry', {
+        type: 'fire-thinking-pulse',
+        payload: {
+          color: args.color ?? '#38bdf8',
+        },
+      });
+
+      return { result: { success: true, color: args.color ?? '#38bdf8' }, id: reqId };
+    }
+  );
+
+  // 7. neura_release_cognitive_charge
+  toolRegistry.registerTool(
+    {
+      name: 'neura_release_cognitive_charge',
+      description: 'Release cognitive charge when model output tokens begin, converging network energy towards active specialist slot.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          activeSlotId: { type: 'number', description: 'Target specialist NanoMesh slot ID receiving energy flow' },
+        },
+        required: ['activeSlotId'],
+      },
+    },
+    (srv: VbsMcpServerInstance, reqId: string, args: Record<string, unknown>): McpResponse => {
+      emit_sse(srv._clients, 'neura-telemetry', {
+        type: 'release-cognitive-charge',
+        payload: {
+          activeSlotId: args.activeSlotId,
+        },
+      });
+
+      return { result: { success: true, activeSlotId: args.activeSlotId }, id: reqId };
+    }
+  );
 }

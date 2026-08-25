@@ -4,6 +4,7 @@ import type {
   NeuraEnergyBeam,
   NeuraViewport,
   NodeActivityState,
+  ThinkingPulseState,
 } from '../core/neura-store.js';
 import { STATE_HALO_COLORS } from '../core/neura-store.js';
 
@@ -124,7 +125,7 @@ function mat4Multiply(out: Float32Array, a: Float32Array, b: Float32Array): Floa
 // GLSL Shader Sources
 // ---------------------------------------------------------------------------
 
-/** Node vertex shader with activity-driven pulsation */
+/** Node vertex shader with activity-driven pulsation and cognitive charge scaling */
 const nodeVertexShaderSource = `
   precision mediump float;
   attribute vec3 a_position;
@@ -136,8 +137,10 @@ const nodeVertexShaderSource = `
   uniform mat4 u_mvp_matrix;
   uniform float u_viewport_height;
   uniform float u_time;
+  uniform float u_cognitive_charge;
 
   varying vec4 v_color;
+  varying vec3 v_world_pos;
   varying float v_depth;
   varying float v_activity;
   varying vec3 v_halo_color;
@@ -146,28 +149,40 @@ const nodeVertexShaderSource = `
     vec4 clipPos = u_mvp_matrix * vec4(a_position, 1.0);
     gl_Position = clipPos;
 
-    // Pulse modulation: active nodes grow 20%-50% via sinusoidal breathing
-    float pulseScale = 1.0 + a_activity * (0.2 + 0.3 * (0.5 + 0.5 * sin(u_time * 4.0)));
+    // Cognitive charge scales node point size dynamically (0.2 rest -> 0.9 full charge)
+    float chargeScale = 1.0 + u_cognitive_charge * 0.45;
+    float pulseScale = (1.0 + a_activity * (0.2 + 0.3 * (0.5 + 0.5 * sin(u_time * 4.0)))) * chargeScale;
     float baseSize = clamp(a_size_attr, 3.0, 20.0) * pulseScale;
     float pointScale = (baseSize * u_viewport_height * 0.75) / max(0.1, clipPos.w);
-    gl_PointSize = clamp(pointScale, 2.5, 48.0);
+    gl_PointSize = clamp(pointScale, 2.5, 54.0);
 
     v_color = a_color;
+    v_world_pos = a_position;
     v_depth = clamp((clipPos.z / max(0.1, clipPos.w)) * 0.5 + 0.5, 0.0, 1.0);
     v_activity = a_activity;
     v_halo_color = a_halo_color;
   }
 `;
 
-/** Node fragment shader with coronal halo effect */
+/** Node fragment shader with coronal halo and 3D spherical ripple shockwave */
 const nodeFragmentShaderSource = `
   precision mediump float;
   varying vec4 v_color;
+  varying vec3 v_world_pos;
   varying float v_depth;
   varying float v_activity;
   varying vec3 v_halo_color;
   uniform int u_theme_mode;
   uniform float u_time;
+  uniform float u_cognitive_charge;
+
+  // Thinking Pulse (3D Spherical Ripple)
+  uniform float u_ripple_active;
+  uniform float u_ripple_time;
+  uniform float u_ripple_duration;
+  uniform float u_ripple_max_radius;
+  uniform vec3 u_ripple_origin;
+  uniform vec3 u_ripple_color;
 
   void main() {
     vec2 coord = gl_PointCoord - vec2(0.5);
@@ -179,13 +194,29 @@ const nodeFragmentShaderSource = `
     // Cosmic Fog: gently fade distant nodes in depth
     float fog = 1.0 - smoothstep(0.45, 1.0, v_depth) * 0.5;
 
-    // Base color with theme glow
+    // Cognitive Charge scales bloom / emissive baseline (0.2 at rest -> 0.9 at full charge)
+    float chargeGlow = 0.2 + 0.7 * clamp(u_cognitive_charge, 0.0, 1.0);
+
+    // Base color with theme glow & charge scaling
     vec4 baseColor;
     if (u_theme_mode == 2 || u_theme_mode == 3 || u_theme_mode == 4) {
       float glow = 1.0 - smoothstep(0.25, 0.5, dist);
-      baseColor = vec4(v_color.rgb * (1.0 + glow * 0.4), v_color.a * glow * fog);
+      baseColor = vec4(v_color.rgb * (1.0 + glow * (0.4 + chargeGlow * 0.8)), v_color.a * glow * fog * (0.7 + chargeGlow * 0.3));
     } else {
-      baseColor = vec4(v_color.rgb, v_color.a * fog);
+      baseColor = vec4(v_color.rgb * (0.8 + chargeGlow * 0.4), v_color.a * fog);
+    }
+
+    // Thinking Pulse (3D Spherical Shockwave)
+    if (u_ripple_active > 0.5) {
+      float dist3D = length(v_world_pos - u_ripple_origin);
+      float progress = clamp(u_ripple_time / max(0.001, u_ripple_duration), 0.0, 1.0);
+      float waveRadius = progress * u_ripple_max_radius;
+      float bandWidth = 120.0 + progress * 80.0;
+      float ring = exp(-pow(dist3D - waveRadius, 2.0) / (2.0 * bandWidth * bandWidth));
+      float fade = 1.0 - smoothstep(0.7, 1.0, progress);
+      vec3 rippleGlow = u_ripple_color * ring * fade * 1.5;
+      baseColor.rgb += rippleGlow;
+      baseColor.a = min(1.0, baseColor.a + ring * fade * 0.5);
     }
 
     // Coronal Halo: bright inner core + pulsating outer corona ring
@@ -238,17 +269,44 @@ const edgeFragmentShaderSource = `
   varying float v_depth;
   uniform float u_time;
   uniform int u_theme_mode;
+  uniform float u_cognitive_charge;
+
+  // Thinking Pulse (3D Spherical Ripple)
+  uniform float u_ripple_active;
+  uniform float u_ripple_time;
+  uniform float u_ripple_duration;
+  uniform float u_ripple_max_radius;
+  uniform vec3 u_ripple_origin;
+  uniform vec3 u_ripple_color;
 
   void main() {
     float pulseSpeed = (u_theme_mode == 3 || u_theme_mode == 4) ? 4.0 : 2.0;
     float pulse = 0.5 + 0.5 * sin(u_time * pulseSpeed + (v_world_pos.x + v_world_pos.y + v_world_pos.z) * 0.02);
     float fog = 1.0 - smoothstep(0.45, 1.0, v_depth) * 0.55;
 
+    // Cognitive Charge scaling (0.2 at rest -> 0.9 at full charge)
+    float chargeGlow = 0.2 + 0.7 * clamp(u_cognitive_charge, 0.0, 1.0);
+
+    vec4 baseColor;
     if (u_theme_mode == 4) { // Cyber mode
-      gl_FragColor = vec4(v_color.rgb * (0.8 + 0.3 * pulse), v_color.a * (0.35 + 0.45 * pulse) * fog);
+      baseColor = vec4(v_color.rgb * (0.8 + 0.3 * pulse + chargeGlow * 0.5), v_color.a * (0.35 + 0.45 * pulse + chargeGlow * 0.3) * fog);
     } else {
-      gl_FragColor = vec4(v_color.rgb, v_color.a * (0.4 + 0.4 * pulse) * fog);
+      baseColor = vec4(v_color.rgb * (1.0 + chargeGlow * 0.4), v_color.a * (0.4 + 0.4 * pulse + chargeGlow * 0.3) * fog);
     }
+
+    // Thinking Pulse (Spherical Shockwave on Edges)
+    if (u_ripple_active > 0.5) {
+      float dist3D = length(v_world_pos - u_ripple_origin);
+      float progress = clamp(u_ripple_time / max(0.001, u_ripple_duration), 0.0, 1.0);
+      float waveRadius = progress * u_ripple_max_radius;
+      float bandWidth = 120.0 + progress * 80.0;
+      float ring = exp(-pow(dist3D - waveRadius, 2.0) / (2.0 * bandWidth * bandWidth));
+      float fade = 1.0 - smoothstep(0.7, 1.0, progress);
+      baseColor.rgb += u_ripple_color * ring * fade * 1.2;
+      baseColor.a = min(1.0, baseColor.a + ring * fade * 0.6);
+    }
+
+    gl_FragColor = baseColor;
   }
 `;
 
@@ -498,7 +556,9 @@ export class WebGLEngine {
     activeNodeIds: Set<string>,
     activeEdgeIds: Set<string>,
     hasActiveFocus: boolean,
-    energyBeams: NeuraEnergyBeam[] = []
+    energyBeams: NeuraEnergyBeam[] = [],
+    cognitiveCharge = 0.0,
+    thinkingPulse: ThinkingPulseState | null = null
   ) {
     if (!this.nodeProgram || !this.edgeProgram || !this.beamProgram) return;
 
@@ -514,8 +574,8 @@ export class WebGLEngine {
       nodeLookup.set(node.id, node);
     }
 
-    this.renderEdges(edges, nodeLookup, mvp, now, modeId, activeEdgeIds, hasActiveFocus);
-    this.renderNodes(nodes, mvp, now, modeId, activeNodeIds, hasActiveFocus);
+    this.renderEdges(edges, nodeLookup, mvp, now, modeId, activeEdgeIds, hasActiveFocus, cognitiveCharge, thinkingPulse);
+    this.renderNodes(nodes, mvp, now, modeId, activeNodeIds, hasActiveFocus, cognitiveCharge, thinkingPulse);
     this.renderBeams(energyBeams, nodeLookup, mvp, now);
   }
 
@@ -530,7 +590,9 @@ export class WebGLEngine {
     now: number,
     modeId: number,
     activeEdgeIds: Set<string>,
-    hasActiveFocus: boolean
+    hasActiveFocus: boolean,
+    cognitiveCharge: number,
+    thinkingPulse: ThinkingPulseState | null
   ) {
     if (!this.edgeProgram) return;
 
@@ -539,10 +601,32 @@ export class WebGLEngine {
     const eMvp = this.gl.getUniformLocation(this.edgeProgram, 'u_mvp_matrix');
     const eTime = this.gl.getUniformLocation(this.edgeProgram, 'u_time');
     const eTheme = this.gl.getUniformLocation(this.edgeProgram, 'u_theme_mode');
+    const eCharge = this.gl.getUniformLocation(this.edgeProgram, 'u_cognitive_charge');
+
+    const uRipActive = this.gl.getUniformLocation(this.edgeProgram, 'u_ripple_active');
+    const uRipTime = this.gl.getUniformLocation(this.edgeProgram, 'u_ripple_time');
+    const uRipDuration = this.gl.getUniformLocation(this.edgeProgram, 'u_ripple_duration');
+    const uRipMaxRadius = this.gl.getUniformLocation(this.edgeProgram, 'u_ripple_max_radius');
+    const uRipOrigin = this.gl.getUniformLocation(this.edgeProgram, 'u_ripple_origin');
+    const uRipColor = this.gl.getUniformLocation(this.edgeProgram, 'u_ripple_color');
 
     this.gl.uniformMatrix4fv(eMvp, false, mvp);
     this.gl.uniform1f(eTime, now);
     this.gl.uniform1i(eTheme, modeId);
+    this.gl.uniform1f(eCharge, cognitiveCharge);
+
+    if (thinkingPulse && thinkingPulse.active) {
+      const elapsed = performance.now() - thinkingPulse.startTime;
+      const rgb = parseHexColor(thinkingPulse.color);
+      this.gl.uniform1f(uRipActive, 1.0);
+      this.gl.uniform1f(uRipTime, elapsed);
+      this.gl.uniform1f(uRipDuration, thinkingPulse.durationMs);
+      this.gl.uniform1f(uRipMaxRadius, thinkingPulse.maxRadius);
+      this.gl.uniform3f(uRipOrigin, thinkingPulse.origin[0], thinkingPulse.origin[1], thinkingPulse.origin[2]);
+      this.gl.uniform3f(uRipColor, rgb[0], rgb[1], rgb[2]);
+    } else {
+      this.gl.uniform1f(uRipActive, 0.0);
+    }
 
     const edgePositions = new Float32Array(edges.length * 6);
     const edgeColors = new Float32Array(edges.length * 8);
@@ -600,7 +684,7 @@ export class WebGLEngine {
   }
 
   // ---------------------------------------------------------------------------
-  // Node Rendering with Activity & Halo
+  // Node Rendering with Activity, Halo & Cognitive Charge
   // ---------------------------------------------------------------------------
 
   private renderNodes(
@@ -609,7 +693,9 @@ export class WebGLEngine {
     now: number,
     modeId: number,
     activeNodeIds: Set<string>,
-    hasActiveFocus: boolean
+    hasActiveFocus: boolean,
+    cognitiveCharge: number,
+    thinkingPulse: ThinkingPulseState | null
   ) {
     if (!this.nodeProgram) return;
 
@@ -619,11 +705,33 @@ export class WebGLEngine {
     const uVh = this.gl.getUniformLocation(this.nodeProgram, 'u_viewport_height');
     const uTheme = this.gl.getUniformLocation(this.nodeProgram, 'u_theme_mode');
     const uTime = this.gl.getUniformLocation(this.nodeProgram, 'u_time');
+    const uCharge = this.gl.getUniformLocation(this.nodeProgram, 'u_cognitive_charge');
+
+    const uRipActive = this.gl.getUniformLocation(this.nodeProgram, 'u_ripple_active');
+    const uRipTime = this.gl.getUniformLocation(this.nodeProgram, 'u_ripple_time');
+    const uRipDuration = this.gl.getUniformLocation(this.nodeProgram, 'u_ripple_duration');
+    const uRipMaxRadius = this.gl.getUniformLocation(this.nodeProgram, 'u_ripple_max_radius');
+    const uRipOrigin = this.gl.getUniformLocation(this.nodeProgram, 'u_ripple_origin');
+    const uRipColor = this.gl.getUniformLocation(this.nodeProgram, 'u_ripple_color');
 
     this.gl.uniformMatrix4fv(uMvp, false, mvp);
     this.gl.uniform1f(uVh, this.canvas.height || 600);
     this.gl.uniform1i(uTheme, modeId);
     this.gl.uniform1f(uTime, now);
+    this.gl.uniform1f(uCharge, cognitiveCharge);
+
+    if (thinkingPulse && thinkingPulse.active) {
+      const elapsed = performance.now() - thinkingPulse.startTime;
+      const rgb = parseHexColor(thinkingPulse.color);
+      this.gl.uniform1f(uRipActive, 1.0);
+      this.gl.uniform1f(uRipTime, elapsed);
+      this.gl.uniform1f(uRipDuration, thinkingPulse.durationMs);
+      this.gl.uniform1f(uRipMaxRadius, thinkingPulse.maxRadius);
+      this.gl.uniform3f(uRipOrigin, thinkingPulse.origin[0], thinkingPulse.origin[1], thinkingPulse.origin[2]);
+      this.gl.uniform3f(uRipColor, rgb[0], rgb[1], rgb[2]);
+    } else {
+      this.gl.uniform1f(uRipActive, 0.0);
+    }
 
     const positions = new Float32Array(nodes.length * 3);
     const colors = new Float32Array(nodes.length * 4);

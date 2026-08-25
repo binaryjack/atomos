@@ -4,3 +4,4 @@ export * from './renderer/culling-system.js';
 export * from './physics/worker.js';
 export * from './create-neura-instance.js';
 export * from './react/neura-graph-canvas.js';
+export * from './react/neura-backdrop.js';

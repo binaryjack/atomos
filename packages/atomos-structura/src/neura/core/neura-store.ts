@@ -34,6 +34,15 @@ export interface NeuraEnergyBeam {
   startedAt: number;     // performance.now() timestamp
 }
 
+export interface ThinkingPulseState {
+  active: boolean;
+  startTime: number;
+  durationMs: number;
+  color: string;
+  origin: [number, number, number];
+  maxRadius: number;
+}
+
 export interface NeuraViewport {
   x: number;
   y: number;
@@ -53,6 +62,8 @@ export interface NeuraState {
   hoveredNodeId: string | null;
   selectedNodeId: string | null;
   energyBeams: NeuraEnergyBeam[];
+  cognitiveCharge: number; // 0.0 (rest glow = 0.2) to 1.0 (max glow = 0.9)
+  thinkingPulse: ThinkingPulseState | null;
 }
 
 /** Color mapping for NodeActivityState coronal halos */
@@ -83,6 +94,8 @@ export function createNeuraStore() {
     hoveredNodeId: null,
     selectedNodeId: null,
     energyBeams: [],
+    cognitiveCharge: 0.0,
+    thinkingPulse: null,
   });
 
   const setViewport = (viewport: Partial<NeuraViewport>) => {
@@ -144,6 +157,22 @@ export function createNeuraStore() {
     });
   };
 
+  const setCognitiveChargeStore = (level: number) => {
+    const state = store.value;
+    store.set({
+      ...state,
+      cognitiveCharge: Math.max(0, Math.min(1, level)),
+    });
+  };
+
+  const setThinkingPulseStore = (pulse: ThinkingPulseState | null) => {
+    const state = store.value;
+    store.set({
+      ...state,
+      thinkingPulse: pulse,
+    });
+  };
+
   const resetAllActivities = () => {
     const state = store.value;
     const nextNodes: Record<string, NeuraNode> = {};
@@ -155,6 +184,8 @@ export function createNeuraStore() {
       ...state,
       nodes: nextNodes,
       energyBeams: [],
+      cognitiveCharge: 0.0,
+      thinkingPulse: null,
     });
   };
 
@@ -166,6 +197,8 @@ export function createNeuraStore() {
     setNodeActivity,
     addEnergyBeam,
     removeBeam,
+    setCognitiveChargeStore,
+    setThinkingPulseStore,
     resetAllActivities,
   };
 }
