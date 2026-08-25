@@ -15,6 +15,7 @@ export interface NeuraInstanceOptions {
   worker?: Worker | string | URL;
   theme?: ShaderTheme;
   physicsParams?: Partial<PhysicsParams>;
+  labelsMode?: 'focus-only' | 'auto' | 'always';
   onNodeClick?: (node: NeuraNode | null) => void;
   onNodeHover?: (node: NeuraNode | null) => void;
   onFPS?: (fps: number) => void;
@@ -32,6 +33,7 @@ export interface NeuraInstance {
   resetCamera: () => void;
   setPhysicsParams: (params: Partial<PhysicsParams>) => void;
   setShaderTheme: (theme: ShaderTheme) => void;
+  setLabelsMode: (mode: 'focus-only' | 'auto' | 'always') => void;
   reheatPhysics: (alpha?: number) => void;
   getFPS: () => number;
   destroy: () => void;
@@ -312,6 +314,11 @@ export function createNeuraInstance(
   if (parent) parent.appendChild(overlay);
 
   const labelsMap = new Map<string, HTMLDivElement>();
+  let currentLabelsMode: 'focus-only' | 'auto' | 'always' = opts.labelsMode ?? 'auto';
+
+  const setLabelsMode = (mode: 'focus-only' | 'auto' | 'always') => {
+    currentLabelsMode = mode;
+  };
 
   // FPS calculation
   let lastFrameTime = performance.now();
@@ -658,7 +665,17 @@ export function createNeuraInstance(
       const isMajorFile = isZoomedIn && node.metadata?.kind === 'file';
       const isActive = (node.activity ?? 0) > 0.3;
 
-      if (isFocused || isMajorFile || isActive) {
+      let shouldRender = false;
+      if (currentLabelsMode === 'focus-only') {
+        shouldRender = isFocused;
+      } else if (currentLabelsMode === 'always') {
+        shouldRender = true;
+      } else {
+        // 'auto'
+        shouldRender = isFocused || isMajorFile || isActive;
+      }
+
+      if (shouldRender) {
         const nx = node.x;
         const ny = node.y;
         const nz = node.z ?? 0;
@@ -1091,6 +1108,7 @@ export function createNeuraInstance(
     resetCamera,
     setPhysicsParams,
     setShaderTheme,
+    setLabelsMode,
     reheatPhysics,
     getFPS,
     destroy,

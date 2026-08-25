@@ -106,6 +106,47 @@ container.appendChild(element);
 
 ---
 
+### 4. Neura 3D WebGL Neural Graph Engine
+
+```typescript
+import { createNeuraInstance, type NeuraNode, type NeuraEdge } from '@atomos-web/structura';
+
+const canvas = document.getElementById('neura-canvas') as HTMLCanvasElement;
+
+const neura = createNeuraInstance(canvas, {
+  theme: 'cyber',
+  labelsMode: 'focus-only', // 'focus-only' (hover/click only), 'auto', or 'always'
+  physicsParams: {
+    attractionForce: 0.03,
+    appartenanceGravity: 0.05,
+    repulsionForce: 0.02,
+    restingDistance: 90,
+    idealRadius: 180,
+    zSpread: 0.85,
+    globalGravity: 0.0003,
+    alphaDecay: 0.98,
+  },
+  onNodeClick: (node) => console.log('Selected node:', node),
+  onNodeHover: (node) => console.log('Hovered node:', node),
+  onFPS: (fps) => console.log('Current FPS:', fps),
+});
+
+// Load nodes & edges into 3D physics worker
+neura.loadGraph(nodes, edges);
+neura.setAutoRotate(true, 0.18);
+
+// Real-Time Telemetry & Synaptic Illumination
+neura.setNodeActivity('slot-0', 0.85, 'routing');
+neura.triggerEnergyBeam('slot-0', 'slot-1', '#38bdf8', 750);
+
+// Empathic Voice / Cognitive Listening Feedback
+neura.setCognitiveCharge(0.75, 0); // VAD user speech energy charge
+neura.fireThinkingPulse('#f59e0b'); // Deliberation 3D shockwave
+neura.releaseCognitiveCharge(1); // Release energy to active specialist slot
+```
+
+---
+
 ## API Reference
 
 ### `createSchemaBuilder(options)`
@@ -115,6 +156,17 @@ container.appendChild(element);
 | `instanceId` | `string` | **Required.** Unique identifier for multi-instance store isolation. |
 | `config` | `WorkspaceConfig` | Runtime feature toggles and operational mode overrides. |
 | `mcpUrl` | `string` | Optional URL of a running MCP server for real-time synchronization. |
+
+### `createNeuraInstance(canvas, options)`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `theme` | `ShaderTheme` | `'cyber'` | WebGL shader theme (`'cyber'`, `'synthwave'`, `'matrix'`). |
+| `labelsMode` | `'focus-only' \| 'auto' \| 'always'` | `'auto'` | Overlay label mode. `'focus-only'` displays 3D HTML labels strictly on hover/click. |
+| `physicsParams` | `Partial<PhysicsParams>` | — | 3D Web Worker force-directed graph parameters. |
+| `onNodeClick` | `(node: NeuraNode \| null) => void` | — | Callback fired when a node is clicked/selected. |
+| `onNodeHover` | `(node: NeuraNode \| null) => void` | — | Callback fired when a node is hovered. |
+| `onFPS` | `(fps: number) => void` | — | Real-time FPS telemetry callback. |
 
 ### Operational Mode Switch
 

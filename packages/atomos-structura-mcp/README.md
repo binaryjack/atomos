@@ -86,6 +86,18 @@ createServer((req, res) => {
 | `structura_center_to_schema` | — | Center viewport on graph center of mass. |
 | `structura_export_svg` | — | Render and return SVG presentation string. |
 
+### Neura 3D Telemetry & Cognitive Tools
+
+| Tool | Parameters | Description |
+|---|---|---|
+| `neura_publish_topology` | `nodes: NeuraNode[]`, `edges: NeuraEdge[]` | Publish and inject 3D neural graph topology into the Neura WebGL engine. |
+| `neura_stream_activity` | `nodeId`, `activity: 0.0..1.0`, `state?` | Stream node activity level and semantic state (`idle`, `routing`, `active`, `firing`, `verifying`, `learning`) to WebGL shaders. |
+| `neura_trigger_beam` | `sourceId`, `targetId`, `color?`, `durationMs?` | Fire an energy beam pulse along a 3D edge between source and target nodes. |
+| `neura_reset_activity` | — | Reset all node activities to idle (0.0) and clear active energy beams. |
+| `neura_set_cognitive_charge` | `level: 0.0..1.0`, `originSlotId?` | Set user speech dictation cognitive charge level for empathic listening feedback. |
+| `neura_fire_thinking_pulse` | `color?` | Fire a 3D spherical shockwave across Neura WebGL during deliberation phase. |
+| `neura_release_cognitive_charge` | `activeSlotId` | Release cognitive charge when model output begins, converging energy to active slot. |
+
 ---
 
 ## Error Handling & Response Codes
