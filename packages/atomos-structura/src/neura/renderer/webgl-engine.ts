@@ -668,19 +668,29 @@ export class WebGLEngine {
       }
     }
 
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.edgePositionBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, edgePositions, this.gl.DYNAMIC_DRAW);
-    const ePosAttr = this.gl.getAttribLocation(this.edgeProgram, 'a_position');
-    this.gl.enableVertexAttribArray(ePosAttr);
-    this.gl.vertexAttribPointer(ePosAttr, 3, this.gl.FLOAT, false, 0, 0);
+    if (edgeCount === 0) return;
 
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.edgeColorBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, edgeColors, this.gl.DYNAMIC_DRAW);
+    const ePosAttr = this.gl.getAttribLocation(this.edgeProgram, 'a_position');
     const eColorAttr = this.gl.getAttribLocation(this.edgeProgram, 'a_color');
-    this.gl.enableVertexAttribArray(eColorAttr);
-    this.gl.vertexAttribPointer(eColorAttr, 4, this.gl.FLOAT, false, 0, 0);
+
+    if (ePosAttr >= 0) {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.edgePositionBuffer);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, edgePositions.subarray(0, edgeCount * 6), this.gl.DYNAMIC_DRAW);
+      this.gl.enableVertexAttribArray(ePosAttr);
+      this.gl.vertexAttribPointer(ePosAttr, 3, this.gl.FLOAT, false, 0, 0);
+    }
+
+    if (eColorAttr >= 0) {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.edgeColorBuffer);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, edgeColors.subarray(0, edgeCount * 8), this.gl.DYNAMIC_DRAW);
+      this.gl.enableVertexAttribArray(eColorAttr);
+      this.gl.vertexAttribPointer(eColorAttr, 4, this.gl.FLOAT, false, 0, 0);
+    }
 
     this.gl.drawArrays(this.gl.LINES, 0, edgeCount * 2);
+
+    if (ePosAttr >= 0) this.gl.disableVertexAttribArray(ePosAttr);
+    if (eColorAttr >= 0) this.gl.disableVertexAttribArray(eColorAttr);
   }
 
   // ---------------------------------------------------------------------------
@@ -697,7 +707,7 @@ export class WebGLEngine {
     cognitiveCharge: number,
     thinkingPulse: ThinkingPulseState | null
   ) {
-    if (!this.nodeProgram) return;
+    if (!this.nodeProgram || nodes.length === 0) return;
 
     this.gl.useProgram(this.nodeProgram);
 
@@ -783,42 +793,59 @@ export class WebGLEngine {
       haloColors[i * 3 + 2] = halo[2];
     }
 
-    // Position buffer
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodePositionBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.DYNAMIC_DRAW);
     const aPosition = this.gl.getAttribLocation(this.nodeProgram, 'a_position');
-    this.gl.enableVertexAttribArray(aPosition);
-    this.gl.vertexAttribPointer(aPosition, 3, this.gl.FLOAT, false, 0, 0);
+    const aColor = this.gl.getAttribLocation(this.nodeProgram, 'a_color');
+    const aSizeAttr = this.gl.getAttribLocation(this.nodeProgram, 'a_size_attr');
+    const aActivity = this.gl.getAttribLocation(this.nodeProgram, 'a_activity');
+    const aHaloColor = this.gl.getAttribLocation(this.nodeProgram, 'a_halo_color');
+
+    // Position buffer
+    if (aPosition >= 0) {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodePositionBuffer);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.DYNAMIC_DRAW);
+      this.gl.enableVertexAttribArray(aPosition);
+      this.gl.vertexAttribPointer(aPosition, 3, this.gl.FLOAT, false, 0, 0);
+    }
 
     // Color buffer
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodeColorBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, colors, this.gl.DYNAMIC_DRAW);
-    const aColor = this.gl.getAttribLocation(this.nodeProgram, 'a_color');
-    this.gl.enableVertexAttribArray(aColor);
-    this.gl.vertexAttribPointer(aColor, 4, this.gl.FLOAT, false, 0, 0);
+    if (aColor >= 0) {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodeColorBuffer);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, colors, this.gl.DYNAMIC_DRAW);
+      this.gl.enableVertexAttribArray(aColor);
+      this.gl.vertexAttribPointer(aColor, 4, this.gl.FLOAT, false, 0, 0);
+    }
 
     // Size buffer
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodeSizeBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, sizes, this.gl.DYNAMIC_DRAW);
-    const aSizeAttr = this.gl.getAttribLocation(this.nodeProgram, 'a_size_attr');
-    this.gl.enableVertexAttribArray(aSizeAttr);
-    this.gl.vertexAttribPointer(aSizeAttr, 1, this.gl.FLOAT, false, 0, 0);
+    if (aSizeAttr >= 0) {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodeSizeBuffer);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, sizes, this.gl.DYNAMIC_DRAW);
+      this.gl.enableVertexAttribArray(aSizeAttr);
+      this.gl.vertexAttribPointer(aSizeAttr, 1, this.gl.FLOAT, false, 0, 0);
+    }
 
     // Activity buffer
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodeActivityBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, activities, this.gl.DYNAMIC_DRAW);
-    const aActivity = this.gl.getAttribLocation(this.nodeProgram, 'a_activity');
-    this.gl.enableVertexAttribArray(aActivity);
-    this.gl.vertexAttribPointer(aActivity, 1, this.gl.FLOAT, false, 0, 0);
+    if (aActivity >= 0) {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodeActivityBuffer);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, activities, this.gl.DYNAMIC_DRAW);
+      this.gl.enableVertexAttribArray(aActivity);
+      this.gl.vertexAttribPointer(aActivity, 1, this.gl.FLOAT, false, 0, 0);
+    }
 
     // Halo color buffer
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodeHaloColorBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, haloColors, this.gl.DYNAMIC_DRAW);
-    const aHaloColor = this.gl.getAttribLocation(this.nodeProgram, 'a_halo_color');
-    this.gl.enableVertexAttribArray(aHaloColor);
-    this.gl.vertexAttribPointer(aHaloColor, 3, this.gl.FLOAT, false, 0, 0);
+    if (aHaloColor >= 0) {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.nodeHaloColorBuffer);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, haloColors, this.gl.DYNAMIC_DRAW);
+      this.gl.enableVertexAttribArray(aHaloColor);
+      this.gl.vertexAttribPointer(aHaloColor, 3, this.gl.FLOAT, false, 0, 0);
+    }
 
     this.gl.drawArrays(this.gl.POINTS, 0, nodes.length);
+
+    if (aPosition >= 0) this.gl.disableVertexAttribArray(aPosition);
+    if (aColor >= 0) this.gl.disableVertexAttribArray(aColor);
+    if (aSizeAttr >= 0) this.gl.disableVertexAttribArray(aSizeAttr);
+    if (aActivity >= 0) this.gl.disableVertexAttribArray(aActivity);
+    if (aHaloColor >= 0) this.gl.disableVertexAttribArray(aHaloColor);
   }
 
   // ---------------------------------------------------------------------------
@@ -895,28 +922,39 @@ export class WebGLEngine {
       return;
     }
 
-    // Position buffer
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.beamPositionBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, positions.subarray(0, particleCount * 3), this.gl.DYNAMIC_DRAW);
     const aPos = this.gl.getAttribLocation(this.beamProgram, 'a_position');
-    this.gl.enableVertexAttribArray(aPos);
-    this.gl.vertexAttribPointer(aPos, 3, this.gl.FLOAT, false, 0, 0);
+    const aColor = this.gl.getAttribLocation(this.beamProgram, 'a_color');
+    const aSize = this.gl.getAttribLocation(this.beamProgram, 'a_size_attr');
+
+    // Position buffer
+    if (aPos >= 0) {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.beamPositionBuffer);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, positions.subarray(0, particleCount * 3), this.gl.DYNAMIC_DRAW);
+      this.gl.enableVertexAttribArray(aPos);
+      this.gl.vertexAttribPointer(aPos, 3, this.gl.FLOAT, false, 0, 0);
+    }
 
     // Color buffer
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.beamColorBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, colors.subarray(0, particleCount * 4), this.gl.DYNAMIC_DRAW);
-    const aColor = this.gl.getAttribLocation(this.beamProgram, 'a_color');
-    this.gl.enableVertexAttribArray(aColor);
-    this.gl.vertexAttribPointer(aColor, 4, this.gl.FLOAT, false, 0, 0);
+    if (aColor >= 0) {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.beamColorBuffer);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, colors.subarray(0, particleCount * 4), this.gl.DYNAMIC_DRAW);
+      this.gl.enableVertexAttribArray(aColor);
+      this.gl.vertexAttribPointer(aColor, 4, this.gl.FLOAT, false, 0, 0);
+    }
 
     // Size buffer
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.beamSizeBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, sizes.subarray(0, particleCount), this.gl.DYNAMIC_DRAW);
-    const aSize = this.gl.getAttribLocation(this.beamProgram, 'a_size_attr');
-    this.gl.enableVertexAttribArray(aSize);
-    this.gl.vertexAttribPointer(aSize, 1, this.gl.FLOAT, false, 0, 0);
+    if (aSize >= 0) {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.beamSizeBuffer);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, sizes.subarray(0, particleCount), this.gl.DYNAMIC_DRAW);
+      this.gl.enableVertexAttribArray(aSize);
+      this.gl.vertexAttribPointer(aSize, 1, this.gl.FLOAT, false, 0, 0);
+    }
 
     this.gl.drawArrays(this.gl.POINTS, 0, particleCount);
+
+    if (aPos >= 0) this.gl.disableVertexAttribArray(aPos);
+    if (aColor >= 0) this.gl.disableVertexAttribArray(aColor);
+    if (aSize >= 0) this.gl.disableVertexAttribArray(aSize);
 
     // Restore standard blending
     this.restoreBlending();
