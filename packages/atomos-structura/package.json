@@ -1,7 +1,8 @@
 {
   "name": "@atomos-web/structura",
-  "version": "2.3.38",
+  "version": "2.3.39",
   "license": "AGPL-3.0-or-later",
+
 
   "type": "module",
   "publishConfig": {

@@ -52,8 +52,8 @@ export interface NeuraInstance {
   highlightRoute: (sourceId: string, targetId: string, keepActive?: boolean) => void;
 
   // Empathic Listening & Synaptic Charge API
-  setCognitiveCharge: (level: number, originSlotId?: number) => void;
-  fireThinkingPulse: (color?: string) => void;
+  setCognitiveCharge: (charge: number) => void;
+  fireThinkingPulse: (colorOrOrigin?: string | [number, number, number], durationOrColor?: number | string, color?: string) => void;
   releaseCognitiveCharge: (activeSlotId: number) => void;
 }
 
@@ -822,7 +822,24 @@ export function createNeuraInstance(
     }
   };
 
-  const fireThinkingPulse = (color = '#38bdf8') => {
+  const fireThinkingPulse = (
+    colorOrOrigin: string | [number, number, number] = '#38bdf8',
+    durationOrColor: number | string = 1500,
+    maybeColor = '#38bdf8'
+  ) => {
+    let color = '#38bdf8';
+    let origin: [number, number, number] = [0, 0, 0];
+    let durationMs = 1500;
+
+    if (Array.isArray(colorOrOrigin) && colorOrOrigin.length >= 3) {
+      origin = [colorOrOrigin[0], colorOrOrigin[1], colorOrOrigin[2]];
+      if (typeof durationOrColor === 'number') durationMs = durationOrColor;
+      if (typeof maybeColor === 'string') color = maybeColor;
+    } else if (typeof colorOrOrigin === 'string') {
+      color = colorOrOrigin;
+      if (typeof durationOrColor === 'number') durationMs = durationOrColor;
+    }
+
     const state = store.value;
     // Calculate max 3D radius from graph nodes
     let maxR = 1200;
@@ -835,12 +852,13 @@ export function createNeuraInstance(
     setThinkingPulseStore({
       active: true,
       startTime: performance.now(),
-      durationMs: 1200,
+      durationMs,
       color,
-      origin: [0, 0, 0],
+      origin,
       maxRadius: maxR * 1.2,
     });
   };
+
 
   const releaseCognitiveCharge = (activeSlotId: number) => {
     const state = store.value;

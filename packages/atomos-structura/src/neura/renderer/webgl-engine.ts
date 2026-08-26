@@ -151,17 +151,32 @@ const BEAM_TRAIL_COUNT = 5;
 // Hex color parsing utility
 // ---------------------------------------------------------------------------
 
-function parseHexColor(hex: string): [number, number, number] {
-  const clean = hex.replace('#', '');
-  if (clean.length === 6) {
-    return [
-      parseInt(clean.substring(0, 2), 16) / 255,
-      parseInt(clean.substring(2, 4), 16) / 255,
-      parseInt(clean.substring(4, 6), 16) / 255,
-    ];
+function parseHexColor(hex: unknown): [number, number, number] {
+  if (Array.isArray(hex) && hex.length >= 3) {
+    return [Number(hex[0]) || 0, Number(hex[1]) || 0, Number(hex[2]) || 0];
+  }
+  if (typeof hex !== 'string') {
+    return [0.0, 0.83, 1.0]; // default cyan
+  }
+  const clean = hex.replace('#', '').trim();
+  if (clean.length === 6 || clean.length === 8) {
+    const r = parseInt(clean.substring(0, 2), 16);
+    const g = parseInt(clean.substring(2, 4), 16);
+    const b = parseInt(clean.substring(4, 6), 16);
+    if (!Number.isNaN(r) && !Number.isNaN(g) && !Number.isNaN(b)) {
+      return [r / 255, g / 255, b / 255];
+    }
+  } else if (clean.length === 3) {
+    const r = parseInt(clean[0] + clean[0], 16);
+    const g = parseInt(clean[1] + clean[1], 16);
+    const b = parseInt(clean[2] + clean[2], 16);
+    if (!Number.isNaN(r) && !Number.isNaN(g) && !Number.isNaN(b)) {
+      return [r / 255, g / 255, b / 255];
+    }
   }
   return [0.0, 0.83, 1.0]; // default cyan
 }
+
 
 // ---------------------------------------------------------------------------
 // WebGL Engine
@@ -742,22 +757,12 @@ export class WebGLEngine {
   // ---------------------------------------------------------------------------
 
   private getNodeColor(node: NeuraNode): [number, number, number] {
-    if (
-      node.metadata?.color &&
-      typeof node.metadata.color === 'string' &&
-      (node.metadata.color as string).startsWith('#')
-    ) {
-      const hex = (node.metadata.color as string).replace('#', '');
-      if (hex.length === 6) {
-        return [
-          parseInt(hex.substring(0, 2), 16) / 255,
-          parseInt(hex.substring(2, 4), 16) / 255,
-          parseInt(hex.substring(4, 6), 16) / 255,
-        ];
-      }
+    if (node.metadata?.color) {
+      return parseHexColor(node.metadata.color);
     }
     return this.getThemeColor(node.appartenanceId);
   }
+
 
   private getThemeColor(id: string): [number, number, number] {
     const hash = id.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
