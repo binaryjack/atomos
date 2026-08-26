@@ -142,9 +142,9 @@ export const createEntityDragBehavior = function(
       const em = getEntityManager(workspace.instanceId);
       em.moveEntity(entityId, { x: finalX, y: finalY });
 
-      // Auto-optimize connections on drop if enabled and snap is active
+      // Auto-optimize connections on drop if enabled (defaults to true)
       const settings = getGeneralSettings();
-      if (settings && settings.enableSnapping && settings.autoOptimizeConnections !== false) {
+      if (!settings || settings.autoOptimizeConnections !== false) {
         autoRouteLinks(em);
       }
     } else {

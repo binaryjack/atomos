@@ -7,7 +7,9 @@ import { ENTITY_DEFAULT_HEIGHT, ENTITY_DEFAULT_WIDTH } from '../../core/entity-d
 import type { EntityInstance } from '../../core/types/entity-instance.types.js'
 import type { EntitySpawnFactory } from '../../core/types/entity-spawn-factory.types.js'
 import { DEFAULT_GLOBAL_CONFIG } from '../../core/types/global-config.types.js'
-import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js'
+import { getGeneralSettings } from '../../core/adapters/toolbox-config-manager.js'
+import { autoRouteLinks } from '../../core/application/dag-service.js'
+import { getEntityManager } from '../../core/presentation/entity-manager.js'
 import { createDemoEntity } from './create-demo-entity.js'
 
 const makeEntityProps = (id: string, name: string, x: number, y: number, width?: number, height?: number, properties?: any[]): Entity => ({
@@ -206,6 +208,10 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager,
         if (instance) {
           instance.position.set({ x: event.position.x, y: event.position.y });
         }
+        const settings = getGeneralSettings();
+        if (!settings || settings.autoOptimizeConnections !== false) {
+          autoRouteLinks(getEntityManager(instanceId));
+        }
         break;
       }
       case 'LinkCreated': {
@@ -215,10 +221,6 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager,
           const srcEntity = canvasAdapter.getEntity(link.sourceEntityId);
           const dstEntity = canvasAdapter.getEntity(link.targetEntityId);
           if (srcEntity && dstEntity) {
-            // Extract the true edge direction from the anchor ID.
-            // Anchor IDs follow the pattern "${entityId}-anchor-${edge}" where
-            // edge ∈ {top, bottom, left, right}.  Splitting on '-anchor-' is
-            // unambiguous regardless of hyphens in the entity ID itself.
             const srcEdge = (link.sourceAnchorId.split('-anchor-')[1] || 'right') as any;
             const dstEdge = (link.targetAnchorId.split('-anchor-')[1] || 'left') as any;
             const srcPos = computeAnchorPos(srcEntity, srcEdge);
@@ -229,6 +231,24 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager,
               link.targetAnchorId, dstPos, link.targetEntityId, dstEdge
             );
           }
+        }
+        break;
+      }
+      case 'LinkEndpointsUpdated': {
+        const link = event.link;
+        const srcEntity = canvasAdapter.getEntity(link.sourceEntityId);
+        const dstEntity = canvasAdapter.getEntity(link.targetEntityId);
+        if (srcEntity && dstEntity) {
+          const srcEdge = (link.sourceAnchorId.split('-anchor-')[1] || 'right') as any;
+          const dstEdge = (link.targetAnchorId.split('-anchor-')[1] || 'left') as any;
+          const srcPos = computeAnchorPos(srcEntity, srcEdge);
+          const dstPos = computeAnchorPos(dstEntity, dstEdge);
+          workspace.removeLinkById(link.id, true);
+          workspace.restoreLink(
+            link.id,
+            link.sourceAnchorId, srcPos, link.sourceEntityId, srcEdge,
+            link.targetAnchorId, dstPos, link.targetEntityId, dstEdge
+          );
         }
         break;
       }

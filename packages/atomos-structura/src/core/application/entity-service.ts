@@ -233,7 +233,12 @@ export interface LinkPropertiesUpdatedEvent {
   };
 }
 
-export type LinkEvent = LinkCreatedEvent | LinkRemovedEvent | LinkPropertiesUpdatedEvent;
+export interface LinkEndpointsUpdatedEvent {
+  readonly type: 'LinkEndpointsUpdated';
+  readonly link: DomainLink;
+}
+
+export type LinkEvent = LinkCreatedEvent | LinkRemovedEvent | LinkPropertiesUpdatedEvent | LinkEndpointsUpdatedEvent;
 
 export type ApplicationEvent = EntityEvent | LinkEvent;
 
@@ -420,9 +425,8 @@ export const createEntityApplicationService = function(
         );
         linkRepository.save(updatedLink);
         eventBus.publish({
-          type: 'LinkPropertiesUpdated',
-          linkId: command.linkId,
-          properties: {}
+          type: 'LinkEndpointsUpdated',
+          link: updatedLink
         });
         break;
       }
