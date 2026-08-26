@@ -1,7 +1,8 @@
 {
   "name": "@atomos-web/structura",
-  "version": "2.3.34",
+  "version": "2.3.38",
   "license": "AGPL-3.0-or-later",
+
   "type": "module",
   "publishConfig": {
     "access": "public"
@@ -24,6 +25,12 @@
       "require": "./dist/webview/index.js",
       "default": "./dist/webview/index.js"
     },
+    "./neura": {
+      "types": "./dist/neura/index.d.ts",
+      "import": "./dist/neura/index.js",
+      "require": "./dist/neura/index.js",
+      "default": "./dist/neura/index.js"
+    },
     "./*": "./*"
   },
   "scripts": {
@@ -37,13 +44,14 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@atomos-web/prime": "workspace:*",
-    "@atomos-web/prime-style": "workspace:*",
-    "@atomos-web/structura-core": "workspace:*",
-    "@atomos-web/structura-mcp": "workspace:*",
-    "@atomos-web/renderer-svg": "workspace:*",
-    "@binaryjack/formular.dev": "workspace:*"
+    "@atomos-web/prime": "^2.3.10",
+    "@atomos-web/prime-style": "^2.3.10",
+    "@atomos-web/structura-core": "^2.3.12",
+    "@atomos-web/structura-mcp": "^2.3.22",
+    "@atomos-web/renderer-svg": "^1.0.2",
+    "@binaryjack/formular.dev": "^2.3.9"
   },
+
   "devDependencies": {
     "glob": "^10.0.0",
     "typescript": "^5.3.0",

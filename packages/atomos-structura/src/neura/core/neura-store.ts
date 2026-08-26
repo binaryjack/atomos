@@ -1,6 +1,34 @@
-import { createSignal } from '@atomos-web/prime';
+export interface Signal<T> {
+  value: T;
+  set: (newValue: T) => void;
+  subscribe: (callback: (value: T) => void) => () => void;
+}
+
+export function createSignal<T>(initialValue: T): Signal<T> {
+  let currentValue = initialValue;
+  const subscribers = new Set<(value: T) => void>();
+
+  return {
+    get value() {
+      return currentValue;
+    },
+    set: (newValue: T) => {
+      if (currentValue !== newValue) {
+        currentValue = newValue;
+        subscribers.forEach(callback => callback(newValue));
+      }
+    },
+    subscribe: (callback: (value: T) => void) => {
+      subscribers.add(callback);
+      return () => {
+        subscribers.delete(callback);
+      };
+    },
+  };
+}
 
 export type NodeActivityState = 'idle' | 'routing' | 'active' | 'firing' | 'verifying' | 'learning';
+
 
 export interface NeuraNode {
   id: string;
