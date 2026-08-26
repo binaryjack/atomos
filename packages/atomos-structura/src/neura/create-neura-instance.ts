@@ -11,11 +11,17 @@ import { CullingSystem } from './renderer/culling-system.js';
 import { type ShaderTheme, WebGLEngine } from './renderer/webgl-engine.js';
 import type { PhysicsParams } from './physics/worker.js';
 
+import { createNeuraPhysicsWorker } from './physics/worker-script.js';
+import { generateBeamId, bfsShortestPath, pruneCompletedBeams } from './core/neura-telemetry.js';
+import { createNeuraConfig, type NeuraConfig } from './core/neura-config.js';
+import { createNeuraLabelsController } from './renderer/neura-labels.js';
+
 export interface NeuraInstanceOptions {
   worker?: Worker | string | URL;
   theme?: ShaderTheme;
   physicsParams?: Partial<PhysicsParams>;
   labelsMode?: 'focus-only' | 'auto' | 'always';
+  config?: Partial<NeuraConfig>;
   onNodeClick?: (node: NeuraNode | null) => void;
   onNodeHover?: (node: NeuraNode | null) => void;
   onFPS?: (fps: number) => void;
@@ -51,207 +57,6 @@ export interface NeuraInstance {
   releaseCognitiveCharge: (activeSlotId: number) => void;
 }
 
-// Inline Web Worker script for 3D physics simulation
-const INLINE_WORKER_SCRIPT = `
-let nodes = [];
-let edges = [];
-let isRunning = false;
-let globalAlpha = 1.0;
-const alphaMin = 0.001;
-
-let params = {
-  attractionForce: 0.05,
-  appartenanceGravity: 0.08,
-  repulsionForce: 0.02,
-  restingDistance: 45,
-  idealRadius: 180,
-  zSpread: 1.0,
-  globalGravity: 0.0005,
-  alphaDecay: 0.97
-};
-
-const calculateAppartenanceCenters = () => {
-  const centers = {};
-  for (let i = 0; i < nodes.length; i++) {
-    const node = nodes[i];
-    if (!centers[node.appartenanceId]) {
-      centers[node.appartenanceId] = { sumX: 0, sumY: 0, sumZ: 0, count: 0 };
-    }
-    const c = centers[node.appartenanceId];
-    c.sumX += node.x;
-    c.sumY += node.y;
-    c.sumZ += node.z;
-    c.count += 1;
-  }
-  const result = {};
-  for (const key in centers) {
-    const c = centers[key];
-    result[key] = { x: c.sumX / c.count, y: c.sumY / c.count, z: c.sumZ / c.count };
-  }
-  return result;
-};
-
-const simulateTick = () => {
-  const centers = calculateAppartenanceCenters();
-  const nodeMap = new Map();
-  for (let i = 0; i < nodes.length; i++) nodeMap.set(nodes[i].id, nodes[i]);
-
-  // 1. Attraction (Edges) in 3D
-  for (let i = 0; i < edges.length; i++) {
-    const edge = edges[i];
-    const source = nodeMap.get(edge.sourceId);
-    const target = nodeMap.get(edge.targetId);
-    if (!source || !target) continue;
-
-    const dx = target.x - source.x;
-    const dy = target.y - source.y;
-    const dz = target.z - source.z;
-
-    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-    const diff = (dist - params.restingDistance) / dist;
-    const force = diff * params.attractionForce * (edge.weight || 1) * globalAlpha;
-
-    source.x += dx * force;
-    source.y += dy * force;
-    source.z += dz * force * params.zSpread;
-
-    target.x -= dx * force;
-    target.y -= dy * force;
-    target.z -= dz * force * params.zSpread;
-  }
-
-  // 2. Cluster grouping in 3D
-  for (let i = 0; i < nodes.length; i++) {
-    const node = nodes[i];
-    const center = centers[node.appartenanceId];
-    if (center) {
-      const dx = center.x - node.x;
-      const dy = center.y - node.y;
-      const dz = center.z - node.z;
-
-      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-      const diff = (dist - params.idealRadius) / dist;
-
-      node.x += dx * diff * params.appartenanceGravity * globalAlpha;
-      node.y += dy * diff * params.appartenanceGravity * globalAlpha;
-      node.z += dz * diff * params.appartenanceGravity * params.zSpread * globalAlpha;
-    }
-  }
-
-  // 3. Centering gravity in 3D
-  if (params.globalGravity > 0) {
-    for (let i = 0; i < nodes.length; i++) {
-      const node = nodes[i];
-      node.x -= node.x * params.globalGravity * globalAlpha;
-      node.y -= node.y * params.globalGravity * globalAlpha;
-      node.z -= node.z * params.globalGravity * globalAlpha;
-    }
-  }
-};
-
-const tickLoop = () => {
-  if (!isRunning) return;
-  simulateTick();
-  const positions = nodes.map(n => ({ id: n.id, x: n.x, y: n.y, z: n.z }));
-  self.postMessage({ type: 'TICK_RESULT', payload: positions });
-  globalAlpha *= params.alphaDecay;
-  if (globalAlpha < alphaMin) {
-    isRunning = false;
-    return;
-  }
-  setTimeout(tickLoop, 33);
-};
-
-self.onmessage = (event) => {
-  const { type, payload } = event.data;
-  if (type === 'INIT_DATA') {
-    nodes = payload.nodes.map((n, idx) => {
-      const zInit = n.z ?? ((idx % 7 - 3) * 20 + Math.sin(idx) * 30);
-      return { id: n.id, x: n.x, y: n.y, z: zInit, appartenanceId: n.appartenanceId };
-    });
-    edges = payload.edges.map(e => ({ sourceId: e.sourceId, targetId: e.targetId, weight: e.weight }));
-    globalAlpha = 1.0;
-  } else if (type === 'SET_PARAMS') {
-    params = { ...params, ...payload };
-  } else if (type === 'REHEAT') {
-    globalAlpha = Math.max(globalAlpha, payload?.alpha ?? 0.8);
-    if (!isRunning) {
-      isRunning = true;
-      tickLoop();
-    }
-  } else if (type === 'START') {
-    if (!isRunning) {
-      isRunning = true;
-      globalAlpha = 1.0;
-      tickLoop();
-    }
-  } else if (type === 'STOP') {
-    isRunning = false;
-  }
-};
-`;
-
-export const createNeuraPhysicsWorker = (): Worker => {
-  const blob = new Blob([INLINE_WORKER_SCRIPT], { type: 'application/javascript' });
-  const url = URL.createObjectURL(blob);
-  return new Worker(url);
-};
-
-// ---------------------------------------------------------------------------
-// BFS Shortest Path Helper
-// ---------------------------------------------------------------------------
-
-function bfsShortestPath(
-  sourceId: string,
-  targetId: string,
-  edges: Record<string, NeuraEdge>
-): string[] | null {
-  const adjacency = new Map<string, Array<{ neighborId: string; edgeId: string }>>();
-
-  for (const key in edges) {
-    const edge = edges[key]!;
-    if (!adjacency.has(edge.sourceId)) adjacency.set(edge.sourceId, []);
-    if (!adjacency.has(edge.targetId)) adjacency.set(edge.targetId, []);
-    adjacency.get(edge.sourceId)!.push({ neighborId: edge.targetId, edgeId: edge.id });
-    adjacency.get(edge.targetId)!.push({ neighborId: edge.sourceId, edgeId: edge.id });
-  }
-
-  if (!adjacency.has(sourceId) || !adjacency.has(targetId)) return null;
-
-  const visited = new Set<string>();
-  const queue: Array<{ nodeId: string; path: string[] }> = [
-    { nodeId: sourceId, path: [] },
-  ];
-  visited.add(sourceId);
-
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    const neighbors = adjacency.get(current.nodeId) ?? [];
-
-    for (const { neighborId, edgeId } of neighbors) {
-      if (visited.has(neighborId)) continue;
-      const newPath = [...current.path, edgeId];
-
-      if (neighborId === targetId) return newPath;
-
-      visited.add(neighborId);
-      queue.push({ nodeId: neighborId, path: newPath });
-    }
-  }
-
-  return null;
-}
-
-// ---------------------------------------------------------------------------
-// Beam ID Generator
-// ---------------------------------------------------------------------------
-
-let beamCounter = 0;
-function generateBeamId(): string {
-  beamCounter++;
-  return `beam_${beamCounter}_${Date.now()}`;
-}
-
 // ---------------------------------------------------------------------------
 // Create Neura Instance
 // ---------------------------------------------------------------------------
@@ -282,16 +87,26 @@ export function createNeuraInstance(
 
   // Initialize Worker
   let worker: Worker;
-  if (opts.worker instanceof Worker) {
+  if (typeof Worker !== 'undefined' && opts.worker instanceof Worker) {
     worker = opts.worker;
-  } else if (typeof opts.worker === 'string' || opts.worker instanceof URL) {
+  } else if (typeof Worker !== 'undefined' && (typeof opts.worker === 'string' || opts.worker instanceof URL)) {
     try {
       worker = new Worker(opts.worker, { type: 'module' });
     } catch {
       worker = createNeuraPhysicsWorker();
     }
-  } else {
+  } else if (typeof Worker !== 'undefined') {
     worker = createNeuraPhysicsWorker();
+  } else {
+    // Dummy Worker stub for jsdom/headless testing
+    worker = {
+      postMessage: () => {},
+      onmessage: null,
+      terminate: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => true,
+    } as unknown as Worker;
   }
 
   if (opts.physicsParams) {
@@ -346,17 +161,20 @@ export function createNeuraInstance(
   };
 
   // Resize handler
-  const resizeObserver = new ResizeObserver((entries) => {
-    for (const entry of entries) {
-      const w = entry.contentRect.width || canvas.clientWidth;
-      const h = entry.contentRect.height || canvas.clientHeight;
-      if (w > 0 && h > 0) {
-        webgl.resize(w, h);
-        setViewport({ width: w, height: h });
+  let resizeObserver: ResizeObserver | null = null;
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width || canvas.clientWidth;
+        const h = entry.contentRect.height || canvas.clientHeight;
+        if (w > 0 && h > 0) {
+          webgl.resize(w, h);
+          setViewport({ width: w, height: h });
+        }
       }
-    }
-  });
-  resizeObserver.observe(canvas.parentElement || canvas);
+    });
+    resizeObserver.observe(canvas.parentElement || canvas);
+  }
 
   // 3D Orbit & Pan gestures
   let isDragging = false;
@@ -1089,7 +907,7 @@ export function createNeuraInstance(
   const getFPS = () => currentFPS;
 
   const destroy = () => {
-    resizeObserver.disconnect();
+    if (resizeObserver) resizeObserver.disconnect();
     webgl.destroy();
     worker.terminate();
     if (animationRaf !== null) cancelAnimationFrame(animationRaf);

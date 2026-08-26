@@ -60,7 +60,12 @@ export function NeuraGraphCanvas({
     }
   }, [theme]);
 
+  const isFirstPhysicsRender = useRef(true);
   useEffect(() => {
+    if (isFirstPhysicsRender.current) {
+      isFirstPhysicsRender.current = false;
+      return;
+    }
     if (instanceRef.current && physicsParams) {
       instanceRef.current.setPhysicsParams(physicsParams);
     }

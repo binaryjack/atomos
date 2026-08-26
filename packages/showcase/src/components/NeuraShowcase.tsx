@@ -50,8 +50,8 @@ export function NeuraShowcase() {
     instance.generateMockData(nodeCount);
 
     const state = instance.store.value;
-    setTotalNodes(Object.keys(state.nodes).length);
-    setTotalEdges(Object.keys(state.edges).length);
+    setTotalNodes(Object.keys(state?.nodes || {}).length);
+    setTotalEdges(Object.keys(state?.edges || {}).length);
 
     return () => {
       instance.destroy();
@@ -66,8 +66,8 @@ export function NeuraShowcase() {
     if (instanceRef.current) {
       instanceRef.current.generateMockData(count);
       const state = instanceRef.current.store.value;
-      setTotalNodes(Object.keys(state.nodes).length);
-      setTotalEdges(Object.keys(state.edges).length);
+      setTotalNodes(Object.keys(state?.nodes || {}).length);
+      setTotalEdges(Object.keys(state?.edges || {}).length);
     }
   };
 

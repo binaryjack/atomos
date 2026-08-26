@@ -1,6 +1,8 @@
 import { createStructuraViewer } from './create-structura-viewer.js'
 import type { DAGExchange } from '../core/application/dag-service.js'
 import { injectDesignSystemTokens } from '../core/presentation/design-system.js'
+import { createInspectorDrawer, type InspectorDrawerController } from './create-inspector-drawer.js'
+import type { StructuraEntityInspectorData } from './types/inspector.types.js'
 
 // @ts-ignore - Vite will resolve this
 import primeStyleContent from '@atomos-web/prime-style/dist/styles.css?raw'
@@ -9,15 +11,82 @@ export class AtomosStructuraViewerElement extends HTMLElement {
   private svgContainer!: SVGSVGElement;
   private contentRoot!: SVGGElement;
   private viewerEngine: ReturnType<typeof createStructuraViewer> | null = null;
+  private inspectorDrawer: InspectorDrawerController | null = null;
   private _schema: DAGExchange | null = null;
   private resizeObserver: ResizeObserver | null = null;
+  private _enableInspectorDrawer = true;
+  private _drawerMode: 'push' | 'overlay' = 'push';
+  private inspectorDataStore = new Map<string, StructuraEntityInspectorData>();
+
+  static get observedAttributes() {
+    return ['enable-inspector-drawer', 'drawer-mode'];
+  }
 
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
   }
 
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    if (oldValue === newValue) return;
+    if (name === 'enable-inspector-drawer') {
+      this._enableInspectorDrawer = newValue !== 'false';
+    } else if (name === 'drawer-mode') {
+      const mode = newValue === 'overlay' ? 'overlay' : 'push';
+      if (this._drawerMode !== mode) {
+        this._drawerMode = mode;
+        if (this.inspectorDrawer) {
+          this.inspectorDrawer.setMode(mode);
+        }
+      }
+    }
+  }
+
+  get enableInspectorDrawer(): boolean {
+    return this._enableInspectorDrawer;
+  }
+
+  set enableInspectorDrawer(val: boolean) {
+    const boolVal = Boolean(val);
+    this._enableInspectorDrawer = boolVal;
+    if (boolVal && this.getAttribute('enable-inspector-drawer') !== 'true') {
+      this.setAttribute('enable-inspector-drawer', 'true');
+    } else if (!boolVal && this.getAttribute('enable-inspector-drawer') !== 'false') {
+      this.setAttribute('enable-inspector-drawer', 'false');
+      this.closeInspector();
+    }
+  }
+
+  get drawerMode(): 'push' | 'overlay' {
+    return this._drawerMode;
+  }
+
+  set drawerMode(val: 'push' | 'overlay') {
+    const mode = val === 'overlay' ? 'overlay' : 'push';
+    if (this._drawerMode !== mode) {
+      this._drawerMode = mode;
+      if (this.getAttribute('drawer-mode') !== mode) {
+        this.setAttribute('drawer-mode', mode);
+      }
+      if (this.inspectorDrawer) {
+        this.inspectorDrawer.setMode(mode);
+      }
+    }
+  }
+
   connectedCallback() {
+    if (this.hasAttribute('enable-inspector-drawer')) {
+      this._enableInspectorDrawer = this.getAttribute('enable-inspector-drawer') !== 'false';
+    } else {
+      this.setAttribute('enable-inspector-drawer', 'true');
+    }
+
+    if (this.hasAttribute('drawer-mode')) {
+      this._drawerMode = this.getAttribute('drawer-mode') === 'overlay' ? 'overlay' : 'push';
+    } else {
+      this.setAttribute('drawer-mode', 'push');
+    }
+
     this.shadowRoot!.innerHTML = `
       <style>
         :host {
@@ -28,20 +97,40 @@ export class AtomosStructuraViewerElement extends HTMLElement {
           background: var(--vbs-bg-canvas, #0f172a);
           overflow: hidden;
         }
+        .structura-viewer-container {
+          display: flex;
+          flex-direction: row;
+          width: 100%;
+          height: 100%;
+          position: relative;
+          overflow: hidden;
+        }
+        .structura-canvas-wrapper {
+          flex: 1 1 0%;
+          min-width: 0;
+          width: 100%;
+          height: 100%;
+          position: relative;
+          overflow: hidden;
+          transition: all 250ms ease;
+        }
         svg {
           width: 100%;
           height: 100%;
           display: block;
         }
       </style>
-      <svg xmlns="http://www.w3.org/2000/svg">
-        <!-- Grid pattern could be injected here -->
-        <g class="viewport-group"></g>
-      </svg>
-      <div class="zoom-bar">
-        <button id="zoom-in" title="Zoom In">+</button>
-        <button id="zoom-out" title="Zoom Out">-</button>
-        <button id="zoom-fit" title="Fit to Screen">Fit</button>
+      <div class="structura-viewer-container">
+        <div class="structura-canvas-wrapper">
+          <svg xmlns="http://www.w3.org/2000/svg">
+            <g class="viewport-group"></g>
+          </svg>
+          <div class="zoom-bar">
+            <button id="zoom-in" title="Zoom In">+</button>
+            <button id="zoom-out" title="Zoom Out">-</button>
+            <button id="zoom-fit" title="Fit to Screen">Fit</button>
+          </div>
+        </div>
       </div>
       <style>
         .zoom-bar {
@@ -83,13 +172,20 @@ export class AtomosStructuraViewerElement extends HTMLElement {
     styleEl.textContent = primeStyleContent;
     this.shadowRoot!.appendChild(styleEl);
 
+    const viewerContainer = this.shadowRoot!.querySelector('.structura-viewer-container')! as HTMLElement;
     this.svgContainer = this.shadowRoot!.querySelector('svg')!;
     this.contentRoot = this.shadowRoot!.querySelector('.viewport-group')!;
+
+    // Instantiate Inspector Drawer inside viewerContainer
+    this.inspectorDrawer = createInspectorDrawer(viewerContainer);
+    this.inspectorDrawer.setMode(this._drawerMode);
+    viewerContainer.appendChild(this.inspectorDrawer.element);
 
     this.viewerEngine = createStructuraViewer(
       this.svgContainer, 
       this.contentRoot, 
-      (tx, ty, scale) => this.setViewport(tx, ty, scale)
+      (tx, ty, scale) => this.setViewport(tx, ty, scale),
+      (entityId, nodeData) => this.handleEntityClick(entityId, nodeData)
     );
 
     if (this._schema) {
@@ -112,13 +208,17 @@ export class AtomosStructuraViewerElement extends HTMLElement {
     // Add basic pan/zoom for the viewer using pure DOM events
     this.setupBasicInteraction();
     
-    // Auto fit-to-screen on container resize
-    this.resizeObserver = new ResizeObserver(() => {
-      if (this.viewerEngine && this._schema) {
-        this.viewerEngine.fitToScreen();
-      }
-    });
-    this.resizeObserver.observe(this);
+    // Auto fit-to-screen on canvas wrapper resize
+    const canvasWrapper = this.shadowRoot!.querySelector('.structura-canvas-wrapper')!;
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => {
+        if (this.viewerEngine && this._schema) {
+          this.viewerEngine.fitToScreen();
+        }
+      });
+      this.resizeObserver.observe(canvasWrapper);
+    }
+
   }
 
   disconnectedCallback() {
@@ -129,6 +229,91 @@ export class AtomosStructuraViewerElement extends HTMLElement {
     if (this.viewerEngine) {
       this.viewerEngine.cleanup();
       this.viewerEngine = null;
+    }
+    if (this.inspectorDrawer) {
+      this.inspectorDrawer.destroy();
+      this.inspectorDrawer = null;
+    }
+  }
+
+  private handleEntityClick(entityId: string, nodeData: any) {
+    const customEvent = new CustomEvent('entity-inspect', {
+      detail: { entityId, nodeData },
+      bubbles: true,
+      composed: true,
+    });
+    this.dispatchEvent(customEvent);
+
+    if (this._enableInspectorDrawer) {
+      const storedData = this.inspectorDataStore.get(entityId);
+      if (storedData) {
+        this.openInspector(entityId, storedData);
+      } else {
+        // Derive initial inspector data from node metadata & execution
+        const inferredData: StructuraEntityInspectorData = {
+          entityId,
+          title: nodeData.name || entityId,
+          status: nodeData.execution?.status || 'in_progress',
+          role: nodeData.execution?.role || nodeData.nodeType || 'Agent Specialist',
+          executionDurationMs: nodeData.execution?.durationMs,
+          lora: nodeData.execution?.lora,
+          task: nodeData.execution?.task || (Array.isArray(nodeData.properties) && nodeData.properties.length > 0 ? { description: `Entity properties: ${nodeData.properties.length}` } : undefined),
+          stagedFiles: nodeData.execution?.stagedFiles,
+          thinkingLog: nodeData.execution?.thinkingLog,
+          error: nodeData.execution?.error,
+        };
+        this.openInspector(entityId, inferredData);
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Public Inspector Drawer API
+  // ---------------------------------------------------------------------------
+
+  public openInspector(entityId: string, data?: StructuraEntityInspectorData): void {
+    if (data) {
+      this.inspectorDataStore.set(entityId, data);
+    }
+    const resolvedData = data || this.inspectorDataStore.get(entityId);
+    if (this.inspectorDrawer) {
+      this.inspectorDrawer.open(entityId, resolvedData);
+      this.dispatchEvent(new CustomEvent('inspector-open', {
+        detail: { entityId, data: resolvedData },
+        bubbles: true,
+        composed: true,
+      }));
+      if (this._drawerMode === 'push') {
+        setTimeout(() => {
+          if (this.viewerEngine && this._schema) {
+            this.viewerEngine.fitToScreen();
+          }
+        }, 260);
+      }
+    }
+  }
+
+  public closeInspector(): void {
+    if (this.inspectorDrawer && this.inspectorDrawer.isOpen()) {
+      this.inspectorDrawer.close();
+      this.dispatchEvent(new CustomEvent('inspector-close', {
+        bubbles: true,
+        composed: true,
+      }));
+      if (this._drawerMode === 'push') {
+        setTimeout(() => {
+          if (this.viewerEngine && this._schema) {
+            this.viewerEngine.fitToScreen();
+          }
+        }, 260);
+      }
+    }
+  }
+
+  public setInspectorData(data: StructuraEntityInspectorData): void {
+    this.inspectorDataStore.set(data.entityId, data);
+    if (this.inspectorDrawer && this.inspectorDrawer.isOpen() && this.inspectorDrawer.getData()?.entityId === data.entityId) {
+      this.inspectorDrawer.setData(data);
     }
   }
 
@@ -150,6 +335,20 @@ export class AtomosStructuraViewerElement extends HTMLElement {
   patchEntity(entityId: string, updates: any) {
     if (this.viewerEngine) {
       this.viewerEngine.patchEntity(entityId, updates);
+    }
+    // Also patch stored inspector data if execution updates occur
+    if (updates.execution) {
+      const existing = this.inspectorDataStore.get(entityId);
+      if (existing) {
+        const updated: StructuraEntityInspectorData = {
+          ...existing,
+          status: updates.execution.status ?? existing.status,
+          thinkingLog: updates.execution.thinkingLog ?? existing.thinkingLog,
+          error: updates.execution.error ?? existing.error,
+          executionDurationMs: updates.execution.durationMs ?? existing.executionDurationMs,
+        };
+        this.setInspectorData(updated);
+      }
     }
   }
 

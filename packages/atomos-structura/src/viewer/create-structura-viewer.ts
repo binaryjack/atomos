@@ -4,14 +4,14 @@ import { createLinkManager } from '../core/link-manager.js'
 import type { DAGExchange } from '../core/application/dag-service.js'
 import type { DomainEntity, DomainLink } from '../core/domain/entity-aggregate.js'
 import type { EdgePosition } from '../features/edge/types/edge-position.types.js'
-import { computeShapeAnchorPos } from '../canvas/geometry/compute-shape-anchor-pos.js'
 import { determineOptimalEdges } from '../core/math/anchor-routing.js'
 import { createViewerEntity } from './create-viewer-entity.js'
 
 export const createStructuraViewer = function(
   svgContainer: SVGSVGElement, 
   contentRoot: SVGElement = svgContainer,
-  onLayoutReady?: (tx: number, ty: number, scale: number) => void
+  onLayoutReady?: (tx: number, ty: number, scale: number) => void,
+  onEntityClick?: (entityId: string, nodeData: DomainEntity) => void
 ) {
   const registry = createEntityRegistry(contentRoot);
   const linkManager = createLinkManager();
@@ -98,13 +98,14 @@ export const createStructuraViewer = function(
   };
 
   const loadSchema = (dag: DAGExchange) => {
+    if (!dag) return;
     // Clear existing
     linkManager.cleanup.destroy();
     registry.workspaceState.value.entities.forEach(e => registry.unregisterEntity(e.id));
 
     // Clone the dag arrays to avoid mutating the original export if it's reused
-    const clonedNodes = JSON.parse(JSON.stringify(dag.nodes)) as DomainEntity[];
-    const clonedEdges = JSON.parse(JSON.stringify(dag.edges)) as DomainLink[];
+    const clonedNodes = JSON.parse(JSON.stringify(dag.nodes || [])) as DomainEntity[];
+    const clonedEdges = JSON.parse(JSON.stringify(dag.edges || [])) as DomainLink[];
 
     // Hide content to prevent FOUC (Flash of Unstyled Content) during measurement and layout
     contentRoot.style.opacity = '0';
@@ -122,6 +123,15 @@ export const createStructuraViewer = function(
         execution: (node as any).execution,
         workspace: null // Viewer doesn't need full workspace manager
       });
+
+      if (onEntityClick) {
+        entity.element.style.cursor = 'pointer';
+        entity.element.addEventListener('click', (e) => {
+          e.stopPropagation();
+          onEntityClick(node.id, node);
+        });
+      }
+
       registry.registerEntity(entity);
     });
 

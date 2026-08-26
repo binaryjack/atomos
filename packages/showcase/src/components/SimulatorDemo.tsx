@@ -22,12 +22,18 @@ export function SimulatorDemo() {
   const [isMouseZoomEnabled, setIsMouseZoomEnabled] = useState(true);
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
+  const [mcpLogs, setMcpLogs] = useState<{ id: string; time: string; action: string; status: string; detail?: string }[]>([]);
 
   // Keep a ref to latest execution state for async loops
   const isExecutingRef = useRef(isExecuting);
   useEffect(() => {
     isExecutingRef.current = isExecuting;
   }, [isExecuting]);
+
+  const addMcpLog = (action: string, status: string, detail?: string) => {
+    const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    setMcpLogs(prev => [{ id: `${Date.now()}-${Math.random()}`, time, action, status, detail }, ...prev.slice(0, 49)]);
+  };
 
   // Dynamically load Structura API
   useEffect(() => {
@@ -39,7 +45,7 @@ export function SimulatorDemo() {
 
       const instanceId = 'simulator-instance';
 
-      // Clean up previous canvas page if it exists
+      // Clean up previous canvas page & singletons if they exist
       if (canvasPageRef.current) {
         if (typeof canvasPageRef.current.cleanup === 'function') {
           canvasPageRef.current.cleanup();
@@ -50,6 +56,9 @@ export function SimulatorDemo() {
           bridgeRef.current.destroy();
         }
       }
+      structura.destroyInstanceReduxStore(instanceId);
+      structura.destroyEntityManager(instanceId);
+      structura.destroyLegacyCanvasAdapter(instanceId);
 
       structura.initToolboxConfigManager(instanceId);
 
@@ -78,7 +87,9 @@ export function SimulatorDemo() {
 
       // Center and fit canvas
       setTimeout(() => {
-        dispatchMcp('structura_fit_to_screen', { padding: { top: 100, bottom: 100, left: 100, right: 100 } });
+        if (mounted) {
+          dispatchMcp('structura_fit_to_screen', { padding: { top: 100, bottom: 100, left: 100, right: 100 } });
+        }
       }, 250);
     };
 
@@ -98,6 +109,11 @@ export function SimulatorDemo() {
         bridgeRef.current.destroy();
         bridgeRef.current = null;
       }
+      import('@atomos-web/structura').then(structura => {
+        structura.destroyInstanceReduxStore('simulator-instance');
+        structura.destroyEntityManager('simulator-instance');
+        structura.destroyLegacyCanvasAdapter('simulator-instance');
+      }).catch(() => {});
     };
   }, [isReadonly, isHeadless, selectedPreset]);
 
@@ -112,14 +128,21 @@ export function SimulatorDemo() {
 
   const dispatchMcp = (action: string, args: any = {}) => {
     console.log(`[Simulator] Executing ${action}`);
+    addMcpLog(action, 'dispatched', JSON.stringify(args));
+
     if (action === 'structura_undo') {
       document.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'z' }));
+      addMcpLog(action, 'success', 'Keyboard event [Ctrl+Z] dispatched');
     } else if (action === 'structura_redo') {
       document.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'y' }));
+      addMcpLog(action, 'success', 'Keyboard event [Ctrl+Y] dispatched');
     } else {
       window.dispatchEvent(new CustomEvent('vbs-mcp-action', {
         detail: { reqId: `sim-req-${Date.now()}`, action, args },
-        sendResult: (data: any) => console.log('[Simulator] Received tool result payload:', data)
+        sendResult: (data: any) => {
+          console.log('[Simulator] Received tool result payload:', data);
+          addMcpLog(action, 'success', data ? JSON.stringify(data).slice(0, 60) : 'OK');
+        }
       } as any));
     }
   };
@@ -475,9 +498,9 @@ export function SimulatorDemo() {
         
         <div className="flex flex-col gap-2">
           {warnings.length === 0 ? (
-            <div className="p-4 rounded-lg bg-slate-900/50 border border-slate-800 text-center">
+            <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-800 text-center">
               <p className="text-xs text-emerald-400 font-medium">✓ Graph topology healthy</p>
-              <p className="text-[10px] text-slate-500 mt-1">No violations or deadlocks detected</p>
+              <p className="text-[10px] text-slate-500 mt-0.5">No violations or deadlocks detected</p>
             </div>
           ) : (
             warnings.map((w, idx) => (
@@ -487,6 +510,28 @@ export function SimulatorDemo() {
               </div>
             ))
           )}
+        </div>
+
+        <div className="flex flex-col gap-2 mt-2">
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">MCP Protocol Activity Stream</h3>
+          <div className="flex flex-col gap-1.5 max-h-80 overflow-y-auto pr-1">
+            {mcpLogs.length === 0 ? (
+              <p className="text-xs text-slate-500 italic">No MCP actions dispatched yet.</p>
+            ) : (
+              mcpLogs.map((log) => (
+                <div key={log.id} className="p-2 rounded bg-slate-900/80 border border-slate-800 text-[11px] flex flex-col gap-0.5">
+                  <div className="flex items-center justify-between text-slate-400 font-mono text-[10px]">
+                    <span>[{log.time}]</span>
+                    <span className={log.status === 'success' ? 'text-emerald-400 font-bold' : 'text-blue-400'}>{log.status}</span>
+                  </div>
+                  <div className="text-slate-200 font-semibold">{log.action}</div>
+                  {log.detail && (
+                    <div className="text-slate-400 text-[10px] font-mono truncate">{log.detail}</div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

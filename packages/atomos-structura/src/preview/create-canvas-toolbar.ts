@@ -649,6 +649,26 @@ export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bott
         const telemetryPayload = args.payload ? args.payload : args;
         applyTelemetry(telemetryPayload);
         if (sendResult) sendResult();
+      } else if (action === 'structura_discovery') {
+        const capabilities = {
+          tools: [
+            'structura_auto_layout',
+            'structura_get_layouts',
+            'structura_optimize_connections',
+            'structura_export_svg',
+            'structura_export_png',
+            'structura_export_dag',
+            'structura_inject_schema',
+            'structura_set_zoom',
+            'structura_fit_to_screen',
+            'structura_center_to_schema',
+            'structura_toggle_mouse_zoom',
+            'structura_toggle_mouse_pan',
+            'structura_report_progress',
+          ],
+          instanceId,
+        };
+        if (sendResult) sendResult(capabilities);
       }
     } catch (err) {
       if (sendResult) sendResult(null, err instanceof Error ? err.message : String(err));

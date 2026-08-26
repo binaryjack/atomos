@@ -163,13 +163,14 @@ export const createInteractiveEntityDemo = function(workspace: WorkspaceManager,
       case 'EntityCreated': {
         const exists = workspace.workspaceState.value.entities.has(event.entity.id);
         if (!exists) {
-          // Only spawn if this entity belongs to the currently active schema.
-          // Prevents cross-tab contamination when reannounceEntity fires events.
+          // Only filter by active schema if entity explicitly carries a different schemaId
           const reduxState = getInstanceReduxStore(instanceId).get_state();
           const activeCanvas = reduxState.workspace.canvases[reduxState.workspace.active_canvas_id];
-          const activeSchema = activeCanvas?.schemas[activeCanvas?.active_schema_id ?? ''];
-          const entityInActiveSchema = activeSchema?.entities.some((e: { id: string }) => e.id === event.entity.id);
-          if (!entityInActiveSchema) break;
+          const activeSchemaId = activeCanvas?.active_schema_id ?? '';
+          const entitySchemaId = (event.entity as any).schemaId;
+          if (entitySchemaId && activeSchemaId && entitySchemaId !== activeSchemaId) {
+            break;
+          }
 
           const domainEntity = event.entity;
           const ep: Entity & { shape?: string, color?: string | undefined } = makeEntityProps(domainEntity.id, domainEntity.name, domainEntity.position.x, domainEntity.position.y, domainEntity.dimensions.width, domainEntity.dimensions.height, domainEntity.properties as any[]);
