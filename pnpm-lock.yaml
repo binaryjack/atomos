@@ -215,16 +215,16 @@ importers:
   packages/showcase:
     dependencies:
       '@atomos-web/prime':
-        specifier: workspace:^2.3.10
+        specifier: workspace:*
         version: link:../atomos-prime
       '@atomos-web/prime-style':
-        specifier: workspace:^2.3.10
+        specifier: workspace:*
         version: link:../atomos-prime-style
       '@atomos-web/structura':
-        specifier: workspace:^2.3.29
+        specifier: workspace:*
         version: link:../atomos-structura
       '@atomos-web/structura-core':
-        specifier: workspace:^2.3.11
+        specifier: workspace:*
         version: link:../atomos-structura-core
       next:
         specifier: 16.2.3

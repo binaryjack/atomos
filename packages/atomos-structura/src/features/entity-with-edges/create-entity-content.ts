@@ -115,7 +115,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   // ─── header ───────────────────────────────────────────────────────────────
   const labelSignal = createSignal(store.signal.value.name);
   const isCollapsedSignal = createSignal(store.signal.value.collapsed ?? false);
-  const hasNoPropertiesSignal = createSignal(store.signal.value.properties.length === 0);
+  const hasNoPropertiesSignal = createSignal((store.signal.value.properties?.length ?? 0) === 0);
 
   const header = createEntityHeader({
     color: undefined,
@@ -268,7 +268,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   const renderRows = (entity: Entity): void => {
     const isGroup = entity.nodeType === 'group' || (entity as any).isGroup || ((entity as any).metadata)?.isGroup || false;
     const svgPrint = (entity as any).print || (entity as any).svgPrint || (entity as any).svgContent || ((entity as any).metadata)?.print || ((entity as any).metadata)?.svgPrint || null;
-    const hasProperties = entity.properties.length > 0;
+    const hasProperties = (entity.properties?.length ?? 0) > 0;
 
     const noProps = !hasProperties;
     const isGroupSvgState = isGroup && !!svgPrint;
@@ -292,7 +292,8 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
       emptyTitleContainer.style.display = 'none';
       if (footer.element) footer.element.style.display = entity.collapsed ? 'none' : 'flex';
     }
-    const nextPropKeys = new Set(entity.properties.map(p => p.key));
+    const safeProps = entity.properties || [];
+    const nextPropKeys = new Set(safeProps.map(p => p.key));
 
     // 1. Remove rows that are no longer in the entity
     for (const [key, cached] of rowCache.entries()) {
@@ -306,7 +307,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
     }
 
     // 2. Add or update rows
-    entity.properties.forEach((prop, index) => {
+    safeProps.forEach((prop, index) => {
       const existing = rowCache.get(prop.key);
       
       if (existing) {
@@ -436,7 +437,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
       props.onHeightChange(currentHeaderH);
       return;
     }
-    const bodyRows = Math.max(entity.properties.length, MIN_BODY_ROWS);
+    const bodyRows = Math.max(entity.properties?.length ?? 0, MIN_BODY_ROWS);
     const total = currentHeaderH + bodyRows * ROW_H + FOOTER_H;
     props.onHeightChange(total);
   };

@@ -305,7 +305,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
   const renderEntityNode = (entity: DomainEntity, q: string): void => {
     const isSel      = entity.id === selectedId;
     const isExpanded = expandedIds.has(entity.id);
-    const hasProps   = entity.properties.length > 0;
+    const hasProps   = (entity.properties?.length ?? 0) > 0;
 
     // Entity row
     const entityRow = document.createElement('div');
@@ -400,7 +400,7 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
 
     if (hasProps) {
       const countBadge = document.createElement('span');
-      countBadge.textContent = String(entity.properties.length);
+      countBadge.textContent = String(entity.properties?.length ?? 0);
       countBadge.style.cssText = css(
         'flex-shrink:0', 'font-size:9px',
         'background:var(--vbs-bg-panel, #111111)', 'color:#64748b',

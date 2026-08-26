@@ -44,7 +44,7 @@ export const injectDesignSystemTokens = (container?: HTMLElement) => {
   style.innerHTML = `
     :root {
       /* Brand Core - "Obsidian" Theme */
-      --vbs-bg-canvas: #000000;    /* Pure black */
+      --vbs-bg-canvas: #020617;    /* Deep obsidian slate */
       --vbs-bg-panel: #111111;     /* Very deep neutral grey */
       --vbs-bg-input: #09090b;     /* Recessed, almost black */
       

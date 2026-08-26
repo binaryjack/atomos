@@ -1,4 +1,4 @@
-﻿import { createInstanceReduxStore } from '../core/create-redux-store.js'
+import { createInstanceReduxStore } from '../core/create-redux-store.js'
 // Side-effect import: registers vbs-tab and vbs-tabs as custom elements
 import '@atomos-web/prime'
 
@@ -20,7 +20,7 @@ export const createSchemaTabs = function(instanceId: string): SchemaTabsResult {
     'position:absolute;top:0;left:0;right:0;',
     `height:${TAB_H}px;`,
     'display:flex;align-items:flex-end;z-index:40;',
-    'background:var(--vbs-bg-canvas, #000);',
+    'background:var(--vbs-bg-canvas, #020617);',
     'border-bottom:1px solid var(--vbs-border, #27272a);',
   ].join('');
 

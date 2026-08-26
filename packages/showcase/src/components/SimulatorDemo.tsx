@@ -398,7 +398,7 @@ export function SimulatorDemo() {
         ${isLeftSidebarOpen ? "ml-0" : "-ml-72 sm:-ml-[320px]"}
       `}>
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Consumer Simulator</h2>
+          <h2 className="text-lg font-semibold text-white">Interactive DAG Engine Simulator</h2>
           <button className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors" onClick={() => setIsLeftSidebarOpen(false)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>

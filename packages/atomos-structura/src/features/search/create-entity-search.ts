@@ -112,7 +112,7 @@ export const createEntitySearch = function(
 
       // Prop count
       const props = document.createElement('span');
-      props.textContent = `${entity.properties.length} props`;
+      props.textContent = `${entity.properties?.length ?? 0} props`;
       props.style.cssText = [
         'font-size:11px;flex-shrink:0;',
         i === activeIdx ? 'color:rgba(255,255,255,0.7);' : 'color:var(--vbs-text-secondary,#a1a1aa);',

@@ -68,12 +68,8 @@ export function Sidebar() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Execution Telemetry
         </Link>
         <Link href="/examples/simulator" className={getLinkClasses("/examples/simulator", "cyan")}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Consumer Simulator
-        </Link>
-        
-        <div className="text-[10px] uppercase font-bold text-slate-600 mt-6 mb-2 tracking-[0.2em] pl-3">Consumer App</div>
-        <Link href="/consumer" className={getLinkClasses("/consumer", "indigo")}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg> Consumer View
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Interactive DAG Simulator
+          <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300">NEW</span>
         </Link>
 
         <div className="text-[10px] uppercase font-bold text-slate-600 mt-6 mb-2 tracking-[0.2em] pl-3">Architecture Samples</div>

@@ -94,7 +94,7 @@ export class AtomosStructuraViewerElement extends HTMLElement {
           width: 100%;
           height: 100%;
           position: relative;
-          background: var(--vbs-bg-canvas, #0f172a);
+          background: var(--vbs-bg-canvas, #020617);
           overflow: hidden;
         }
         .structura-viewer-container {

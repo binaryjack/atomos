@@ -118,7 +118,7 @@ export const createCanvasPage = function (
   const canvasWrap = document.createElement('div');
   canvasWrap.classList.add('vbs-canvas-wrap');
   canvasWrap.style.cssText =
-    'position:relative;flex:1;min-width:0;min-height:0;overflow:hidden;background-color:var(--vbs-bg-canvas, #1e293b);-webkit-backface-visibility:hidden;backface-visibility:hidden;';
+    'position:relative;flex:1;min-width:0;min-height:0;overflow:hidden;background-color:var(--vbs-bg-canvas, #020617);-webkit-backface-visibility:hidden;backface-visibility:hidden;';
   mainArea.appendChild(canvasWrap);
 
   // SVG Canvas Stage

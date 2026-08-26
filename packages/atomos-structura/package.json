@@ -1,6 +1,6 @@
 {
   "name": "@atomos-web/structura",
-  "version": "2.3.39",
+  "version": "5.0.0",
   "license": "AGPL-3.0-or-later",
 
 
@@ -45,12 +45,12 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@atomos-web/prime": "^2.3.10",
-    "@atomos-web/prime-style": "^2.3.10",
-    "@atomos-web/structura-core": "^2.3.12",
-    "@atomos-web/structura-mcp": "^2.3.22",
-    "@atomos-web/renderer-svg": "^1.0.2",
-    "@binaryjack/formular.dev": "^2.3.9"
+    "@atomos-web/prime": "workspace:*",
+    "@atomos-web/prime-style": "workspace:*",
+    "@atomos-web/structura-core": "workspace:*",
+    "@atomos-web/structura-mcp": "workspace:*",
+    "@atomos-web/renderer-svg": "workspace:*",
+    "@binaryjack/formular.dev": "workspace:*"
   },
 
   "devDependencies": {
