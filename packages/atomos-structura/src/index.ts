@@ -33,3 +33,8 @@ export { createViewportCuller, type ViewportCuller } from './core/viewport-culle
 
 // Neura 3D WebGL Graph Engine
 export * from './neura/index.js';
+
+// Graph Diff & Standalone Exporters
+export * from './features/diff/create-graph-diff-engine.js';
+export * from './features/export/create-standalone-html-exporter.js';
+

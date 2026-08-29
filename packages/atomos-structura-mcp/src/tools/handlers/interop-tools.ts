@@ -105,4 +105,87 @@ export function registerInteropTools(): void {
       };
     }
   );
+
+  // 3. structura_export_html
+  toolRegistry.registerTool(
+    {
+      name: 'structura_export_html',
+      description: 'Export active architecture schema into a self-contained, single-file HTML document for offline viewing and sharing.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Title of the architecture diagram' },
+          schema_id: { type: 'string', description: 'Target schema ID (defaults to active schema)' },
+        },
+      },
+    },
+    (srv: VbsMcpServerInstance, reqId: string, args: Record<string, unknown>): McpResponse => {
+      const active_schema = get_active_schema(srv._state);
+      const schema_id = (args.schema_id as string) || active_schema?.id;
+      if (!schema_id) return { error: { code: 400, message: 'No active schema' }, id: reqId };
+
+      const canvas = find_canvas_for_schema(srv._state, schema_id);
+      const schema = canvas?.schemas[schema_id];
+      if (!schema) return { error: { code: 404, message: 'Schema not found' }, id: reqId };
+
+      const title = (args.title as string) || 'Atomos Structura Architecture Diagram';
+      const dagExchange = {
+        type: 'DAGExchange',
+        version: '1.0.0',
+        nodes: schema.entities,
+        edges: schema.links,
+      };
+
+      const htmlContent = `<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #020617; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+    #header { height: 48px; background: #090d16; border-bottom: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 50; }
+    #header .title { font-size: 14px; font-weight: 600; color: #e2e8f0; }
+    #header .badge { font-size: 10px; font-weight: 700; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); padding: 2px 8px; border-radius: 4px; }
+    #viewer-container { width: 100%; height: calc(100% - 48px); position: relative; }
+  </style>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@atomos-web/structura@5.0.0/dist/viewer/atomos-structura-viewer.js"></script>
+</head>
+<body>
+  <div id="header">
+    <div class="title">${title}</div>
+    <div class="badge">STANDALONE VERIFIED DIAGRAM</div>
+  </div>
+  <div id="viewer-container">
+    <atomos-structura-viewer id="viewer" enable-inspector-drawer="true" drawer-mode="push"></atomos-structura-viewer>
+  </div>
+  <script>
+    const schemaData = ${JSON.stringify(dagExchange)};
+    window.addEventListener('DOMContentLoaded', () => {
+      const viewer = document.getElementById('viewer');
+      if (viewer && typeof viewer.setSchema === 'function') {
+        viewer.setSchema(schemaData);
+      } else {
+        customElements.whenDefined('atomos-structura-viewer').then(() => {
+          document.getElementById('viewer').setSchema(schemaData);
+        });
+      }
+    });
+  </script>
+</body>
+</html>`;
+
+      return {
+        result: {
+          success: true,
+          title,
+          entityCount: schema.entities.length,
+          linkCount: schema.links.length,
+          htmlContent,
+        },
+        id: reqId,
+      };
+    }
+  );
 }

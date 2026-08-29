@@ -98,6 +98,51 @@ export const createExportPluginsTab = (getKernel: (() => SchemaGraphKernel) | un
 
       pluginList.appendChild(card);
     });
+
+    // ── Share Card (1200x630 PNG) Exporter Card ──
+    const card = document.createElement('div');
+    card.className = 'flex items-center gap-4 bg-slate-950 border border-slate-800 rounded-lg px-4 py-3';
+
+    const info = document.createElement('div');
+    info.className = 'flex-1 min-w-0';
+
+    const nameRow = document.createElement('div');
+    nameRow.className = 'flex items-center gap-2';
+
+    const name = document.createElement('span');
+    name.className = 'text-slate-200 text-sm font-medium';
+    name.textContent = 'Share Card Exporter (1200×630)';
+
+    nameRow.appendChild(name);
+    nameRow.appendChild(badge('.png', '#38bdf8'));
+    info.appendChild(nameRow);
+
+    const desc = document.createElement('p');
+    desc.className = 'text-slate-500 text-xs mt-1 truncate';
+    desc.textContent = 'Export canonical 1200x630 social & README image card with obsidian styling.';
+    info.appendChild(desc);
+
+    card.appendChild(info);
+
+    const exportBtn = document.createElement('button');
+    exportBtn.textContent = 'Export Card';
+    exportBtn.style.cssText = [
+      'flex-shrink:0;padding:4px 14px;font-size:13px;border-radius:6px;cursor:pointer;border:none;',
+      'background:#0284c7;color:#fff;transition:background 0.15s;',
+    ].join('');
+    exportBtn.onmouseover = () => { exportBtn.style.background = '#38bdf8'; };
+    exportBtn.onmouseout  = () => { exportBtn.style.background = '#0284c7'; };
+    exportBtn.onclick = () => {
+      const svg = document.querySelector('.vbs-canvas-wrap svg') as SVGSVGElement;
+      if (!svg) { alert('No active canvas SVG found.'); return; }
+      import('./create-canvas-snapshot.js').then(({ createCanvasSnapshot }) => {
+        const snap = createCanvasSnapshot(() => svg);
+        snap.exportShareCard({ title: 'System Architecture Diagram' });
+      });
+    };
+    card.appendChild(exportBtn);
+
+    pluginList.appendChild(card);
   };
 
   renderBuiltins();
