@@ -29,6 +29,29 @@ export function createSignal<T>(initialValue: T): Signal<T> {
 
 export type NodeActivityState = 'idle' | 'routing' | 'active' | 'firing' | 'verifying' | 'learning';
 
+export type NodeMorphology =
+  | 'soma_spherical'
+  | 'soma_dendritic'
+  | 'quantum_crystal'
+  | 'vesicle_hologram'
+  | 'ring_oracle';
+
+export type EdgeMorphology =
+  | 'wire'
+  | 'myelinated_tube'
+  | 'synaptic_lightning'
+  | 'quantum_flow'
+  | 'catenary_curve';
+
+export type CognitiveEmotion =
+  | 'harmonic_focus'
+  | 'curiosity'
+  | 'conflict'
+  | 'insight'
+  | 'high_load'
+  | 'dreaming';
+
+export type BrainWaveType = 'alpha' | 'beta' | 'gamma' | 'theta' | 'delta';
 
 export interface NeuraNode {
   id: string;
@@ -41,7 +64,10 @@ export interface NeuraNode {
   visible: boolean; // Managed by culling system
   activity?: number;           // 0.0 = idle, 1.0 = maximum luminosity
   state?: NodeActivityState;   // semantic state for color coding
+  morphology?: NodeMorphology; // visual morphologic geometry
   pulseFrequency?: number;     // Hz, default ~2.0
+  turgorScale?: number;        // Current dilation factor (1.0 = rest, 1.8 = peak turgor)
+  tentacleCount?: number;      // Dendritic rays (e.g. 5 to 8)
 }
 
 export interface NeuraEdge {
@@ -50,6 +76,9 @@ export interface NeuraEdge {
   targetId: string;
   weight: number;
   visible: boolean; // Managed by culling system
+  morphology?: EdgeMorphology;
+  flowVelocity?: number;
+  lightningEnergy?: number;
 }
 
 export interface NeuraEnergyBeam {
@@ -71,6 +100,25 @@ export interface ThinkingPulseState {
   maxRadius: number;
 }
 
+export interface SynapticLightningState {
+  id: string;
+  sourceId: string;
+  targetId: string;
+  color: string;
+  durationMs: number;
+  startedAt: number;
+  jaggedness: number;
+  branches: number;
+}
+
+export interface TurgorPulseState {
+  nodeId: string;
+  peakDilation: number;
+  durationMs: number;
+  attackMs: number;
+  startedAt: number;
+}
+
 export interface NeuraViewport {
   x: number;
   y: number;
@@ -90,7 +138,14 @@ export interface NeuraState {
   hoveredNodeId: string | null;
   selectedNodeId: string | null;
   energyBeams: NeuraEnergyBeam[];
+  synapticLightnings: SynapticLightningState[];
+  turgorPulses: Record<string, TurgorPulseState>;
   cognitiveCharge: number; // 0.0 (rest glow = 0.2) to 1.0 (max glow = 0.9)
+  cognitiveEmotion: CognitiveEmotion;
+  emotionIntensity: number;
+  brainWaveType: BrainWaveType;
+  brainWaveFreq: number; // Hz
+  brainWaveAmp: number;
   thinkingPulse: ThinkingPulseState | null;
 }
 
@@ -102,6 +157,25 @@ export const STATE_HALO_COLORS: Record<NodeActivityState, [number, number, numbe
   firing:    [1.0, 0.42, 0.0],     // orange #ff6b00
   verifying: [0.13, 0.77, 0.37],   // green #22c55e
   learning:  [0.66, 0.33, 0.97],   // purple #a855f7
+};
+
+/** Color mapping for CognitiveEmotion auras */
+export const EMOTION_AURA_COLORS: Record<CognitiveEmotion, [number, number, number]> = {
+  harmonic_focus: [0.0, 0.94, 1.0],   // electric cyan #00F0FF
+  curiosity:      [0.0, 1.0, 0.6],    // emerald borealis #00FF99
+  conflict:       [1.0, 0.0, 0.33],   // neon magenta/amber jitter #FF0055
+  insight:        [1.0, 0.84, 0.0],   // solar gold #FFD700
+  high_load:      [1.0, 0.2, 0.0],    // plasma red #FF3300
+  dreaming:       [0.58, 0.0, 1.0],   // deep bioluminescent violet #9400D3
+};
+
+/** Frequency mapping for BrainWaveType (Hz) */
+export const BRAIN_WAVE_FREQUENCIES: Record<BrainWaveType, number> = {
+  alpha: 10.0,
+  beta:  20.0,
+  gamma: 40.0,
+  theta: 5.0,
+  delta: 1.5,
 };
 
 export function createNeuraStore() {
@@ -122,7 +196,14 @@ export function createNeuraStore() {
     hoveredNodeId: null,
     selectedNodeId: null,
     energyBeams: [],
+    synapticLightnings: [],
+    turgorPulses: {},
     cognitiveCharge: 0.0,
+    cognitiveEmotion: 'harmonic_focus',
+    emotionIntensity: 0.8,
+    brainWaveType: 'alpha',
+    brainWaveFreq: 10.0,
+    brainWaveAmp: 0.5,
     thinkingPulse: null,
   });
 
@@ -138,7 +219,12 @@ export function createNeuraStore() {
     const state = store.value;
     const newNodes = { ...state.nodes };
     for (const node of nodes) {
-      newNodes[node.id] = node;
+      newNodes[node.id] = {
+        ...node,
+        morphology: node.morphology ?? 'soma_spherical',
+        turgorScale: 1.0,
+        tentacleCount: node.tentacleCount ?? 6,
+      };
     }
     store.set({ ...state, nodes: newNodes });
   };
@@ -147,7 +233,10 @@ export function createNeuraStore() {
     const state = store.value;
     const newEdges = { ...state.edges };
     for (const edge of edges) {
-      newEdges[edge.id] = edge;
+      newEdges[edge.id] = {
+        ...edge,
+        morphology: edge.morphology ?? 'wire',
+      };
     }
     store.set({ ...state, edges: newEdges });
   };
@@ -166,6 +255,76 @@ export function createNeuraStore() {
           state: nodeState ?? node.state ?? 'idle',
         },
       },
+    });
+  };
+
+  const setNodeMorphology = (nodeId: string, morphology: NodeMorphology) => {
+    const state = store.value;
+    const node = state.nodes[nodeId];
+    if (!node) return;
+    store.set({
+      ...state,
+      nodes: {
+        ...state.nodes,
+        [nodeId]: { ...node, morphology },
+      },
+    });
+  };
+
+  const setEdgeMorphology = (edgeId: string, morphology: EdgeMorphology) => {
+    const state = store.value;
+    const edge = state.edges[edgeId];
+    if (!edge) return;
+    store.set({
+      ...state,
+      edges: {
+        ...state.edges,
+        [edgeId]: { ...edge, morphology },
+      },
+    });
+  };
+
+  const setCognitiveEmotion = (emotion: CognitiveEmotion, intensity = 1.0) => {
+    const state = store.value;
+    store.set({
+      ...state,
+      cognitiveEmotion: emotion,
+      emotionIntensity: Math.max(0, Math.min(1, intensity)),
+    });
+  };
+
+  const setBrainWaveOscillation = (waveType: BrainWaveType, freq?: number, amp = 0.5) => {
+    const state = store.value;
+    store.set({
+      ...state,
+      brainWaveType: waveType,
+      brainWaveFreq: freq ?? BRAIN_WAVE_FREQUENCIES[waveType],
+      brainWaveAmp: Math.max(0, Math.min(1, amp)),
+    });
+  };
+
+  const triggerTurgorPulse = (nodeId: string, peakDilation = 1.6, durationMs = 700, attackMs = 120) => {
+    const state = store.value;
+    store.set({
+      ...state,
+      turgorPulses: {
+        ...state.turgorPulses,
+        [nodeId]: {
+          nodeId,
+          peakDilation,
+          durationMs,
+          attackMs,
+          startedAt: performance.now(),
+        },
+      },
+    });
+  };
+
+  const triggerSynapticLightning = (lightning: SynapticLightningState) => {
+    const state = store.value;
+    store.set({
+      ...state,
+      synapticLightnings: [...state.synapticLightnings, lightning],
     });
   };
 
@@ -206,12 +365,14 @@ export function createNeuraStore() {
     const nextNodes: Record<string, NeuraNode> = {};
     for (const key in state.nodes) {
       const n = state.nodes[key]!;
-      nextNodes[key] = { ...n, activity: 0, state: 'idle' };
+      nextNodes[key] = { ...n, activity: 0, state: 'idle', turgorScale: 1.0 };
     }
     store.set({
       ...state,
       nodes: nextNodes,
       energyBeams: [],
+      synapticLightnings: [],
+      turgorPulses: {},
       cognitiveCharge: 0.0,
       thinkingPulse: null,
     });
@@ -223,6 +384,12 @@ export function createNeuraStore() {
     addNodes,
     addEdges,
     setNodeActivity,
+    setNodeMorphology,
+    setEdgeMorphology,
+    setCognitiveEmotion,
+    setBrainWaveOscillation,
+    triggerTurgorPulse,
+    triggerSynapticLightning,
     addEnergyBeam,
     removeBeam,
     setCognitiveChargeStore,

@@ -43,6 +43,7 @@ function createMockWebGLContext() {
     uniformMatrix4fv: vi.fn(),
     uniform1f: vi.fn(),
     uniform1i: vi.fn(),
+    uniform3f: vi.fn(),
     uniform3fv: vi.fn(),
     uniform4fv: vi.fn(),
     clearColor: vi.fn(),
@@ -51,6 +52,8 @@ function createMockWebGLContext() {
     disable: vi.fn(),
     blendFunc: vi.fn(),
     depthFunc: vi.fn(),
+    depthMask: vi.fn(),
+    disableVertexAttribArray: vi.fn(),
     viewport: vi.fn(),
     drawArrays: vi.fn(),
   };

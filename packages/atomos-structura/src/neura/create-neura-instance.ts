@@ -6,6 +6,10 @@ import type {
   NeuraViewport,
   NodeActivityState,
   ThinkingPulseState,
+  NodeMorphology,
+  EdgeMorphology,
+  CognitiveEmotion,
+  BrainWaveType,
 } from './core/neura-store.js';
 import { CullingSystem } from './renderer/culling-system.js';
 import { type ShaderTheme, WebGLEngine } from './renderer/webgl-engine.js';
@@ -44,12 +48,20 @@ export interface NeuraInstance {
   getFPS: () => number;
   destroy: () => void;
 
-  // Telemetry & Illumination API
+  // Telemetry API
   setNodeActivity: (nodeId: string, activity: number, state?: NodeActivityState) => void;
   triggerEnergyBeam: (sourceId: string, targetId: string, color?: string, durationMs?: number) => void;
   pulseNode: (nodeId: string, durationMs?: number, color?: string) => void;
   resetAllActivities: () => void;
   highlightRoute: (sourceId: string, targetId: string, keepActive?: boolean) => void;
+
+  // Morphologies & Living Emotion API
+  setNodeMorphology: (nodeId: string, morphology: NodeMorphology) => void;
+  setEdgeMorphology: (edgeId: string, morphology: EdgeMorphology) => void;
+  setCognitiveEmotion: (emotion: CognitiveEmotion, intensity?: number) => void;
+  triggerTurgorPulse: (nodeId: string, peakDilation?: number, durationMs?: number, attackMs?: number) => void;
+  triggerSynapticLightning: (sourceId: string, targetId: string, color?: string, durationMs?: number) => void;
+  setBrainWaveOscillation: (waveType: BrainWaveType, freq?: number, amp?: number) => void;
 
   // Empathic Listening & Synaptic Charge API
   setCognitiveCharge: (charge: number) => void;
@@ -74,6 +86,12 @@ export function createNeuraInstance(
     store,
     setViewport,
     setNodeActivity: storeSetNodeActivity,
+    setNodeMorphology: storeSetNodeMorphology,
+    setEdgeMorphology: storeSetEdgeMorphology,
+    setCognitiveEmotion: storeSetCognitiveEmotion,
+    setBrainWaveOscillation: storeSetBrainWaveOscillation,
+    triggerTurgorPulse: storeTriggerTurgorPulse,
+    triggerSynapticLightning: storeTriggerSynapticLightning,
     addEnergyBeam,
     setCognitiveChargeStore,
     setThinkingPulseStore,
@@ -435,7 +453,7 @@ export function createNeuraInstance(
       }
     }
 
-    // 3. Render WebGL 3D (with energy beams, cognitive charge & thinking pulse)
+    // 3. Render WebGL 3D (with energy beams, cognitive charge, living somas, synaptic lightning & emotions)
     webgl.render(
       visibleNodes,
       visibleEdges,
@@ -445,7 +463,13 @@ export function createNeuraInstance(
       !!focusId,
       liveBeams,
       state.cognitiveCharge,
-      currentPulse
+      currentPulse,
+      state.cognitiveEmotion,
+      state.emotionIntensity,
+      state.brainWaveFreq,
+      state.brainWaveAmp,
+      state.synapticLightnings,
+      state.turgorPulses
     );
 
     // 4. HTML Overlay Labels projected in 3D
@@ -932,6 +956,40 @@ export function createNeuraInstance(
     overlay.remove();
   };
 
+  const setNodeMorphology = (nodeId: string, morphology: NodeMorphology) => {
+    storeSetNodeMorphology(nodeId, morphology);
+  };
+
+  const setEdgeMorphology = (edgeId: string, morphology: EdgeMorphology) => {
+    storeSetEdgeMorphology(edgeId, morphology);
+  };
+
+  const setCognitiveEmotion = (emotion: CognitiveEmotion, intensity = 1.0) => {
+    storeSetCognitiveEmotion(emotion, intensity);
+  };
+
+  const triggerTurgorPulse = (nodeId: string, peakDilation = 1.6, durationMs = 700, attackMs = 120) => {
+    storeTriggerTurgorPulse(nodeId, peakDilation, durationMs, attackMs);
+  };
+
+  const triggerSynapticLightning = (sourceId: string, targetId: string, color = '#00FFFF', durationMs = 450) => {
+    const id = `lightning_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    storeTriggerSynapticLightning({
+      id,
+      sourceId,
+      targetId,
+      color,
+      durationMs,
+      startedAt: performance.now(),
+      jaggedness: 0.8,
+      branches: 3,
+    });
+  };
+
+  const setBrainWaveOscillation = (waveType: BrainWaveType, freq?: number, amp = 0.5) => {
+    storeSetBrainWaveOscillation(waveType, freq, amp);
+  };
+
   return {
     store,
     webgl,
@@ -954,6 +1012,13 @@ export function createNeuraInstance(
     pulseNode,
     resetAllActivities,
     highlightRoute,
+    // Morphologies & Living Emotion API
+    setNodeMorphology,
+    setEdgeMorphology,
+    setCognitiveEmotion,
+    triggerTurgorPulse,
+    triggerSynapticLightning,
+    setBrainWaveOscillation,
     // Empathic Listening & Synaptic Charge API
     setCognitiveCharge,
     fireThinkingPulse,
