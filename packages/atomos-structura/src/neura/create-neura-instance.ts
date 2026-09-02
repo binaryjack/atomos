@@ -18,7 +18,7 @@ import type { PhysicsParams } from './physics/worker.js';
 import { createNeuraPhysicsWorker } from './physics/worker-script.js';
 import { generateBeamId, bfsShortestPath, pruneCompletedBeams } from './core/neura-telemetry.js';
 import { createNeuraConfig, type NeuraConfig } from './core/neura-config.js';
-import { createNeuraLabelsController } from './renderer/neura-labels.js';
+import { createNeuraLabelsController, formatCleanLabel } from './renderer/neura-labels.js';
 
 export interface NeuraInstanceOptions {
   worker?: Worker | string | URL;
@@ -473,7 +473,7 @@ export function createNeuraInstance(
     );
 
     // 4. HTML Overlay Labels projected in 3D
-    renderOverlayLabels(visibleNodes, state, focusId);
+    renderOverlayLabels(visibleNodes, state, focusId, activeNodeIds);
   });
 
   // ---------------------------------------------------------------------------
@@ -494,26 +494,38 @@ export function createNeuraInstance(
   function renderOverlayLabels(
     visibleNodes: NeuraNode[],
     state: { viewport: NeuraViewport; hoveredNodeId: string | null; selectedNodeId: string | null },
-    focusId: string | null
+    focusId: string | null,
+    activeNodeIds?: Set<string>
   ) {
     const renderedIds = new Set<string>();
-    const isZoomedIn = state.viewport.zoom >= 0.7;
+    const isZoomedIn = state.viewport.zoom >= 0.65;
+    const isSelectionActive = Boolean(state.selectedNodeId);
     const mvp = webgl.computeMVPMatrix(state.viewport);
     const canvasW = canvas.width || 800;
     const canvasH = canvas.height || 600;
 
+    // Track 2D bounding boxes in screen-space for anti-collision (Smart LOD)
+    const renderedBoxes: Array<{ x: number; y: number; w: number; h: number }> = [];
+
     for (const node of visibleNodes) {
-      const isFocused = node.id === focusId;
+      const isSelected = node.id === state.selectedNodeId;
+      const isHovered = node.id === state.hoveredNodeId;
+      const isFocused = isSelected || isHovered;
+      const isConnectedNeighbor = activeNodeIds ? activeNodeIds.has(node.id) : false;
       const isMajorFile = isZoomedIn && node.metadata?.kind === 'file';
       const isActive = (node.activity ?? 0) > 0.3;
 
+      // When a node is selected, ONLY the selected node and its directly connected neighbors are shown.
+      // All other node labels fade out / are hidden to eliminate noise.
       let shouldRender = false;
-      if (currentLabelsMode === 'focus-only') {
+      if (isSelectionActive) {
+        shouldRender = isSelected || isConnectedNeighbor;
+      } else if (currentLabelsMode === 'focus-only') {
         shouldRender = isFocused;
       } else if (currentLabelsMode === 'always') {
         shouldRender = true;
       } else {
-        // 'auto'
+        // 'auto' mode when no selection is active
         shouldRender = isFocused || isMajorFile || isActive;
       }
 
@@ -530,43 +542,69 @@ export function createNeuraInstance(
           const screenX = (clipX / clipW * 0.5 + 0.5) * canvasW;
           const screenY = (1.0 - (clipY / clipW * 0.5 + 0.5)) * canvasH;
 
+          // Anti-collision: if not focused/connected, prevent rendering if too close to an existing label
+          if (!isFocused && !isConnectedNeighbor && !isSelectionActive) {
+            const hasCollision = renderedBoxes.some(
+              b => Math.abs(b.x - screenX) < 85 && Math.abs(b.y - screenY) < 24
+            );
+            if (hasCollision) continue;
+          }
+
+          renderedBoxes.push({ x: screenX, y: screenY, w: 85, h: 24 });
           renderedIds.add(node.id);
+
           let el = labelsMap.get(node.id);
           if (!el) {
             el = document.createElement('div');
             el.style.position = 'absolute';
-            el.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+            el.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
             el.style.transform = 'translate(-50%, -100%)';
             el.style.marginTop = '-12px';
             el.style.whiteSpace = 'nowrap';
             el.style.pointerEvents = 'none';
-            el.style.borderRadius = '4px';
-            el.style.padding = '2px 6px';
-            el.style.backdropFilter = 'blur(6px)';
-            el.style.transition = 'opacity 0.15s ease';
+            el.style.borderRadius = '5px';
+            el.style.padding = '3px 7px';
+            el.style.backdropFilter = 'blur(8px)';
+            el.style.transition = 'opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease';
             overlay.appendChild(el);
             labelsMap.set(node.id, el);
           }
 
-          const labelText = (node.metadata?.label ?? node.metadata?.name ?? node.id) as string;
+          const labelText = formatCleanLabel(node);
           el.innerText = labelText;
 
           el.style.left = `${screenX}px`;
           el.style.top = `${screenY}px`;
 
-          if (isFocused) {
+          if (isSelected) {
+            el.style.zIndex = '120';
+            el.style.color = '#ffffff';
+            el.style.background = 'rgba(0, 119, 255, 0.92)';
+            el.style.border = '1px solid rgba(147, 197, 253, 0.9)';
+            el.style.fontSize = '12px';
+            el.style.fontWeight = 'bold';
+            el.style.boxShadow = '0 0 16px rgba(0, 119, 255, 0.6), 0 4px 12px rgba(0,0,0,0.8)';
+          } else if (isFocused) {
             el.style.zIndex = '100';
             el.style.color = '#38bdf8';
-            el.style.background = 'rgba(15, 23, 42, 0.85)';
-            el.style.border = '1px solid rgba(56, 189, 248, 0.4)';
+            el.style.background = 'rgba(15, 23, 42, 0.9)';
+            el.style.border = '1px solid rgba(56, 189, 248, 0.6)';
             el.style.fontSize = '12px';
             el.style.fontWeight = 'bold';
             el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.6)';
+          } else if (isSelectionActive && isConnectedNeighbor) {
+            // Connected neighbor in isolated 1-hop view
+            el.style.zIndex = '90';
+            el.style.color = '#67e8f9';
+            el.style.background = 'rgba(8, 47, 73, 0.88)';
+            el.style.border = '1px solid rgba(6, 182, 212, 0.6)';
+            el.style.fontSize = '11px';
+            el.style.fontWeight = '600';
+            el.style.boxShadow = '0 0 10px rgba(6, 182, 212, 0.35)';
           } else if (isActive) {
-            // Active telemetry nodes get highlighted labels
             el.style.zIndex = '50';
             el.style.color = '#fbbf24';
-            el.style.background = 'rgba(15, 23, 42, 0.8)';
+            el.style.background = 'rgba(15, 23, 42, 0.85)';
             el.style.border = '1px solid rgba(251, 191, 36, 0.4)';
             el.style.fontSize = '11px';
             el.style.fontWeight = '600';
@@ -574,8 +612,8 @@ export function createNeuraInstance(
           } else {
             el.style.zIndex = '10';
             el.style.color = '#cbd5e1';
-            el.style.background = 'rgba(15, 23, 42, 0.7)';
-            el.style.border = '1px solid rgba(148, 163, 184, 0.2)';
+            el.style.background = 'rgba(15, 23, 42, 0.75)';
+            el.style.border = '1px solid rgba(148, 163, 184, 0.25)';
             el.style.fontSize = '11px';
             el.style.fontWeight = '500';
             el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)';
