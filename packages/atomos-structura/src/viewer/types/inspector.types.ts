@@ -51,7 +51,10 @@ export interface StructuraEntityInspectorData {
   /** Duration of execution in milliseconds */
   executionDurationMs?: number;
 
-  /** LoRA adapter & agent specialization details */
+  /** Specialist Lobe Codename (e.g. "LOBE-KRONOS", "LOBE-AETHER") */
+  specialistCodename?: string;
+
+  /** LoRA adapter & agent specialization details (legacy fallback) */
   lora?: LoraSpecializationData;
 
   /** Task description & file operation intention */

@@ -321,40 +321,37 @@ export function createInspectorDrawer(parentContainer: HTMLElement): InspectorDr
       </div>
 
       <div class="structura-drawer-body">
-        <!-- LoRA & Agent Specialization Section -->
-        ${data.lora ? `
+        <!-- Sovereign Specialist Section -->
+        ${data.specialistCodename ? `
           <div class="structura-drawer-section">
             <div class="structura-section-title">
-              <span>LoRA & Specialist Agent</span>
-              <span class="structura-badge" style="${data.lora.isVramResident
-                ? 'background: rgba(34, 197, 94, 0.15); color: #4ade80; border-color: rgba(34, 197, 94, 0.3);'
-                : 'background: rgba(6, 182, 212, 0.15); color: #38bdf8; border-color: rgba(6, 182, 212, 0.3);'}">
-                ${data.lora.isVramResident ? '● VRAM Resident' : '⚡ JIT Auto-Trained'}
+              <span>Assigned Specialist</span>
+              <span class="structura-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">
+                ● Active Swarm
               </span>
             </div>
             <div class="structura-meta-item">
-              <span class="structura-meta-label">Safetensors Adapter</span>
-              <span class="structura-meta-val" style="color: #60a5fa;">${escapeHtml(data.lora.adapterName)}</span>
+              <span class="structura-meta-label">Codename</span>
+              <span class="structura-meta-val" style="color: #6ee7b7; font-weight: bold; font-size: 13px; letter-spacing: 0.5px;">${escapeHtml(data.specialistCodename)}</span>
             </div>
-            ${data.lora.specialtyDomain ? `
+            ${data.role ? `
               <div class="structura-meta-item">
-                <span class="structura-meta-label">Specialty Domain</span>
-                <span class="structura-meta-val" style="color: #f1f5f9;">${escapeHtml(data.lora.specialtyDomain)}</span>
+                <span class="structura-meta-label">Role</span>
+                <span class="structura-meta-val" style="color: #f1f5f9;">${escapeHtml(data.role)}</span>
               </div>
             ` : ''}
-            <div class="structura-grid-2">
-              ${data.lora.rank !== undefined ? `
-                <div class="structura-meta-item">
-                  <span class="structura-meta-label">Rank (r) / Alpha (α)</span>
-                  <span class="structura-meta-val">r=${data.lora.rank} / α=${data.lora.alpha ?? data.lora.rank * 2}</span>
-                </div>
-              ` : ''}
-              ${data.lora.swapLatencyUs !== undefined ? `
-                <div class="structura-meta-item">
-                  <span class="structura-meta-label">Swap Latency</span>
-                  <span class="structura-meta-val" style="color: #a7f3d0;">${data.lora.swapLatencyUs} µs</span>
-                </div>
-              ` : ''}
+          </div>
+        ` : data.lora ? `
+          <div class="structura-drawer-section">
+            <div class="structura-section-title">
+              <span>Specialist</span>
+              <span class="structura-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">
+                ● Active
+              </span>
+            </div>
+            <div class="structura-meta-item">
+              <span class="structura-meta-label">Codename</span>
+              <span class="structura-meta-val" style="color: #60a5fa;">${escapeHtml(data.lora.adapterName.replace(/\.safetensors$/, ''))}</span>
             </div>
           </div>
         ` : ''}
