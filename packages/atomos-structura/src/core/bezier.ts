@@ -96,37 +96,34 @@ export const getBezierControlPoints = (
     cp2 = offsetForEdge(dst, dstEdge, dVal);
   }
   if (obstacles && obstacles.length > 0) {
-    const PAD = 24; // tighter collision padding to avoid false positives
+    const PAD = 16;
 
-    // Corridor bounding box: only obstacles that lie BETWEEN src and dst matter.
-    // Expand by PAD in all directions so nearby entities aren't wrongly flagged.
-    const corridorX1 = Math.min(src.x, dst.x) - PAD;
-    const corridorX2 = Math.max(src.x, dst.x) + PAD;
-    const corridorY1 = Math.min(src.y, dst.y) - PAD;
-    const corridorY2 = Math.max(src.y, dst.y) + PAD;
+    // Corridor bounding box between src and dst with padding
+    const corridorX1 = Math.min(src.x, dst.x) - 40;
+    const corridorX2 = Math.max(src.x, dst.x) + 40;
+    const corridorY1 = Math.min(src.y, dst.y) - 40;
+    const corridorY2 = Math.max(src.y, dst.y) + 40;
 
-    // Sample 9 interior points along the initial bezier to detect collisions
+    // Sample 25 interior points along the initial bezier curve to detect collisions
     const sample = (t: number) => {
       const mt = 1 - t;
       return {
-        x: mt*mt*mt*src.x + 3*mt*mt*t*cp1.x + 3*mt*t*t*cp2.x + t*t*t*dst.x,
-        y: mt*mt*mt*src.y + 3*mt*mt*t*cp1.y + 3*mt*t*t*cp2.y + t*t*t*dst.y,
+        x: mt * mt * mt * src.x + 3 * mt * mt * t * cp1.x + 3 * mt * t * t * cp2.x + t * t * t * dst.x,
+        y: mt * mt * mt * src.y + 3 * mt * mt * t * cp1.y + 3 * mt * t * t * cp2.y + t * t * t * dst.y,
       };
     };
 
-    // Find the obstacle that the curve penetrates most (most sampled points inside)
-    let worstObs: { x: number; y: number; width: number; height: number } | undefined;
-    let worstOverlap = 0;
+    const collidingObstacles: Array<{ x: number; y: number; width: number; height: number }> = [];
 
     for (const obs of obstacles) {
       // Skip source rect
       if (srcRect &&
-          obs.x < srcRect.x + srcRect.width + 2 && obs.x + obs.width > srcRect.x - 2 &&
-          obs.y < srcRect.y + srcRect.height + 2 && obs.y + obs.height > srcRect.y - 2) continue;
+          obs.x < srcRect.x + srcRect.width + 4 && obs.x + obs.width > srcRect.x - 4 &&
+          obs.y < srcRect.y + srcRect.height + 4 && obs.y + obs.height > srcRect.y - 4) continue;
       // Skip destination rect
       if (dstRect &&
-          obs.x < dstRect.x + dstRect.width + 2 && obs.x + obs.width > dstRect.x - 2 &&
-          obs.y < dstRect.y + dstRect.height + 2 && obs.y + obs.height > dstRect.y - 2) continue;
+          obs.x < dstRect.x + dstRect.width + 4 && obs.x + obs.width > dstRect.x - 4 &&
+          obs.y < dstRect.y + dstRect.height + 4 && obs.y + obs.height > dstRect.y - 4) continue;
 
       // Skip if obstacle lies fully outside the corridor between src and dst
       if (obs.x + obs.width < corridorX1 || obs.x > corridorX2 ||
@@ -135,49 +132,86 @@ export const getBezierControlPoints = (
       const ox1 = obs.x - PAD, ox2 = obs.x + obs.width + PAD;
       const oy1 = obs.y - PAD, oy2 = obs.y + obs.height + PAD;
 
-      let hits = 0;
-      for (let i = 1; i <= 9; i++) {
-        const p = sample(i / 10);
-        if (p.x > ox1 && p.x < ox2 && p.y > oy1 && p.y < oy2) hits++;
+      let hasCollision = false;
+      for (let i = 1; i <= 25; i++) {
+        const p = sample(i / 26);
+        if (p.x >= ox1 && p.x <= ox2 && p.y >= oy1 && p.y <= oy2) {
+          hasCollision = true;
+          break;
+        }
       }
-      if (hits > worstOverlap) {
-        worstOverlap = hits;
-        worstObs = obs;
+      if (hasCollision) {
+        collidingObstacles.push(obs);
       }
     }
 
-    // If an obstacle was found in the corridor, compute a perpendicular bypass
-    if (worstObs) {
-      const obs = worstObs;
-      const BYPASS_PAD = 50; // clearance beyond the obstacle bounding box
-
-      // Midpoint X of the two anchor points — route the arc through there
-      const midX = (src.x + dst.x) / 2;
-
-      // Choose above or below the obstacle:
-      // - If both endpoints are clearly above centre → always go above
-      // - If both endpoints are clearly below centre → always go below
-      // - Otherwise pick whichever direction requires less vertical travel from src
-      const obsCenterY = obs.y + obs.height / 2;
-      let routeAbove: boolean;
-      if (src.y <= obsCenterY && dst.y <= obsCenterY) {
-        routeAbove = true;
-      } else if (src.y >= obsCenterY && dst.y >= obsCenterY) {
-        routeAbove = false;
-      } else {
-        // Mixed: pick the shorter detour
-        routeAbove =
-          Math.abs(src.y - (obs.y - BYPASS_PAD)) <
-          Math.abs(src.y - (obs.y + obs.height + BYPASS_PAD));
+    // If one or more obstacles are in the path, route around the union bounding box
+    if (collidingObstacles.length > 0) {
+      let minObsX = Infinity, maxObsX = -Infinity;
+      let minObsY = Infinity, maxObsY = -Infinity;
+      for (const obs of collidingObstacles) {
+        if (obs.x < minObsX) minObsX = obs.x;
+        if (obs.x + obs.width > maxObsX) maxObsX = obs.x + obs.width;
+        if (obs.y < minObsY) minObsY = obs.y;
+        if (obs.y + obs.height > maxObsY) maxObsY = obs.y + obs.height;
       }
 
-      const bypassY = routeAbove
-        ? obs.y - BYPASS_PAD
-        : obs.y + obs.height + BYPASS_PAD;
+      const isHorizontal = Math.abs(dst.x - src.x) >= Math.abs(dst.y - src.y);
+      const BYPASS_PAD = 45;
 
-      // Redirect both control points through the bypass waypoint
-      cp1 = { x: midX, y: bypassY };
-      cp2 = { x: midX, y: bypassY };
+      if (isHorizontal) {
+        const obsCenterY = (minObsY + maxObsY) / 2;
+        let routeAbove: boolean;
+        if (src.y <= obsCenterY && dst.y <= obsCenterY) {
+          routeAbove = true;
+        } else if (src.y >= obsCenterY && dst.y >= obsCenterY) {
+          routeAbove = false;
+        } else {
+          routeAbove = Math.abs(src.y - (minObsY - BYPASS_PAD)) <= Math.abs(src.y - (maxObsY + BYPASS_PAD));
+        }
+
+        const targetY = routeAbove ? minObsY - BYPASS_PAD : maxObsY + BYPASS_PAD;
+        // Cubic Bézier sag compensation factor: at t=0.5, B(0.5) reaches targetY
+        const bypassY = (targetY - 0.125 * (src.y + dst.y)) / 0.75;
+
+        // Bracket control points across the obstacle union span
+        if (src.x <= dst.x) {
+          const x1 = Math.max(src.x + 20, Math.min(dst.x - 20, minObsX - 10));
+          const x2 = Math.min(dst.x - 20, Math.max(src.x + 20, maxObsX + 10));
+          cp1 = { x: x1, y: bypassY };
+          cp2 = { x: x2, y: bypassY };
+        } else {
+          const x1 = Math.min(src.x - 20, Math.max(dst.x + 20, maxObsX + 10));
+          const x2 = Math.max(dst.x + 20, Math.min(src.x - 20, minObsX - 10));
+          cp1 = { x: x1, y: bypassY };
+          cp2 = { x: x2, y: bypassY };
+        }
+      } else {
+        const obsCenterX = (minObsX + maxObsX) / 2;
+        let routeLeft: boolean;
+        if (src.x <= obsCenterX && dst.x <= obsCenterX) {
+          routeLeft = true;
+        } else if (src.x >= obsCenterX && dst.x >= obsCenterX) {
+          routeLeft = false;
+        } else {
+          routeLeft = Math.abs(src.x - (minObsX - BYPASS_PAD)) <= Math.abs(src.x - (maxObsX + BYPASS_PAD));
+        }
+
+        const targetX = routeLeft ? minObsX - BYPASS_PAD : maxObsX + BYPASS_PAD;
+        const bypassX = (targetX - 0.125 * (src.x + dst.x)) / 0.75;
+
+        if (src.y <= dst.y) {
+          const y1 = Math.max(src.y + 20, Math.min(dst.y - 20, minObsY - 10));
+          const y2 = Math.min(dst.y - 20, Math.max(src.y + 20, maxObsY + 10));
+          cp1 = { x: bypassX, y: y1 };
+          cp2 = { x: bypassX, y: y2 };
+        } else {
+          const y1 = Math.min(src.y - 20, Math.max(dst.y + 20, maxObsY + 10));
+          const y2 = Math.max(dst.y + 20, Math.min(src.y - 20, minObsY - 10));
+          cp1 = { x: bypassX, y: y1 };
+          cp2 = { x: bypassX, y: y2 };
+        }
+      }
     }
   }
 

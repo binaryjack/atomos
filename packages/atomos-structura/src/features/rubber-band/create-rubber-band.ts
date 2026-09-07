@@ -39,8 +39,8 @@ export const createRubberBand = (
     if (e.button !== 0) return;
     // Only activate with Shift held — normal drag pans the canvas
     if (!e.shiftKey) return;
-    // Ignore clicks on entities, links, toolbars, or interactive UI elements
-    if (target.closest('[data-entity-id], .vbs-entity, .vbs-link, .vbs-palette, .vbs-bottom-toolbar, button, foreignObject')) return;
+    const target = e.target as Element | null;
+    if (target?.closest('[data-entity-id], .vbs-entity, .vbs-link, .vbs-palette, .vbs-bottom-toolbar, button, foreignObject')) return;
 
     // Prevent the viewport pan handler from also activating
     e.stopPropagation();

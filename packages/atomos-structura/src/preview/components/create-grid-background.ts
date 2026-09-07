@@ -1,4 +1,8 @@
-export function createGridBackground(svg: SVGSVGElement): SVGElement {
+export interface GridBackgroundOptions {
+  readonly hidden?: boolean;
+}
+
+export function createGridBackground(svg: SVGSVGElement, options?: GridBackgroundOptions): SVGElement {
   const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
 
   const smallGrid = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
@@ -46,6 +50,9 @@ export function createGridBackground(svg: SVGSVGElement): SVGElement {
   gridBg.setAttribute('height', '100%');
   gridBg.setAttribute('fill', 'url(#canvas-grid-large)');
   gridBg.style.pointerEvents = 'none';
+  if (options?.hidden) {
+    gridBg.style.display = 'none';
+  }
   svg.appendChild(gridBg);
 
   return gridBg;

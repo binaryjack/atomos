@@ -197,7 +197,21 @@ export const createStructuraViewer = function(
               const d = computeAnchorPos(dstEntity, dstEdge);
               const srcRect = { ...srcEntity.position.value, ...srcEntity.dimensions.value };
               const dstRect = { ...dstEntity.position.value, ...dstEntity.dimensions.value };
-              permanentLink.updatePath(s, d, srcEdge, dstEdge, 'bezier', srcRect, dstRect, (edge as any).direction || 'default');
+              const obstacles = clonedNodes
+                .filter(n => n.id !== edge.sourceEntityId && n.id !== edge.targetEntityId)
+                .map(n => {
+                  const ent = registry.workspaceState.value.entities.get(n.id);
+                  if (ent) {
+                    return { ...ent.position.value, ...ent.dimensions.value };
+                  }
+                  return {
+                    x: n.position?.x ?? 0,
+                    y: n.position?.y ?? 0,
+                    width: n.dimensions?.width ?? 180,
+                    height: n.dimensions?.height ?? 80
+                  };
+                });
+              permanentLink.updatePath(s, d, srcEdge, dstEdge, 'bezier', srcRect, dstRect, (edge as any).direction || 'default', obstacles);
             };
 
             srcEntity.position.subscribe(recompute);

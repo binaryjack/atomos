@@ -1,11 +1,11 @@
+// Copyright (c) Tadeop. All rights reserved.
+// Proprietary and Confidential Source Code.
+
 import { createNeuraStore } from './core/neura-store.js';
 import type {
   NeuraEdge,
-  NeuraEnergyBeam,
   NeuraNode,
-  NeuraViewport,
   NodeActivityState,
-  ThinkingPulseState,
   NodeMorphology,
   EdgeMorphology,
   CognitiveEmotion,
@@ -14,21 +14,24 @@ import type {
 import { CullingSystem } from './renderer/culling-system.js';
 import { type ShaderTheme, WebGLEngine } from './renderer/webgl-engine.js';
 import type { PhysicsParams } from './physics/worker.js';
-
 import { createNeuraPhysicsWorker } from './physics/worker-script.js';
-import { generateBeamId, bfsShortestPath, pruneCompletedBeams } from './core/neura-telemetry.js';
-import { createNeuraConfig, type NeuraConfig } from './core/neura-config.js';
-import { createNeuraLabelsController, formatCleanLabel } from './renderer/neura-labels.js';
+import { pruneCompletedBeams } from './core/neura-telemetry.js';
+import type { NeuraConfig } from './core/neura-config.js';
+import { createNeuraLabelsController } from './renderer/neura-labels.js';
+import { generateMockGraph } from './data/mock-graph-generator.js';
+import { CameraController } from './controllers/camera-controller.js';
+import { InteractionController } from './controllers/interaction-controller.js';
+import { TelemetryController } from './controllers/telemetry-controller.js';
 
 export interface NeuraInstanceOptions {
-  worker?: Worker | string | URL;
-  theme?: ShaderTheme;
-  physicsParams?: Partial<PhysicsParams>;
-  labelsMode?: 'focus-only' | 'auto' | 'always';
-  config?: Partial<NeuraConfig>;
-  onNodeClick?: (node: NeuraNode | null) => void;
-  onNodeHover?: (node: NeuraNode | null) => void;
-  onFPS?: (fps: number) => void;
+  worker?: Worker | string | URL | undefined;
+  theme?: ShaderTheme | undefined;
+  physicsParams?: Partial<PhysicsParams> | undefined;
+  labelsMode?: ('focus-only' | 'auto' | 'always') | undefined;
+  config?: Partial<NeuraConfig> | undefined;
+  onNodeClick?: ((node: NeuraNode | null) => void) | undefined;
+  onNodeHover?: ((node: NeuraNode | null) => void) | undefined;
+  onFPS?: ((fps: number) => void) | undefined;
 }
 
 export interface NeuraInstance {
@@ -65,14 +68,18 @@ export interface NeuraInstance {
 
   // Empathic Listening & Synaptic Charge API
   setCognitiveCharge: (charge: number) => void;
-  fireThinkingPulse: (colorOrOrigin?: string | [number, number, number], durationOrColor?: number | string, color?: string) => void;
+  fireThinkingPulse: (
+    colorOrOrigin?: string | [number, number, number],
+    durationOrColor?: number | string,
+    color?: string
+  ) => void;
   releaseCognitiveCharge: (activeSlotId: number) => void;
 }
 
-// ---------------------------------------------------------------------------
-// Create Neura Instance
-// ---------------------------------------------------------------------------
-
+/**
+ * Creates and initializes a complete Neura 3D instance, wiring together
+ * state management, WebGL rendering, physics workers, camera, interactions, and telemetry.
+ */
 export function createNeuraInstance(
   canvas: HTMLCanvasElement,
   options: NeuraInstanceOptions | string | URL = {}
@@ -85,17 +92,17 @@ export function createNeuraInstance(
   const {
     store,
     setViewport,
-    setNodeActivity: storeSetNodeActivity,
-    setNodeMorphology: storeSetNodeMorphology,
-    setEdgeMorphology: storeSetEdgeMorphology,
-    setCognitiveEmotion: storeSetCognitiveEmotion,
-    setBrainWaveOscillation: storeSetBrainWaveOscillation,
-    triggerTurgorPulse: storeTriggerTurgorPulse,
-    triggerSynapticLightning: storeTriggerSynapticLightning,
+    setNodeActivity,
+    setNodeMorphology,
+    setEdgeMorphology,
+    setCognitiveEmotion,
+    setBrainWaveOscillation,
+    triggerTurgorPulse,
+    triggerSynapticLightning,
     addEnergyBeam,
     setCognitiveChargeStore,
     setThinkingPulseStore,
-    resetAllActivities: storeResetAllActivities,
+    resetAllActivities,
   } = createNeuraStore();
 
   const webgl = new WebGLEngine(canvas);
@@ -103,11 +110,14 @@ export function createNeuraInstance(
 
   const culling = new CullingSystem(600);
 
-  // Initialize Worker
+  // Initialize Physics Worker
   let worker: Worker;
   if (typeof Worker !== 'undefined' && opts.worker instanceof Worker) {
     worker = opts.worker;
-  } else if (typeof Worker !== 'undefined' && (typeof opts.worker === 'string' || opts.worker instanceof URL)) {
+  } else if (
+    typeof Worker !== 'undefined' &&
+    (typeof opts.worker === 'string' || opts.worker instanceof URL)
+  ) {
     try {
       worker = new Worker(opts.worker, { type: 'module' });
     } catch {
@@ -116,7 +126,7 @@ export function createNeuraInstance(
   } else if (typeof Worker !== 'undefined') {
     worker = createNeuraPhysicsWorker();
   } else {
-    // Dummy Worker stub for jsdom/headless testing
+    // Stub Worker for test/headless environments
     worker = {
       postMessage: () => {},
       onmessage: null,
@@ -131,34 +141,7 @@ export function createNeuraInstance(
     worker.postMessage({ type: 'SET_PARAMS', payload: opts.physicsParams });
   }
 
-  // Setup Overlay container
-  const parent = canvas.parentElement;
-  if (parent && getComputedStyle(parent).position === 'static') {
-    parent.style.position = 'relative';
-  }
-  const overlay = document.createElement('div');
-  overlay.style.position = 'absolute';
-  overlay.style.top = '0';
-  overlay.style.left = '0';
-  overlay.style.width = '100%';
-  overlay.style.height = '100%';
-  overlay.style.pointerEvents = 'none';
-  overlay.style.overflow = 'hidden';
-  if (parent) parent.appendChild(overlay);
-
-  const labelsMap = new Map<string, HTMLDivElement>();
-  let currentLabelsMode: 'focus-only' | 'auto' | 'always' = opts.labelsMode ?? 'auto';
-
-  const setLabelsMode = (mode: 'focus-only' | 'auto' | 'always') => {
-    currentLabelsMode = mode;
-  };
-
-  // FPS calculation
-  let lastFrameTime = performance.now();
-  let frameCount = 0;
-  let currentFPS = 60;
-
-  worker.onmessage = (e) => {
+  worker.onmessage = (e: MessageEvent) => {
     if (e.data.type === 'TICK_RESULT') {
       const positions = e.data.payload as Array<{ id: string; x: number; y: number; z?: number }>;
       const state = store.value;
@@ -178,7 +161,75 @@ export function createNeuraInstance(
     }
   };
 
-  // Resize handler
+  // Setup HTML Overlay container
+  const parent = canvas.parentElement;
+  if (parent && getComputedStyle(parent).position === 'static') {
+    parent.style.position = 'relative';
+  }
+  const overlay = document.createElement('div');
+  overlay.style.position = 'absolute';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100%';
+  overlay.style.height = '100%';
+  overlay.style.pointerEvents = 'none';
+  overlay.style.overflow = 'hidden';
+  if (parent) parent.appendChild(overlay);
+
+  let currentLabelsMode: 'focus-only' | 'auto' | 'always' = opts.labelsMode ?? 'auto';
+  const labelsController = createNeuraLabelsController(canvas, overlay, webgl);
+
+  const setLabelsMode = (mode: 'focus-only' | 'auto' | 'always') => {
+    currentLabelsMode = mode;
+  };
+
+  // Controllers
+  const camera = new CameraController({
+    canvas,
+    getViewport: () => store.value.viewport,
+    setViewport,
+    getNode: (id) => store.value.nodes[id],
+    onFlyComplete: (nodeId) => {
+      store.set({ ...store.value, selectedNodeId: nodeId });
+    },
+  });
+
+  const interaction = new InteractionController({
+    canvas,
+    webgl,
+    getViewport: () => store.value.viewport,
+    setViewport,
+    getNodes: () => store.value.nodes,
+    getHoveredNodeId: () => store.value.hoveredNodeId,
+    getSelectedNodeId: () => store.value.selectedNodeId,
+    setHoveredNodeId: (id) => {
+      store.set({ ...store.value, hoveredNodeId: id });
+    },
+    setSelectedNodeId: (id) => {
+      store.set({ ...store.value, selectedNodeId: id });
+    },
+    onNodeClick: opts.onNodeClick,
+    onNodeHover: opts.onNodeHover,
+  });
+
+  const telemetry = new TelemetryController({
+    getNodes: () => store.value.nodes,
+    getEdges: () => store.value.edges,
+    getCognitiveCharge: () => store.value.cognitiveCharge,
+    setNodeActivity,
+    setNodeMorphology,
+    setEdgeMorphology,
+    setCognitiveEmotion,
+    setBrainWaveOscillation,
+    triggerTurgorPulse,
+    triggerSynapticLightning,
+    addEnergyBeam,
+    setCognitiveChargeStore,
+    setThinkingPulseStore,
+    resetAllActivities,
+  });
+
+  // Resize Observer
   let resizeObserver: ResizeObserver | null = null;
   if (typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver((entries) => {
@@ -194,446 +245,12 @@ export function createNeuraInstance(
     resizeObserver.observe(canvas.parentElement || canvas);
   }
 
-  // 3D Orbit & Pan gestures
-  let isDragging = false;
-  let isPanning = false;
-  let lastX = 0;
-  let lastY = 0;
-
-  canvas.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-  });
-
-  canvas.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    isPanning = e.button === 2 || e.button === 1 || e.shiftKey;
-    lastX = e.clientX;
-    lastY = e.clientY;
-  });
-
-  window.addEventListener('mouseup', () => {
-    isDragging = false;
-    isPanning = false;
-  });
-
-  canvas.addEventListener('mousemove', (e) => {
-    if (isDragging) {
-      handleDragMove(e);
-    } else {
-      handleHoverDetection(e);
-    }
-  });
-
-  function handleDragMove(e: MouseEvent) {
-    const dx = e.clientX - lastX;
-    const dy = e.clientY - lastY;
-    lastX = e.clientX;
-    lastY = e.clientY;
-
-    const state = store.value;
-
-    if (isPanning) {
-      // 3D Camera Pan in screen space
-      const zoom = Math.max(0.01, state.viewport.zoom);
-      const panSpeed = (950 / zoom) / (canvas.clientHeight || 600);
-      const yaw = state.viewport.yaw ?? 0;
-
-      const panX = - (dx * Math.cos(yaw) * panSpeed);
-      const panY = dy * panSpeed;
-
-      setViewport({
-        x: state.viewport.x + panX,
-        y: state.viewport.y + panY,
-      });
-    } else {
-      // 3D Orbital Rotation (Left Click Drag)
-      const currentYaw = state.viewport.yaw ?? 0;
-      const currentPitch = state.viewport.pitch ?? 0;
-
-      const newYaw = currentYaw - dx * 0.007;
-      const newPitch = Math.max(-1.4, Math.min(1.4, currentPitch + dy * 0.007));
-
-      setViewport({
-        yaw: newYaw,
-        pitch: newPitch,
-      });
-    }
-  }
-
-  function handleHoverDetection(e: MouseEvent) {
-    // 3D Ray-cast hover detection using computed MVP matrix
-    const state = store.value;
-    const mvp = webgl.computeMVPMatrix(state.viewport);
-    const canvasW = canvas.width || 800;
-    const canvasH = canvas.height || 600;
-
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-
-    let closestNodeId: string | null = null;
-    let minDistance = 22;
-
-    for (const key in state.nodes) {
-      const n = state.nodes[key]!;
-      const nx = n.x;
-      const ny = n.y;
-      const nz = n.z ?? 0;
-
-      const clipX = mvp[0]! * nx + mvp[4]! * ny + mvp[8]! * nz + mvp[12]!;
-      const clipY = mvp[1]! * nx + mvp[5]! * ny + mvp[9]! * nz + mvp[13]!;
-      const clipW = mvp[3]! * nx + mvp[7]! * ny + mvp[11]! * nz + mvp[15]!;
-
-      if (clipW > 0.1) {
-        const sx = (clipX / clipW * 0.5 + 0.5) * canvasW;
-        const sy = (1.0 - (clipY / clipW * 0.5 + 0.5)) * canvasH;
-
-        const dist = Math.hypot(mouseX - sx, mouseY - sy);
-        const hitRadius = minDistance + (Math.min(20, n.weight) * 2);
-
-        if (dist < hitRadius && dist < minDistance) {
-          minDistance = dist;
-          closestNodeId = n.id;
-        }
-      }
-    }
-
-    if (state.hoveredNodeId !== closestNodeId) {
-      store.set({ ...state, hoveredNodeId: closestNodeId });
-      if (opts.onNodeHover) {
-        opts.onNodeHover(closestNodeId ? state.nodes[closestNodeId] ?? null : null);
-      }
-    }
-  }
-
-  canvas.addEventListener('click', () => {
-    const state = store.value;
-    const newSelectedId = state.hoveredNodeId !== state.selectedNodeId ? state.hoveredNodeId : null;
-    store.set({ ...state, selectedNodeId: newSelectedId });
-    if (opts.onNodeClick) {
-      opts.onNodeClick(newSelectedId ? state.nodes[newSelectedId] ?? null : null);
-    }
-  });
-
-  // Mouse Wheel: 3D Dolly Distance Zoom
-  canvas.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const state = store.value;
-    const zoomDelta = e.deltaY < 0 ? 1.15 : 0.85;
-    const oldZoom = state.viewport.zoom;
-    const newZoom = Math.max(0.02, Math.min(oldZoom * zoomDelta, 8.0));
-
-    if (newZoom === oldZoom) return;
-
-    setViewport({
-      zoom: newZoom,
-    });
-  });
-
-  // Camera Fly-To with cubic ease-out
-  let animationRaf: number | null = null;
-  const flyToNode = (nodeId: string, targetZoom = 1.2, durationMs = 600) => {
-    const state = store.value;
-    const node = state.nodes[nodeId];
-    if (!node) return;
-
-    if (animationRaf !== null) cancelAnimationFrame(animationRaf);
-
-    const startX = state.viewport.x;
-    const startY = state.viewport.y;
-    const startZoom = state.viewport.zoom;
-
-    const endX = node.x;
-    const endY = node.y;
-    const endZoom = targetZoom;
-
-    const startTime = performance.now();
-
-    const animate = (now: number) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(1.0, elapsed / durationMs);
-      const ease = 1 - Math.pow(1 - progress, 3);
-
-      const curX = startX + (endX - startX) * ease;
-      const curY = startY + (endY - startY) * ease;
-      const curZoom = startZoom + (endZoom - startZoom) * ease;
-
-      setViewport({ x: curX, y: curY, zoom: curZoom });
-
-      if (progress < 1.0) {
-        animationRaf = requestAnimationFrame(animate);
-      } else {
-        animationRaf = null;
-        store.set({ ...store.value, selectedNodeId: nodeId });
-      }
-    };
-
-    animationRaf = requestAnimationFrame(animate);
-  };
-
-  const setCameraRotation = (yaw: number, pitch: number) => {
-    setViewport({ yaw, pitch: Math.max(-1.4, Math.min(1.4, pitch)) });
-  };
-
-  const setAutoRotate = (enabled: boolean, speed = 0.5) => {
-    setViewport({ autoRotate: enabled, autoRotateSpeed: speed });
-  };
-
-  const resetCamera = () => {
-    const canvasW = canvas.width || 1200;
-    const canvasH = canvas.height || 800;
-    setViewport({
-      x: 0,
-      y: 0,
-      zoom: 0.35,
-      yaw: 0,
-      pitch: 0,
-      width: canvasW,
-      height: canvasH,
-    });
-  };
-
-  // ---------------------------------------------------------------------------
-  // Render Loop (with beam progress management & cognitive state)
-  // ---------------------------------------------------------------------------
-
-  webgl.startLoop(() => {
-    const state = store.value;
-
-    // Auto-Rotate 3D Nebula if active
-    if (state.viewport.autoRotate && !isDragging) {
-      const currentYaw = state.viewport.yaw ?? 0;
-      const speed = (state.viewport.autoRotateSpeed ?? 0.5) * 0.004;
-      setViewport({ yaw: (currentYaw + speed) % (2 * Math.PI) });
-    }
-
-    // FPS calculation
-    frameCount++;
-    const now = performance.now();
-    if (now - lastFrameTime >= 1000) {
-      currentFPS = Math.round((frameCount * 1000) / (now - lastFrameTime));
-      frameCount = 0;
-      lastFrameTime = now;
-      if (opts.onFPS) opts.onFPS(currentFPS);
-    }
-
-    // Advance beam progress and prune completed beams
-    const liveBeams = pruneCompletedBeams(state.energyBeams, now);
-    if (liveBeams.length !== state.energyBeams.length) {
-      store.set({ ...store.value, energyBeams: liveBeams });
-    }
-
-    // Prune expired thinking pulse
-    let currentPulse = state.thinkingPulse;
-    if (currentPulse && currentPulse.active) {
-      const elapsed = now - currentPulse.startTime;
-      if (elapsed > currentPulse.durationMs) {
-        currentPulse = null;
-        setThinkingPulseStore(null);
-      }
-    }
-
-    // 1. Cull off-screen items
-    const { visibleNodes, visibleEdges } = culling.cull(state.nodes, state.edges, state.viewport);
-
-    // 2. Active Focus (hover or select)
-    const activeNodeIds = new Set<string>();
-    const activeEdgeIds = new Set<string>();
-    const focusId = state.hoveredNodeId || state.selectedNodeId;
-
-    if (focusId) {
-      activeNodeIds.add(focusId);
-      for (const edgeKey in state.edges) {
-        const edge = state.edges[edgeKey]!;
-        if (edge.sourceId === focusId || edge.targetId === focusId) {
-          activeEdgeIds.add(edge.id);
-          activeNodeIds.add(edge.sourceId);
-          activeNodeIds.add(edge.targetId);
-        }
-      }
-    }
-
-    // 3. Render WebGL 3D (with energy beams, cognitive charge, living somas, synaptic lightning & emotions)
-    webgl.render(
-      visibleNodes,
-      visibleEdges,
-      state.viewport,
-      activeNodeIds,
-      activeEdgeIds,
-      !!focusId,
-      liveBeams,
-      state.cognitiveCharge,
-      currentPulse,
-      state.cognitiveEmotion,
-      state.emotionIntensity,
-      state.brainWaveFreq,
-      state.brainWaveAmp,
-      state.synapticLightnings,
-      state.turgorPulses
-    );
-
-    // 4. HTML Overlay Labels projected in 3D
-    renderOverlayLabels(visibleNodes, state, focusId, activeNodeIds);
-  });
-
-  // ---------------------------------------------------------------------------
-  // Beam Lifecycle
-  // ---------------------------------------------------------------------------
-
-  function pruneCompletedBeams(beams: NeuraEnergyBeam[], nowMs: number): NeuraEnergyBeam[] {
-    return beams.filter(beam => {
-      const elapsed = nowMs - beam.startedAt;
-      return elapsed < beam.durationMs;
-    });
-  }
-
-  // ---------------------------------------------------------------------------
-  // Overlay Labels
-  // ---------------------------------------------------------------------------
-
-  function renderOverlayLabels(
-    visibleNodes: NeuraNode[],
-    state: { viewport: NeuraViewport; hoveredNodeId: string | null; selectedNodeId: string | null },
-    focusId: string | null,
-    activeNodeIds?: Set<string>
-  ) {
-    const renderedIds = new Set<string>();
-    const isZoomedIn = state.viewport.zoom >= 0.65;
-    const isSelectionActive = Boolean(state.selectedNodeId);
-    const mvp = webgl.computeMVPMatrix(state.viewport);
-    const canvasW = canvas.width || 800;
-    const canvasH = canvas.height || 600;
-
-    // Track 2D bounding boxes in screen-space for anti-collision (Smart LOD)
-    const renderedBoxes: Array<{ x: number; y: number; w: number; h: number }> = [];
-
-    for (const node of visibleNodes) {
-      const isSelected = node.id === state.selectedNodeId;
-      const isHovered = node.id === state.hoveredNodeId;
-      const isFocused = isSelected || isHovered;
-      const isConnectedNeighbor = activeNodeIds ? activeNodeIds.has(node.id) : false;
-      const isMajorFile = isZoomedIn && node.metadata?.kind === 'file';
-      const isActive = (node.activity ?? 0) > 0.3;
-
-      // When a node is selected, ONLY the selected node and its directly connected neighbors are shown.
-      // All other node labels fade out / are hidden to eliminate noise.
-      let shouldRender = false;
-      if (isSelectionActive) {
-        shouldRender = isSelected || isConnectedNeighbor;
-      } else if (currentLabelsMode === 'focus-only') {
-        shouldRender = isFocused;
-      } else if (currentLabelsMode === 'always') {
-        shouldRender = true;
-      } else {
-        // 'auto' mode when no selection is active
-        shouldRender = isFocused || isMajorFile || isActive;
-      }
-
-      if (shouldRender) {
-        const nx = node.x;
-        const ny = node.y;
-        const nz = node.z ?? 0;
-
-        const clipX = mvp[0]! * nx + mvp[4]! * ny + mvp[8]! * nz + mvp[12]!;
-        const clipY = mvp[1]! * nx + mvp[5]! * ny + mvp[9]! * nz + mvp[13]!;
-        const clipW = mvp[3]! * nx + mvp[7]! * ny + mvp[11]! * nz + mvp[15]!;
-
-        if (clipW > 0.1) {
-          const screenX = (clipX / clipW * 0.5 + 0.5) * canvasW;
-          const screenY = (1.0 - (clipY / clipW * 0.5 + 0.5)) * canvasH;
-
-          // Anti-collision: if not focused/connected, prevent rendering if too close to an existing label
-          if (!isFocused && !isConnectedNeighbor && !isSelectionActive) {
-            const hasCollision = renderedBoxes.some(
-              b => Math.abs(b.x - screenX) < 85 && Math.abs(b.y - screenY) < 24
-            );
-            if (hasCollision) continue;
-          }
-
-          renderedBoxes.push({ x: screenX, y: screenY, w: 85, h: 24 });
-          renderedIds.add(node.id);
-
-          let el = labelsMap.get(node.id);
-          if (!el) {
-            el = document.createElement('div');
-            el.style.position = 'absolute';
-            el.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
-            el.style.transform = 'translate(-50%, -100%)';
-            el.style.marginTop = '-12px';
-            el.style.whiteSpace = 'nowrap';
-            el.style.pointerEvents = 'none';
-            el.style.borderRadius = '5px';
-            el.style.padding = '3px 7px';
-            el.style.backdropFilter = 'blur(8px)';
-            el.style.transition = 'opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease';
-            overlay.appendChild(el);
-            labelsMap.set(node.id, el);
-          }
-
-          const labelText = formatCleanLabel(node);
-          el.innerText = labelText;
-
-          el.style.left = `${screenX}px`;
-          el.style.top = `${screenY}px`;
-
-          if (isSelected) {
-            el.style.zIndex = '120';
-            el.style.color = '#ffffff';
-            el.style.background = 'rgba(0, 119, 255, 0.92)';
-            el.style.border = '1px solid rgba(147, 197, 253, 0.9)';
-            el.style.fontSize = '12px';
-            el.style.fontWeight = 'bold';
-            el.style.boxShadow = '0 0 16px rgba(0, 119, 255, 0.6), 0 4px 12px rgba(0,0,0,0.8)';
-          } else if (isFocused) {
-            el.style.zIndex = '100';
-            el.style.color = '#38bdf8';
-            el.style.background = 'rgba(15, 23, 42, 0.9)';
-            el.style.border = '1px solid rgba(56, 189, 248, 0.6)';
-            el.style.fontSize = '12px';
-            el.style.fontWeight = 'bold';
-            el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.6)';
-          } else if (isSelectionActive && isConnectedNeighbor) {
-            // Connected neighbor in isolated 1-hop view
-            el.style.zIndex = '90';
-            el.style.color = '#67e8f9';
-            el.style.background = 'rgba(8, 47, 73, 0.88)';
-            el.style.border = '1px solid rgba(6, 182, 212, 0.6)';
-            el.style.fontSize = '11px';
-            el.style.fontWeight = '600';
-            el.style.boxShadow = '0 0 10px rgba(6, 182, 212, 0.35)';
-          } else if (isActive) {
-            el.style.zIndex = '50';
-            el.style.color = '#fbbf24';
-            el.style.background = 'rgba(15, 23, 42, 0.85)';
-            el.style.border = '1px solid rgba(251, 191, 36, 0.4)';
-            el.style.fontSize = '11px';
-            el.style.fontWeight = '600';
-            el.style.boxShadow = '0 3px 8px rgba(0,0,0,0.5)';
-          } else {
-            el.style.zIndex = '10';
-            el.style.color = '#cbd5e1';
-            el.style.background = 'rgba(15, 23, 42, 0.75)';
-            el.style.border = '1px solid rgba(148, 163, 184, 0.25)';
-            el.style.fontSize = '11px';
-            el.style.fontWeight = '500';
-            el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)';
-          }
-        }
-      }
-    }
-
-    for (const [id, el] of labelsMap.entries()) {
-      if (!renderedIds.has(id)) {
-        el.remove();
-        labelsMap.delete(id);
-      }
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Graph Loading & Mock Data
-  // ---------------------------------------------------------------------------
-
+  // FPS tracking
+  let lastFrameTime = performance.now();
+  let frameCount = 0;
+  let currentFPS = 60;
+
+  // Graph loading
   const loadGraph = (nodes: NeuraNode[], edges: NeuraEdge[]) => {
     const state = store.value;
     const nodeMap: Record<string, NeuraNode> = {};
@@ -643,8 +260,6 @@ export function createNeuraInstance(
 
     const canvasW = canvas.width || 1200;
     const canvasH = canvas.height || 800;
-
-    // Centered wide-angle 3D constellation view
     const initialZoom = nodes.length > 400 ? 0.35 : nodes.length > 100 ? 0.5 : 0.75;
 
     store.set({
@@ -674,358 +289,99 @@ export function createNeuraInstance(
   };
 
   const generateMockData = (numNodes: number) => {
-    const nodes: NeuraNode[] = [];
-    const edges: NeuraEdge[] = [];
-    const degrees: Record<string, number> = {};
-    let totalDegree = 0;
-    const m = 2;
-    const m0 = Math.min(5, numNodes);
-    const numClusters = Math.max(4, Math.floor(numNodes / 150));
-
-    for (let i = 0; i < numNodes; i++) {
-      const id = `n${i}`;
-      degrees[id] = 0;
-      let clusterIdx = i % numClusters;
-
-      if (i < m0) {
-        for (let j = 0; j < i; j++) {
-          const targetId = `n${j}`;
-          edges.push({ id: `e${edges.length}`, sourceId: id, targetId, weight: 1, visible: true });
-          degrees[id]!++;
-          degrees[targetId]!++;
-          totalDegree += 2;
-        }
-      } else {
-        const targets = new Set<string>();
-        let attempts = 0;
-        while (targets.size < m && targets.size < i && attempts < 40) {
-          attempts++;
-          let r = Math.random() * totalDegree;
-          let selectedTarget = 'n0';
-          for (let j = 0; j < i; j++) {
-            const tj = `n${j}`;
-            r -= degrees[tj] || 0;
-            if (r <= 0) {
-              selectedTarget = tj;
-              break;
-            }
-          }
-          targets.add(selectedTarget);
-        }
-
-        let first = true;
-        for (const targetId of targets) {
-          edges.push({ id: `e${edges.length}`, sourceId: id, targetId, weight: 1, visible: true });
-          degrees[id]!++;
-          degrees[targetId] = (degrees[targetId] || 0) + 1;
-          totalDegree += 2;
-
-          if (first) {
-            const targetNode = nodes.find(n => n.id === targetId);
-            if (targetNode) {
-              const clusterMatch = targetNode.appartenanceId.match(/\d+/);
-              if (clusterMatch) clusterIdx = Number(clusterMatch[0]);
-            }
-            first = false;
-          }
-        }
-      }
-
-      // Spherical distribution in 3D
-      const spread = Math.sqrt(numNodes) * 45;
-      const r_pos = Math.sqrt(Math.random()) * spread;
-      const theta = Math.random() * 2 * Math.PI;
-      const phi = Math.acos(2 * Math.random() - 1);
-
-      nodes.push({
-        id,
-        x: r_pos * Math.sin(phi) * Math.cos(theta),
-        y: r_pos * Math.sin(phi) * Math.sin(theta),
-        z: r_pos * Math.cos(phi) * 0.7,
-        weight: 0,
-        appartenanceId: `cluster_${clusterIdx}`,
-        metadata: {
-          label: `Node ${i}`,
-          appartenance: `Cluster ${clusterIdx}`,
-        },
-        visible: true,
-      });
-    }
-
-    // Normalize degrees
-    let maxDegree = 1;
-    for (const id in degrees) {
-      if (degrees[id]! > maxDegree) maxDegree = degrees[id]!;
-    }
-    for (const node of nodes) {
-      node.weight = degrees[node.id]! / maxDegree;
-    }
-
+    const { nodes, edges } = generateMockGraph(numNodes);
     loadGraph(nodes, edges);
   };
 
-  // ---------------------------------------------------------------------------
-  // Telemetry & Illumination API
-  // ---------------------------------------------------------------------------
-
-  const setNodeActivity = (nodeId: string, activity: number, nodeState?: NodeActivityState) => {
-    storeSetNodeActivity(nodeId, activity, nodeState);
-  };
-
-  const triggerEnergyBeam = (
-    sourceId: string,
-    targetId: string,
-    color = '#00d4ff',
-    durationMs = 800
-  ) => {
-    const beam: NeuraEnergyBeam = {
-      id: generateBeamId(),
-      sourceId,
-      targetId,
-      progress: 0,
-      color,
-      durationMs,
-      startedAt: performance.now(),
-    };
-    addEnergyBeam(beam);
-  };
-
-  const pulseNode = (nodeId: string, durationMs = 400, _color?: string) => {
+  // Main Render Loop
+  webgl.startLoop(() => {
     const state = store.value;
-    const node = state.nodes[nodeId];
-    if (!node) return;
 
-    const previousActivity = node.activity ?? 0;
-    storeSetNodeActivity(nodeId, 1.0, node.state ?? 'firing');
+    camera.updateAutoRotate(interaction.isDragging);
 
-    // Decay back to previous level
-    const startTime = performance.now();
-    const decayLoop = () => {
-      const elapsed = performance.now() - startTime;
-      const progress = Math.min(1.0, elapsed / durationMs);
-      const ease = 1 - Math.pow(1 - progress, 2); // quadratic ease-out
-      const currentActivity = 1.0 - (1.0 - previousActivity) * ease;
-
-      storeSetNodeActivity(nodeId, currentActivity);
-
-      if (progress < 1.0) {
-        requestAnimationFrame(decayLoop);
-      }
-    };
-    requestAnimationFrame(decayLoop);
-  };
-
-  const resetAllActivities = () => {
-    storeResetAllActivities();
-  };
-
-  const highlightRoute = (sourceId: string, targetId: string, keepActive = false) => {
-    const state = store.value;
-    const edgePath = bfsShortestPath(sourceId, targetId, state.edges);
-    if (!edgePath || edgePath.length === 0) return;
-
-    // Activate source and target nodes
-    storeSetNodeActivity(sourceId, 0.8, 'routing');
-    storeSetNodeActivity(targetId, 0.8, 'active');
-
-    // Fire sequential beams along the path
-    let delay = 0;
-    const beamDuration = 600;
-    const stepDelay = 300;
-
-    for (const edgeId of edgePath) {
-      const edge = state.edges[edgeId];
-      if (!edge) continue;
-
-      const capturedSourceId = edge.sourceId;
-      const capturedTargetId = edge.targetId;
-
-      setTimeout(() => {
-        triggerEnergyBeam(capturedSourceId, capturedTargetId, '#00d4ff', beamDuration);
-        if (keepActive) {
-          storeSetNodeActivity(capturedSourceId, 0.6, 'routing');
-          storeSetNodeActivity(capturedTargetId, 0.6, 'routing');
-        }
-      }, delay);
-
-      delay += stepDelay;
+    // Track FPS
+    frameCount++;
+    const now = performance.now();
+    if (now - lastFrameTime >= 1000) {
+      currentFPS = Math.round((frameCount * 1000) / (now - lastFrameTime));
+      frameCount = 0;
+      lastFrameTime = now;
+      if (opts.onFPS) opts.onFPS(currentFPS);
     }
-  };
 
-  // ---------------------------------------------------------------------------
-  // Empathic Listening & Synaptic Charge API
-  // ---------------------------------------------------------------------------
+    // Prune completed energy beams
+    const liveBeams = pruneCompletedBeams(state.energyBeams, now);
+    if (liveBeams.length !== state.energyBeams.length) {
+      store.set({ ...store.value, energyBeams: liveBeams });
+    }
 
-  const setCognitiveCharge = (level: number, originSlotId?: number) => {
-    const clamped = Math.max(0.0, Math.min(1.0, level));
-    setCognitiveChargeStore(clamped);
+    // Prune expired thinking pulse
+    let currentPulse = state.thinkingPulse;
+    if (currentPulse && currentPulse.active) {
+      const elapsed = now - currentPulse.startTime;
+      if (elapsed > currentPulse.durationMs) {
+        currentPulse = null;
+        setThinkingPulseStore(null);
+      }
+    }
 
-    // If active charge accumulates, trigger micro-impulses on ALTYN center / origin slot edges
-    if (clamped > 0.05) {
-      const state = store.value;
-      const centralNodeId = originSlotId !== undefined
-        ? (`slot-${originSlotId}` in state.nodes ? `slot-${originSlotId}` : `n${originSlotId}`)
-        : (state.nodes['n0'] ? 'n0' : Object.keys(state.nodes)[0]);
+    // Spatial culling
+    const { visibleNodes, visibleEdges } = culling.cull(state.nodes, state.edges, state.viewport);
 
-      if (centralNodeId && state.nodes[centralNodeId]) {
-        // Find connected edges to central node
-        const connectedEdges = Object.values(state.edges).filter(
-          e => e.sourceId === centralNodeId || e.targetId === centralNodeId
-        );
+    // Active Focus tracking
+    const activeNodeIds = new Set<string>();
+    const activeEdgeIds = new Set<string>();
+    const focusId = state.hoveredNodeId || state.selectedNodeId;
 
-        if (connectedEdges.length > 0) {
-          // Select 1-2 edges for micro-pulses proportional to charge
-          const edge = connectedEdges[Math.floor(Math.random() * connectedEdges.length)];
-          if (edge) {
-            triggerEnergyBeam(edge.sourceId, edge.targetId, '#38bdf8', 600);
-          }
+    if (focusId) {
+      activeNodeIds.add(focusId);
+      for (const edgeKey in state.edges) {
+        const edge = state.edges[edgeKey]!;
+        if (edge.sourceId === focusId || edge.targetId === focusId) {
+          activeEdgeIds.add(edge.id);
+          activeNodeIds.add(edge.sourceId);
+          activeNodeIds.add(edge.targetId);
         }
       }
     }
-  };
 
-  const fireThinkingPulse = (
-    colorOrOrigin: string | [number, number, number] = '#38bdf8',
-    durationOrColor: number | string = 1500,
-    maybeColor = '#38bdf8'
-  ) => {
-    let color = '#38bdf8';
-    let origin: [number, number, number] = [0, 0, 0];
-    let durationMs = 1500;
+    // Render WebGL frame
+    webgl.render(
+      visibleNodes,
+      visibleEdges,
+      state.viewport,
+      activeNodeIds,
+      activeEdgeIds,
+      Boolean(focusId),
+      liveBeams,
+      state.cognitiveCharge,
+      currentPulse,
+      state.cognitiveEmotion,
+      state.emotionIntensity,
+      state.brainWaveFreq,
+      state.brainWaveAmp,
+      state.synapticLightnings,
+      state.turgorPulses
+    );
 
-    if (Array.isArray(colorOrOrigin) && colorOrOrigin.length >= 3) {
-      origin = [colorOrOrigin[0], colorOrOrigin[1], colorOrOrigin[2]];
-      if (typeof durationOrColor === 'number') durationMs = durationOrColor;
-      if (typeof maybeColor === 'string') color = maybeColor;
-    } else if (typeof colorOrOrigin === 'string') {
-      color = colorOrOrigin;
-      if (typeof durationOrColor === 'number') durationMs = durationOrColor;
-    }
-
-    const state = store.value;
-    // Calculate max 3D radius from graph nodes
-    let maxR = 1200;
-    for (const key in state.nodes) {
-      const n = state.nodes[key]!;
-      const r = Math.hypot(n.x, n.y, n.z ?? 0);
-      if (r > maxR) maxR = r;
-    }
-
-    setThinkingPulseStore({
-      active: true,
-      startTime: performance.now(),
-      durationMs,
-      color,
-      origin,
-      maxRadius: maxR * 1.2,
-    });
-  };
-
-
-  const releaseCognitiveCharge = (activeSlotId: number) => {
-    const state = store.value;
-
-    // Resolve target specialist slot node ID
-    const targetSlotId = `slot-${activeSlotId}` in state.nodes
-      ? `slot-${activeSlotId}`
-      : `n${activeSlotId}` in state.nodes
-      ? `n${activeSlotId}`
-      : Object.keys(state.nodes)[0];
-
-    if (targetSlotId && state.nodes[targetSlotId]) {
-      // Find neighboring nodes connecting to the active specialist slot
-      const connectedEdges = Object.values(state.edges).filter(
-        e => e.sourceId === targetSlotId || e.targetId === targetSlotId
-      );
-
-      // Fire converging energy beams towards the active slot
-      for (const edge of connectedEdges) {
-        const source = edge.sourceId === targetSlotId ? edge.targetId : edge.sourceId;
-        triggerEnergyBeam(source, targetSlotId, '#f59e0b', 700);
-      }
-
-      // Highlight active specialist slot node
-      storeSetNodeActivity(targetSlotId, 1.0, 'active');
-    }
-
-    // Smoothly decay cognitive charge back to 0.0 rest level over 800ms
-    const startCharge = state.cognitiveCharge;
-    const startTime = performance.now();
-
-    const decayLoop = () => {
-      const elapsed = performance.now() - startTime;
-      const progress = Math.min(1.0, elapsed / 800);
-      const ease = 1 - Math.pow(1 - progress, 2); // quadratic ease-out
-      const currentCharge = startCharge * (1.0 - ease);
-
-      setCognitiveChargeStore(currentCharge);
-
-      if (progress < 1.0) {
-        requestAnimationFrame(decayLoop);
-      }
-    };
-
-    requestAnimationFrame(decayLoop);
-  };
-
-  // ---------------------------------------------------------------------------
-  // Standard Controls
-  // ---------------------------------------------------------------------------
-
-  const setPhysicsParams = (params: Partial<PhysicsParams>) => {
-    worker.postMessage({ type: 'SET_PARAMS', payload: params });
-  };
-
-  const setShaderTheme = (theme: ShaderTheme) => {
-    webgl.setTheme(theme);
-  };
-
-  const reheatPhysics = (alpha = 0.8) => {
-    worker.postMessage({ type: 'REHEAT', payload: { alpha } });
-  };
-
-  const getFPS = () => currentFPS;
+    // Render HTML overlay labels
+    labelsController.renderOverlayLabels(
+      visibleNodes,
+      state,
+      focusId,
+      currentLabelsMode,
+      activeNodeIds
+    );
+  });
 
   const destroy = () => {
     if (resizeObserver) resizeObserver.disconnect();
     webgl.destroy();
     worker.terminate();
-    if (animationRaf !== null) cancelAnimationFrame(animationRaf);
+    camera.destroy();
+    interaction.destroy();
+    labelsController.destroy();
     overlay.remove();
-  };
-
-  const setNodeMorphology = (nodeId: string, morphology: NodeMorphology) => {
-    storeSetNodeMorphology(nodeId, morphology);
-  };
-
-  const setEdgeMorphology = (edgeId: string, morphology: EdgeMorphology) => {
-    storeSetEdgeMorphology(edgeId, morphology);
-  };
-
-  const setCognitiveEmotion = (emotion: CognitiveEmotion, intensity = 1.0) => {
-    storeSetCognitiveEmotion(emotion, intensity);
-  };
-
-  const triggerTurgorPulse = (nodeId: string, peakDilation = 1.6, durationMs = 700, attackMs = 120) => {
-    storeTriggerTurgorPulse(nodeId, peakDilation, durationMs, attackMs);
-  };
-
-  const triggerSynapticLightning = (sourceId: string, targetId: string, color = '#00FFFF', durationMs = 450) => {
-    const id = `lightning_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    storeTriggerSynapticLightning({
-      id,
-      sourceId,
-      targetId,
-      color,
-      durationMs,
-      startedAt: performance.now(),
-      jaggedness: 0.8,
-      branches: 3,
-    });
-  };
-
-  const setBrainWaveOscillation = (waveType: BrainWaveType, freq?: number, amp = 0.5) => {
-    storeSetBrainWaveOscillation(waveType, freq, amp);
   };
 
   return {
@@ -1034,32 +390,35 @@ export function createNeuraInstance(
     worker,
     loadGraph,
     generateMockData,
-    flyToNode,
-    setCameraRotation,
-    setAutoRotate,
-    resetCamera,
-    setPhysicsParams,
-    setShaderTheme,
+    flyToNode: (nodeId, targetZoom, durationMs) => camera.flyToNode(nodeId, targetZoom, durationMs),
+    setCameraRotation: (yaw, pitch) => camera.setCameraRotation(yaw, pitch),
+    setAutoRotate: (enabled, speed) => camera.setAutoRotate(enabled, speed),
+    resetCamera: () => camera.resetCamera(),
+    setPhysicsParams: (params) => worker.postMessage({ type: 'SET_PARAMS', payload: params }),
+    setShaderTheme: (theme) => webgl.setTheme(theme),
     setLabelsMode,
-    reheatPhysics,
-    getFPS,
+    reheatPhysics: (alpha = 0.8) => worker.postMessage({ type: 'REHEAT', payload: { alpha } }),
+    getFPS: () => currentFPS,
     destroy,
+
     // Telemetry API
-    setNodeActivity,
-    triggerEnergyBeam,
-    pulseNode,
-    resetAllActivities,
-    highlightRoute,
+    setNodeActivity: (nodeId, activity, nodeState) => telemetry.setNodeActivity(nodeId, activity, nodeState),
+    triggerEnergyBeam: (sourceId, targetId, color, durationMs) => telemetry.triggerEnergyBeam(sourceId, targetId, color, durationMs),
+    pulseNode: (nodeId, durationMs, color) => telemetry.pulseNode(nodeId, durationMs, color),
+    resetAllActivities: () => telemetry.resetAllActivities(),
+    highlightRoute: (sourceId, targetId, keepActive) => telemetry.highlightRoute(sourceId, targetId, keepActive),
+
     // Morphologies & Living Emotion API
-    setNodeMorphology,
-    setEdgeMorphology,
-    setCognitiveEmotion,
-    triggerTurgorPulse,
-    triggerSynapticLightning,
-    setBrainWaveOscillation,
+    setNodeMorphology: (nodeId, morphology) => telemetry.setNodeMorphology(nodeId, morphology),
+    setEdgeMorphology: (edgeId, morphology) => telemetry.setEdgeMorphology(edgeId, morphology),
+    setCognitiveEmotion: (emotion, intensity) => telemetry.setCognitiveEmotion(emotion, intensity),
+    triggerTurgorPulse: (nodeId, peakDilation, durationMs, attackMs) => telemetry.triggerTurgorPulse(nodeId, peakDilation, durationMs, attackMs),
+    triggerSynapticLightning: (sourceId, targetId, color, durationMs) => telemetry.triggerSynapticLightning(sourceId, targetId, color, durationMs),
+    setBrainWaveOscillation: (waveType, freq, amp) => telemetry.setBrainWaveOscillation(waveType, freq, amp),
+
     // Empathic Listening & Synaptic Charge API
-    setCognitiveCharge,
-    fireThinkingPulse,
-    releaseCognitiveCharge,
+    setCognitiveCharge: (charge) => telemetry.setCognitiveCharge(charge),
+    fireThinkingPulse: (colorOrOrigin, durationOrColor, color) => telemetry.fireThinkingPulse(colorOrOrigin, durationOrColor, color),
+    releaseCognitiveCharge: (activeSlotId) => telemetry.releaseCognitiveCharge(activeSlotId),
   };
 }

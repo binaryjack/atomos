@@ -26,7 +26,7 @@ export interface CanvasToolbarConfig {
 }
 
 export const createCanvasToolbar = function(config: CanvasToolbarConfig): { bottomBar: HTMLElement; topBurger: HTMLElement; destroy: () => void } {
-  const { viewport, entityManager, onFitToScreen } = config;
+  const { instanceId, viewport, entityManager, onFitToScreen } = config;
 
   const toolbar = document.createElement('div');
   toolbar.classList.add('vbs-bottom-toolbar');

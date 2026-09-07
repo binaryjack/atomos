@@ -29,7 +29,7 @@
       "@atomos/structura": ["./packages/atomos-structura/src/index.ts"],
       "@atomos/structura-core": ["./packages/atomos-structura-core/src/index.ts"],
       "@atomos/structura-mcp": ["./packages/atomos-structura-mcp/src/index.ts"],
-      "@binaryjack/formular.dev": ["./packages/formular-dev/src/index.ts"]
+      "@binaryjack/formular.dev": ["./packages/formular-dev/dist/types/src/index.d.ts"]
     },
   },
   "include": ["./packages/*/src/**/*"],

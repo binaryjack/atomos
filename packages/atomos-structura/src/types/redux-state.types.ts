@@ -88,4 +88,6 @@ export interface ReduxStore {
   /** Register a pre-dispatch hook. Return `null` to swallow the action;
    *  return the action (possibly modified) to let it proceed. */
   readonly addDispatchHook: (hook: (action: ReduxAction) => ReduxAction | null) => () => void;
+  readonly flushPersistence?: () => void;
+  readonly onUndoRedo?: (listener: (type: 'undo' | 'redo') => void) => () => void;
 }

@@ -252,6 +252,12 @@ export const createWorkspaceManager = function(
     const dstEntity   = workspaceState.value.entities.get(dstEntityId);
     if (srcEntity && dstEntity) {
       const recompute = () => {
+        const obstacles: Array<{ x: number; y: number; width: number; height: number }> = [];
+        for (const [id, entity] of workspaceState.value.entities) {
+          if (id !== srcEntityId && id !== dstEntityId) {
+            obstacles.push({ ...entity.position.value, ...entity.dimensions.value });
+          }
+        }
         permanentLink.updatePath(
           computeAnchorWorldPos(srcEntityId, srcEdge),
           computeAnchorWorldPos(dstEntityId, dstEdge),
@@ -259,7 +265,9 @@ export const createWorkspaceManager = function(
           dstEdge,
           undefined, // renderType default
           { ...srcEntity.position.value, ...srcEntity.dimensions.value },
-          { ...dstEntity.position.value, ...dstEntity.dimensions.value }
+          { ...dstEntity.position.value, ...dstEntity.dimensions.value },
+          undefined,
+          obstacles
         );
       };
       linkSubscriptions.set(linkId, [

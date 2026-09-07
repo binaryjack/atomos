@@ -374,10 +374,17 @@ export const create_redux_store = function(options: { instanceId: string; config
 
   const reduxStateKey = `${instanceId ? `${instanceId}:` : ''}vbe2:redux-state`;
 
-  const persist = function(): void {
+  let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const persistSync = function(): void {
+    if (persistTimer !== null) {
+      clearTimeout(persistTimer);
+      persistTimer = null;
+    }
     if (current_state.workspace?.config?.disableLocalStorage) return;
-    const serialized = JSON.stringify(current_state);
+    if (typeof localStorage === 'undefined') return;
     try {
+      const serialized = JSON.stringify(current_state);
       localStorage.setItem(reduxStateKey, serialized);
     } catch (error) {
       if (error instanceof DOMException && error.name === 'QuotaExceededError') {
@@ -388,10 +395,34 @@ export const create_redux_store = function(options: { instanceId: string; config
           if (key?.startsWith(prefix) && key !== reduxStateKey) keysToRemove.push(key);
         }
         keysToRemove.forEach(key => localStorage.removeItem(key));
-        try { localStorage.setItem(reduxStateKey, serialized); } catch { /* quota still full */ }
+        try {
+          const serialized = JSON.stringify(current_state);
+          localStorage.setItem(reduxStateKey, serialized);
+        } catch { /* quota still full */ }
       }
     }
   };
+
+  const persist = function(immediate = false): void {
+    if (current_state.workspace?.config?.disableLocalStorage) return;
+    if (immediate) {
+      persistSync();
+      return;
+    }
+    if (persistTimer !== null) clearTimeout(persistTimer);
+    persistTimer = setTimeout(() => {
+      persistTimer = null;
+      persistSync();
+    }, 250);
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', () => {
+      if (persistTimer !== null) {
+        persistSync();
+      }
+    });
+  }
 
   const load = function(): void {
     if (config?.disableLocalStorage) {
@@ -464,7 +495,7 @@ export const create_redux_store = function(options: { instanceId: string; config
       current_state = make_initial_state(config);
       return;
     }
-    current_state.is_settings_open = false;
+    current_state = { ...current_state, is_settings_open: false };
     
     // Runtime config always wins over persisted config
     if (config !== undefined) {
@@ -515,13 +546,21 @@ export const create_redux_store = function(options: { instanceId: string; config
     }
   };
 
+  const undoRedoListeners = new Set<(type: 'undo' | 'redo') => void>();
+
+  const onUndoRedo = function(listener: (type: 'undo' | 'redo') => void): () => void {
+    undoRedoListeners.add(listener);
+    return () => undoRedoListeners.delete(listener);
+  };
+
   const undo = function(): void {
     const prev = history_past.pop();
     if (!prev) return;
     history_future.push(current_state);
     current_state = prev;
-    persist();
+    persist(true);
     listeners.forEach(listener => { try { listener(current_state); } catch (err) { console.error('[Redux] listener error:', err); } });
+    undoRedoListeners.forEach(listener => { try { listener('undo'); } catch (err) { console.error('[Redux] onUndoRedo error:', err); } });
   };
 
   const redo = function(): void {
@@ -529,8 +568,9 @@ export const create_redux_store = function(options: { instanceId: string; config
     if (!next) return;
     history_past.push(current_state);
     current_state = next;
-    persist();
+    persist(true);
     listeners.forEach(listener => { try { listener(current_state); } catch (err) { console.error('[Redux] listener error:', err); } });
+    undoRedoListeners.forEach(listener => { try { listener('redo'); } catch (err) { console.error('[Redux] onUndoRedo error:', err); } });
   };
 
   const can_undo = function(): boolean { return history_past.length > 0; };
@@ -549,7 +589,7 @@ export const create_redux_store = function(options: { instanceId: string; config
   // Load initial state
   load();
 
-  return { get_state, dispatch, subscribe, undo, redo, can_undo, can_redo, reconcile, addDispatchHook };
+  return { get_state, dispatch, subscribe, undo, redo, can_undo, can_redo, reconcile, addDispatchHook, flushPersistence: persistSync, onUndoRedo };
 };
 
 // ── Global store (legacy, for backward compatibility) ──────────────────────

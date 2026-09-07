@@ -47,7 +47,7 @@ export const compareDAGSchemas = function(baseSchema: DAGExchange, headSchema: D
     } else {
       const changes: string[] = [];
       if (baseNode.name !== headNode.name) changes.push(`Name changed: "${baseNode.name}" -> "${headNode.name}"`);
-      if (baseNode.x !== headNode.x || baseNode.y !== headNode.y) changes.push('Position moved');
+      if (baseNode.position?.x !== headNode.position?.x || baseNode.position?.y !== headNode.position?.y) changes.push('Position moved');
       if (baseNode.collapsed !== headNode.collapsed) changes.push('Collapse state changed');
 
       const basePropCount = baseNode.properties?.length ?? 0;
@@ -79,7 +79,7 @@ export const compareDAGSchemas = function(baseSchema: DAGExchange, headSchema: D
     if (!baseEdge) {
       linkDiffs.push({ link: headEdge, changeType: 'added' });
     } else {
-      const isModified = baseEdge.fromId !== headEdge.fromId || baseEdge.toId !== headEdge.toId;
+      const isModified = baseEdge.sourceEntityId !== headEdge.sourceEntityId || baseEdge.targetEntityId !== headEdge.targetEntityId;
       linkDiffs.push({ link: headEdge, changeType: isModified ? 'modified' : 'unchanged' });
     }
   }

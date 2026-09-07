@@ -113,9 +113,15 @@ importers:
         specifier: workspace:*
         version: link:../formular-dev
     devDependencies:
+      '@types/react':
+        specifier: ^19.2.14
+        version: 19.2.14
       glob:
         specifier: ^10.0.0
         version: 10.5.0
+      react:
+        specifier: 19.2.4
+        version: 19.2.4
       typescript:
         specifier: ^5.3.0
         version: 5.9.3
@@ -268,16 +274,20 @@ packages:
 
   '@ai-agencee/cli@1.4.1':
     resolution: {integrity: sha512-8yDKroqL9pPaev/QzjHDot5DCutfOpvBunA6jVJ6PPdaTgxr+TLxzzuR/7ovMmWFXfarwGBxqrscFzXh8dLv3g==}
+    deprecated: This package is legacy and no longer maintained.
     hasBin: true
 
   '@ai-agencee/core@1.1.0':
     resolution: {integrity: sha512-ogPIKCKXrl0Yzn1smRArWkUArVyMuToh8LzxAlK6d4IhgFxKk7zE/LJiwHIzWpLFE4Ht2u6021aqRsvp+UxBug==}
+    deprecated: This package is legacy and no longer maintained.
 
   '@ai-agencee/engine@1.1.0':
     resolution: {integrity: sha512-eX0atBVQ32N1oKaTBa7dW9LEsMgD3sslUM9RMD20IuSktB6zJTnuTb4vY1CVvNpi6Lo0W1qrYWst3GbgF7SRqg==}
+    deprecated: This package is legacy and no longer maintained.
 
   '@ai-agencee/mcp@1.3.5':
     resolution: {integrity: sha512-B8tic0edl6c5lqzOfhgd+9l/LWm88YN36QG232g3CwC+4CIi/ZgfsecQdKTWHPeDtSG+PpwomIfWb+KRSaC9NQ==}
+    deprecated: This package is legacy and no longer maintained.
     hasBin: true
 
   '@algolia/abtesting@1.21.1':
@@ -2062,6 +2072,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@unrs/resolver-binding-android-arm-eabi@1.11.1':
     resolution: {integrity: sha512-ppLRUgHVaGRWUx0R0Ut06Mjo9gBaBkg3v/8AxusGLhsIotbBLuRk51rAzqLC8gq6NyyAojEXglNjzf6R948DNw==}
@@ -3450,6 +3461,7 @@ packages:
   eslint@9.39.4:
     resolution: {integrity: sha512-XoMjdBOwe/esVgEvLmNsD3IRHkm7fbKIUGvrleloJXUZgDHig2IPWNniv+GwjyJXzuNqVjlr5+4yVUZjycJwfQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -6010,6 +6022,7 @@ packages:
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   v8-compile-cache-lib@3.0.1:

@@ -129,7 +129,14 @@ export const createCanvasPage = function (
   svg.style.cssText = 'display:block;cursor:default;-webkit-transform:translateZ(0);transform:translateZ(0);';
 
   // Sub-component: Grid background
-  createGridBackground(svg);
+  const shouldHideGrid = Boolean(
+    config?.headless ||
+    (config as any)?.hide_grid ||
+    (config as any)?.hideGrid ||
+    config?.readonly ||
+    ((config as any)?.mode === 'readonly')
+  );
+  createGridBackground(svg, { hidden: shouldHideGrid });
 
   // Viewport group
   const viewportGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -477,6 +484,110 @@ export const createCanvasPage = function (
       settingsPage.element.style.display = state.is_settings_open ? 'flex' : 'none';
     })
   );
+
+  // Reconcile workspace DOM and signals with Redux state on undo/redo
+  const reconcileWorkspaceWithStore = () => {
+    const state = store.get_state();
+    const activeCanvas = state.workspace?.canvases?.[state.workspace?.active_canvas_id];
+    if (!activeCanvas) return;
+    const activeSchema = activeCanvas.schemas?.[activeCanvas.active_schema_id];
+    if (!activeSchema) return;
+
+    const targetEntities = new Map((activeSchema.entities || []).map(e => [e.id, e]));
+    const currentEntities = workspace.workspaceState.value.entities;
+    const entityManager = getEntityManager(instanceId);
+
+    // 1. Remove entities deleted by undo
+    const toRemove: string[] = [];
+    currentEntities.forEach((_, id) => {
+      if (!targetEntities.has(id)) {
+        toRemove.push(id);
+      }
+    });
+    toRemove.forEach(id => {
+      workspace.unregisterEntity(id);
+    });
+
+    // 2. Synchronize existing entities & restore entities created by undo
+    targetEntities.forEach((reduxEntity, id) => {
+      const existing = currentEntities.get(id);
+      if (existing) {
+        const rx = Number(reduxEntity.position?.x) || 0;
+        const ry = Number(reduxEntity.position?.y) || 0;
+        const curPos = existing.position.value;
+        if (Math.abs(curPos.x - rx) > 0.5 || Math.abs(curPos.y - ry) > 0.5) {
+          existing.position.set({ x: rx, y: ry });
+        }
+        const rw = Number(reduxEntity.dimensions?.width) || 200;
+        const rh = Number(reduxEntity.dimensions?.height) || 100;
+        const curDim = existing.dimensions.value;
+        if (Math.abs(curDim.width - rw) > 0.5 || Math.abs(curDim.height - rh) > 0.5) {
+          existing.dimensions.set({ width: rw, height: rh });
+        }
+        const desc = (reduxEntity as any).description;
+        if (desc && existing.updateMetadata) {
+          existing.updateMetadata({ description: desc });
+        }
+      } else {
+        entityManager.reannounceEntity(id);
+      }
+    });
+
+    // 3. Synchronize links
+    const targetLinks = new Map((activeSchema.links || []).map(l => [l.id, l]));
+    const currentLinks = workspace.linkManager.links.value;
+    const linksToRemove: string[] = [];
+    currentLinks.forEach((_, linkId) => {
+      if (!targetLinks.has(linkId)) {
+        linksToRemove.push(linkId);
+      }
+    });
+    linksToRemove.forEach(linkId => {
+      workspace.linkManager.removeLink(linkId);
+    });
+
+    targetLinks.forEach((_, linkId) => {
+      if (!workspace.linkManager.getLink(linkId)) {
+        entityManager.reannounceLink(linkId);
+      }
+    });
+  };
+
+  if (store.onUndoRedo) {
+    cleanups.push(store.onUndoRedo(() => {
+      reconcileWorkspaceWithStore();
+    }));
+  }
+
+  // Global keyboard shortcuts for Undo (Ctrl+Z / Cmd+Z) and Redo (Ctrl+Y / Cmd+Shift+Z)
+  const handleCanvasKeyDown = (e: KeyboardEvent) => {
+    const activeEl = (e.composedPath ? e.composedPath()[0] : e.target) as HTMLElement | null;
+    if (activeEl) {
+      const tag = activeEl.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || activeEl.isContentEditable) {
+        return;
+      }
+    }
+
+    const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+    if (!isCtrlOrCmd) return;
+
+    const key = e.key.toLowerCase();
+    if (key === 'z') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        if (store.can_redo()) store.redo();
+      } else {
+        if (store.can_undo()) store.undo();
+      }
+    } else if (key === 'y') {
+      e.preventDefault();
+      if (store.can_redo()) store.redo();
+    }
+  };
+
+  document.addEventListener('keydown', handleCanvasKeyDown);
+  cleanups.push(() => document.removeEventListener('keydown', handleCanvasKeyDown));
 
   cleanups.push(schemaPanel.cleanup.destroy);
   cleanups.push(settingsPage.cleanup.destroy);

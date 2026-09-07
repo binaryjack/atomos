@@ -10,6 +10,7 @@ import { DEFAULT_GLOBAL_CONFIG } from '../../core/types/global-config.types.js'
 import { getGeneralSettings } from '../../core/adapters/toolbox-config-manager.js'
 import { autoRouteLinks } from '../../core/application/dag-service.js'
 import { getEntityManager } from '../../core/presentation/entity-manager.js'
+import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js'
 import { createDemoEntity } from './create-demo-entity.js'
 
 const makeEntityProps = (id: string, name: string, x: number, y: number, width?: number, height?: number, properties?: any[]): Entity => ({

@@ -56,8 +56,8 @@ export function NeuraBackdrop({
     instance.generateMockData(initialNodeCount);
 
     const handle: NanoMeshNeuraBackdropHandle = {
-      setCognitiveCharge: (level: number, originSlotId?: number) => {
-        instanceRef.current?.setCognitiveCharge(level, originSlotId);
+      setCognitiveCharge: (level: number) => {
+        instanceRef.current?.setCognitiveCharge(level);
       },
       fireThinkingPulse: (color?: string) => {
         instanceRef.current?.fireThinkingPulse(color);

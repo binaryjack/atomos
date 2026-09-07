@@ -92,7 +92,7 @@ export const createMinimap = function(
     const scale = Math.min(0.9, Math.min((rect.width - 80) / w, (rect.height - 80) / h));
     const cx = (minX + maxX) / 2;
     const cy = (minY + maxY) / 2;
-    viewport.setZoom(scale);
+    viewport.zoomTo(scale);
     viewport.panTo(rect.width / 2 - cx * scale, rect.height / 2 - cy * scale);
   });
 

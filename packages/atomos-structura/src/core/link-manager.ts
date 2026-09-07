@@ -32,7 +32,8 @@ export interface LinkResult {
     renderType?: RenderType,
     srcRect?: { x: number; y: number; width: number; height: number },
     dstRect?: { x: number; y: number; width: number; height: number },
-    direction?: 'default' | 'left' | 'right' | 'both'
+    direction?: 'default' | 'left' | 'right' | 'both',
+    obstacles?: Array<{ x: number; y: number; width: number; height: number }>
   ) => void;
   readonly setTemporary: (temporary: boolean) => void;
   readonly setValidity: (isValid: boolean) => void;
@@ -54,7 +55,8 @@ export interface LinkManager {
     renderType?: RenderType,
     srcRect?: { x: number; y: number; width: number; height: number },
     dstRect?: { x: number; y: number; width: number; height: number },
-    direction?: 'default' | 'left' | 'right' | 'both'
+    direction?: 'default' | 'left' | 'right' | 'both',
+    obstacles?: Array<{ x: number; y: number; width: number; height: number }>
   ) => void;
   readonly removeLink: (linkId: string) => void;
   readonly getLink: (linkId: string) => LinkResult | undefined;
@@ -297,9 +299,9 @@ export const createLinkManager = function(): LinkManager {
   };
 
   // Update existing link path
-  const updateLinkPath = (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }, direction?: 'default' | 'left' | 'right' | 'both') => {
+  const updateLinkPath = (linkId: string, sourcePos: { x: number; y: number }, targetPos: { x: number; y: number }, srcEdge?: EdgePosition, dstEdge?: EdgePosition, renderType?: RenderType, srcRect?: { x: number; y: number; width: number; height: number }, dstRect?: { x: number; y: number; width: number; height: number }, direction?: 'default' | 'left' | 'right' | 'both', obstacles?: Array<{ x: number; y: number; width: number; height: number }>) => {
     const link = links.value.get(linkId);
-    if (link) link.updatePath(sourcePos, targetPos, srcEdge, dstEdge, renderType, srcRect, dstRect, direction);
+    if (link) link.updatePath(sourcePos, targetPos, srcEdge, dstEdge, renderType, srcRect, dstRect, direction, obstacles);
   };
 
   // Remove link

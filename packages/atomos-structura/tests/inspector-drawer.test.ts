@@ -70,26 +70,28 @@ describe('Contextual Entity Inspector Drawer', () => {
     const html = drawer.element.innerHTML;
 
     expect(html).toContain('C# .NET 9 Specialist Agent');
-    expect(html).toContain('csharp_wpf_mvvm_v1.safetensors');
-    expect(html).toContain('● VRAM Resident');
+    expect(html).toContain('csharp_wpf_mvvm_v1');
+    expect(html).toContain('● Active');
     expect(html).toContain('MODIFY FILE');
     expect(html).toContain('MainWindowViewModel.cs');
     expect(html).toContain('Parsing AST for MainWindowViewModel');
   });
 
-  it('renders JIT Auto-Trained badge when isVramResident is false', () => {
+  it('renders Sovereign Specialist section when specialistCodename is provided', () => {
     const drawer = createInspectorDrawer(container);
     drawer.open('agent-slot-1', {
       entityId: 'agent-slot-1',
-      title: 'JIT Agent',
+      title: 'DNA Specialist',
       status: 'success',
-      lora: {
-        adapterName: 'python_fastapi_v2.safetensors',
-        isVramResident: false,
-      },
+      specialistCodename: 'dna_fastapi_v2',
+      role: 'Backend API Architect',
     });
 
-    expect(drawer.element.innerHTML).toContain('⚡ JIT Auto-Trained');
+    const html = drawer.element.innerHTML;
+    expect(html).toContain('Assigned Specialist');
+    expect(html).toContain('● Active Swarm');
+    expect(html).toContain('dna_fastapi_v2');
+    expect(html).toContain('Backend API Architect');
   });
 
   it('supports drawer mode configuration (push vs overlay)', () => {
