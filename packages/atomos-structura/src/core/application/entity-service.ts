@@ -286,7 +286,10 @@ export const createEntityApplicationService = function(
       
       case 'MoveEntity': {
         const entity = repository.getById(command.entityId);
-        if (!entity) throw new Error(`Entity ${command.entityId} not found`);
+        if (!entity) {
+          console.warn(`[EntityService] MoveEntity skipped: Entity ${command.entityId} not found`);
+          break;
+        }
         
         const movedEntity = moveEntity(entity, command.position);
         repository.save(movedEntity);
@@ -300,7 +303,10 @@ export const createEntityApplicationService = function(
       
       case 'ResizeEntity': {
         const entity = repository.getById(command.entityId);
-        if (!entity) throw new Error(`Entity ${command.entityId} not found`);
+        if (!entity) {
+          console.warn(`[EntityService] ResizeEntity skipped: Entity ${command.entityId} not found`);
+          break;
+        }
         
         const resizedEntity = resizeEntity(entity, command.dimensions);
         repository.save(resizedEntity);

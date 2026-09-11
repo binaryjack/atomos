@@ -95,8 +95,10 @@ const spawnEntity = (
     if (positionDebounceTimer) clearTimeout(positionDebounceTimer);
     
     positionDebounceTimer = window.setTimeout(() => {
-      adapter.moveEntity(entityProps.id, roundedPos.x, roundedPos.y);
-      lastPersistedPos = roundedPos;
+      if (adapter.getEntity(entityProps.id)) {
+        adapter.moveEntity(entityProps.id, roundedPos.x, roundedPos.y);
+        lastPersistedPos = roundedPos;
+      }
       positionDebounceTimer = undefined;
     }, 100); // Debounce to prevent infinite updates
   });
@@ -126,8 +128,10 @@ const spawnEntity = (
     if (dimensionsDebounceTimer) clearTimeout(dimensionsDebounceTimer);
     
     dimensionsDebounceTimer = window.setTimeout(() => {
-      adapter.resizeEntity(entityProps.id, roundedDims.width, roundedDims.height);
-      lastPersistedDims = roundedDims;
+      if (adapter.getEntity(entityProps.id)) {
+        adapter.resizeEntity(entityProps.id, roundedDims.width, roundedDims.height);
+        lastPersistedDims = roundedDims;
+      }
       dimensionsDebounceTimer = undefined;
     }, 100);
   });
