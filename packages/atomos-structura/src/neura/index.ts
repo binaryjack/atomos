@@ -7,3 +7,5 @@ export * from './physics/worker-script.js';
 export * from './create-neura-instance.js';
 export * from './react/neura-graph-canvas.js';
 export * from './react/neura-backdrop.js';
+export * from './dna/dna-plugin-types.js';
+export * from './dna/dna-visualizer-core.js';
