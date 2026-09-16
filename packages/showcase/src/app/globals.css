@@ -1,34 +1,171 @@
 @import "@atomos-web/prime-style/dist/styles.css";
 @import "tailwindcss";
+
+@theme {
+  --color-emerald-50:  #ecfdf5;
+  --color-emerald-100: #d1fae5;
+  --color-emerald-200: #a7f3d0;
+  --color-emerald-300: #6ee7b7;
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;
+  --color-emerald-800: #065f46;
+  --color-emerald-900: #064e3b;
+  --color-emerald-950: #022c22;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* ── Atomos Structura Primary Accent (Emerald Precision) ── */
+  --emerald-50:  #ecfdf5;
+  --emerald-100: #d1fae5;
+  --emerald-200: #a7f3d0;
+  --emerald-300: #6ee7b7;
+  --emerald-400: #34d399; /* Bright Emerald Metallic */
+  --emerald-500: #10b981; /* Primary Brand Emerald */
+  --emerald-600: #059669; /* Deep Emerald */
+  --emerald-700: #047857;
+  --emerald-800: #065f46;
+  --emerald-900: #064e3b;
+  --emerald-950: #022c22;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* ── Carbon Surfaces (Identical to Codernic DeepTech) ── */
+  --carbon-void:             #050608;
+  --carbon-base:             #08090c;
+  --carbon-surface:          #0f131a;
+  --carbon-surface-elevated: #141824;
+  --carbon-surface-hover:    #1c2233;
+  --steel-border:            rgba(255, 255, 255, 0.08);
+  --steel-border-subtle:     rgba(255, 255, 255, 0.04);
+  --steel-border-active:     rgba(16, 185, 129, 0.45);
+  --emerald-glow:            0 0 28px -4px rgba(16, 185, 129, 0.35);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* ── Neutrals — Swiss Zinc Palette ── */
+  --neutral-50:  #fafafa;
+  --neutral-100: #f4f4f5;
+  --neutral-200: #e4e4e7;
+  --neutral-300: #d4d4d8;
+  --neutral-400: #a1a1aa;
+  --neutral-500: #71717a;
+  --neutral-600: #52525b;
+  --neutral-700: #3f3f46;
+  --neutral-800: #27272a;
+  --neutral-850: #18181b;
+  --neutral-900: #121216;
+  --neutral-950: #09090b;
+
+  /* ── Semantic Bindings ── */
+  --background: var(--carbon-base);
+  --foreground: var(--neutral-100);
+  --color-bg:   var(--carbon-base);
+  --color-surface: var(--carbon-surface);
+  --color-surface-elevated: var(--carbon-surface-elevated);
+  --color-border: var(--steel-border);
+  --color-text: var(--neutral-100);
+  --color-muted: var(--neutral-400);
+  --color-accent: var(--emerald-500);
+  --color-accent-hover: var(--emerald-400);
+
+  /* ── Sharp Rectilinear Radius (Industrial Precision) ── */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+  overflow-x: hidden;
 }
 
-/* Sleek minimal scrollbars */
+/* ── Typography ── */
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+/* ── Gradient Utilities ── */
+.gradient-text-emerald {
+  background: linear-gradient(135deg, var(--emerald-300) 0%, var(--emerald-400) 50%, var(--emerald-600) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Card Base (Codernic Standard) ── */
+.card-sovereign {
+  background: var(--carbon-surface);
+  border: 1px solid var(--steel-border);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-sovereign:hover {
+  border-color: rgba(16, 185, 129, 0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.7);
+}
+
+/* ── Industrial Buttons ── */
+.btn-emerald {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(180deg, var(--emerald-500) 0%, var(--emerald-600) 100%);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: -0.01em;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  text-decoration: none;
+}
+
+.btn-emerald:hover {
+  background: linear-gradient(180deg, var(--emerald-400) 0%, var(--emerald-500) 100%);
+  border-color: rgba(110, 231, 183, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.btn-secondary-carbon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--carbon-surface-elevated);
+  color: var(--neutral-200);
+  font-weight: 500;
+  font-size: 0.8125rem;
+  letter-spacing: -0.01em;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--steel-border);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-secondary-carbon:hover {
+  background: var(--carbon-surface-hover);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+/* ── Minimalist Scrollbars ── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #3f3f46 transparent;
+  scrollbar-color: #27272a transparent;
 }
 ::-webkit-scrollbar {
   width: 5px;
@@ -38,12 +175,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 4px;
-}
-*:hover::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: #27272a;
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1aa !important;
+  background: #3f3f46;
 }

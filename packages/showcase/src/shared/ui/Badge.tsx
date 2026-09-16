@@ -7,11 +7,11 @@ interface BadgeProps {
   readonly className?: string;
 }
 
-export function Badge({ children, active = false, color = 'cyan', className = '' }: BadgeProps) {
+export function Badge({ children, active = false, color = 'emerald', className = '' }: BadgeProps) {
   const colorStyles = {
     cyan: 'bg-cyan-500/10 border-cyan-500/30 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.12)]',
     blue: 'bg-blue-500/10 border-blue-500/30 text-blue-300 shadow-[0_0_12px_rgba(59,130,246,0.12)]',
-    emerald: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.12)]',
+    emerald: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.15)]',
     purple: 'bg-purple-500/10 border-purple-500/30 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.12)]',
   }[color];
 

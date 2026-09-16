@@ -40,13 +40,13 @@ export function MetricCard({
   label,
   description,
   badge,
-  color = 'cyan',
+  color = 'emerald',
 }: MetricCardProps) {
   const styles = colorStyles[color];
 
   return (
-    <div className={`group relative p-5 rounded-xl bg-slate-900/60 border ${styles.border} backdrop-blur-xs transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.2)]`}>
-      <div className={`absolute -top-12 -right-12 w-28 h-28 bg-gradient-to-br ${styles.glow} rounded-full blur-xl pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity`} />
+    <div className={`group relative p-5 rounded bg-[#0f131a] border border-white/8 hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.3)]`}>
+      <div className={`absolute -top-12 -right-12 w-28 h-28 bg-gradient-to-br ${styles.glow} rounded-full blur-xl pointer-events-none opacity-40 group-hover:opacity-80 transition-opacity`} />
       
       <div className="flex items-center justify-between mb-3 relative z-10">
         <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-medium">

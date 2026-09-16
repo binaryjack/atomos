@@ -24,17 +24,17 @@ export function Button({
     lg: 'px-5.5 py-2.5 text-sm font-medium',
   }[size];
 
-  const baseStyles = 'inline-flex items-center justify-center gap-2 rounded-lg transition-all select-none cursor-pointer';
+  const baseStyles = 'inline-flex items-center justify-center gap-2 rounded transition-all select-none cursor-pointer font-mono font-medium';
 
   const variants = {
     primary:
-      'bg-cyan-500/10 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400 hover:shadow-[0_0_16px_rgba(6,182,212,0.2)]',
+      'bg-emerald-500 hover:bg-emerald-400 text-black font-semibold shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] border border-emerald-400/50',
     secondary:
-      'bg-indigo-500/10 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/20 hover:border-indigo-400 hover:shadow-[0_0_16px_rgba(99,102,241,0.2)]',
+      'bg-slate-900/80 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/60 shadow-[0_0_10px_rgba(16,185,129,0.1)]',
     outline:
-      'bg-slate-900/60 border border-slate-700/80 text-slate-300 hover:bg-slate-800/80 hover:text-slate-100 hover:border-slate-600',
+      'bg-slate-900/50 border border-slate-800 text-slate-300 hover:bg-slate-800/80 hover:text-slate-100 hover:border-slate-700',
     ghost:
-      'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50',
+      'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40',
   };
 
   const combinedStyles = `${baseStyles} ${sizeStyles} ${variants[variant]} ${className}`;
