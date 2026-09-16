@@ -1,6 +1,7 @@
 /** Beam particle vertex shader — renders glowing energy orbs traveling along edges */
 export const beamVertexShaderSource = `
   precision mediump float;
+  precision mediump int;
   attribute vec3 a_position;
   attribute vec4 a_color;
   attribute float a_size_attr;
@@ -24,6 +25,7 @@ export const beamVertexShaderSource = `
 /** Beam particle fragment shader — radial gradient with soft glow for additive blending */
 export const beamFragmentShaderSource = `
   precision mediump float;
+  precision mediump int;
   varying vec4 v_color;
 
   void main() {

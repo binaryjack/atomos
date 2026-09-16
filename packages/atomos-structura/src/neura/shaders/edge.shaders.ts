@@ -1,5 +1,6 @@
 export const edgeVertexShaderSource = `
   precision mediump float;
+  precision mediump int;
   attribute vec3 a_position;
   attribute vec4 a_color;
   attribute float a_morphology; // 0=wire, 1=myelinated_tube, 2=synaptic_lightning, 3=quantum_flow, 4=catenary
@@ -50,6 +51,7 @@ export const edgeVertexShaderSource = `
 
 export const edgeFragmentShaderSource = `
   precision mediump float;
+  precision mediump int;
   varying vec4 v_color;
   varying vec3 v_world_pos;
   varying float v_depth;
@@ -106,7 +108,8 @@ export const edgeFragmentShaderSource = `
       float progress = clamp(u_ripple_time / max(0.001, u_ripple_duration), 0.0, 1.0);
       float waveRadius = progress * u_ripple_max_radius;
       float bandWidth = 120.0 + progress * 80.0;
-      float ring = exp(-pow(dist3D - waveRadius, 2.0) / (2.0 * bandWidth * bandWidth));
+      float rippleDiff = dist3D - waveRadius;
+      float ring = exp(-(rippleDiff * rippleDiff) / (2.0 * bandWidth * bandWidth));
       float fade = 1.0 - smoothstep(0.7, 1.0, progress);
       baseColor.rgb += u_ripple_color * ring * fade * 1.4;
       baseColor.a = min(1.0, baseColor.a + ring * fade * 0.6);
