@@ -99,7 +99,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="flex flex-col w-72 h-[calc(100vh-5rem)] sticky top-20 bg-[#0b0d13]/90 border-r border-white/8 p-4 overflow-y-auto shrink-0 select-none font-mono">
+    <aside className="flex flex-col w-64 h-[calc(100vh-3.5rem)] sticky top-14 bg-[#08090c] border-r border-white/[0.07] p-4 overflow-y-auto shrink-0 select-none font-sans">
       {/* Search Filter */}
       <div className="mb-4 relative">
         <input
@@ -107,12 +107,12 @@ export function Sidebar() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Filter diagrams..."
-          className="w-full bg-[#0f131a] border border-white/10 rounded px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-all font-mono"
+          className="w-full bg-[#0c0e14] border border-white/[0.08] rounded px-3 py-1.5 text-xs text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-white/25 transition-all font-mono"
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery("")}
-            className="absolute right-2.5 top-2 text-slate-500 hover:text-slate-300 text-xs"
+            className="absolute right-2.5 top-2 text-neutral-500 hover:text-neutral-300 text-xs"
           >
             ✕
           </button>
@@ -122,8 +122,8 @@ export function Sidebar() {
       {/* Navigation Sections */}
       <nav className="flex flex-col gap-5 flex-1">
         {filteredSections.map((section) => (
-          <div key={section.category} className="flex flex-col gap-1">
-            <div className="text-[10px] uppercase font-bold text-slate-500 tracking-[0.16em] px-2.5 mb-1">
+          <div key={section.category} className="flex flex-col gap-0.5">
+            <div className="text-[10px] uppercase font-mono font-medium text-neutral-500 tracking-wider px-2.5 mb-1.5">
               {section.category}
             </div>
             {section.items.map((item) => {
@@ -132,18 +132,14 @@ export function Sidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`px-2.5 py-1.5 text-xs rounded transition-all flex items-center gap-2 font-medium ${
+                  className={`px-2.5 py-1.5 text-xs rounded transition-colors flex items-center justify-between ${
                     active
-                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold"
-                      : "border border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                      ? "bg-white/[0.06] text-neutral-100 font-medium"
+                      : "text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.03]"
                   }`}
                 >
                   <span className="truncate">{item.title}</span>
-                  {item.badge && (
-                    <span className={`ml-auto text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border ${getBadgeClasses(item.badgeColor)}`}>
-                      {item.badge}
-                    </span>
-                  )}
+                  {active && <span className="w-1 h-1 rounded-full bg-emerald-400" />}
                 </Link>
               );
             })}

@@ -19,22 +19,22 @@ export function Button({
   className = '',
 }: ButtonProps) {
   const sizeStyles = {
-    sm: 'px-3.5 py-1.5 text-xs',
-    md: 'px-4.5 py-2 text-xs font-medium',
-    lg: 'px-5.5 py-2.5 text-sm font-medium',
+    sm: 'px-3 py-1.5 text-xs',
+    md: 'px-4 py-2 text-xs font-medium',
+    lg: 'px-5 py-2.5 text-sm font-medium',
   }[size];
 
-  const baseStyles = 'inline-flex items-center justify-center gap-2 rounded transition-all select-none cursor-pointer font-mono font-medium';
+  const baseStyles = 'inline-flex items-center justify-center gap-2 rounded transition-all select-none cursor-pointer font-sans';
 
   const variants = {
     primary:
-      'bg-emerald-500 hover:bg-emerald-400 text-black font-semibold shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] border border-emerald-400/50',
+      'bg-neutral-100 hover:bg-white text-neutral-900 font-semibold shadow-[0_1px_2px_rgba(0,0,0,0.5)] border border-neutral-200',
     secondary:
-      'bg-slate-900/80 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/60 shadow-[0_0_10px_rgba(16,185,129,0.1)]',
+      'bg-white/[0.04] hover:bg-white/[0.08] text-neutral-200 border border-white/[0.08] hover:border-white/[0.15] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]',
     outline:
-      'bg-slate-900/50 border border-slate-800 text-slate-300 hover:bg-slate-800/80 hover:text-slate-100 hover:border-slate-700',
+      'bg-transparent border border-white/[0.08] text-neutral-300 hover:bg-white/[0.04] hover:text-white hover:border-white/[0.16]',
     ghost:
-      'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40',
+      'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.04]',
   };
 
   const combinedStyles = `${baseStyles} ${sizeStyles} ${variants[variant]} ${className}`;

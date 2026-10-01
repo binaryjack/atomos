@@ -181,3 +181,16 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-thumb:hover {
   background: #3f3f46;
 }
+
+/* ── Linear-Style Engineering CAD Grid & Mask ── */
+.bg-cad-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+.mask-radial-vignette {
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 15%, #000 35%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 15%, #000 35%, transparent 100%);
+}

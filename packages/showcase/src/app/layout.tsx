@@ -28,18 +28,15 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
-      <body className="min-h-screen flex flex-col bg-[#08090c] text-slate-300 relative overflow-x-hidden selection:bg-emerald-500/30 selection:text-emerald-200">
-        {/* Subtle Industrial Background Glow */}
-        <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-5%] w-[45%] h-[45%] rounded-full bg-emerald-500/5 blur-[150px]" />
-          <div className="absolute bottom-[-10%] right-[-5%] w-[35%] h-[35%] rounded-full bg-slate-800/10 blur-[130px]" />
-        </div>
+      <body className="min-h-screen flex flex-col bg-[#08090c] text-neutral-300 relative overflow-x-hidden selection:bg-emerald-500/20 selection:text-emerald-200">
+        {/* Linear Engineering CAD Grid Background */}
+        <div className="fixed inset-0 -z-10 pointer-events-none bg-cad-grid mask-radial-vignette opacity-70" />
 
-        {/* Global Sovereign Top Navigation Header */}
+        {/* Global Top Navigation Header */}
         <SiteHeader />
 
         {/* Main Application Container */}
-        <main className="flex-1 min-w-0 relative z-10 flex flex-col pt-20">
+        <main className="flex-1 min-w-0 relative z-10 flex flex-col pt-14">
           {children}
         </main>
       </body>
