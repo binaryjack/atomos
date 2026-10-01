@@ -28,11 +28,11 @@ export function Button({
 
   const variants = {
     primary:
-      'bg-neutral-100 hover:bg-white text-neutral-900 font-semibold shadow-[0_1px_2px_rgba(0,0,0,0.5)] border border-neutral-200',
+      'bg-emerald-400 hover:bg-emerald-300 text-[#09090b] font-semibold border border-emerald-300/40 shadow-[0_1px_2px_rgba(0,0,0,0.3)]',
     secondary:
-      'bg-white/[0.04] hover:bg-white/[0.08] text-neutral-200 border border-white/[0.08] hover:border-white/[0.15] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]',
+      'bg-white/[0.04] hover:bg-white/[0.08] text-neutral-200 border border-white/[0.06] hover:border-white/[0.12] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.03)]',
     outline:
-      'bg-transparent border border-white/[0.08] text-neutral-300 hover:bg-white/[0.04] hover:text-white hover:border-white/[0.16]',
+      'bg-transparent border border-white/[0.06] text-neutral-300 hover:bg-white/[0.04] hover:text-white hover:border-white/[0.12]',
     ghost:
       'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.04]',
   };

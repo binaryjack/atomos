@@ -8,12 +8,12 @@ export function HeroArchitectureDiagram() {
   return (
     <div className="w-full relative flex flex-col items-center select-none bg-transparent">
       {/* Linear-Style Technical Architecture Schematic Container */}
-      <div className="w-full max-w-4xl p-6 sm:p-8 rounded-xl border border-white/[0.08] bg-[#0c0e14]/90 backdrop-blur-md relative overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.05)]">
+      <div className="w-full max-w-4xl p-6 sm:p-8 rounded-xl border border-white/[0.045] bg-[#0c0e14]/90 backdrop-blur-md relative overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,255,255,0.03)]">
         {/* Subtle decorative grid lines */}
         <div className="absolute inset-0 bg-cad-grid opacity-50 pointer-events-none" />
 
         {/* Pipeline Stage Header & Metrics */}
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/[0.06] relative z-10">
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/[0.045] relative z-10">
           <div className="flex items-center gap-2.5">
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
             <span className="text-xs font-mono font-medium tracking-wider text-neutral-300">
@@ -21,10 +21,10 @@ export function HeroArchitectureDiagram() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded border border-white/[0.08] bg-white/[0.02] text-neutral-400">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded border border-white/[0.06] bg-white/[0.02] text-neutral-400">
               0.82ms ROUTING
             </span>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded border border-white/[0.08] bg-white/[0.02] text-neutral-400">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded border border-white/[0.06] bg-white/[0.02] text-neutral-400">
               60 FPS RENDER
             </span>
           </div>

@@ -9,8 +9,6 @@ const NAV_LINKS = [
   { href: '/neura', label: 'Neura 3D' },
   { href: '/examples/simulator', label: 'Simulator' },
   { href: '/examples', label: 'Blueprints' },
-  { href: '/mcp', label: 'MCP Protocol' },
-  { href: '/headless', label: 'Headless API' },
 ];
 
 export function SiteHeader() {
@@ -18,23 +16,23 @@ export function SiteHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-[#08090c]/80 backdrop-blur-md border-b border-white/[0.07]">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-[#08090c]/85 backdrop-blur-md border-b border-white/[0.045]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-6 h-6 rounded border border-white/[0.12] bg-white/[0.04] flex items-center justify-center text-neutral-100 font-mono font-bold text-xs group-hover:border-emerald-500/50 group-hover:text-emerald-400 transition-all">
+          <div className="w-6 h-6 rounded border border-white/[0.1] bg-white/[0.03] flex items-center justify-center text-neutral-100 font-mono font-bold text-xs group-hover:border-emerald-500/40 group-hover:text-emerald-400 transition-all">
             ▲
           </div>
           <div className="flex items-center gap-2">
             <span className="font-semibold text-neutral-100 tracking-tight text-sm">
               ATOMOS
             </span>
-            <span className="text-neutral-500 text-xs">/</span>
+            <span className="text-neutral-600 text-xs">/</span>
             <span className="text-neutral-400 font-medium text-xs tracking-wide">
               STRUCTURA
             </span>
           </div>
-          <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded border border-white/[0.08] bg-white/[0.02] text-neutral-400 ml-1">
+          <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded border border-white/[0.06] bg-white/[0.02] text-neutral-400 ml-1">
             v5.0
           </span>
         </Link>
@@ -75,16 +73,16 @@ export function SiteHeader() {
 
           <Link
             href="/playground"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium bg-neutral-100 hover:bg-white text-neutral-900 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.5)] border border-neutral-200"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold bg-emerald-400 hover:bg-emerald-300 text-[#09090b] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.3)] border border-emerald-300/40"
           >
             <span>Launch Playground</span>
-            <span className="text-neutral-500">→</span>
+            <span>→</span>
           </Link>
 
           {/* Mobile hamburger button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-1.5 rounded text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.05]"
+            className="md:hidden p-1.5 rounded text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.04]"
             aria-label="Toggle navigation menu"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -100,7 +98,7 @@ export function SiteHeader() {
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-white/[0.07] bg-[#0b0d13]/98 px-4 py-3 flex flex-col gap-1">
+        <div className="md:hidden border-t border-white/[0.045] bg-[#0b0d13]/98 px-4 py-3 flex flex-col gap-1">
           {NAV_LINKS.map((link) => {
             const isActive = pathname === link.href;
             return (

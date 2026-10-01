@@ -120,7 +120,7 @@ export function TimeTravelDebugger() {
         </div>
 
         <div className="flex items-center gap-3">
-          <label className="text-xs text-slate-400 font-medium">Trace Scenario:</label>
+          <label className="text-[11px] font-mono text-neutral-400">Trace Scenario:</label>
           <select
             value={selectedScenarioIdx}
             onChange={(e) => {
@@ -128,10 +128,10 @@ export function TimeTravelDebugger() {
               setCurrentStep(0);
               setIsPlaying(false);
             }}
-            className="bg-slate-800 border border-slate-700 text-xs rounded-lg px-3 py-1.5 text-slate-200 outline-none focus:border-emerald-500 font-medium"
+            className="bg-[#0c0e14] border border-white/[0.08] text-xs rounded px-3 py-1.5 text-neutral-200 outline-none focus:border-white/20 font-medium cursor-pointer transition-colors"
           >
             {TRACE_SCENARIOS.map((sc, i) => (
-              <option key={i} value={i}>
+              <option key={i} value={i} className="bg-[#0c0e14] text-neutral-200 py-1">
                 {sc.name}
               </option>
             ))}

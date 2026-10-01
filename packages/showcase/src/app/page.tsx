@@ -47,7 +47,7 @@ const CAPABILITIES = [
     title: 'Model Context Protocol (MCP) & Headless AST',
     tag: 'AI AGENT PROTOCOL',
     description: 'Decoupled headless AST manipulation runnable in pure Node.js, Bun, or CI. Exposes standardized JSON-RPC endpoints for autonomous AI agent inspection and code synthesis.',
-    href: '/mcp',
+    href: '/playground',
     span: 'md:col-span-2',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -104,7 +104,7 @@ export default function Home() {
         {/* Subtle Sovereign Pill */}
         <Link
           href="/playground"
-          className="inline-flex items-center gap-2.5 px-3.5 py-1 rounded-full border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.15] text-[11px] text-neutral-300 font-mono transition-all group"
+          className="inline-flex items-center gap-2.5 px-3.5 py-1 rounded-full border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/[0.1] text-[11px] text-neutral-300 font-mono transition-all group"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
           <span>Atomos Structura v5.0 — The Sovereign Graph Engine</span>
@@ -156,11 +156,11 @@ export default function Home() {
             <Link
               key={cap.title}
               href={cap.href}
-              className={`p-7 rounded-xl bg-[#0c0e14] border border-white/[0.07] hover:border-white/[0.16] hover:bg-[#0f1118] transition-all duration-200 flex flex-col justify-between group shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] ${cap.span}`}
+              className={`p-7 rounded-xl bg-[#0c0e14] border border-white/[0.045] hover:border-white/[0.12] hover:bg-[#0f1118] transition-all duration-200 flex flex-col justify-between group shadow-[inset_0_1px_0_0_rgba(255,255,255,0.03)] ${cap.span}`}
             >
               <div>
                 <div className="flex items-center justify-between mb-5">
-                  <div className="w-9 h-9 rounded-lg border border-white/[0.08] bg-white/[0.02] flex items-center justify-center text-neutral-300 group-hover:text-emerald-400 transition-colors">
+                  <div className="w-9 h-9 rounded-lg border border-white/[0.06] bg-white/[0.02] flex items-center justify-center text-neutral-300 group-hover:text-emerald-400 transition-colors">
                     {cap.icon}
                   </div>
                   <span className="text-[10px] font-mono tracking-wider text-neutral-500 font-medium">
@@ -251,7 +251,7 @@ export default function Home() {
             <Link
               key={arch.title}
               href={arch.href}
-              className="p-5 rounded-lg bg-[#0c0e14] border border-white/[0.06] hover:border-white/[0.16] hover:bg-[#0f1118] transition-all duration-200 group flex flex-col justify-between shadow-[inset_0_1px_0_0_rgba(255,255,255,0.03)]"
+              className="p-5 rounded-lg bg-[#0c0e14] border border-white/[0.045] hover:border-white/[0.12] hover:bg-[#0f1118] transition-all duration-200 group flex flex-col justify-between shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]"
             >
               <div>
                 <span className="text-[10px] font-mono text-neutral-500 font-medium block mb-2">
@@ -274,7 +274,7 @@ export default function Home() {
       </section>
 
       {/* ── 6. Technical Specifications Comparison ── */}
-      <section className="flex flex-col gap-8 border-t border-white/[0.07] pt-14">
+      <section className="flex flex-col gap-8 border-t border-white/[0.045] pt-14">
         <div className="flex flex-col gap-2">
           <span className="text-xs font-mono uppercase tracking-wider text-emerald-400/90 font-medium">
             Engine Comparison
@@ -284,16 +284,16 @@ export default function Home() {
           </h2>
         </div>
 
-        <div className="overflow-x-auto rounded-lg border border-white/[0.07] bg-[#0c0e14]">
+        <div className="overflow-x-auto rounded-lg border border-white/[0.045] bg-[#0c0e14]">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-white/[0.07] text-neutral-400 font-mono">
+              <tr className="border-b border-white/[0.045] text-neutral-400 font-mono">
                 <th className="p-4 font-medium uppercase tracking-wider">FEATURE / CAPABILITY</th>
                 <th className="p-4 font-medium uppercase tracking-wider text-neutral-500">TRADITIONAL SVG LIBRARIES</th>
                 <th className="p-4 font-medium uppercase tracking-wider text-neutral-200">ATOMOS STRUCTURA</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.05] text-neutral-300">
+            <tbody className="divide-y divide-white/[0.03] text-neutral-300">
               <tr className="hover:bg-white/[0.02] transition-colors">
                 <td className="p-4 font-medium text-neutral-200">Edge Obstacle Avoidance</td>
                 <td className="p-4 text-neutral-500">Direct or simple step lines cutting through nodes</td>
@@ -320,7 +320,7 @@ export default function Home() {
       </section>
 
       {/* ── 7. Minimalist Footer ── */}
-      <footer className="border-t border-white/[0.07] pt-10 pb-16 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-neutral-500">
+      <footer className="border-t border-white/[0.045] pt-10 pb-16 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-neutral-500">
         <div className="flex items-center gap-2.5">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
           <span>Atomos Structura v5.0 — Sovereign Architecture Engine</span>

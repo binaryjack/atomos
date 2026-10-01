@@ -409,33 +409,33 @@ export function SimulatorDemo() {
 
         {/* Preset Selector */}
         <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Architecture Preset</h3>
+          <h3 className="text-xs font-mono font-medium text-neutral-400 uppercase tracking-wider">Architecture Preset</h3>
           <select
             value={selectedPreset}
             onChange={(e) => setSelectedPreset(e.target.value)}
-            className="w-full bg-slate-800 border border-slate-700 text-xs rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-medium"
+            className="w-full bg-[#0c0e14] border border-white/[0.08] text-xs rounded px-3 py-2 text-neutral-200 outline-none focus:border-white/20 font-medium cursor-pointer transition-colors"
           >
-            <option value="mvc">MVC Architecture</option>
-            <option value="cqrs">CQRS Pattern</option>
-            <option value="flux">FLUX Architecture</option>
-            <option value="database">Relational Database</option>
-            <option value="security-schema">Security Architecture</option>
-            <option value="activity-workflow">Activity Workflow</option>
+            <option value="mvc" className="bg-[#0c0e14] text-neutral-200 py-1">MVC Architecture</option>
+            <option value="cqrs" className="bg-[#0c0e14] text-neutral-200 py-1">CQRS Pattern</option>
+            <option value="flux" className="bg-[#0c0e14] text-neutral-200 py-1">FLUX Architecture</option>
+            <option value="database" className="bg-[#0c0e14] text-neutral-200 py-1">Relational Database</option>
+            <option value="security-schema" className="bg-[#0c0e14] text-neutral-200 py-1">Security Architecture</option>
+            <option value="activity-workflow" className="bg-[#0c0e14] text-neutral-200 py-1">Activity Workflow</option>
           </select>
         </div>
 
         <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Execution Simulation</h3>
-          <label className="flex items-center gap-2 cursor-pointer text-sm">
-            <input type="checkbox" className="w-4 h-4 rounded border-slate-600" checked={isReadonly} onChange={e => setIsReadonly(e.target.checked)} />
+          <h3 className="text-xs font-mono font-medium text-neutral-400 uppercase tracking-wider">Execution Simulation</h3>
+          <label className="flex items-center gap-2 cursor-pointer text-xs text-neutral-300">
+            <input type="checkbox" className="w-3.5 h-3.5 rounded border-white/[0.1] bg-[#0c0e14] accent-emerald-500" checked={isReadonly} onChange={e => setIsReadonly(e.target.checked)} />
             Read-Only Mode
           </label>
-          <label className="flex items-center gap-2 cursor-pointer text-sm">
-            <input type="checkbox" className="w-4 h-4 rounded border-slate-600" checked={isHeadless} onChange={e => setIsHeadless(e.target.checked)} />
+          <label className="flex items-center gap-2 cursor-pointer text-xs text-neutral-300">
+            <input type="checkbox" className="w-3.5 h-3.5 rounded border-white/[0.1] bg-[#0c0e14] accent-emerald-500" checked={isHeadless} onChange={e => setIsHeadless(e.target.checked)} />
             Headless (No UI)
           </label>
           <button 
-            className={`w-full mt-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isExecuting ? 'bg-red-900 text-red-200 hover:bg-red-800' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20'}`}
+            className={`w-full mt-2 px-3 py-2 text-xs font-mono font-medium rounded transition-colors ${isExecuting ? 'bg-red-950/60 border border-red-500/30 text-red-300 hover:bg-red-900/60' : 'bg-emerald-400 hover:bg-emerald-300 text-[#09090b] font-semibold border border-emerald-300/40'}`}
             onClick={handleTelemetry}
           >
             {isExecuting ? '⏹ Stop Telemetry' : '▶ Start Telemetry'}

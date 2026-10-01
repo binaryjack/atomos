@@ -136,50 +136,50 @@ export function NeuraShowcase() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-full bg-[#030712] text-slate-100 overflow-hidden select-none font-sans">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] w-full bg-[#08090c] text-neutral-200 overflow-hidden select-none font-sans">
       {/* Top Header Bar */}
-      <header className="h-14 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md px-6 flex items-center justify-between shrink-0 z-30">
+      <header className="h-12 border-b border-white/[0.045] bg-[#0c0e14] px-5 flex items-center justify-between shrink-0 z-30">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-cyan-400 animate-ping" />
-            <span className="font-bold text-base bg-gradient-to-r from-cyan-400 via-teal-300 to-indigo-400 bg-clip-text text-transparent">
-              Neura 3D WebGL Volumetric Nebula
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-semibold text-xs tracking-wider text-neutral-100 font-mono">
+              NEURA 3D WEBGL ENGINE
             </span>
           </div>
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono border border-cyan-500/30">
-            3D Orbit & Spacing Engine
+          <span className="text-[10px] px-2 py-0.5 rounded border border-white/[0.06] bg-white/[0.02] text-neutral-400 font-mono">
+            Spatial Graph Visualizer
           </span>
         </div>
 
         {/* Live Metrics Counters */}
-        <div className="flex items-center gap-4 text-xs font-mono">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-900 border border-slate-800">
-            <span className="text-slate-500">FPS:</span>
+        <div className="flex items-center gap-3 text-xs font-mono">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0e1017] border border-white/[0.06]">
+            <span className="text-neutral-500">FPS:</span>
             <span className={`font-bold ${fps >= 50 ? "text-emerald-400" : fps >= 30 ? "text-amber-400" : "text-rose-400"}`}>
               {fps}
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-900 border border-slate-800">
-            <span className="text-slate-500">Nodes:</span>
-            <span className="text-cyan-400 font-bold">{totalNodes.toLocaleString()}</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0e1017] border border-white/[0.06]">
+            <span className="text-neutral-500">Nodes:</span>
+            <span className="text-neutral-200 font-bold">{totalNodes.toLocaleString()}</span>
           </div>
 
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-900 border border-slate-800">
-            <span className="text-slate-500">Edges:</span>
-            <span className="text-indigo-400 font-bold">{totalEdges.toLocaleString()}</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0e1017] border border-white/[0.06]">
+            <span className="text-neutral-500">Edges:</span>
+            <span className="text-neutral-200 font-bold">{totalEdges.toLocaleString()}</span>
           </div>
 
           {/* Scale Dataset Selector */}
-          <div className="flex items-center gap-1 ml-2 bg-slate-900 p-1 rounded-lg border border-slate-800">
+          <div className="flex items-center gap-1 ml-2 bg-[#0e1017] p-0.5 rounded border border-white/[0.06]">
             {[1000, 3000, 5000, 10000].map((count) => (
               <button
                 key={count}
                 onClick={() => handleScaleChange(count)}
-                className={`px-2.5 py-1 rounded text-xs font-bold transition-all ${
+                className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium transition-all ${
                   nodeCount === count
-                    ? "bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                    ? "bg-white/[0.08] text-white border border-white/[0.1]"
+                    : "text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.02]"
                 }`}
               >
                 {count >= 1000 ? `${count / 1000}k` : count}
@@ -198,13 +198,13 @@ export function NeuraShowcase() {
         />
 
         {/* Floating Left Control HUD */}
-        <div className="absolute top-4 left-4 z-20 flex flex-col gap-3 w-76 bg-slate-950/85 backdrop-blur-md p-4 rounded-xl border border-slate-800 shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)]">
+        <div className="absolute top-4 left-4 z-20 flex flex-col gap-3 w-76 bg-[#0c0e14]/90 backdrop-blur-md p-4 rounded-xl border border-white/[0.045] shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)]">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
-            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">3D Orbit & Shaders</span>
+          <div className="flex items-center justify-between border-b border-white/[0.045] pb-2">
+            <span className="text-[11px] font-mono font-medium text-neutral-300 uppercase tracking-wider">3D Orbit & Shaders</span>
             <button
               onClick={handleReheat}
-              className="text-[11px] font-bold px-2 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 transition"
+              className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition"
               title="Re-energize physics simulation"
             >
               ⚡ Re-heat
@@ -214,10 +214,10 @@ export function NeuraShowcase() {
           {/* 3D Camera Controls */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <label className="text-[11px] text-slate-400 font-medium">3D Camera Presets:</label>
+              <label className="text-[11px] font-mono text-neutral-400">Camera Presets:</label>
               <button
                 onClick={handleResetCamera}
-                className="text-[10px] text-slate-400 hover:text-slate-200 bg-slate-900 px-2 py-0.5 rounded border border-slate-800"
+                className="text-[10px] font-mono text-neutral-400 hover:text-neutral-200 bg-white/[0.02] px-2 py-0.5 rounded border border-white/[0.06]"
               >
                 Reset 3D
               </button>
@@ -225,19 +225,19 @@ export function NeuraShowcase() {
             <div className="grid grid-cols-3 gap-1.5">
               <button
                 onClick={() => handleSetView(0, 0)}
-                className="px-2 py-1 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs rounded border border-slate-800 font-mono"
+                className="px-2 py-1 bg-white/[0.02] hover:bg-white/[0.05] text-neutral-300 text-xs rounded border border-white/[0.06] font-mono transition-colors"
               >
                 Front
               </button>
               <button
                 onClick={() => handleSetView(0, 1.4)}
-                className="px-2 py-1 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs rounded border border-slate-800 font-mono"
+                className="px-2 py-1 bg-white/[0.02] hover:bg-white/[0.05] text-neutral-300 text-xs rounded border border-white/[0.06] font-mono transition-colors"
               >
                 Top
               </button>
               <button
                 onClick={() => handleSetView(0.78, 0.45)}
-                className="px-2 py-1 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs rounded border border-slate-800 font-mono"
+                className="px-2 py-1 bg-white/[0.02] hover:bg-white/[0.05] text-neutral-300 text-xs rounded border border-white/[0.06] font-mono transition-colors"
               >
                 Isometric
               </button>
@@ -246,29 +246,28 @@ export function NeuraShowcase() {
             {/* Auto Rotate Toggle */}
             <button
               onClick={handleToggleAutoRotate}
-              className={`w-full py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 border ${
+              className={`w-full py-1.5 px-3 rounded text-xs font-mono font-medium transition flex items-center justify-center gap-2 border ${
                 autoRotate
-                  ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-300 shadow-md shadow-cyan-500/20"
-                  : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200"
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                  : "bg-white/[0.02] border-white/[0.06] text-neutral-400 hover:text-neutral-200"
               }`}
             >
-              <span className={autoRotate ? "animate-spin" : ""}>🔄</span>
               <span>{autoRotate ? "Auto-Orbit Active" : "Enable 3D Auto-Orbit"}</span>
             </button>
           </div>
 
           {/* Shader Mode Selection */}
-          <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-800/80">
-            <label className="text-[11px] text-slate-400 font-medium">Shader Palette:</label>
+          <div className="flex flex-col gap-1.5 pt-2 border-t border-white/[0.045]">
+            <label className="text-[11px] font-mono text-neutral-400">Shader Palette:</label>
             <div className="grid grid-cols-3 gap-1.5">
               {(["cyber", "neon", "pulse", "dark", "normal"] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => handleThemeChange(t)}
-                  className={`px-2 py-1 rounded text-[11px] font-medium capitalize transition-all ${
+                  className={`px-2 py-1 rounded text-[11px] font-mono font-medium capitalize transition-all ${
                     theme === t
-                      ? "bg-cyan-600 text-white font-bold shadow-md shadow-cyan-500/20"
-                      : "bg-slate-900 hover:bg-slate-800 text-slate-400 border border-slate-800"
+                      ? "bg-white/[0.08] text-white border border-white/[0.12]"
+                      : "bg-white/[0.02] hover:bg-white/[0.05] text-neutral-400 border border-white/[0.06]"
                   }`}
                 >
                   {t}

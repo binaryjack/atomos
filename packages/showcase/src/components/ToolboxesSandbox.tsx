@@ -90,9 +90,9 @@ export function ToolboxesSandbox() {
   return (
     <div className="flex flex-col h-full relative">
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 p-4 bg-slate-900/80 backdrop-blur border border-slate-700/50 rounded-xl shadow-2xl w-64">
-        <label className="text-xs uppercase font-bold text-slate-400 tracking-wider">Select Domain</label>
+        <label className="text-[11px] uppercase font-mono font-medium text-neutral-400 tracking-wider">Select Domain</label>
         <select 
-          className="bg-[#020617] border border-slate-700 rounded-lg p-2 text-sm text-slate-200 outline-none focus:border-amber-500 transition-colors"
+          className="bg-[#0c0e14] border border-white/[0.08] rounded px-3 py-2 text-xs text-neutral-200 outline-none focus:border-white/20 transition-colors cursor-pointer"
           value={activeDomain.id}
           onChange={(e) => {
             const domain = DOMAINS.find(d => d.id === e.target.value);
@@ -100,10 +100,10 @@ export function ToolboxesSandbox() {
           }}
         >
           {DOMAINS.map(d => (
-            <option key={d.id} value={d.id}>{d.name}</option>
+            <option key={d.id} value={d.id} className="bg-[#0c0e14] text-neutral-200 py-1">{d.name}</option>
           ))}
         </select>
-        <p className="text-xs text-slate-500 mt-2">
+        <p className="text-[11px] text-neutral-500 mt-1 leading-relaxed">
           The palette on the left will instantly re-render with tools tailored specifically for the selected domain.
         </p>
       </div>
