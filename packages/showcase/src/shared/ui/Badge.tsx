@@ -15,8 +15,8 @@ export function Badge({
 }: BadgeProps) {
   // Linear style: predominantly monochrome or very subtle emerald accent
   const colorStyles = color === 'emerald'
-    ? 'bg-emerald-500/[0.07] border-emerald-500/25 text-emerald-300/90'
-    : 'bg-white/[0.03] border-white/[0.08] text-neutral-300';
+    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-200'
+    : 'bg-white/[0.02] border-white/[0.03] text-neutral-200';
 
   return (
     <div

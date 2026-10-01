@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { AtomosLogo } from '../../shared/ui/AtomosLogo';
+
 const NAV_LINKS = [
   { href: '/playground', label: 'Playground' },
   { href: '/neura', label: 'Neura 3D' },
@@ -16,12 +18,12 @@ export function SiteHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-[#08090c]/85 backdrop-blur-md border-b border-white/[0.045]">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-[#08090c]/85 backdrop-blur-md border-b border-white/[0.025]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-6 h-6 rounded border border-white/[0.1] bg-white/[0.03] flex items-center justify-center text-neutral-100 font-mono font-bold text-xs group-hover:border-emerald-500/40 group-hover:text-emerald-400 transition-all">
-            ▲
+          <div className="w-7 h-7 rounded-lg border border-white/[0.03] bg-white/[0.02] flex items-center justify-center group-hover:border-emerald-500/30 transition-all">
+            <AtomosLogo size={22} orientation="horizontal" />
           </div>
           <div className="flex items-center gap-2">
             <span className="font-semibold text-neutral-100 tracking-tight text-sm">
@@ -32,7 +34,7 @@ export function SiteHeader() {
               STRUCTURA
             </span>
           </div>
-          <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded border border-white/[0.06] bg-white/[0.02] text-neutral-400 ml-1">
+          <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded border border-white/[0.03] bg-white/[0.02] text-neutral-400 ml-1">
             v5.0
           </span>
         </Link>
@@ -47,8 +49,8 @@ export function SiteHeader() {
                 href={link.href}
                 className={`px-3 py-1.5 rounded text-xs transition-colors ${
                   isActive
-                    ? 'text-neutral-100 bg-white/[0.06] font-medium'
-                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.03]'
+                    ? 'text-neutral-100 bg-white/[0.04] font-medium'
+                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.02]'
                 }`}
               >
                 {link.label}
@@ -73,7 +75,7 @@ export function SiteHeader() {
 
           <Link
             href="/playground"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold bg-emerald-400 hover:bg-emerald-300 text-[#09090b] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.3)] border border-emerald-300/40"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-sm border border-emerald-500/40"
           >
             <span>Launch Playground</span>
             <span>→</span>

@@ -1,0 +1,23 @@
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="atomos-orbit-h-mask">
+      <rect width="100" height="100" fill="white" />
+      <path d="M 28 68 L 50 18 L 72 68" stroke="black" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
+      <polygon points="50,22 34,64 66,64" fill="black" />
+    </mask>
+    <mask id="atomos-a-h-mask">
+      <rect width="100" height="100" fill="white" />
+      <circle cx="53.5" cy="47" r="11.5" fill="black" />
+    </mask>
+  </defs>
+
+  <ellipse cx="50" cy="47" rx="36" ry="11" 
+    stroke="#10B981" stroke-width="7" 
+    mask="url(#atomos-orbit-h-mask)" />
+
+  <path d="M 28 68 L 50 18 L 72 68" 
+    stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" 
+    mask="url(#atomos-a-h-mask)" />
+
+  <circle cx="53.5" cy="47" r="8.5" fill="#FFFFFF" />
+</svg>

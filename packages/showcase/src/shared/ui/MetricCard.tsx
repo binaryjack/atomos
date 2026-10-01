@@ -15,14 +15,14 @@ export function MetricCard({
   badge,
 }: MetricCardProps) {
   return (
-    <div className="group relative p-6 rounded-lg bg-[#0c0e14] border border-white/[0.045] hover:border-white/[0.1] transition-all duration-200 flex flex-col justify-between shadow-[inset_0_1px_0_0_rgba(255,255,255,0.03)]">
+    <div className="group relative p-6 rounded-lg bg-[#0c0e14] border border-white/[0.025] hover:border-white/[0.06] transition-all duration-200 flex flex-col justify-between shadow-[inset_0_1px_0_0_rgba(255,255,255,0.015)]">
       <div>
         <div className="flex items-center justify-between mb-4">
           <span className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 font-medium">
             {label}
           </span>
           {badge && (
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded border border-white/[0.06] bg-white/[0.02] text-neutral-400">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded border border-white/[0.03] bg-white/[0.02] text-neutral-400">
               {badge}
             </span>
           )}

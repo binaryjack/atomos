@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atomos Structura — Logo Final (Même Épaisseur & Décorrélation)</title>
+<style>
+  :root {
+    --bg: #08090c;
+    --surface: #0c0e14;
+    --border: rgba(255,255,255,0.06);
+    --text-primary: #f4f4f5;
+    --text-secondary: #71717a;
+    --emerald: #10b981;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 48px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .header { text-align: center; max-width: 720px; margin-bottom: 40px; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-family: monospace;
+    color: var(--emerald);
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    margin-bottom: 16px;
+  }
+  h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 12px; }
+  p.desc { color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 28px;
+    width: 100%;
+    max-width: 1000px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .card:hover { border-color: rgba(255,255,255,0.12); }
+  .card.featured {
+    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 35px rgba(16, 185, 129, 0.06);
+  }
+  .card-badge {
+    position: absolute;
+    top: 14px;
+    left: 16px;
+    font-size: 10px;
+    font-family: monospace;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .card-badge.rec {
+    color: var(--emerald);
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+  }
+  .card-badge.opt {
+    color: var(--text-secondary);
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+  }
+  .logo-stage {
+    width: 160px;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0 16px;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.03) 0%, transparent 70%);
+    border: 1px solid rgba(255,255,255,0.03);
+    border-radius: 18px;
+  }
+  .logo-stage svg { width: 120px; height: 120px; }
+  .nav-simulation {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    width: 100%;
+    justify-content: center;
+  }
+  .nav-simulation svg { width: 24px; height: 24px; }
+  .nav-simulation span.brand { font-size: 13px; font-weight: 600; color: #fff; }
+  .nav-simulation span.slash { color: #52525b; font-size: 12px; }
+  .nav-simulation span.sub { font-size: 11px; color: #a1a1aa; font-weight: 500; }
+  .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; text-align: center; }
+  .card p.explanation {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    text-align: center;
+    margin-bottom: 20px;
+    min-height: 52px;
+  }
+  .specs {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 11px;
+    font-family: monospace;
+    color: #a1a1aa;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .specs div { display: flex; justify-content: space-between; }
+  .specs span.key { color: #71717a; }
+  .specs span.val { color: #e4e4e7; font-weight: 500; }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="badge">Atomos Brand Identity · Final Calibration</div>
+    <h1>Logo Atomos Structura — Version Calibrée</h1>
+    <p class="desc">
+      Le A et le rond blanc sont conservés exactement tels quels. Les orbites passent à <strong>la même épaisseur rigoureuse que le A (7px)</strong> et sont <strong>décorrélées par un espace négatif pur de 4px</strong> (aucun point de contact physique).
+    </p>
+  </div>
+
+  <div class="grid">
+    <!-- Option Horizontale -->
+    <div class="card featured">
+      <span class="card-badge rec">Option 1 · Anneau Horizontal</span>
+      <div class="logo-stage"><svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Masque transparent pour l'orbite : border transparent de 4px autour du A + intérieur -->
+    <mask id="atomos-orbit-h-mask">
+      <rect width="100" height="100" fill="white" />
+      <path d="M 28 68 L 50 18 L 72 68" stroke="black" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
+      <polygon points="50,22 34,64 66,64" fill="black" />
+    </mask>
+    <!-- Masque encoche négative pour le A (comme dans la capture validée) -->
+    <mask id="atomos-a-h-mask">
+      <rect width="100" height="100" fill="white" />
+      <circle cx="53.5" cy="47" r="11.5" fill="black" />
+    </mask>
+  </defs>
+
+  <!-- Anneau orbital vert émeraude HORIZONTAL de MÊME ÉPAISSEUR que le A (7px) -->
+  <!-- Totalement décorrelé du A par un espace négatif de 4px -->
+  <ellipse cx="50" cy="47" rx="36" ry="11" 
+    stroke="#10B981" stroke-width="7" 
+    mask="url(#atomos-orbit-h-mask)" />
+
+  <!-- Structure du A blanc (7px) avec encoche négative transparente -->
+  <path d="M 28 68 L 50 18 L 72 68" 
+    stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" 
+    mask="url(#atomos-a-h-mask)" />
+
+  <!-- Rond blanc (l'électron/noyau, r=8.5) -->
+  <circle cx="53.5" cy="47" r="8.5" fill="#FFFFFF" />
+</svg></div>
+      <div class="nav-simulation">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Masque transparent pour l'orbite : border transparent de 4px autour du A + intérieur -->
+    <mask id="atomos-orbit-h-mask">
+      <rect width="100" height="100" fill="white" />
+      <path d="M 28 68 L 50 18 L 72 68" stroke="black" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
+      <polygon points="50,22 34,64 66,64" fill="black" />
+    </mask>
+    <!-- Masque encoche négative pour le A (comme dans la capture validée) -->
+    <mask id="atomos-a-h-mask">
+      <rect width="100" height="100" fill="white" />
+      <circle cx="53.5" cy="47" r="11.5" fill="black" />
+    </mask>
+  </defs>
+
+  <!-- Anneau orbital vert émeraude HORIZONTAL de MÊME ÉPAISSEUR que le A (7px) -->
+  <!-- Totalement décorrelé du A par un espace négatif de 4px -->
+  <ellipse cx="50" cy="47" rx="36" ry="11" 
+    stroke="#10B981" stroke-width="7" 
+    mask="url(#atomos-orbit-h-mask)" />
+
+  <!-- Structure du A blanc (7px) avec encoche négative transparente -->
+  <path d="M 28 68 L 50 18 L 72 68" 
+    stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" 
+    mask="url(#atomos-a-h-mask)" />
+
+  <!-- Rond blanc (l'électron/noyau, r=8.5) -->
+  <circle cx="53.5" cy="47" r="8.5" fill="#FFFFFF" />
+</svg>
+        <span class="brand">ATOMOS</span>
+        <span class="slash">/</span>
+        <span class="sub">STRUCTURA</span>
+      </div>
+      <h3>Orbite Horizontale Décorrelée (7px)</h3>
+      <p class="explanation">
+        L'anneau vert émeraude ceinture le A horizontalement avec la même épaisseur (7px). Un canal transparent régulier de 4px sépare parfaitement l'orbite de la structure du A.
+      </p>
+      <div class="specs">
+        <div><span class="key">Épaisseur A & Anneau :</span><span class="val">7px rigoureux (1:1)</span></div>
+        <div><span class="key">Orientation orbite :</span><span class="val">Horizontale pure (0°)</span></div>
+        <div><span class="key">Décorrélation :</span><span class="val">Border transparent 4px</span></div>
+        <div><span class="key">Noyau / A :</span><span class="val">Blanc pur avec encoche alpha</span></div>
+      </div>
+    </div>
+
+    <!-- Option Oblique -->
+    <div class="card">
+      <span class="card-badge opt">Option 2 · Anneau Oblique</span>
+      <div class="logo-stage"><svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Masque transparent pour l'orbite oblique : border transparent de 4px autour du A + intérieur -->
+    <mask id="atomos-orbit-o-mask">
+      <rect width="100" height="100" fill="white" />
+      <path d="M 28 68 L 50 18 L 72 68" stroke="black" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
+      <polygon points="50,20 30,68 70,68" fill="black" />
+    </mask>
+    <!-- Masque encoche négative pour le A -->
+    <mask id="atomos-a-o-mask">
+      <rect width="100" height="100" fill="white" />
+      <circle cx="53.5" cy="47" r="11.5" fill="black" />
+    </mask>
+  </defs>
+
+  <!-- Anneau orbital vert émeraude OBLIQUE (-18°) de MÊME ÉPAISSEUR que le A (7px) -->
+  <!-- Totalement décorrelé du A par un espace négatif de 4px -->
+  <ellipse cx="49" cy="47" rx="35" ry="14" 
+    transform="rotate(-18 49 47)" 
+    stroke="#10B981" stroke-width="7" 
+    mask="url(#atomos-orbit-o-mask)" />
+
+  <!-- Structure du A blanc (7px) avec encoche négative transparente -->
+  <path d="M 28 68 L 50 18 L 72 68" 
+    stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" 
+    mask="url(#atomos-a-o-mask)" />
+
+  <!-- Rond blanc (r=8.5) -->
+  <circle cx="53.5" cy="47" r="8.5" fill="#FFFFFF" />
+</svg></div>
+      <div class="nav-simulation">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Masque transparent pour l'orbite oblique : border transparent de 4px autour du A + intérieur -->
+    <mask id="atomos-orbit-o-mask">
+      <rect width="100" height="100" fill="white" />
+      <path d="M 28 68 L 50 18 L 72 68" stroke="black" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
+      <polygon points="50,20 30,68 70,68" fill="black" />
+    </mask>
+    <!-- Masque encoche négative pour le A -->
+    <mask id="atomos-a-o-mask">
+      <rect width="100" height="100" fill="white" />
+      <circle cx="53.5" cy="47" r="11.5" fill="black" />
+    </mask>
+  </defs>
+
+  <!-- Anneau orbital vert émeraude OBLIQUE (-18°) de MÊME ÉPAISSEUR que le A (7px) -->
+  <!-- Totalement décorrelé du A par un espace négatif de 4px -->
+  <ellipse cx="49" cy="47" rx="35" ry="14" 
+    transform="rotate(-18 49 47)" 
+    stroke="#10B981" stroke-width="7" 
+    mask="url(#atomos-orbit-o-mask)" />
+
+  <!-- Structure du A blanc (7px) avec encoche négative transparente -->
+  <path d="M 28 68 L 50 18 L 72 68" 
+    stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" 
+    mask="url(#atomos-a-o-mask)" />
+
+  <!-- Rond blanc (r=8.5) -->
+  <circle cx="53.5" cy="47" r="8.5" fill="#FFFFFF" />
+</svg>
+        <span class="brand">ATOMOS</span>
+        <span class="slash">/</span>
+        <span class="sub">STRUCTURA</span>
+      </div>
+      <h3>Orbite Oblique Décorrelée (7px)</h3>
+      <p class="explanation">
+        Même épaisseur de 7px et même décorrélation par canal transparent de 4px, mais avec une dynamique inclinée à -18° rappelant la trajectoire orbitale atomique.
+      </p>
+      <div class="specs">
+        <div><span class="key">Épaisseur A & Anneau :</span><span class="val">7px rigoureux (1:1)</span></div>
+        <div><span class="key">Orientation orbite :</span><span class="val">Inclinée à -18°</span></div>
+        <div><span class="key">Décorrélation :</span><span class="val">Border transparent 4px</span></div>
+        <div><span class="key">Noyau / A :</span><span class="val">Blanc pur avec encoche alpha</span></div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

@@ -435,7 +435,7 @@ export function SimulatorDemo() {
             Headless (No UI)
           </label>
           <button 
-            className={`w-full mt-2 px-3 py-2 text-xs font-mono font-medium rounded transition-colors ${isExecuting ? 'bg-red-950/60 border border-red-500/30 text-red-300 hover:bg-red-900/60' : 'bg-emerald-400 hover:bg-emerald-300 text-[#09090b] font-semibold border border-emerald-300/40'}`}
+            className={`w-full mt-2 px-3 py-2 text-xs font-mono font-medium rounded transition-colors ${isExecuting ? 'bg-red-950/60 border border-red-500/30 text-red-300 hover:bg-red-900/60' : 'bg-emerald-600 hover:bg-emerald-500 text-white font-medium border border-emerald-500/40 shadow-sm'}`}
             onClick={handleTelemetry}
           >
             {isExecuting ? '⏹ Stop Telemetry' : '▶ Start Telemetry'}

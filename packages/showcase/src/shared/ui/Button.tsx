@@ -28,13 +28,13 @@ export function Button({
 
   const variants = {
     primary:
-      'bg-emerald-400 hover:bg-emerald-300 text-[#09090b] font-semibold border border-emerald-300/40 shadow-[0_1px_2px_rgba(0,0,0,0.3)]',
+      'bg-emerald-600 hover:bg-emerald-500 text-white font-medium border border-emerald-500/40 shadow-sm transition-colors',
     secondary:
-      'bg-white/[0.04] hover:bg-white/[0.08] text-neutral-200 border border-white/[0.06] hover:border-white/[0.12] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.03)]',
+      'bg-white/[0.03] hover:bg-white/[0.06] text-neutral-200 border border-white/[0.03] hover:border-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] transition-colors',
     outline:
-      'bg-transparent border border-white/[0.06] text-neutral-300 hover:bg-white/[0.04] hover:text-white hover:border-white/[0.12]',
+      'bg-transparent border border-white/[0.03] text-neutral-300 hover:bg-white/[0.03] hover:text-white hover:border-white/[0.08] transition-colors',
     ghost:
-      'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.04]',
+      'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.03]',
   };
 
   const combinedStyles = `${baseStyles} ${sizeStyles} ${variants[variant]} ${className}`;

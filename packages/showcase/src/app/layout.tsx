@@ -16,6 +16,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Atomos Structura | Sub-millisecond Canvas & WebGL Architecture Engine",
   description: "High-performance interactive architectural diagramming engine with orthogonal routing, Canvas 2D, Neura 3D WebGL, and MCP headless protocol.",
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: '/apple-icon.png',
+  },
 };
 
 export default function RootLayout({
