@@ -115,6 +115,9 @@ pnpm test         # Execute test suites
 pnpm type-check   # Validate TypeScript types
 ```
 
+### Package Registry (Codernic Operative Center - COC)
+For instructions on publishing `@atomos-web/*` packages and consuming sovereign dependencies directly from the COC registry, see the [COC Registry Guide](docs/guides/coc_registry_guide.md).
+
 ---
 
 ## License

@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@atomos-web/structura-core": "workspace:*",
-    "@binaryjack/formular.dev": "workspace:*",
+    "@binaryjack/formular.dev": "^2.4.0",
     "@types/dagre": "^0.7.54",
     "chokidar": "^5.0.0",
     "dagre": "^0.8.5"

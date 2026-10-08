@@ -1,5 +1,6 @@
 packages:
   - 'packages/*'
+  - '!packages/formular-dev'
 
 pnpm:
   shamefully-hoist: true
