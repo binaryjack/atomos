@@ -143,47 +143,49 @@ const tickLoop = () => {
   setTimeout(tickLoop, 33);
 };
 
-self.onmessage = (event: MessageEvent) => {
-  const { type, payload } = event.data;
+if (typeof self !== 'undefined') {
+  self.onmessage = (event: MessageEvent) => {
+    const { type, payload } = event.data;
 
-  switch (type) {
-    case 'INIT_DATA':
-      nodes = payload.nodes.map((n: any, idx: number) => {
-        const zInitial = n.z ?? ((idx % 7 - 3) * 20 + Math.sin(idx) * 30);
-        return {
-          id: n.id,
-          x: n.x,
-          y: n.y,
-          z: zInitial,
-          appartenanceId: n.appartenanceId,
-        };
-      });
-      edges = payload.edges.map((e: any) => ({
-        sourceId: e.sourceId,
-        targetId: e.targetId,
-        weight: e.weight,
-      }));
-      globalAlpha = 1.0;
-      break;
-    case 'SET_PARAMS':
-      params = { ...params, ...payload };
-      break;
-    case 'REHEAT':
-      globalAlpha = Math.max(globalAlpha, payload?.alpha ?? 0.8);
-      if (!isRunning) {
-        isRunning = true;
-        tickLoop();
-      }
-      break;
-    case 'START':
-      if (!isRunning) {
-        isRunning = true;
+    switch (type) {
+      case 'INIT_DATA':
+        nodes = payload.nodes.map((n: any, idx: number) => {
+          const zInitial = n.z ?? ((idx % 7 - 3) * 20 + Math.sin(idx) * 30);
+          return {
+            id: n.id,
+            x: n.x,
+            y: n.y,
+            z: zInitial,
+            appartenanceId: n.appartenanceId,
+          };
+        });
+        edges = payload.edges.map((e: any) => ({
+          sourceId: e.sourceId,
+          targetId: e.targetId,
+          weight: e.weight,
+        }));
         globalAlpha = 1.0;
-        tickLoop();
-      }
-      break;
-    case 'STOP':
-      isRunning = false;
-      break;
-  }
-};
+        break;
+      case 'SET_PARAMS':
+        params = { ...params, ...payload };
+        break;
+      case 'REHEAT':
+        globalAlpha = Math.max(globalAlpha, payload?.alpha ?? 0.8);
+        if (!isRunning) {
+          isRunning = true;
+          tickLoop();
+        }
+        break;
+      case 'START':
+        if (!isRunning) {
+          isRunning = true;
+          globalAlpha = 1.0;
+          tickLoop();
+        }
+        break;
+      case 'STOP':
+        isRunning = false;
+        break;
+    }
+  };
+}

@@ -27,7 +27,7 @@ export interface NeuraInstanceOptions {
   worker?: Worker | string | URL | undefined;
   theme?: ShaderTheme | undefined;
   physicsParams?: Partial<PhysicsParams> | undefined;
-  labelsMode?: ('focus-only' | 'auto' | 'always') | undefined;
+  labelsMode?: ('focus-only' | 'auto' | 'always' | 'selection-only') | undefined;
   config?: Partial<NeuraConfig> | undefined;
   onNodeClick?: ((node: NeuraNode | null) => void) | undefined;
   onNodeHover?: ((node: NeuraNode | null) => void) | undefined;
@@ -46,7 +46,7 @@ export interface NeuraInstance {
   resetCamera: () => void;
   setPhysicsParams: (params: Partial<PhysicsParams>) => void;
   setShaderTheme: (theme: ShaderTheme) => void;
-  setLabelsMode: (mode: 'focus-only' | 'auto' | 'always') => void;
+  setLabelsMode: (mode: 'focus-only' | 'auto' | 'always' | 'selection-only') => void;
   reheatPhysics: (alpha?: number) => void;
   getFPS: () => number;
   destroy: () => void;
@@ -176,10 +176,10 @@ export function createNeuraInstance(
   overlay.style.overflow = 'hidden';
   if (parent) parent.appendChild(overlay);
 
-  let currentLabelsMode: 'focus-only' | 'auto' | 'always' = opts.labelsMode ?? 'auto';
+  let currentLabelsMode: 'focus-only' | 'auto' | 'always' | 'selection-only' = opts.labelsMode ?? 'auto';
   const labelsController = createNeuraLabelsController(canvas, overlay, webgl);
 
-  const setLabelsMode = (mode: 'focus-only' | 'auto' | 'always') => {
+  const setLabelsMode = (mode: 'focus-only' | 'auto' | 'always' | 'selection-only') => {
     currentLabelsMode = mode;
   };
 

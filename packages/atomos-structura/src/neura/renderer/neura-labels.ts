@@ -6,7 +6,7 @@ export interface NeuraLabelsController {
     visibleNodes: NeuraNode[],
     state: { viewport: NeuraViewport; hoveredNodeId: string | null; selectedNodeId: string | null },
     focusId: string | null,
-    labelsMode: 'focus-only' | 'auto' | 'always',
+    labelsMode: 'focus-only' | 'auto' | 'always' | 'selection-only',
     activeNodeIds?: Set<string>
   ) => void;
   destroy: () => void;
@@ -55,7 +55,7 @@ export function createNeuraLabelsController(
     visibleNodes: NeuraNode[],
     state: { viewport: NeuraViewport; hoveredNodeId: string | null; selectedNodeId: string | null },
     focusId: string | null,
-    labelsMode: 'focus-only' | 'auto' | 'always',
+    labelsMode: 'focus-only' | 'auto' | 'always' | 'selection-only',
     activeNodeIds?: Set<string>
   ) {
     const renderedIds = new Set<string>();
@@ -79,7 +79,9 @@ export function createNeuraLabelsController(
       // When a node is selected, ONLY the selected node and its direct neighbors are shown.
       // All other node labels fade out / are hidden to eliminate noise.
       let shouldRender = false;
-      if (isSelectionActive) {
+      if (labelsMode === 'selection-only') {
+        shouldRender = isSelected;
+      } else if (isSelectionActive) {
         shouldRender = isSelected || isConnectedNeighbor;
       } else if (labelsMode === 'focus-only') {
         shouldRender = isFocused;
