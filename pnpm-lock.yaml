@@ -48,8 +48,8 @@ importers:
         specifier: workspace:*
         version: link:../atomos-structura-core
       '@binaryjack/formular.dev':
-        specifier: ^2.4.0
-        version: 2.4.0
+        specifier: file:../../.codernic/packages/@binaryjack/formular.dev/layers/frontend
+        version: file:.codernic/packages/@binaryjack/formular.dev/layers/frontend
     devDependencies:
       '@vitest/ui':
         specifier: ^4.1.2
@@ -110,8 +110,8 @@ importers:
         specifier: workspace:*
         version: link:../atomos-structura-mcp
       '@binaryjack/formular.dev':
-        specifier: ^2.4.0
-        version: 2.4.0
+        specifier: file:../../.codernic/packages/@binaryjack/formular.dev/layers/frontend
+        version: file:.codernic/packages/@binaryjack/formular.dev/layers/frontend
     devDependencies:
       '@types/react':
         specifier: ^19.2.14
@@ -138,8 +138,8 @@ importers:
   packages/atomos-structura-core:
     dependencies:
       '@binaryjack/formular.dev':
-        specifier: ^2.4.0
-        version: 2.4.0
+        specifier: file:../../.codernic/packages/@binaryjack/formular.dev/layers/frontend
+        version: file:.codernic/packages/@binaryjack/formular.dev/layers/frontend
     devDependencies:
       typescript:
         specifier: ^5.3.0
@@ -154,8 +154,8 @@ importers:
         specifier: workspace:*
         version: link:../atomos-structura-core
       '@binaryjack/formular.dev':
-        specifier: ^2.4.0
-        version: 2.4.0
+        specifier: file:../../.codernic/packages/@binaryjack/formular.dev/layers/frontend
+        version: file:.codernic/packages/@binaryjack/formular.dev/layers/frontend
       '@types/dagre':
         specifier: ^0.7.54
         version: 0.7.54
@@ -330,8 +330,8 @@ packages:
     resolution: {integrity: sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A==}
     engines: {node: '>=6.9.0'}
 
-  '@binaryjack/formular.dev@2.4.0':
-    resolution: {integrity: sha512-hkojIhnNTiTD/15pebaIddkqcpFN/SwjkSHesi5Ui5vTFeRt3O2QkiimgjcRwAGBGC32r4uUDv9ImNeZJ0+Aig==, tarball: http://127.0.0.1:4873/@binaryjack%2Fformular.dev/-/formular.dev-binaryjack-formular.dev-2.4.0.tgz}
+  '@binaryjack/formular.dev@file:.codernic/packages/@binaryjack/formular.dev/layers/frontend':
+    resolution: {directory: .codernic/packages/@binaryjack/formular.dev/layers/frontend, type: directory}
 
   '@bramus/specificity@2.4.2':
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
@@ -4387,7 +4387,7 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
-  '@binaryjack/formular.dev@2.4.0': {}
+  '@binaryjack/formular.dev@file:.codernic/packages/@binaryjack/formular.dev/layers/frontend': {}
 
   '@bramus/specificity@2.4.2':
     dependencies:

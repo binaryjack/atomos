@@ -48,7 +48,7 @@
     "@atomos-web/renderer-svg": "workspace:*",
     "@atomos-web/structura-core": "workspace:*",
     "@atomos-web/structura-mcp": "workspace:*",
-    "@binaryjack/formular.dev": "^2.4.0"
+    "@binaryjack/formular.dev": "file:../../.codernic/packages/@binaryjack/formular.dev/layers/frontend"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",

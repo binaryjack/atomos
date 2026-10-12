@@ -1,0 +1,18 @@
+{
+  "schema": "https://codernic.dev/schemas/cpk-v1.json",
+  "name": "@atomos-web/structura",
+  "version": "5.0.0",
+  "authors": [],
+  "license": "Proprietary",
+  "layers": {
+    "frontend": {
+      "language": "typescript-react",
+      "entry": "layers/frontend/package.json",
+      "kind": "bundle"
+    }
+  },
+  "dependencies": {
+    "@binaryjack/formular.dev": "2.4.0"
+  },
+  "peerDependencies": {}
+}

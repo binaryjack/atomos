@@ -1,0 +1,15 @@
+{
+  "lockfileVersion": 1,
+  "generatedAt": "2026-10-12T10:45:39.573377490+00:00",
+  "manifestBlake3": "",
+  "root": "@atomos-web/structura",
+  "packages": {
+    "@binaryjack/formular.dev@2.4.0": {
+      "version": "2.4.0",
+      "blake3": "0815dc079b1cfbf8baf2559db1024c5a08d1db837fb01be6a121127ffb599836",
+      "resolved": "http://127.0.0.1:4873/api/v1/cpk/@binaryjack/formular.dev/2.4.0",
+      "installedPath": ".codernic/packages/@binaryjack/formular.dev",
+      "dependencies": {}
+    }
+  }
+}

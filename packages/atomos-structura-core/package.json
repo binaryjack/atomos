@@ -28,6 +28,6 @@
     "vitest": "^1.0.0"
   },
   "dependencies": {
-    "@binaryjack/formular.dev": "^2.4.0"
+    "@binaryjack/formular.dev": "file:../../.codernic/packages/@binaryjack/formular.dev/layers/frontend"
   }
 }

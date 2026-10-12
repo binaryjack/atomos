@@ -91,3 +91,7 @@ temp/
 
 # Tailwind CSS compiled files
 *.css.map
+
+# Codernic Package Manager local packages cache
+.codernic/packages/
+
