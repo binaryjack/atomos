@@ -9,7 +9,7 @@ import {
   mat4Multiply,
   parseHexColor,
 } from '../src/neura/math/math3d.js';
-import { generateMockGraph } from '../src/neura/data/mock-graph-generator.js';
+import { generateDeterministicTopology } from '../src/neura/data/deterministic-topology-generator.js';
 import { CameraController } from '../src/neura/controllers/camera-controller.js';
 import type { NeuraViewport } from '../src/neura/core/neura-store.js';
 
@@ -67,9 +67,9 @@ describe('Neura 3D Math Engine (math3d.ts)', () => {
   });
 });
 
-describe('Synthetic Graph Generator (mock-graph-generator.ts)', () => {
-  it('generates the specified number of nodes with connected edges', () => {
-    const { nodes, edges } = generateMockGraph(25);
+describe('Deterministic Topology Generator (deterministic-topology-generator.ts)', () => {
+  it('generates the specified number of nodes with connected edges deterministically', () => {
+    const { nodes, edges } = generateDeterministicTopology(25);
     expect(nodes).toHaveLength(25);
     expect(edges.length).toBeGreaterThan(0);
 
@@ -82,6 +82,12 @@ describe('Synthetic Graph Generator (mock-graph-generator.ts)', () => {
       expect(node.weight).toBeLessThanOrEqual(1);
       expect(node.appartenanceId).toMatch(/^cluster_\d+$/);
     }
+
+    // Verify determinism (identical results on repeated runs)
+    const run2 = generateDeterministicTopology(25);
+    expect(run2.nodes[0].x).toBe(nodes[0].x);
+    expect(run2.nodes[0].y).toBe(nodes[0].y);
+    expect(run2.nodes[0].z).toBe(nodes[0].z);
   });
 });
 

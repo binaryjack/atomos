@@ -18,7 +18,7 @@ import { createNeuraPhysicsWorker } from './physics/worker-script.js';
 import { pruneCompletedBeams } from './core/neura-telemetry.js';
 import type { NeuraConfig } from './core/neura-config.js';
 import { createNeuraLabelsController } from './renderer/neura-labels.js';
-import { generateMockGraph } from './data/mock-graph-generator.js';
+import { generateDeterministicTopology } from './data/deterministic-topology-generator.js';
 import { CameraController } from './controllers/camera-controller.js';
 import { InteractionController } from './controllers/interaction-controller.js';
 import { TelemetryController } from './controllers/telemetry-controller.js';
@@ -289,7 +289,7 @@ export function createNeuraInstance(
   };
 
   const generateMockData = (numNodes: number) => {
-    const { nodes, edges } = generateMockGraph(numNodes);
+    const { nodes, edges } = generateDeterministicTopology(numNodes);
     loadGraph(nodes, edges);
   };
 
