@@ -123,7 +123,7 @@ export default defineConfig({
       '/atomos-prime-style': resolve(__dirname, '../atomos-prime-style'),
       '/atomos-structura-core': resolve(__dirname, '../atomos-structura-core'),
       '/atomos-structura': resolve(__dirname, '.'),
-      '/formular-dev': resolve(__dirname, '../formular-dev')
+      '/formular-dev': resolve(__dirname, '../../../formular.dev')
     }
   }
 });

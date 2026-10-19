@@ -5,7 +5,7 @@
     "rootDir": "./src",
     "baseUrl": ".",
     "paths": {
-      "@binaryjack/formular.dev": ["../formular-dev/dist/types/src"],
+      "@binaryjack/formular.dev": ["../../../formular.dev/dist/types/src"],
       "@atomos-web/structura-core": ["../atomos-structura-core/dist/types/src"]
     },
     "noEmit": false,
@@ -17,6 +17,6 @@
   "references": [
     { "path": "../atomos-prime" },
     { "path": "../atomos-structura-core" },
-    { "path": "../formular-dev" }
+    { "path": "../../../formular.dev" }
   ]
 }

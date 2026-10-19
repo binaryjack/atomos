@@ -11,6 +11,6 @@
   "include": ["./src/**/*"],
   "exclude": ["./src/**/*.test.ts", "./dist"],
   "references": [
-    { "path": "../formular-dev" }
+    { "path": "../../../formular.dev" }
   ]
 }
