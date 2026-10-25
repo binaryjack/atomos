@@ -95,3 +95,4 @@ temp/
 # Codernic local artifacts and cache
 .codernic/
 
+target_cos/

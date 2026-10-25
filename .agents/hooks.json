@@ -1,3 +1,44 @@
 {
+  "cos-orchestrator-hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "/home/tadeop/.local/bin/coe guard --event posttooluse --detect-story",
+            "timeout": 10,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "PreInvocation": [
+      {
+        "command": "/home/tadeop/.local/bin/coe guard --event preinvocation --detect-story",
+        "timeout": 10,
+        "type": "command"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "/home/tadeop/.local/bin/coe guard --event pretooluse --detect-story",
+            "timeout": 15,
+            "type": "command"
+          }
+        ],
+        "matcher": "replace_file_content|write_to_file|multi_replace_file_content|write_file|edit_file|read_file|run_command|execute_command|call_mcp_tool|mcp_.*"
+      }
+    ],
+    "Stop": [
+      {
+        "command": "/home/tadeop/.local/bin/coe guard --event stop --detect-story",
+        "timeout": 15,
+        "type": "command"
+      }
+    ],
+    "enabled": true
+  },
   "mode": "enforce"
 }
