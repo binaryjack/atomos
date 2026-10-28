@@ -39,3 +39,26 @@ export type { ArchitectureAuditResult, ArchitectureViolation } from './analysis/
 export { computeGraphMetrics } from './analysis/graph-metrics.js';
 export type { GraphMetrics } from './analysis/graph-metrics.js';
 
+// Workspace & Schema Models
+export type { SchemaModel, CanvasModel, WorkspaceState, StructuraWorkspaceState } from './types/workspace.types.js';
+export {
+  DEFAULT_CANVAS_ID,
+  DEFAULT_SCHEMA_ID,
+  makeDefaultSchema,
+  makeDefaultCanvas,
+  makeInitialState,
+  getActiveCanvas,
+  getActiveSchema,
+  findCanvasForSchema,
+  updateSchemaById,
+} from './shared/workspace-state.js';
+
+// Architecture Diff
+export type { ProposedDiff, DiffApplicationResult } from './shared/architecture-diff.js';
+export { createProposedDiff, applyArchitectureDiff } from './shared/architecture-diff.js';
+
+// Headless CLI & SdkEnvelope
+export type { SdkEnvelope } from './shared/cli.js';
+export { successEnvelope, errorEnvelope, executeStructuraCli, runCli } from './shared/cli.js';
+
+

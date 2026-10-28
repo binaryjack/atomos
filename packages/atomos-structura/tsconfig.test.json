@@ -9,7 +9,6 @@
   "references": [
     { "path": "../atomos-structura-core" },
     { "path": "../atomos-prime-style" },
-    { "path": "../atomos-prime" },
-    { "path": "../atomos-structura-mcp" }
+    { "path": "../atomos-prime" }
   ]
 }
