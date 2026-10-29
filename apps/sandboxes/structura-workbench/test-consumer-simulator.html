@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="data:,">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consumer Simulator</title>
+  <link rel="stylesheet" href="https://unpkg.com/@atomos-web/prime-style@2.3.10/dist/styles.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; }
+    #app { display: flex; width: 100%; height: 100%; }
+    
+    #sidebar {
+      width: 300px;
+      background: #1e293b;
+      border-right: 1px solid #334155;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      gap: 1rem;
+      overflow-y: auto;
+    }
+    
+    #canvas-container {
+      flex: 1;
+      position: relative;
+    }
+
+    h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; border-bottom: 1px solid #334155; padding-bottom: 0.5rem; }
+    
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 0.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    button:hover { background: #2563eb; }
+    button:active { background: #1d4ed8; }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+    
+    input[type="checkbox"] {
+      width: 1rem;
+      height: 1rem;
+      cursor: pointer;
+    }
+    
+    @keyframes vbs-dash {
+      to {
+        stroke-dashoffset: -10;
+      }
+    }
+    .sim-animated-link {
+      animation: vbs-dash 0.6s linear infinite !important;
+    }
+  </style>
+</head>
+<body>
+  
+  <div id="app">
+    <div id="sidebar">
+      <h2>Consumer Simulator</h2>
+      <p style="font-size: 0.875rem; color: #94a3b8;">
+        This panel imitates an external consumer controlling Structura via MCP tools and Redux configs.
+      </p>
+
+      <div class="control-group">
+         <div style="display: flex; gap: 8px; margin-top: 8px; flex-direction: column;">
+           <label style="color: white; font-size: 14px; display: flex; align-items: center; gap: 4px;">
+             <input type="checkbox" id="readonly-toggle" /> Read-Only Mode
+           </label>
+           <label style="color: white; font-size: 14px; display: flex; align-items: center; gap: 4px;">
+             <input type="checkbox" id="headless-toggle" /> Headless Mode
+           </label>
+           <label style="color: white; font-size: 14px; display: flex; align-items: center; gap: 4px;">
+             <input type="checkbox" id="mouse-zoom-toggle" checked /> Mouse Zoom Enabled
+           </label>
+           <label style="color: white; font-size: 14px; display: flex; align-items: center; gap: 4px;">
+             <input type="checkbox" id="mouse-drag-toggle" checked /> Mouse Drag Enabled
+           </label>
+         </div>
+        <button id="telemetry-btn">Start Telemetry</button>
+      </div>
+
+      <div class="control-group">
+        <h3>Viewport</h3>
+        <button onclick="dispatchMcp('structura_set_zoom', { level: 'in' })">Zoom In</button>
+        <button onclick="dispatchMcp('structura_set_zoom', { level: 'out' })">Zoom Out</button>
+        <button onclick="dispatchMcp('structura_fit_to_screen')">Fit to Screen</button>
+      </div>
+
+      <div class="control-group">
+        <h3>Actions</h3>
+        <button onclick="dispatchMcp('structura_undo')">Undo</button>
+        <button onclick="dispatchMcp('structura_redo')">Redo</button>
+        <button onclick="dispatchMcp('structura_auto_layout')">Auto Layout Nodes</button>
+        <button onclick="dispatchMcp('structura_optimize_connections')">Optimize Connections</button>
+        <button onclick="dispatchMcp('structura_load_schema_preset')">Load Schema Preset</button>
+      </div>
+
+      <div class="control-group">
+        <h3>Layout Templates</h3>
+        <div style="display:flex;gap:4px;flex-direction:column;">
+           <select id="layout-select" style="padding: 4px; border-radius: 4px; border: 1px solid #334155; background: #0f172a; color: white;">
+             <option value="horizontal">Sugiyama Horizontal</option>
+             <option value="vertical">Sugiyama Vertical</option>
+             <option value="clair">Clair (Clear Flow)</option>
+           </select>
+           <button onclick="applySelectedLayout()">Apply Layout Template</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Export</h3>
+        <button onclick="dispatchMcp('structura_export_svg')">Export SVG</button>
+        <button onclick="dispatchMcp('structura_export_png')">Export PNG</button>
+        <button onclick="dispatchMcp('structura_export_dag')">Export DAG JSON</button>
+      </div>
+    </div>
+    
+    <div id="canvas-container"></div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://unpkg.com/react@19.2.4/index.js",
+      "react-dom": "https://unpkg.com/react-dom@19.2.4/index.js",
+      "@atomos-web/prime": "https://unpkg.com/@atomos-web/prime@2.3.10/dist/index.js",
+      "@atomos-web/prime-style": "https://unpkg.com/@atomos-web/prime-style@2.3.10/dist/index.js",
+      "@atomos-web/structura-core": "https://unpkg.com/@atomos-web/structura-core@2.3.11/dist/index.js",
+      "@atomos-web/structura": "https://unpkg.com/@atomos-web/structura@2.3.29/dist/index.js",
+      "@binaryjack/formular.dev": "https://unpkg.com/@binaryjack/formular.dev@2.3.11/dist/formular-dev.mjs"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import { createCanvasPage } from '../dist/preview/create-canvas-page.js';
+    import { getEntityManager } from '../dist/core/presentation/entity-manager.js';
+
+    // 1. Setup Canvas with initial configuration
+    let isReadonly = false;
+    let isHeadless = false;
+    let canvasPage;
+    let instanceId = 'simulator-instance';
+
+    function mountCanvas() {
+      const container = document.getElementById('canvas-container');
+      
+      let existingDag = null;
+      if (canvasPage) {
+        const em = getEntityManager(instanceId);
+        existingDag = {
+          type: 'DAGExchange',
+          version: '1.0.0',
+          nodes: em.getAllEntities(),
+          edges: em.getAllLinks()
+        };
+        canvasPage.cleanup.destroy();
+      }
+
+      // Re-mount with new config
+      canvasPage = createCanvasPage(instanceId, { readonly: isReadonly, headless: isHeadless });
+      container.innerHTML = '';
+      container.appendChild(canvasPage.element);
+      
+      if (existingDag) {
+        setTimeout(() => {
+          const em = getEntityManager(instanceId);
+          import('../dist/core/application/dag-service.js').then(({ deserializeDAG }) => {
+             deserializeDAG(em, JSON.stringify(existingDag), false);
+          });
+        }, 100);
+      } else {
+        setTimeout(seedSchema, 100);
+      }
+
+      return canvasPage;
+    }
+
+    // Initial mount
+    mountCanvas();
+
+    window.applySelectedLayout = () => {
+      const em = getEntityManager(instanceId);
+      const val = document.getElementById('layout-select').value;
+      const dag = {
+        type: 'DAGExchange',
+        version: '1.0.0',
+        nodes: em.getAllEntities(),
+        edges: em.getAllLinks(),
+        applyAfterLoad: [
+          val === 'clair' ? { type: 'auto-layout', strategy: 'clair' } : { type: 'auto-layout', strategy: 'sugiyama', orientation: val },
+          { type: 'optimize-connections' },
+          { type: 'fit-to-screen' }
+        ]
+      };
+      dispatchMcp('structura_inject_schema', { dag });
+    };
+
+    // 2. Setup a default schema with multiple nodes for layout/telemetry testing
+    function seedSchema() {
+      const em = getEntityManager(instanceId);
+      
+      em.createEntity('node1', 'View', { x: -300, y: -100 }, { width: 220, height: 180 }, { shape: 'rectangle', color: '#3b82f6' });
+      em.updateEntityProperties('node1', [
+        { key: 'render', label: 'render()', dataType: 'function', componentType: 'input', value: '' },
+        { key: 'template', label: 'template', dataType: 'string', componentType: 'input', value: 'html' }
+      ]);
+      
+      em.createEntity('node2', 'Controller', { x: 0, y: -100 }, { width: 220, height: 180 }, { shape: 'rectangle', color: '#10b981' });
+      em.updateEntityProperties('node2', [
+        { key: 'handleInput', label: 'handleInput()', dataType: 'function', componentType: 'input', value: '' },
+        { key: 'updateModel', label: 'updateModel()', dataType: 'function', componentType: 'input', value: '' }
+      ]);
+
+      em.createEntity('node3', 'Model', { x: 300, y: -100 }, { width: 220, height: 180 }, { shape: 'cylinder', color: '#f59e0b' });
+      em.updateEntityProperties('node3', [
+        { key: 'data', label: 'data', dataType: 'object', componentType: 'input', value: '{}' },
+        { key: 'notifyObservers', label: 'notify()', dataType: 'function', componentType: 'input', value: '' }
+      ]);
+      
+      // We must specify proper anchor IDs for the links to attach to the entities
+      em.createLink('link1', 'right', 'left', 'node1', 'node2');
+      em.createLink('link2', 'right', 'left', 'node2', 'node3');
+      em.createLink('link3', 'bottom', 'bottom', 'node3', 'node1');
+    }
+    
+
+    // 3. MCP Simulator Dispatcher
+    window.dispatchMcp = async (action, args = {}) => {
+      console.log(`[Simulator] Executing ${action} via MCP server`);
+      try {
+        const response = await fetch('http://localhost:9743', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            method: 'tools/call',
+            params: {
+              name: action,
+              arguments: args
+            },
+            id: `sim-req-${Date.now()}`
+          })
+        });
+        const data = await response.json();
+        console.log('[Simulator] Received tool result payload:', data);
+      } catch (err) {
+        console.error('[Simulator] Failed to execute tool over network:', err);
+      }
+    };
+
+    // 4. Toggle Modes
+    document.getElementById('readonly-toggle').addEventListener('change', (e) => {
+      isReadonly = e.target.checked;
+      mountCanvas();
+    });
+
+    document.getElementById('headless-toggle').addEventListener('change', (e) => {
+      isHeadless = e.target.checked;
+      mountCanvas();
+    });
+
+    document.getElementById('mouse-zoom-toggle').addEventListener('change', (e) => {
+      dispatchMcp('structura_toggle_mouse_zoom', { enabled: e.target.checked });
+    });
+
+    document.getElementById('mouse-drag-toggle').addEventListener('change', (e) => {
+      dispatchMcp('structura_toggle_mouse_pan', { enabled: e.target.checked });
+    });
+
+    // 5. Telemetry / Execution Simulator
+    let isExecuting = false;
+    document.getElementById('telemetry-btn').addEventListener('click', async (e) => {
+      if (isExecuting) {
+        isExecuting = false;
+        e.target.textContent = 'Start Telemetry';
+        e.target.style.background = '#3b82f6';
+        return;
+      }
+      isExecuting = true;
+      e.target.textContent = 'Stop Telemetry';
+      e.target.style.background = '#ef4444';
+
+      const em = getEntityManager(instanceId);
+      const entities = em.getAllEntities();
+      const links = em.getAllLinks();
+      
+      const inDegree = new Map(entities.map(en => [en.id, 0]));
+      const adj = new Map(entities.map(en => [en.id, []]));
+      
+      links.forEach(l => {
+        if(inDegree.has(l.targetEntityId)) inDegree.set(l.targetEntityId, inDegree.get(l.targetEntityId) + 1);
+        if(adj.has(l.sourceEntityId)) adj.get(l.sourceEntityId).push({ link: l, target: l.targetEntityId });
+      });
+      
+      let queue = entities.filter(en => inDegree.get(en.id) === 0).map(en => en.id);
+      if (queue.length === 0 && entities.length > 0) queue = [entities[0].id];
+      
+      // Reset visuals
+      dispatchMcp('structura_report_progress', {
+        payload: {
+          entities: entities.map(en => ({ id: en.id, state: 'not_started', effect: 'none' }))
+        }
+      });
+
+      while (queue.length > 0 && isExecuting) {
+        // Processing state
+        dispatchMcp('structura_report_progress', {
+          payload: {
+            entities: queue.map(id => ({ id, state: 'in_progress' }))
+          }
+        });
+        
+        await new Promise(r => setTimeout(r, 800));
+        if (!isExecuting) break;
+        
+        // Mark Completed with Random State
+        const completedEntities = queue.map(id => {
+           const states = ['success', 'error', 'warning', 'skipped'];
+           const roll = Math.random();
+           let state = states[0];
+           if (roll > 0.6) state = states[1];
+           if (roll > 0.8) state = states[2];
+           if (roll > 0.9) state = states[3];
+           return { id, state };
+        });
+
+        dispatchMcp('structura_report_progress', {
+          payload: { entities: completedEntities }
+        });
+        
+        // Link Animations
+        let nextQueue = [];
+        const activeLinks = [];
+        
+        for (const id of queue) {
+           const outgoing = adj.get(id);
+           for (const out of outgoing) {
+             nextQueue.push(out.target);
+             activeLinks.push({ id: out.link.id, direction: 'source-to-target' });
+           }
+        }
+        
+        if (activeLinks.length > 0) {
+          dispatchMcp('structura_report_progress', {
+            payload: { links: activeLinks }
+          });
+          await new Promise(r => setTimeout(r, 1500));
+        }
+        
+        queue = [...new Set(nextQueue)];
+      }
+      
+      if (isExecuting) {
+         isExecuting = false;
+         document.getElementById('telemetry-btn').textContent = 'Start Telemetry';
+         document.getElementById('telemetry-btn').style.background = '#3b82f6';
+      }
+    });
+  </script>
+</body>
+</html>

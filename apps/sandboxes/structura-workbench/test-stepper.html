@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="data:,">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATP Stepper Component Test</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f1f5f9;
+      color: #0f172a;
+      font-family: system-ui, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .demo-container {
+      margin-top: 40px;
+      width: 100%;
+      max-width: 800px;
+      height: 600px;
+      padding: 40px;
+      box-sizing: border-box;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+  </style>
+<script type="importmap">{"imports":{"@atomos/structura":"/atomos-structura/dist/index.js","@atomos/prime":"/atomos-prime/dist/index.js","@binaryjack/formular.dev": "/formular-dev/dist/formular-dev.es.js",
+      "@atomos/structura-core": "/atomos-structura-core/dist/index.js",
+      "@atomos/prime-style": "/atomos-prime-style/dist/index.js","@atomos/structura-core":"/atomos-structura-core/dist/index.js","@atomos/prime-style":"/atomos-prime-style/dist/index.js"}}</script></head>
+<body>
+  <nav style="position:fixed;top:0;left:0;right:0;z-index:999;background:rgba(15,23,42,0.92);backdrop-filter:blur(8px);border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:8px;padding:0 16px;height:40px;font-family:system-ui,sans-serif;font-size:13px;pointer-events:auto;">
+    <span style="font-weight:700;color:#f1f5f9;margin-right:8px;">VBS</span>
+    <a href="preview.html" style="color:#94a3b8;text-decoration:none;padding:4px 10px;border-radius:6px;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background=''">Components</a>
+    <a href="canvas.html" style="color:#94a3b8;text-decoration:none;padding:4px 10px;border-radius:6px;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background=''">Canvas</a>
+    <a href="modal.html" style="color:#94a3b8;text-decoration:none;padding:4px 10px;border-radius:6px;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background=''">Modal</a>
+    <a href="formular.html" style="color:#94a3b8;text-decoration:none;padding:4px 10px;border-radius:6px;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background=''">Formular</a> <a href="test-stepper.html" style="color:#38bdf8;text-decoration:none;font-weight:500;padding:4px 10px;border-radius:6px;background:#0f2744;">Stepper</a> <a href="test-schema-canvas.html" style="color:#94a3b8;text-decoration:none;padding:4px 10px;border-radius:6px;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background=''">Schema Canvas</a>
+  </nav>
+
+  <div class="demo-container">
+    <atp-stepper enable-footer current-step-id="1">
+        <atp-step step-id="1" label="Account Details" is-active>
+            <div style="flex: 1; padding: 20px;">
+                <h2>Step 1: Account Configuration</h2>
+                <p>Welcome to the multi-step account builder. Provide your core credentials here to continue.</p>
+                <div style="margin-top: 20px;">
+                    <label>Username: <input type="text" placeholder="jdoe_88" /></label>
+                </div>
+            </div>
+        </atp-step>
+
+        <atp-step step-id="2" label="Organization Setup" is-valid>
+            <div style="flex: 1; padding: 20px;">
+                <h2>Step 2: Connect Organization</h2>
+                <p>Select your workspace bindings based on your user-id profile details.</p>
+                <div style="margin: 20px 0; background: #e0f2fe; padding: 15px; border-radius: 6px;">
+                    Validations passed! You are connected.
+                </div>
+            </div>
+        </atp-step>
+
+        <atp-step step-id="3" label="User Permissions">
+            <div style="flex: 1; padding: 20px;">
+                <h2>Step 3: User Permissions</h2>
+                <p>Define what roles and access rights should be applied.</p>
+                <div style="margin-top: 20px;">
+                    <label>Role: 
+                        <select>
+                            <option>Admin</option>
+                            <option>Editor</option>
+                            <option>Viewer</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+        </atp-step>
+
+        <atp-step step-id="4" label="Deployment Constraints">
+            <div style="flex: 1; padding: 20px;">
+                <h2>Step 4: Deployment Constraints</h2>
+                <p>Configure the targeted zones and regional parameters.</p>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <label><input type="checkbox" checked /> EU-West-1</label>
+                    <label><input type="checkbox" checked /> US-East-1</label>
+                </div>
+            </div>
+        </atp-step>
+
+        <atp-step step-id="5" label="Confirmation">
+            <div style="flex: 1; padding: 20px;">
+                <h2>Step 5: Review & Submit</h2>
+                <p>Please review everything. Once submitted, your structure will be locked.</p>
+            </div>
+        </atp-step>
+    </atp-stepper>
+  </div>
+
+  <!-- Note: Depending on your serve config, this points to your Vite root src or compiled dist. -->
+  <!-- Falling back to direct src via esbuild/vite for dev environments. -->
+  <script type="module" src="/atomos-prime/dist/test-stepper.js"></script>
+</body>
+</html>

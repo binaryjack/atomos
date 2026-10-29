@@ -1,0 +1,60 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@atomos-web/structura-core": [
+        "../../.codernic/packages/@atomos-web/structura/layers/frontend/atomos-structura-core/dist/index.d.ts"
+      ],
+      "@atomos-web/structura": [
+        "../../.codernic/packages/@atomos-web/structura/layers/frontend/atomos-structura/dist/index.d.ts"
+      ],
+      "@atomos-web/prime": [
+        "../../.codernic/packages/@atomos-web/structura/layers/frontend/atomos-prime/dist/index.d.ts"
+      ],
+      "@atomos-web/prime-style": [
+        "../../.codernic/packages/@atomos-web/structura/layers/frontend/atomos-prime-style/dist/index.d.ts"
+      ],
+      "@binaryjack/formular.dev": [
+        "../../.codernic/packages/@binaryjack/formular.dev/layers/frontend/dist/types/src/index.d.ts"
+      ]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts",
+    "out/types/**/*.ts",
+    "out/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

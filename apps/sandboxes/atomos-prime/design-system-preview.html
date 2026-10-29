@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VBS Design System Preview</title>
+  <style>
+    :root {
+      /* Brand Core - "Obsidian" Theme */
+      --vbs-bg-canvas: #000000;    /* Pure black */
+      --vbs-bg-panel: #111111;     /* Very deep neutral grey */
+      --vbs-bg-input: #09090b;     /* Recessed, almost black */
+      
+      /* Borders & Depth */
+      --vbs-border: #27272a;       /* Zinc 800 */
+      --vbs-border-hover: #3f3f46; /* Zinc 700 */
+      
+      /* Accents */
+      --vbs-primary: #3b82f6;      /* Sharp Blue 500 */
+      --vbs-primary-hover: #2563eb;/* Sharp Blue 600 */
+      --vbs-danger: #ef4444;       /* Red 500 */
+      
+      /* Typography */
+      --vbs-text-primary: #f4f4f5; /* Zinc 50 */
+      --vbs-text-secondary: #a1a1aa;/* Zinc 400 */
+      
+      /* Sizing - Technical, sharp edges! */
+      --vbs-radius: 2px;
+      --vbs-control-height: 28px;  /* Compact height for node canvas */
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--vbs-bg-canvas);
+      color: var(--vbs-text-primary);
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    .panel {
+      background: var(--vbs-bg-panel);
+      border: 1px solid var(--vbs-border);
+      border-radius: var(--vbs-radius);
+      padding: 20px;
+      width: 400px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    }
+
+    h2 { font-size: 16px; margin-bottom: 16px; color: var(--vbs-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* =========================================
+       CONSISTENT CONTROLS
+       ========================================= */
+    .control {
+      height: var(--vbs-control-height);
+      border-radius: var(--vbs-radius);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0 12px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      font-weight: 500;
+    }
+    
+    .btn-primary {
+      background: var(--vbs-primary);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--vbs-primary-hover); }
+
+    .btn-default {
+      background: var(--vbs-bg-panel);
+      border-color: var(--vbs-border);
+      color: var(--vbs-text-primary);
+    }
+    .btn-default:hover { border-color: var(--vbs-border-hover); background: #263348; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--vbs-text-secondary);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.05); color: var(--vbs-text-primary); }
+
+    /* Inputs & Selects */
+    .input {
+      background: var(--vbs-bg-input);
+      border: 1px solid var(--vbs-border);
+      color: var(--vbs-text-primary);
+      padding: 0 8px;
+    }
+    .input:focus {
+      border-color: var(--vbs-primary);
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
+    }
+
+    /* =========================================
+       PROPERTY ROW MOCKUP
+       ========================================= */
+    .property-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .property-row .input.name { flex: 1; }
+    
+    .badge {
+      height: var(--vbs-control-height);
+      display: inline-flex;
+      align-items: center;
+      padding: 0 8px;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: var(--vbs-primary);
+      border-radius: var(--vbs-radius);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--vbs-border);
+    }
+
+    /* =========================================
+       CUSTOM SCROLLBARS
+       ========================================= */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--vbs-border);
+      border-radius: 4px;
+      border: 2px solid var(--vbs-bg-panel); /* Creates padding effect */
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--vbs-border-hover);
+    }
+
+    /* =========================================
+       TOGGLES / SWITCHES
+       ========================================= */
+    .toggle {
+      appearance: none;
+      width: 28px;
+      height: 16px;
+      background: var(--vbs-bg-input);
+      border: 1px solid var(--vbs-border);
+      border-radius: 8px;
+      position: relative;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .toggle::after {
+      content: "";
+      position: absolute;
+      top: 1px; left: 1px;
+      width: 12px; height: 12px;
+      background: var(--vbs-text-secondary);
+      border-radius: 50%;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .toggle:checked {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: var(--vbs-primary);
+    }
+    .toggle:checked::after {
+      transform: translateX(12px);
+      background: var(--vbs-primary);
+    }
+    .toggle:focus-visible {
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+    }
+
+    /* =========================================
+       CHECKBOXES
+       ========================================= */
+    .checkbox {
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--vbs-bg-input);
+      border: 1px solid var(--vbs-border);
+      border-radius: 2px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.1s ease;
+    }
+    .checkbox:checked {
+      background: var(--vbs-primary);
+      border-color: var(--vbs-primary);
+    }
+    .checkbox:checked::after {
+      content: "";
+      position: absolute;
+      left: 3px; top: 1px;
+      width: 4px; height: 8px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    
+    /* =========================================
+       INTERACTIVE SPOTLIGHT BORDER EFFECT
+       ========================================= */
+    .spotlight-border {
+      position: relative;
+      /* Remove standard border because the pseudo-element will handle it */
+      border: 1px solid transparent; 
+      /* We use background-clip to keep the inner background opaque while
+         letting the 1px spotlight gradient shine through the padding area */
+      background: linear-gradient(var(--vbs-bg-panel), var(--vbs-bg-panel)) padding-box,
+                  var(--vbs-border) border-box;
+      z-index: 1;
+    }
+    
+    .spotlight-border::before {
+      content: "";
+      position: absolute;
+      inset: -1px; /* Overlap exactly where the border is */
+      border-radius: inherit;
+      padding: 1px; /* Size of the glowing border */
+      
+      /* The spotlight gradient tracking the mouse */
+      background: radial-gradient(
+        150px circle at var(--mouse-x, 0%) var(--mouse-y, 0%),
+        rgba(255, 255, 255, 0.9) 0%,   /* Hot white core makes it visually pop/thicken */
+        rgba(59, 130, 246, 1) 10%,     /* Intense solid blue */
+        rgba(59, 130, 246, 0.2) 40%,   /* Fading blue */
+        transparent 60%
+      );
+      
+      /* Webkit mask trick: mask out the center, ONLY show the 1px padding */
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .spotlight-border:hover::before {
+      opacity: 1; /* Glow appears heavily on hover */
+    }
+
+  </style>
+</head>
+<body>
+
+  <div>
+    <h2>2. The "Obsidian" Technical Minimalist Palette</h2>
+    <p style="color: var(--vbs-text-secondary); font-size: 14px; max-width: 600px;">
+      A stark, high-contrast environment. The background is pure black (#000) or extremely deep grey (#111). The border-radius is reduced from 6px to a much sharper <b>2px</b>, giving buttons and inputs a technical, "dev-tool" UI feel (similar to VS Code or old-school terminal apps, but modernized). The accent color is a sleek sharp Blue.
+      <br><br><b>Hover over the panels below to see the interactive Spotlight Edge Animation!</b>
+    </p>
+  </div>
+
+  <div class="panel spotlight-border">
+    <h2 style="margin-bottom: 12px; font-size: 13px; color: var(--vbs-text-primary);">Entity Properties</h2>
+    
+    <!-- Perfect Property Rows -->
+    <div class="property-row">
+      <input type="text" class="control input name" value="propertyName" />
+      <span class="badge">in</span>
+      <select class="control input" style="width: 90px;">
+        <option>string</option>
+        <option>number</option>
+      </select>
+      <button class="control btn btn-ghost" style="padding: 0 8px;" title="Settings">⚙️</button>
+      <button class="control btn btn-ghost" style="padding: 0 8px; color: var(--vbs-danger);" title="Delete">🗑️</button>
+    </div>
+
+    <div class="property-row">
+      <input type="text" class="control input name" value="isActive" />
+      <span class="badge">in</span>
+      <select class="control input" style="width: 90px;">
+        <option>boolean</option>
+      </select>
+      <button class="control btn btn-ghost" style="padding: 0 8px;">⚙️</button>
+      <button class="control btn btn-ghost" style="padding: 0 8px; color: var(--vbs-danger);">🗑️</button>
+    </div>
+
+    <!-- Toolbar with consistent buttons -->
+    <div class="toolbar">
+      <button class="control btn btn-default">Cancel</button>
+      <button class="control btn btn-primary">Save Changes</button>
+    </div>
+  </div>
+
+  <div class="panel spotlight-border">
+    <h2 style="margin-bottom: 12px; font-size: 13px; color: var(--vbs-text-primary);">Configuration</h2>
+    
+    <div style="max-height: 120px; overflow-y: auto; padding-right: 8px;">
+      <!-- Scrollable content to demo custom scrollbars -->
+      <div class="property-row">
+        <span style="flex: 1; font-size: 13px;">Auto-Connect Links</span>
+        <input type="checkbox" class="toggle" checked />
+      </div>
+      <div class="property-row">
+        <span style="flex: 1; font-size: 13px;">Strict Type Checking</span>
+        <input type="checkbox" class="toggle" />
+      </div>
+      <div class="property-row">
+        <span style="flex: 1; font-size: 13px;">Hide Empty Properties</span>
+        <input type="checkbox" class="checkbox" checked />
+      </div>
+      <div class="property-row">
+        <span style="flex: 1; font-size: 13px;">Enable Physics</span>
+        <input type="checkbox" class="checkbox" />
+      </div>
+      <div class="property-row">
+        <span style="flex: 1; font-size: 13px;">Snap to Grid</span>
+        <input type="checkbox" class="toggle" checked />
+      </div>
+      <div class="property-row">
+        <span style="flex: 1; font-size: 13px;">Show Debug Information</span>
+        <input type="checkbox" class="checkbox" />
+      </div>
+    </div>
+    
+    <div class="toolbar">
+      <button class="control btn btn-default">Reset</button>
+      <button class="control btn btn-primary">Apply</button>
+    </div>
+  </div>
+
+  <script>
+    // Spotlights effect logic
+    document.querySelectorAll('.spotlight-border').forEach(el => {
+      el.addEventListener('mousemove', e => {
+        const rect = el.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        el.style.setProperty('--mouse-x', `${x}px`);
+        el.style.setProperty('--mouse-y', `${y}px`);
+      });
+    });
+  </script>
+</body>
+</html>

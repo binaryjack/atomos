@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="data:,">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VBS Redux Store Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls h2 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #0277bd;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0288d1;
+        }
+        button.danger {
+            background-color: #d32f2f;
+        }
+        button.danger:hover {
+            background-color: #f44336;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 4px solid #0277bd;
+        }
+        .canvas-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        canvas {
+            display: block;
+            cursor: crosshair;
+        }
+        .status {
+            background: #f5f5f5;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .entity-count {
+            display: inline-block;
+            background: #4caf50;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .link-count {
+            display: inline-block;
+            background: #ff9800;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+    </style>
+<script type="importmap">{`n"imports":{"@atomos/structura":"/atomos-structura/dist/index.js","@atomos/prime":"/atomos-prime/dist/index.js",`n"@binaryjack/formular.dev": "/formular-dev/dist/formular-dev.es.js",
+      "@atomos/structura-core": "/atomos-structura-core/dist/index.js",
+      "@atomos/prime-style": "/atomos-prime-style/dist/index.js",`n"@atomos/structura-core":"/atomos-structura-core/dist/index.js",`n"@atomos/prime-style":"/atomos-prime-style/dist/index.js"`n}`n}</script></head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <h2>VBS Redux Store Test 
+                <span class="entity-count" id="entity-count">0 entities</span>
+                <span class="link-count" id="link-count">0 links</span>
+            </h2>
+            
+            <div class="info">
+                <strong>Instructions:</strong>
+                • Double-click on empty canvas to create entities
+                • Drag entities to move them around
+                • All changes are automatically persisted to localStorage
+                • Reload the page to test persistence
+            </div>
+
+            <div class="button-group">
+                <button id="add-entity-btn">Add Random Entity</button>
+                <button id="create-link-btn">Create Link</button>
+                <button id="clear-canvas-btn" class="danger">Clear Canvas</button>
+                <button id="reload-btn">Reload Page</button>
+                <button id="export-btn">Export State</button>
+                <button id="clear-storage-btn" class="danger">Clear Storage</button>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="canvas" width="1200" height="600"></canvas>
+        </div>
+
+        <div class="status" id="status">
+            <strong>Console Log:</strong><br>
+            Initializing Redux store...<br>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createStore, createPersistence, createCanvas } from '/atomos-prime/dist/redux-store.js';
+
+        // Initialize Redux store
+        console.log('🚀 Initializing Redux store...');
+        const store = createStore();
+        
+        // Setup persistence
+        console.log('💾 Setting up persistence...');
+        const persistence = createPersistence(store);
+        
+        // Setup canvas
+        const canvas = document.getElementById('canvas');
+        console.log('🎨 Setting up canvas...');
+        const canvasController = createCanvas(store, canvas);
+
+        // Status display
+        const statusElement = document.getElementById('status');
+        const entityCountElement = document.getElementById('entity-count');
+        const linkCountElement = document.getElementById('link-count');
+
+        function logToStatus(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            statusElement.innerHTML += `[${timestamp}] ${message}<br>`;
+            statusElement.scrollTop = statusElement.scrollHeight;
+            console.log(message);
+        }
+
+        // Subscribe to store changes for status updates
+        store.subscribe((state) => {
+            const entityCount = Object.keys(state.entities).length;
+            const linkCount = Object.keys(state.links).length;
+            
+            entityCountElement.textContent = `${entityCount} entities`;
+            linkCountElement.textContent = `${linkCount} links`;
+            
+            logToStatus(`State updated: ${entityCount} entities, ${linkCount} links`);
+        });
+
+        // Functions for buttons
+        function addRandomEntity() {
+            const id = `entity-${Date.now()}`;
+            const entity = {
+                id,
+                position: { 
+                    x: Math.random() * 800 + 100, 
+                    y: Math.random() * 400 + 100 
+                },
+                dimensions: { width: 120, height: 60 },
+                data: { label: `Entity ${id.split('-')[1]}` }
+            };
+            
+            store.dispatch({ type: 'entity/add', payload: entity });
+            logToStatus(`Added entity: ${id}`);
+        }
+
+        function createLink() {
+            const state = store.getState();
+            const entityIds = Object.keys(state.entities);
+            
+            if (entityIds.length < 2) {
+                logToStatus('Need at least 2 entities to create a link');
+                return;
+            }
+
+            const sourceId = entityIds[Math.floor(Math.random() * entityIds.length)];
+            let targetId = entityIds[Math.floor(Math.random() * entityIds.length)];
+            
+            // Ensure different entities
+            while (targetId === sourceId && entityIds.length > 1) {
+                targetId = entityIds[Math.floor(Math.random() * entityIds.length)];
+            }
+
+            const linkId = `link-${Date.now()}`;
+            const link = {
+                id: linkId,
+                sourceId,
+                targetId,
+                anchorFrom: 'center',
+                anchorTo: 'center'
+            };
+
+            store.dispatch({ type: 'link/add', payload: link });
+            logToStatus(`Created link: ${sourceId} → ${targetId}`);
+        }
+
+        function clearCanvas() {
+            store.dispatch({ type: 'canvas/clear' });
+            logToStatus('Canvas cleared');
+        }
+
+        function reloadPage() {
+            logToStatus('Reloading page to test persistence...');
+            setTimeout(() => window.location.reload(), 500);
+        }
+
+        function exportState() {
+            const state = store.getState();
+            const json = JSON.stringify(state, null, 2);
+            logToStatus(`Current state exported to console`);
+            console.log('📊 Current state:', state);
+            
+            // Create download
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'vbs-canvas-state.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function clearStorage() {
+            localStorage.removeItem('vbs-canvas-state');
+            logToStatus('localStorage cleared');
+        }
+
+        // Setup button event listeners
+        document.getElementById('add-entity-btn').addEventListener('click', addRandomEntity);
+        document.getElementById('create-link-btn').addEventListener('click', createLink);
+        document.getElementById('clear-canvas-btn').addEventListener('click', clearCanvas);
+        document.getElementById('reload-btn').addEventListener('click', reloadPage);
+        document.getElementById('export-btn').addEventListener('click', exportState);
+        document.getElementById('clear-storage-btn').addEventListener('click', clearStorage);
+
+        // Initial state check
+        const initialState = store.getState();
+        logToStatus(`✅ Redux store initialized`);
+        logToStatus(`Initial state: ${Object.keys(initialState.entities).length} entities, ${Object.keys(initialState.links).length} links`);
+        
+        // Add some initial entities if none exist
+        if (Object.keys(initialState.entities).length === 0) {
+            logToStatus('No persisted entities found, creating sample entities...');
+            
+            // Create sample entities
+            setTimeout(() => {
+                addRandomEntity();
+                setTimeout(() => {
+                    addRandomEntity();
+                    setTimeout(() => {
+                        createLink();
+                    }, 100);
+                }, 100);
+            }, 100);
+        } else {
+            logToStatus(`✅ Loaded ${Object.keys(initialState.entities).length} persisted entities from localStorage`);
+        }
+    </script>
+</body>
+</html>

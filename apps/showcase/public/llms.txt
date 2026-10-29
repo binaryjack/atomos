@@ -1,0 +1,71 @@
+# Atomos Structura - LLM Optimization Guide
+
+Atomos Structura is a high-performance, headless graph modeling interface connected through standard ISO architectures and the Model Context Protocol (MCP).
+
+## Core Architecture
+- **Headless Pipeline**: The core graph engine (`atomos-structura-core`) runs in pure Node.js, separate from the UI.
+- **Redux State**: All schema nodes are Redux Entities. State transitions are purely functional.
+- **MCP Integration**: Changes are automatically broadcasted via the Model Context Protocol (MCP) using `atomos-structura-mcp`, allowing LLMs to read the graph state, listen to graph changes, and perform structural edits via standardized MCP tools.
+
+## Customization Hooks
+Developers can customize the workspace experience by providing configuration to the `createWorkspaceManager` or via Redux state.
+
+### 1. Read-only Freezing
+To prevent the user from dragging, connecting, or creating entities via the UI:
+```typescript
+const config: WorkspaceConfig = {
+  readonly: true, // short-circuits all DOM-based interaction
+  headless: false,
+};
+```
+
+### 2. Custom Actions
+Add custom tools to the toolbar by modifying `WorkspaceMenuConfig.customActions`:
+```typescript
+const config: WorkspaceConfig = {
+  menu: {
+    customActions: [
+      { id: 'run-analysis', label: 'Run Analysis', icon: '<svg>...</svg>' }
+    ]
+  }
+};
+```
+Listen to these actions using the `SchemaBuilder`:
+```typescript
+builder.onCustomAction('run-analysis', (state) => {
+  console.log("Analysis triggered on current state:", state);
+});
+```
+
+### 3. Asynchronous Property Fetching
+For entities that have dropdown properties (`componentType: 'select'`), options can be loaded asynchronously:
+```typescript
+const config: WorkspaceConfig = {
+  onLoadOptions: async (propertyKey, entityId) => {
+    if (propertyKey === 'database_type') {
+      return [
+        { label: 'PostgreSQL', value: 'pg' },
+        { label: 'MongoDB', value: 'mongo' }
+      ];
+    }
+    return [];
+  }
+};
+```
+
+### 4. Extension Lifecycle Manager
+Dynamic scripts and UI plugins can be injected via the Extension Lifecycle Manager. Extensions must conform to the `Extension` interface:
+```typescript
+import { createExtensionLifecycleManager } from '@atomos-web/structura';
+
+const manager = createExtensionLifecycleManager();
+manager.registerExtension({
+  id: 'my-plugin',
+  mount: (builder) => {
+    // Add entities, listen to actions
+  },
+  unmount: () => {
+    // Cleanup
+  }
+}, builder);
+```

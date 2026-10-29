@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="icon" href="data:,">
+  <title>Property Persistence Test</title>
+  <style>
+    body { font-family: monospace; padding: 20px; }
+    button { margin: 5px; padding: 10px; }
+    #output { background: #f0f0f0; padding: 10px; margin-top: 10px; white-space: pre-wrap; }
+    .success { color: green; }
+    .error { color: red; }
+    .info { color: blue; }
+  </style>
+<script type="importmap">{`n"imports":{"@atomos/structura":"/atomos-structura/dist/index.js","@atomos/prime":"/atomos-prime/dist/index.js",`n"@binaryjack/formular.dev": "/formular-dev/dist/formular-dev.es.js",
+      "@atomos/structura-core": "/atomos-structura-core/dist/index.js",
+      "@atomos/prime-style": "/atomos-prime-style/dist/index.js",`n"@atomos/structura-core":"/atomos-structura-core/dist/index.js",`n"@atomos/prime-style":"/atomos-prime-style/dist/index.js"`n}`n}</script></head>
+<body>
+  <h1>Property Persistence Test</h1>
+  
+  <button onclick="clearStorage()">Clear localStorage</button>
+  <button onclick="createEntity()">Create Entity</button>
+  <button onclick="addProperty()">Add Property</button>
+  <button onclick="updatePropertyViaStore()">Update Property Via Entity Store</button>
+  <button onclick="simulateModalPropertyUpdate()">Simulate Modal Property Update</button>
+  <button onclick="checkPersistence()">Check Persistence</button>
+  <button onclick="reload()">Reload Page</button>
+  
+  <div id="output"></div>
+  
+  <script type="module">
+    import { createAppStore } from '/atomos-prime/dist/core/create-app-store.js';
+    import { createEntity } from '../vbs-mod/dist/index.js';
+    
+    let appStore, schemaStore, testEntityId = 'test-entity-property-persistence';
+    
+    function log(msg, type = 'info') {
+      const output = document.getElementById('output');
+      const line = document.createElement('div');
+      line.className = type;
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      output.appendChild(line);
+      output.scrollTop = output.scrollHeight;
+      console.log(msg);
+    }
+    
+    function init() {
+      appStore = createAppStore();
+      const schemaId = appStore.appSignal.value.activeSchemaId;
+      schemaStore = appStore.getSchemaStore(schemaId);
+      log('App initialized, schema: ' + schemaId);
+      
+      // Check if entity exists from previous session
+      const existing = schemaStore.signal.value.entities.find(e => e.id === testEntityId);
+      if (existing) {
+        log('Found existing entity: ' + existing.name, 'success');
+        log('  Properties: ' + existing.properties.length);
+        existing.properties.forEach((p, i) => {
+          log(`    [${i}] ${p.key}: ${p.value} (validation: ${JSON.stringify(p.validation)})`, 'info');
+        });
+      }
+    }
+    
+    window.clearStorage = () => {
+      localStorage.clear();
+      log('localStorage cleared');
+      location.reload();
+    };
+    
+    window.createEntity = () => {
+      const entity = createEntity({
+        id: testEntityId,
+        code: testEntityId,
+        name: 'Property Persistence Test Entity',
+      });
+      schemaStore.addEntity(entity);
+      log('Entity created: ' + entity.name);
+    };
+    
+    window.addProperty = () => {
+      const entityStore = schemaStore.getEntityStore(testEntityId);
+      if (!entityStore) {
+        log('Entity not found!', 'error');
+        return;
+      }
+      const prop = {
+        key: 'test-property',
+        label: 'Test Property',
+        value: 'initial value',
+        dataType: 'string',
+        componentType: 'input',
+        validation: { required: { value: false } }
+      };
+      entityStore.addProperty(prop);
+      log('Property added: ' + prop.key);
+    };
+    
+    window.updatePropertyViaStore = () => {
+      const entityStore = schemaStore.getEntityStore(testEntityId);
+      if (!entityStore) {
+        log('Entity not found!', 'error');
+        return;
+      }
+      const entity = entityStore.signal.value;
+      const propIndex = entity.properties.findIndex(p => p.key === 'test-property');
+      if (propIndex === -1) {
+        log('Test property not found!', 'error');
+        return;
+      }
+      
+      // Update the property via entity store
+      const updated = {
+        ...entity,
+        properties: entity.properties.map((p, i) => 
+          i === propIndex ? { ...p, value: 'updated via store at ' + new Date().toLocaleTimeString() } : p
+        ),
+        updatedAt: Date.now(),
+      };
+      entityStore.signal.set(updated);
+      log('Property updated via entity store');
+    };
+    
+    window.simulateModalPropertyUpdate = () => {
+      // This simulates what happens when a property is updated via modal
+      const entityStore = schemaStore.getEntityStore(testEntityId);
+      if (!entityStore) {
+        log('Entity not found!', 'error');
+        return;
+      }
+      const entity = entityStore.signal.value;
+      const propIndex = entity.properties.findIndex(p => p.key === 'test-property');
+      if (propIndex === -1) {
+        log('Test property not found!', 'error');
+        return;
+      }
+      
+      // This is what happens when the modal updates a property
+      const updated = {
+        ...entity,
+        properties: entity.properties.map((p, i) => 
+          i === propIndex ? { 
+            ...p, 
+            value: 'updated via MODAL at ' + new Date().toLocaleTimeString(),
+            validation: { required: { value: true } } // Also update validation
+          } : p
+        ),
+        updatedAt: Date.now(),
+      };
+      
+      // First set the entity store
+      entityStore.signal.set(updated);
+      log('Property updated via modal simulation - checking if persistence triggered...');
+      
+      // Now check if it triggered the Redux store update (this is the fix we implemented)
+      setTimeout(() => {
+        const storageData = localStorage.getItem('vbe2:schemas');
+        if (storageData) {
+          const parsed = JSON.parse(storageData);
+          const schemaData = parsed[schemaStore.schemaId];
+          if (schemaData) {
+            const storedEntity = schemaData.entities.find(e => e.id === testEntityId);
+            if (storedEntity) {
+              const storedProp = storedEntity.properties.find(p => p.key === 'test-property');
+              if (storedProp && storedProp.value.includes('MODAL')) {
+                log('✓ Modal property update PERSISTED to localStorage!', 'success');
+              } else {
+                log('✗ Modal property update NOT persisted to localStorage!', 'error');
+              }
+            } else {
+              log('✗ Entity not found in localStorage!', 'error');
+            }
+          } else {
+            log('✗ Schema not found in localStorage!', 'error');
+          }
+        } else {
+          log('✗ No schemas in localStorage!', 'error');
+        }
+      }, 100);
+    };
+    
+    window.checkPersistence = () => {
+      log('--- Checking localStorage persistence ---');
+      const schemas = localStorage.getItem('vbe2:schemas');
+      if (schemas) {
+        const parsed = JSON.parse(schemas);
+        log('Schemas in localStorage: ' + Object.keys(parsed).length);
+        
+        Object.entries(parsed).forEach(([schemaId, schemaData]) => {
+          log(`Schema ${schemaId}:`, 'info');
+          log(`  Entities: ${schemaData.entities.length}`, 'info');
+          
+          const testEntity = schemaData.entities.find(e => e.id === testEntityId);
+          if (testEntity) {
+            log(`  Found test entity: ${testEntity.name}`, 'success');
+            log(`    Properties: ${testEntity.properties.length}`, 'info');
+            testEntity.properties.forEach((p, i) => {
+              log(`      [${i}] ${p.key}: ${p.value}`, 'info');
+              if (p.validation) {
+                log(`          validation: ${JSON.stringify(p.validation)}`, 'info');
+              }
+            });
+          }
+        });
+      } else {
+        log('No schemas in localStorage!', 'error');
+      }
+    };
+    
+    window.reload = () => {
+      log('Reloading in 1 second to test persistence...');
+      setTimeout(() => location.reload(), 1000);
+    };
+    
+    init();
+  </script>
+</body>
+</html>

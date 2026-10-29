@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AURA-PRIME DNA Sovereign 3D Neura Workbench</title>
+  <style>
+    * { box-sizing: border-box; }
+    body, html {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      overflow: hidden; background: #07090e; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      color: #e2e8f0;
+    }
+    #workbench-container { width: 100%; height: 100%; position: relative; }
+    canvas { display: block; width: 100%; height: 100%; }
+
+    .hud-panel {
+      position: absolute; top: 16px; left: 16px;
+      width: 380px; max-height: calc(100vh - 32px);
+      background: rgba(13, 17, 23, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(56, 189, 248, 0.05);
+      overflow-y: auto;
+      z-index: 10;
+    }
+
+    .hud-title {
+      font-size: 15px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      color: #38bdf8; margin: 0 0 8px 0; display: flex; align-items: center; justify-content: space-between;
+    }
+    .hud-badge {
+      background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid #38bdf8;
+      font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600;
+    }
+
+    .section-title {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8;
+      margin: 16px 0 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 4px;
+    }
+
+    .organ-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;
+    }
+    .organ-chip {
+      background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px; padding: 8px; font-size: 11px;
+    }
+    .organ-chip.active {
+      border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.05);
+    }
+    .organ-name { font-weight: 600; color: #f8fafc; margin-bottom: 2px; }
+    .organ-meta { font-size: 10px; color: #64748b; }
+
+    .control-group {
+      display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;
+    }
+    .stimulus-btn {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.2) 0%, rgba(30, 58, 138, 0.4) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 6px; color: #f8fafc; padding: 10px 14px;
+      font-size: 12px; font-weight: 600; cursor: pointer; text-align: left;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .stimulus-btn:hover {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.35) 0%, rgba(30, 58, 138, 0.6) 100%);
+      border-color: #38bdf8; transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+    }
+    .stimulus-btn:active { transform: translateY(0); }
+    .stimulus-desc { font-size: 10px; color: #94a3b8; margin-top: 3px; font-weight: normal; }
+
+    .slider-row {
+      display: flex; flex-direction: column; gap: 4px;
+      background: rgba(255, 255, 255, 0.02); padding: 8px; border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .slider-label-row {
+      display: flex; justify-content: space-between; font-size: 11px; color: #cbd5e1;
+    }
+    input[type="range"] {
+      width: 100%; accent-color: #38bdf8; cursor: pointer;
+    }
+
+    .telemetry-feed {
+      height: 140px; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 6px; padding: 8px; font-family: monospace; font-size: 10px;
+      overflow-y: auto; color: #10b981; line-height: 1.4;
+    }
+    .telemetry-entry { margin-bottom: 2px; }
+    .telemetry-time { color: #64748b; margin-right: 4px; }
+    .telemetry-warn { color: #f59e0b; }
+    .telemetry-error { color: #ef4444; }
+  </style>
+</head>
+<body>
+  <div id="workbench-container">
+    <canvas id="neura-canvas"></canvas>
+
+    <div class="hud-panel">
+      <div class="hud-title">
+        <span>DNA 3D Neura</span>
+        <span class="hud-badge">SOVEREIGN V5</span>
+      </div>
+
+      <div class="section-title">Active Neural Organs</div>
+      <div class="organ-grid" id="organ-list">
+        <!-- Injected dynamically -->
+      </div>
+
+      <div class="section-title">Self-Describing Stimulus Controls</div>
+      <div class="control-group" id="controls-container">
+        <!-- Injected dynamically from plugins -->
+      </div>
+
+      <div class="section-title">Physical Telemetry Stream</div>
+      <div class="telemetry-feed" id="telemetry-log">
+        <div class="telemetry-entry"><span class="telemetry-time">[0.00s]</span> Workbench initialized. Awaiting stimulus.</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createNeuraInstance } from '../dist/neura/create-neura-instance.js';
+    import { DnaVisualizerCore } from '../dist/neura/dna/dna-visualizer-core.js';
+
+    const canvas = document.getElementById('neura-canvas');
+    const workerUrl = new URL('../dist/neura/physics/worker.js', window.location.href);
+    const neura = createNeuraInstance(canvas, workerUrl);
+    const visualizer = new DnaVisualizerCore(neura);
+
+    const telemetryLog = document.getElementById('telemetry-log');
+    function logTelemetry(msg, cls = '') {
+      const now = (performance.now() / 1000).toFixed(2);
+      const row = document.createElement('div');
+      row.className = 'telemetry-entry ' + cls;
+      row.innerHTML = `<span class="telemetry-time">[${now}s]</span> ${msg}`;
+      telemetryLog.appendChild(row);
+      telemetryLog.scrollTop = telemetryLog.scrollHeight;
+    }
+
+    visualizer.addListener({
+      onStimulusDispatched: (res) => {
+        logTelemetry(`Stimulus '${res.controlId}' => [${res.dispatchedEffects.join(', ')}]`);
+      }
+    });
+
+    // Render Self-Describing Controls
+    function renderControls() {
+      const organGrid = document.getElementById('organ-list');
+      organGrid.innerHTML = '';
+      for (const organ of visualizer.getAllOrgans()) {
+        const chip = document.createElement('div');
+        chip.className = 'organ-chip active';
+        chip.innerHTML = `
+          <div class="organ-name" style="color: ${organ.color_theme}">${organ.organ_name}</div>
+          <div class="organ-meta">${organ.dimension} • ${organ.nodes.length} neurons • ${organ.sockets.length} sockets</div>
+        `;
+        organGrid.appendChild(chip);
+      }
+
+      const container = document.getElementById('controls-container');
+      container.innerHTML = '';
+      const controls = visualizer.getAllStimulusControls();
+
+      for (const ctrl of controls) {
+        if (ctrl.type === 'button') {
+          const btn = document.createElement('button');
+          btn.className = 'stimulus-btn';
+          btn.innerHTML = `
+            <div>${ctrl.label}</div>
+            ${ctrl.description ? `<div class="stimulus-desc">${ctrl.description}</div>` : ''}
+          `;
+          btn.addEventListener('click', () => {
+            logTelemetry(`Firing control '${ctrl.id}' (${ctrl.action})...`);
+            visualizer.dispatchStimulus(ctrl.id);
+          });
+          container.appendChild(btn);
+        } else if (ctrl.type === 'slider') {
+          const row = document.createElement('div');
+          row.className = 'slider-row';
+          row.innerHTML = `
+            <div class="slider-label-row">
+              <span>${ctrl.label}</span>
+              <span id="val-${ctrl.id}">${ctrl.default ?? 4}</span>
+            </div>
+            <input type="range" min="${ctrl.min ?? 1}" max="${ctrl.max ?? 16}" value="${ctrl.default ?? 4}" id="input-${ctrl.id}" />
+            ${ctrl.description ? `<div class="stimulus-desc">${ctrl.description}</div>` : ''}
+          `;
+          const input = row.querySelector(`#input-${ctrl.id}`);
+          const valDisplay = row.querySelector(`#val-${ctrl.id}`);
+          input.addEventListener('change', (e) => {
+            const v = Number(e.target.value);
+            valDisplay.textContent = v;
+            logTelemetry(`Adjusted slider '${ctrl.id}' to ${v}`);
+            visualizer.dispatchStimulus(ctrl.id, v);
+          });
+          container.appendChild(row);
+        }
+      }
+    }
+
+    // Auto-discover / load plugins from standard codernicapp directory or embedded fallback
+    async function initAuraPrimeSwarm() {
+      try {
+        // Attempt fetching generated companions if served via static file server
+        const organNames = [
+          'aura_cns_trunk',
+          'aura_thalamus',
+          'aura_acc',
+          'aura_allostasis',
+          'aura_compile_gate',
+          'aura_popper',
+          'aura_mcts',
+          'aura_audio_jepa',
+          'aura_fusion_tensor',
+        ];
+        for (const name of organNames) {
+          try {
+            const resp = await fetch(`/dna/core/${name}.neura.json`);
+            if (resp.ok) {
+              const plugin = await resp.json();
+              visualizer.loadOrganPlugin(plugin);
+              logTelemetry(`Loaded visual plugin for ${name}`);
+            }
+          } catch {
+            // fallback handled below
+          }
+        }
+      } catch (err) {
+        console.warn("Direct file fetch skipped, using dynamic protocol", err);
+      }
+
+      // If no organs loaded yet (e.g. file protocol), load default AURA-PRIME layout
+      if (visualizer.getAllOrgans().length === 0) {
+        logTelemetry("Ingesting AURA-PRIME sovereign visual twins...", "telemetry-warn");
+
+        visualizer.loadOrganPlugin({
+          plugin_version: "1.0.0",
+          organ_name: "aura_cns_trunk",
+          dimension: "2D",
+          color_theme: "#00d4ff",
+          theme_name: "cyan_glow",
+          anchor_offset: { x: 0, y: 0, z: 0 },
+          nodes: Array.from({ length: 16 }, (_, i) => ({
+            id: `aura_cns_trunk_l${Math.floor(i/4)}_n${i%4}`,
+            x: ((i % 4) - 1.5) * 24,
+            y: (Math.floor(i / 4) - 1.5) * 24,
+            z: 0,
+            weight: 1.0,
+            layer_index: Math.floor(i / 4),
+            neuron_index: i % 4
+          })),
+          sockets: [
+            { name: "grid_ingress", role: "ingress", tensor_dim: 100, x: -60, y: 0, z: 0 },
+            { name: "main_features", role: "egress", tensor_dim: 100, x: 60, y: 0, z: 0 }
+          ],
+          stimulus_controls: [
+            { id: "inject_pattern", label: "Inject Sensory Pattern", type: "button", action: "dna_neural_infer", description: "Injects discrete ternary pattern into grid_ingress." },
+            { id: "deliberation_recurrence", label: "Deliberation Cycles", type: "slider", min: 1, max: 16, default: 4, action: "dna_neural_infer", description: "Runs fixed-point attractor cycles." }
+          ],
+          telemetry_mapping: [0, 1, 2, 3]
+        });
+
+        visualizer.loadOrganPlugin({
+          plugin_version: "1.0.0",
+          organ_name: "aura_thalamus",
+          dimension: "1D",
+          color_theme: "#10b981",
+          theme_name: "emerald_pulse",
+          anchor_offset: { x: 140, y: 0, z: 0 },
+          nodes: Array.from({ length: 8 }, (_, i) => ({
+            id: `aura_thalamus_n${i}`,
+            x: Math.cos(i * Math.PI / 4) * 25,
+            y: Math.sin(i * Math.PI / 4) * 25,
+            z: 0,
+            weight: 1.0,
+            layer_index: 0,
+            neuron_index: i
+          })),
+          sockets: [
+            { name: "grid_ingress", role: "ingress", tensor_dim: 100, x: -35, y: 0, z: 0 },
+            { name: "main_features", role: "egress", tensor_dim: 100, x: 35, y: 0, z: 0 }
+          ],
+          stimulus_controls: [
+            { id: "advance_clock", label: "Step Modulo-8 Clock", type: "button", action: "step_phase", description: "Advances the 3-bit ring oscillator phase." }
+          ],
+          telemetry_mapping: [0]
+        });
+
+        visualizer.loadOrganPlugin({
+          plugin_version: "1.0.0",
+          organ_name: "aura_acc",
+          dimension: "2D",
+          color_theme: "#f59e0b",
+          theme_name: "amber_spark",
+          anchor_offset: { x: 0, y: 120, z: 0 },
+          nodes: Array.from({ length: 8 }, (_, i) => ({
+            id: `aura_acc_n${i}`,
+            x: ((i % 4) - 1.5) * 20,
+            y: (Math.floor(i / 4) - 0.5) * 20,
+            z: 0,
+            weight: 1.0,
+            layer_index: Math.floor(i / 4),
+            neuron_index: i % 4
+          })),
+          sockets: [
+            { name: "grid_ingress", role: "ingress", tensor_dim: 100, x: 0, y: -30, z: 0 },
+            { name: "main_features", role: "egress", tensor_dim: 100, x: 0, y: 30, z: 0 }
+          ],
+          stimulus_controls: [
+            { id: "inject_conflict", label: "Inject Conflict / GABA Clamp", type: "button", action: "inject_surprise_residual", description: "Simulates an L1 surprise spike triggering retroactive GABA clamp." }
+          ],
+          telemetry_mapping: [0, 1]
+        });
+
+        visualizer.loadOrganPlugin({
+          plugin_version: "1.0.0",
+          organ_name: "aura_allostasis",
+          dimension: "2D",
+          color_theme: "#8b5cf6",
+          theme_name: "violet_field",
+          anchor_offset: { x: 0, y: -120, z: 0 },
+          nodes: Array.from({ length: 8 }, (_, i) => ({
+            id: `aura_allostasis_n${i}`,
+            x: ((i % 4) - 1.5) * 20,
+            y: (Math.floor(i / 4) - 0.5) * 20,
+            z: 0,
+            weight: 1.0,
+            layer_index: Math.floor(i / 4),
+            neuron_index: i % 4
+          })),
+          sockets: [
+            { name: "grid_ingress", role: "ingress", tensor_dim: 100, x: 0, y: 30, z: 0 },
+            { name: "main_features", role: "egress", tensor_dim: 100, x: 0, y: -30, z: 0 }
+          ],
+          stimulus_controls: [
+            { id: "rebalance_atp", label: "Transfer 25k ATP to CNS", type: "button", action: "dna_atp_transfer", args: { from_organ: "aura_allostasis", to_organ: "aura_cns_trunk", amount: 25000 }, description: "Transfers metabolic ATP quanta dynamically." }
+          ],
+          telemetry_mapping: [0, 1]
+        });
+
+        // Load Cables
+        visualizer.loadCablePlugin({
+          plugin_version: "1.0.0",
+          cable_name: "cns_to_thalamus",
+          source_organ: "aura_cns_trunk",
+          source_socket: "main_features",
+          target_organ: "aura_thalamus",
+          target_socket: "grid_ingress",
+          has_adaptation: true,
+          beam_style: { color: "#00d4ff", durationMs: 600, pulse_type: "synaptic_beam" },
+          edges: [{
+            id: "cns_to_thalamus_edge",
+            sourceId: "aura_cns_trunk:main_features",
+            targetId: "aura_thalamus:grid_ingress",
+            source_coord: { x: 60, y: 0, z: 0 },
+            target_coord: { x: 105, y: 0, z: 0 },
+            weight: 1.5
+          }]
+        });
+
+        visualizer.loadCablePlugin({
+          plugin_version: "1.0.0",
+          cable_name: "cns_to_acc",
+          source_organ: "aura_cns_trunk",
+          source_socket: "main_features",
+          target_organ: "aura_acc",
+          target_socket: "grid_ingress",
+          has_adaptation: false,
+          beam_style: { color: "#f59e0b", durationMs: 600, pulse_type: "synaptic_beam" },
+          edges: [{
+            id: "cns_to_acc_edge",
+            sourceId: "aura_cns_trunk:main_features",
+            targetId: "aura_acc:grid_ingress",
+            source_coord: { x: 60, y: 0, z: 0 },
+            target_coord: { x: 0, y: 90, z: 0 },
+            weight: 1.0
+          }]
+        });
+
+        visualizer.loadCablePlugin({
+          plugin_version: "1.0.0",
+          cable_name: "cns_to_allostasis",
+          source_organ: "aura_cns_trunk",
+          source_socket: "main_features",
+          target_organ: "aura_allostasis",
+          target_socket: "grid_ingress",
+          has_adaptation: true,
+          beam_style: { color: "#8b5cf6", durationMs: 600, pulse_type: "synaptic_beam" },
+          edges: [{
+            id: "cns_to_allostasis_edge",
+            sourceId: "aura_cns_trunk:main_features",
+            targetId: "aura_allostasis:grid_ingress",
+            source_coord: { x: 60, y: 0, z: 0 },
+            target_coord: { x: 0, y: -90, z: 0 },
+            weight: 1.5
+          }]
+        });
+      }
+
+      renderControls();
+      logTelemetry("Swarm loaded. 4 organs, 3 cables, 5 stimulus controls ready.");
+    }
+
+    initAuraPrimeSwarm();
+  </script>
+</body>
+</html>
