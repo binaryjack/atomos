@@ -2,6 +2,7 @@
  * Infrastructure Layer - Repository Implementation
  * Handles persistence through the Instance-specific Redux Store
  */
+import type { Entity } from '@atomos-web/structura-core'
 import { getInstanceReduxStore } from '../create-redux-store.js'
 import type { DomainEntity, DomainLink, EntityRepository, LinkRepository } from '../domain/entity-aggregate.js'
 
@@ -31,16 +32,13 @@ export const createPersistedEntityRepository = function(instanceId: string): Ent
   const save = function(entity: DomainEntity): void {
     const schemaId = getSchemaId(instanceId);
     const schema = getActiveSchema(instanceId, schemaId);
-    const exists = schema?.entities.some((e) => e.id === entity.id);
+    const stored = schema?.entities.find((e) => e.id === entity.id);
 
-    // Convert DomainEntity to Entity
-    const reduxEntity = {
-      ...entity,
-      code: entity.name, // Fallback if necessary
-      edges: []          // Default requirement for Redux 'Entity' type
-    } as any;
+    // Lossless DomainEntity -> Entity: keeps stored edge geometry and every workflow field
+    // (nodeType, config, metadata, ports) carried by the aggregate.
+    const reduxEntity = { ...entity, code: stored?.code ?? entity.name, edges: stored?.edges ?? [] } as unknown as Entity;
 
-    if (exists) {
+    if (stored) {
       store.dispatch({
         type: 'entity-updated',
         schema_id: schemaId,
@@ -169,35 +167,4 @@ export const createPersistedLinkRepository = function(instanceId: string): LinkR
   return { getById, save, remove, getAll };
 };
 
-/**
- * Simple Event Bus Implementation
- * Decouples components with pub/sub pattern
- */
-import type { ApplicationEvent, EventBus } from '../application/entity-service.js'
-
-export const createEventBus = function(): EventBus {
-  const handlers = new Set<(event: ApplicationEvent) => void>();
-
-  const publish = function(event: ApplicationEvent): void {
-    // Snapshot handlers before iterating so that re-entrant publishes (e.g. entity
-    // spawn triggering another event) do not corrupt the iteration.
-    const snapshot = Array.from(handlers);
-    snapshot.forEach(handler => {
-      try {
-        handler(event);
-      } catch (error) {
-        console.error(`[EventBus] Handler failed for ${event.type}:`, error);
-      }
-    });
-  };
-
-  const subscribe = function(handler: (event: ApplicationEvent) => void): () => void {
-    handlers.add(handler);
-
-    return function unsubscribe() {
-      handlers.delete(handler);
-    };
-  };
-
-  return { publish, subscribe };
-};
+export { createEventBus } from './create-event-bus.js'

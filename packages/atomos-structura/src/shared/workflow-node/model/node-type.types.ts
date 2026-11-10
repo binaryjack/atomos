@@ -35,4 +35,6 @@ export interface AddNodeInput {
   readonly size?: { readonly width: number; readonly height: number };
   readonly config?: Record<string, unknown>;
   readonly metadata?: Record<string, unknown>;
+  /** Containing group node id (must be a node of type `group`). */
+  readonly parentId?: string;
 }

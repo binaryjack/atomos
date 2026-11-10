@@ -1,6 +1,9 @@
 import type { DomainEntity, DomainLink } from '../domain/entity-aggregate.js';
 import type { EntityManager } from '../presentation/entity-manager.js';
 import { determineOptimalEdges } from '../math/anchor-routing.js';
+import { getInstanceReduxStore } from '../create-redux-store.js';
+import { isPortAnchorId } from '../../workflow-node/model/port-anchor.js';
+import { toCreationOptions } from '../domain/entity-options.types.js';
 
 export interface SchemaCommand {
   type: string;
@@ -16,7 +19,7 @@ export interface DAGExchange {
 }
 
 import { LayoutRegistry } from './layout/layout-strategy.js';
-import './layout/sugiyama-layout.js';
+import './layout/elk-layered-layout.js';
 import './layout/clear-layout.js';
 
 export const applySchemaCommands = async (entityManager: EntityManager, commands: (string | SchemaCommand)[]) => {
@@ -58,23 +61,26 @@ export const deserializeDAG = function(
   entityManager: EntityManager,
   jsonString: string,
   autoLayout: boolean = true
-): void {
+): Promise<void> {
+  const store = getInstanceReduxStore(entityManager.instanceId);
+  const data = store.transaction('Import DAG', () => applyDag(entityManager, jsonString));
+  if (data.applyAfterLoad && Array.isArray(data.applyAfterLoad)) return applySchemaCommands(entityManager, data.applyAfterLoad);
+  if (!autoLayout) return Promise.resolve();
+  // The async ELK layout amends the import's history entry: clear + recreate + layout = ONE undo step.
+  return Promise.resolve(LayoutRegistry.get('layered')?.execute(entityManager, { amendHistory: store.historyHead?.() }));
+};
+
+const applyDag = function(entityManager: EntityManager, jsonString: string): DAGExchange {
   try {
     const data = JSON.parse(jsonString) as DAGExchange;
-    
     // Clear existing
     entityManager.getAllLinks().forEach(link => entityManager.removeLink(link.id));
     entityManager.getAllEntities().forEach(entity => entityManager.removeEntity(entity.id));
 
     // Restore Entities
     data.nodes.forEach(node => {
-      entityManager.createEntity(node.id, node.name, node.position, node.dimensions, {
-        shape: (node as any).shape,
-        color: (node as any).color,
-        description: (node as any).description,
-        collapsed: (node as any).collapsed,
-        defaultCollapsed: (node as any).defaultCollapsed
-      });
+      // Lossless: appearance plus nodeType / config / metadata / ports
+      entityManager.createEntity(node.id, node.name, node.position, node.dimensions, toCreationOptions(node));
       entityManager.updateEntityProperties(node.id, node.properties);
     });
 
@@ -96,12 +102,7 @@ export const deserializeDAG = function(
       });
     });
 
-    if (data.applyAfterLoad && Array.isArray(data.applyAfterLoad)) {
-      applySchemaCommands(entityManager, data.applyAfterLoad);
-    } else if (autoLayout) {
-      const strategy = LayoutRegistry.get('sugiyama');
-      if (strategy) strategy.execute(entityManager);
-    }
+    return data;
   } catch (error) {
     console.error('[dag-service] Failed to deserialize DAG', error);
     throw error;
@@ -109,13 +110,21 @@ export const deserializeDAG = function(
 };
 
 
-export const autoRouteLinks = function(entityManager: EntityManager): void {
+/**
+ * Re-anchors ER links to the optimal entity sides as one undo step. Links between typed
+ * ports are never re-routed. Pass `onlyEntityIds` to touch only links attached to those nodes.
+ */
+export const autoRouteLinks = function(entityManager: EntityManager, onlyEntityIds?: ReadonlySet<string>): void {
+  getInstanceReduxStore(entityManager.instanceId).transaction('Optimize connections', () => routeLinks(entityManager, onlyEntityIds));
+};
+
+const routeLinks = function(entityManager: EntityManager, onlyEntityIds?: ReadonlySet<string>): void {
   const nodes = entityManager.getAllEntities();
-  const edges = entityManager.getAllLinks();
-  
-  // 1. Convert to easily queriable map
+  const edges = entityManager.getAllLinks().filter(link =>
+    !isPortAnchorId(link.sourceAnchorId) && !isPortAnchorId(link.targetAnchorId)
+    && (!onlyEntityIds || onlyEntityIds.has(link.sourceEntityId) || onlyEntityIds.has(link.targetEntityId)));
   const nodeMap = new Map<string, DomainEntity>(nodes.map(n => [n.id, n]));
-  
+
   edges.forEach(link => {
     const src = nodeMap.get(link.sourceEntityId);
     const dst = nodeMap.get(link.targetEntityId);

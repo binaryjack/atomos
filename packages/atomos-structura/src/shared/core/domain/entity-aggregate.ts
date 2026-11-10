@@ -1,9 +1,7 @@
-/**
- * Domain Layer - Entity Aggregate Root
- * Manages entity lifecycle and business rules in pure domain logic
- */
+/** Domain Layer - Entity Aggregate Root: entity lifecycle and business rules in pure domain logic. */
+export type { EntityCreationOptions, WorkflowEntityFields } from './entity-options.types.js'
 import type { Property } from '@atomos-web/structura-core'
-
+import { type EntityCreationOptions, pickWorkflowFields, type WorkflowEntityFields } from './entity-options.types.js'
 export interface EntityPosition {
   readonly x: number;
   readonly y: number;
@@ -14,7 +12,7 @@ export interface EntityDimensions {
   readonly height: number;
 }
 
-export interface DomainEntity {
+export interface DomainEntity extends WorkflowEntityFields {
   readonly id: string;
   readonly name: string;
   readonly description?: string | undefined;
@@ -41,10 +39,9 @@ export const createEntityAggregate = function(
   name: string,
   position: EntityPosition = { x: 100, y: 100 },
   dimensions: EntityDimensions = { width: 200, height: 150 },
-  options?: { shape?: string; color?: string; description?: string; defaultCollapsed?: boolean; collapsed?: boolean }
+  options?: EntityCreationOptions
 ): DomainEntity {
   const now = Date.now();
-  
   return {
     id,
     name,
@@ -54,23 +51,16 @@ export const createEntityAggregate = function(
     properties: [],
     collapsed: options?.collapsed ?? options?.defaultCollapsed ?? false,
     defaultCollapsed: options?.defaultCollapsed,
+    ...pickWorkflowFields(options),
     position,
-    dimensions, 
+    dimensions,
     createdAt: now,
     updatedAt: now
   };
 };
 
-export const moveEntity = function(
-  entity: DomainEntity, 
-  newPosition: EntityPosition
-): DomainEntity {
-  return {
-    ...entity,
-    position: newPosition,
-    updatedAt: Date.now()
-  };
-};
+export const moveEntity = (entity: DomainEntity, newPosition: EntityPosition): DomainEntity =>
+  ({ ...entity, position: newPosition, updatedAt: Date.now() });
 
 export const resizeEntity = function(
   entity: DomainEntity,

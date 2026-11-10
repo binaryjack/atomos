@@ -87,7 +87,9 @@ const optionalErFields = (sink: ErrorSink, raw: Record<string, unknown>, path: s
   const color = optionalString(sink, raw, 'color', path);
   const description = optionalString(sink, raw, 'description', path);
   const collapsed = optionalBoolean(sink, raw, 'collapsed', path);
+  const parentId = optionalString(sink, raw, 'parentId', path);
   return {
+    ...(parentId ? { parentId } : {}),
     ...(properties !== undefined ? { properties } : {}),
     ...(shape !== undefined ? { shape } : {}),
     ...(color !== undefined ? { color } : {}),

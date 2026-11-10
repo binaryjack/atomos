@@ -10,6 +10,7 @@ import {
 import { isV1WorkspaceJson, migrateV1Workspace } from './migrate-v1-workspace.js';
 import { checkEdgeReferences, validateEdge } from './validate-edge.js';
 import { validateNode } from './validate-node.js';
+import { checkParentReferences } from './validate-parents.js';
 import { createErrorSink, type ErrorSink, isRecord, report, requireArray, requireNumber } from './validation-primitives.js';
 
 const validateViewport = (sink: ErrorSink, raw: unknown): DocumentViewport => {
@@ -51,8 +52,10 @@ export const validateCanvasDocument = (input: unknown): DocumentValidationResult
   if (!isRecord(input)) {
     return { ok: false, errors: [{ path: '', code: 'invalid-type', message: 'Document must be a JSON object' }] };
   }
-  if (input['schemaVersion'] !== CURRENT_DOCUMENT_SCHEMA_VERSION) {
-    const message = `Unsupported schemaVersion '${String(input['schemaVersion'])}', expected ${CURRENT_DOCUMENT_SCHEMA_VERSION}`;
+  // v2 -> v3 is additive (groups), so v2 documents validate as-is and are reported as migrated.
+  const version = input['schemaVersion'];
+  if (version !== CURRENT_DOCUMENT_SCHEMA_VERSION && version !== 2) {
+    const message = `Unsupported schemaVersion '${String(version)}', expected ${CURRENT_DOCUMENT_SCHEMA_VERSION} (or 2)`;
     return { ok: false, errors: [{ path: '/schemaVersion', code: 'unsupported-version', message }] };
   }
   const rawNodes = requireArray(sink, input, 'nodes', '');
@@ -61,8 +64,10 @@ export const validateCanvasDocument = (input: unknown): DocumentValidationResult
   const edges = collectUnique<WorkflowDocumentEdge>(sink, rawEdges.map((e, i) => validateEdge(sink, e, `/edges/${i}`)), 'edges');
   const viewport = validateViewport(sink, input['viewport']);
   checkEdgeReferences(sink, edges, new Map(nodes.map(node => [node.id, node])));
+  checkParentReferences(sink, nodes);
   if (sink.errors.length > 0) return { ok: false, errors: sink.errors };
-  return { ok: true, document: { schemaVersion: CURRENT_DOCUMENT_SCHEMA_VERSION, nodes, edges, viewport } };
+  const document = { schemaVersion: CURRENT_DOCUMENT_SCHEMA_VERSION, nodes, edges, viewport };
+  return version === 2 ? { ok: true, document, migratedFrom: 2 } : { ok: true, document };
 };
 
 /**

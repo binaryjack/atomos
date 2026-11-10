@@ -211,7 +211,6 @@ export const getCanvasAdapterFor = function(instanceId: string, schemaId: string
   if (!adapter) {
     adapter = createCanvasAdapter(instanceId);
     adapterRegistry.set(key, adapter);
-    console.log(`🏗️ Canvas adapter created for instance: ${instanceId}, schema: ${schemaId}`);
   }
   return adapter;
 };
@@ -220,7 +219,6 @@ export const getCanvasAdapterFor = function(instanceId: string, schemaId: string
 export const destroyCanvasAdapter = function(instanceId: string, schemaId: string): void {
   const key = `${instanceId}:${schemaId}`;
   adapterRegistry.delete(key);
-  console.log(`🗑️ Canvas adapter destroyed for instance: ${instanceId}, schema: ${schemaId}`);
 };
 
 // Legacy singleton structure changed to Map for proper instance isolation
@@ -229,7 +227,6 @@ const canvasAdapters = new Map<string, CanvasAdapter>();
 export const getCanvasAdapter = function(instanceId: string): CanvasAdapter {
   if (!canvasAdapters.has(instanceId)) {
     canvasAdapters.set(instanceId, createCanvasAdapter(instanceId));
-    console.log(`🏗️ Clean Architecture Canvas Adapter initialized for instance ${instanceId}`);
   }
   return canvasAdapters.get(instanceId)!;
 };

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import type { Cardinality, PortSpec, Property, RenderType } from '@atomos-web/structura-core';
 
-export const CURRENT_DOCUMENT_SCHEMA_VERSION = 2 as const;
+/** v3 adds groups: `parentId` on nodes (containers are nodes of type `group`). */
+export const CURRENT_DOCUMENT_SCHEMA_VERSION = 3 as const;
 
 export interface DocumentPoint {
   readonly x: number;
@@ -29,6 +30,8 @@ export interface WorkflowDocumentNode {
   readonly color?: string;
   readonly description?: string;
   readonly collapsed?: boolean;
+  /** Containing group node id (v3). */
+  readonly parentId?: string;
 }
 
 /** One edge of a versioned canvas document. Port ids are set for workflow links. */
@@ -80,5 +83,5 @@ export interface DocumentValidationError {
 }
 
 export type DocumentValidationResult =
-  | { readonly ok: true; readonly document: WorkflowCanvasDocument; readonly migratedFrom?: 1 }
+  | { readonly ok: true; readonly document: WorkflowCanvasDocument; readonly migratedFrom?: 1 | 2 }
   | { readonly ok: false; readonly errors: readonly DocumentValidationError[] };

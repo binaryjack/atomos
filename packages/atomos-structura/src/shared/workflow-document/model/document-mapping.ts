@@ -27,6 +27,7 @@ export const entityToDocumentNode = (entity: StoredEntity): WorkflowDocumentNode
   ...defined('color', entity.color),
   ...defined('description', entity.description),
   ...defined('collapsed', entity.collapsed),
+  ...defined('parentId', entity.parentId),
 });
 
 export const linkToDocumentEdge = (link: LinkProps): WorkflowDocumentEdge => ({
@@ -63,6 +64,7 @@ export const documentNodeToEntity = (node: WorkflowDocumentNode, now: number): E
     ...defined('color', node.color),
     ...defined('description', node.description),
     ...defined('collapsed', node.collapsed),
+    ...defined('parentId', node.parentId),
   };
   return node.shape === undefined ? stored : ({ ...stored, shape: node.shape } as unknown as Entity);
 };

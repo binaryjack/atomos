@@ -6,14 +6,14 @@ import type { Property } from '@atomos-web/structura-core'
 import { getGeneralSettings } from '../adapters/toolbox-config-manager.js'
 import type { ApplicationEvent } from '../application/entity-service.js'
 import { createEntityApplicationService } from '../application/entity-service.js'
-import type { DomainEntity, DomainLink, EntityDimensions, EntityPosition } from '../domain/entity-aggregate.js'
+import type { DomainEntity, DomainLink, EntityCreationOptions, EntityDimensions, EntityPosition } from '../domain/entity-aggregate.js'
 import { createEventBus, createPersistedEntityRepository, createPersistedLinkRepository } from '../infrastructure/entity-repository.js'
 
 // Simplified UI Interface - Hide CQRS complexity  
 export interface EntityManager {
   readonly instanceId: string;
   // Entity Commands (UI Actions)
-  readonly createEntity: (id: string, name: string, position?: EntityPosition, dimensions?: EntityDimensions, metadata?: { shape?: string; color?: string; description?: string; defaultCollapsed?: boolean; collapsed?: boolean; }) => void;
+  readonly createEntity: (id: string, name: string, position?: EntityPosition, dimensions?: EntityDimensions, metadata?: EntityCreationOptions) => void;
   readonly moveEntity: (entityId: string, position: EntityPosition) => void;
   readonly resizeEntity: (entityId: string, dimensions: EntityDimensions) => void;
   readonly updateEntityProperties: (entityId: string, properties: readonly Property[]) => void;
@@ -81,7 +81,7 @@ export const createEntityManager = function(instanceId: string): EntityManager {
     name: string, 
     position?: EntityPosition, 
     dimensions?: EntityDimensions,
-    metadata?: { shape?: string; color?: string; description?: string; defaultCollapsed?: boolean; collapsed?: boolean; }
+    metadata?: EntityCreationOptions
   ): void {
     applicationService.executeCommand({
       type: 'CreateEntity',
@@ -156,7 +156,6 @@ export const createEntityManager = function(instanceId: string): EntityManager {
     sourceEntityId: string,
     targetEntityId: string
   ): void {
-    console.log('[ENTITY-MANAGER] 🔗 Creating link:', { id, sourceAnchorId, targetAnchorId, sourceEntityId, targetEntityId });
     const settings = getGeneralSettings();
     applicationService.executeCommand({
       type: 'CreateLink',
@@ -167,7 +166,6 @@ export const createEntityManager = function(instanceId: string): EntityManager {
       targetEntityId,
       renderType: settings?.defaultLinkStyle
     });
-    console.log('[ENTITY-MANAGER] ✅ Link command executed');
   };
   
   const updateLinkProperties = function(linkId: string, properties: { sourceCardinality?: string | undefined; targetCardinality?: string | undefined; sourceProperty?: string | undefined; targetProperty?: string | undefined; renderType?: string | undefined; direction?: 'default' | 'left' | 'right' | 'both' | undefined; }): void {
@@ -246,7 +244,6 @@ export const createEntityManager = function(instanceId: string): EntityManager {
         links: getAllLinks()
       };
       devToolsConnection.init(initialState);
-      console.log(`🔧 Redux DevTools connected to EntityManager for instance ${instanceId}`);
       
       // Subscribe to events and send to DevTools
       eventUnsubscribe = eventBus.subscribe((event: ApplicationEvent) => {

@@ -26,7 +26,7 @@ const pick = (source: JsonRecord, keys: readonly string[]): JsonRecord => {
 const entityToCandidate = (raw: unknown): unknown => {
   if (!isRecord(raw)) return raw;
   return {
-    ...pick(raw, ['id', 'position', 'properties', 'shape', 'color', 'description', 'collapsed', 'config', 'metadata', 'ports']),
+    ...pick(raw, ['id', 'position', 'properties', 'shape', 'color', 'description', 'collapsed', 'config', 'metadata', 'ports', 'parentId']),
     ...(typeof raw['nodeType'] === 'string' ? { type: raw['nodeType'] } : {}),
     label: typeof raw['name'] === 'string' ? raw['name'] : raw['id'],
     size: raw['dimensions'],

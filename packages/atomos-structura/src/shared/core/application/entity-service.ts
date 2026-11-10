@@ -3,7 +3,7 @@
  * Orchestrates domain logic with clean command/query separation
  */
 import type { Property } from '@atomos-web/structura-core'
-import type { DomainEntity, DomainLink, EntityDimensions, EntityPosition, EntityRepository, LinkRepository } from '../domain/entity-aggregate.js'
+import type { DomainEntity, DomainLink, EntityCreationOptions, EntityDimensions, EntityPosition, EntityRepository, LinkRepository } from '../domain/entity-aggregate.js'
 import { createEntityAggregate, createLinkAggregate, moveEntity, resizeEntity, updateEntityMetadata, updateEntityName, updateEntityProperties, updateLinkEndpoints, updateLinkProperties } from '../domain/entity-aggregate.js'
 
 // ...
@@ -13,13 +13,7 @@ export interface CreateEntityCommand {
   readonly name: string;
   readonly position?: EntityPosition;
   readonly dimensions?: EntityDimensions;
-  readonly metadata?: {
-    readonly shape?: string;
-    readonly color?: string;
-    readonly description?: string;
-    readonly defaultCollapsed?: boolean;
-    readonly collapsed?: boolean;
-  };
+  readonly metadata?: EntityCreationOptions;
 }
 
 export interface MoveEntityCommand {
