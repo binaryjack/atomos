@@ -4,8 +4,8 @@
  * localStorage is mocked in-memory so these run in pure Node.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { create_redux_store } from '../src/core/create-redux-store.js';
-import { createWorkspaceApi } from '../src/core/create-workspace-api.js';
+import { create_redux_store } from '../src/shared/core/create-redux-store.js';
+import { createWorkspaceApi } from '../src/shared/core/create-workspace-api.js';
 import type { Entity } from '@atomos-web/structura-core';
 import type { AppSettings } from '../src/features/settings-page/types/settings-page.types.js';
 

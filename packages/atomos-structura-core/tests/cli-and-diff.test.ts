@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   applyArchitectureDiff,
   createProposedDiff,
-  executeStructuraCli,
   findCanvasForSchema,
   makeDefaultSchema,
   makeInitialState,
   updateSchemaById,
 } from '../src/index.js';
+import { executeStructuraCli } from '../src/shared/cli.js';
 
 describe('Structura Core — Workspace & Diff Invariants', () => {
   it('creates initial workspace state with default canvas and schema', () => {

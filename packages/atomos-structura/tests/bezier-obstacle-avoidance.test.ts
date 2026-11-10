@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bezierPath, getBezierControlPoints } from '../src/core/bezier.js';
+import { bezierPath, getBezierControlPoints } from '../src/shared/core/bezier.js';
 
 describe('Bézier Multi-Obstacle Collision Avoidance', () => {
   it('routes around multiple collinear intermediate obstacles with guaranteed clearance', () => {

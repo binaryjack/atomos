@@ -1,6 +1,6 @@
-import type { CanvasViewport } from '../../core/create-canvas-viewport.js';
-import type { EntityManager } from '../../core/presentation/entity-manager.js';
-import type { SchemaValidator, ValidationWarning } from '../../core/validation/create-schema-validator.js';
+import type { CanvasViewport } from '../../shared/core/create-canvas-viewport.js';
+import type { EntityManager } from '../../shared/core/presentation/entity-manager.js';
+import type { SchemaValidator, ValidationWarning } from '../../shared/core/validation/create-schema-validator.js';
 
 export interface ValidationOverlayResult {
   readonly element: HTMLElement;

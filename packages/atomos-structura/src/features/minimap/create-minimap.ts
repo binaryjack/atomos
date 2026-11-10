@@ -1,5 +1,5 @@
-import type { CanvasViewport } from '../../core/create-canvas-viewport.js';
-import type { EntityManager } from '../../core/presentation/entity-manager.js';
+import type { CanvasViewport } from '../../shared/core/create-canvas-viewport.js';
+import type { EntityManager } from '../../shared/core/presentation/entity-manager.js';
 
 const MINI_W = 200;
 const MINI_H = 130;

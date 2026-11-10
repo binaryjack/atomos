@@ -12,6 +12,8 @@ export interface WorkspaceConfig {
   readonly allow_multiple_schemas?: boolean;
   /** Disable local storage persistence for schemas, pushing responsibility to Redux/parent session. */
   readonly disableLocalStorage?: boolean;
+  /** Set to false to disable localStorage persistence entirely (alias of disableLocalStorage). */
+  readonly persistence?: boolean;
   /** Schema injection validation mode: 'strict' (throw error) or 'passive' (store errors as warnings) */
   readonly validationMode?: 'strict' | 'passive';
   /** Allow zooming via the mouse wheel. Default is true. */

@@ -1,9 +1,9 @@
 import { computeContrastColor, createButton, createFormularDropdown, createFormularInput, createFormularTextarea, createSignal } from '@atomos-web/prime'
 import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
 import { f } from '@binaryjack/formular.dev'
-import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
-import { getToolboxConfig } from '../../core/adapters/toolbox-config-manager.js'
-import { createFormularManager } from '../../core/create-formular-manager.js'
+import { getCanvasAdapter } from '../../shared/core/adapters/canvas-adapter.js'
+import { getToolboxConfig } from '../../shared/core/adapters/toolbox-config-manager.js'
+import { createFormularManager } from '../../shared/core/create-formular-manager.js'
 import { createEntityPropertyRow } from '../entity-with-edges/create-entity-property-row.js'
 
 import type { AtpModal } from '@atomos-web/prime'

@@ -1,4 +1,4 @@
-import type { ReduxStore, SchemaModel } from '../../types/redux-state.types.js';
+import type { ReduxStore, SchemaModel } from '../../shared/types/redux-state.types.js';
 
 export function createBreadcrumb(container: HTMLElement, store: ReduxStore): { destroy: () => void } {
   const el = document.createElement('div');

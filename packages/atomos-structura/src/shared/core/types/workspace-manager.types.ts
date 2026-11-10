@@ -1,0 +1,70 @@
+import type { Signal } from './signal.types.js';
+import type { WorkspaceState } from './workspace-state.types.js';
+import type { EntityInstance } from './entity-instance.types.js';
+import type { EntitySpawnFactory } from './entity-spawn-factory.types.js';
+import type { InteractiveBehaviorManager } from './interactive-behavior-manager.types.js';
+import type { LinkManager } from './link-manager.types.js';
+import type { EdgePosition } from '../../../features/edge/types/edge-position.types.js';
+import type { AlignmentGuide } from '../../../features/alignment/create-alignment-guides.js';
+
+export interface WorkspaceManager {
+  readonly instanceId: string;
+  readonly workspaceState: Signal<WorkspaceState>;
+  readonly behaviorManager: InteractiveBehaviorManager;
+  readonly linkManager: LinkManager;
+  readonly isReadonly?: () => boolean;
+  readonly registerEntity: (entity: EntityInstance) => void;
+  /** Removes an entity from the canvas. `silent` rebuilds DOM only, without deleting it from the store. */
+  readonly unregisterEntity: (entityId: string, options?: { readonly silent?: boolean }) => void;
+  readonly screenToSvgCoords: (clientX: number, clientY: number) => { x: number; y: number };
+  readonly startCachingCoords: () => void;
+  readonly stopCachingCoords: () => void;
+  readonly startLinkFromAnchor: (
+    anchorId: string,
+    anchorPos: { x: number; y: number },
+    entityId: string,
+    srcEdge: EdgePosition,
+    event: MouseEvent
+  ) => void;
+  readonly finalizeLinkToAnchor: (
+    anchorId: string,
+    anchorPos: { x: number; y: number },
+    entityId: string,
+    dstEdge: EdgePosition
+  ) => void;
+  readonly setEntitySpawnFactory: (factory: EntitySpawnFactory) => void;
+  readonly appendToCanvas: (element: SVGElement) => void;
+  readonly removeLinkById: (linkId: string, skipPersistence?: boolean) => void;
+  readonly restoreLink: (
+    linkId: string,
+    srcAnchorId: string,
+    srcPos: { x: number; y: number },
+    srcEntityId: string,
+    srcEdge: EdgePosition,
+    dstAnchorId: string,
+    dstPos: { x: number; y: number },
+    dstEntityId: string,
+    dstEdge: EdgePosition
+  ) => void;
+  readonly notifyAnchorHoverStart: (anchorId: string, entityId: string, edge: EdgePosition) => void;
+  readonly notifyAnchorHoverEnd: () => void;
+  readonly handleCanvasMouseMove: (event: MouseEvent) => void;
+  readonly updateAlignmentGuides: (draggingEntityId: string, position: { x: number; y: number }, dimensions: { width: number; height: number }) => AlignmentGuide[];
+  readonly clearAlignmentGuides: () => void;
+  readonly cleanup: {
+    readonly destroy: () => void;
+  };
+  /** Persistence hooks installed by the interactive entity layer. */
+  onLinkCreated?: (link: CreatedLinkInfo, isReconnect?: boolean) => void;
+  onLinkDeleted?: (linkId: string) => void;
+  onEntityDeleted?: (entityId: string) => void;
+}
+
+/** Link endpoints reported by the link finalizer when a user connection is completed. */
+export interface CreatedLinkInfo {
+  readonly id: string;
+  readonly sourceAnchorId: string;
+  readonly targetAnchorId: string;
+  readonly leftEntityId: string;
+  readonly rightEntityId: string;
+}

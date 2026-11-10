@@ -1,4 +1,4 @@
-import { computeShapeAnchorPos } from '../../canvas/geometry/compute-shape-anchor-pos.js';
+import { computeShapeAnchorPos } from '../../shared/geometry/compute-shape-anchor-pos.js';
 import { createSignal } from '@atomos-web/prime';
 import { createAnchor } from '@atomos-web/prime';
 import type { EdgeProps, EdgeResult, EdgeState } from './types/edge.types.js';

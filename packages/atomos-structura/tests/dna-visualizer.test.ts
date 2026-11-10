@@ -2,13 +2,13 @@
 // Proprietary and Confidential Source Code.
 
 import { describe, it, expect, vi } from 'vitest';
-import { DnaVisualizerCore } from '../src/neura/dna/dna-visualizer-core.js';
+import { DnaVisualizerCore } from '../src/widgets/neura/dna/dna-visualizer-core.js';
 import type {
   DnaOrganVisualPlugin,
   DnaCableVisualPlugin,
-} from '../src/neura/dna/dna-plugin-types.js';
-import type { NeuraInstance } from '../src/neura/create-neura-instance.js';
-import type { NeuraNode, NeuraEdge } from '../src/neura/core/neura-store.js';
+} from '../src/widgets/neura/dna/dna-plugin-types.js';
+import type { NeuraInstance } from '../src/widgets/neura/create-neura-instance.js';
+import type { NeuraNode, NeuraEdge } from '../src/widgets/neura/core/neura-store.js';
 
 function createMockNeura(): {
   neura: NeuraInstance;

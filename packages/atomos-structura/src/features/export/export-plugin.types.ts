@@ -1,4 +1,4 @@
-import type { SchemaGraphState } from '../../core/create-schema-graph-kernel.js';
+import type { SchemaGraphState } from '../../shared/core/create-schema-graph-kernel.js';
 
 export interface ExportPlugin {
   readonly id: string;

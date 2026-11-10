@@ -1,5 +1,5 @@
 import type { AppSettings, EntityStyleSettings, FontFamily, FontWeight, LinkStyleSettings } from './types/settings-page.types.js'
-import { applyAppearanceTokens, DEFAULT_ENTITY_STYLE, DEFAULT_LINK_STYLE } from '../../core/presentation/design-system.js'
+import { applyAppearanceTokens, DEFAULT_ENTITY_STYLE, DEFAULT_LINK_STYLE } from '../../shared/core/presentation/design-system.js'
 
 export interface AppearanceTabResult {
   readonly element: HTMLElement;
@@ -289,6 +289,6 @@ export const createAppearanceTab = (
 
   return {
     element: pane,
-    cleanup: { destroy: () => {} }
+    cleanup: { destroy: () => { pane.remove() } }
   }
 }

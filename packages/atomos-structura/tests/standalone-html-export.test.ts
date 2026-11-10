@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { generateStandaloneHtml } from '../src/features/export/create-standalone-html-exporter.js';
-import type { DAGExchange } from '../src/core/application/dag-service.js';
+import type { DAGExchange } from '../src/shared/core/application/dag-service.js';
 
 describe('Standalone HTML Exporter', () => {
   it('generates valid self-contained HTML with embedded DAG schema', () => {

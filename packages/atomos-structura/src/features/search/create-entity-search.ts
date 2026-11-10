@@ -1,6 +1,6 @@
-import type { CanvasViewport } from '../../core/create-canvas-viewport.js';
-import type { EntityManager } from '../../core/presentation/entity-manager.js';
-import type { DomainEntity } from '../../core/domain/entity-aggregate.js';
+import type { CanvasViewport } from '../../shared/core/create-canvas-viewport.js';
+import type { EntityManager } from '../../shared/core/presentation/entity-manager.js';
+import type { DomainEntity } from '../../shared/core/domain/entity-aggregate.js';
 
 export interface EntitySearchResult {
   readonly open: () => void;

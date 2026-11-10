@@ -1,5 +1,5 @@
 import type { Entity, EntityShape } from '@atomos-web/structura-core';
-import { createSVGShape } from '../../canvas/shape-renderers/create-svg-shape.js';
+import { createSVGShape } from '../../shared/canvas/shape-renderers/create-svg-shape.js';
 import { computeContrastColor } from '@atomos-web/prime';
 import type { Signal } from '@atomos-web/prime';
 

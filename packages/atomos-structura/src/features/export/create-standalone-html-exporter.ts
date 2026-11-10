@@ -1,4 +1,4 @@
-import type { DAGExchange } from '../../core/application/dag-service.js';
+import type { DAGExchange } from '../../shared/core/application/dag-service.js';
 
 export interface StandaloneHtmlOptions {
   readonly title?: string;

@@ -1,13 +1,13 @@
 import type { Signal } from '@atomos-web/prime'
 import { createEditableLabel, createSignal } from '@atomos-web/prime'
-import { createSVGShape } from '../../canvas/shape-renderers/create-svg-shape.js';
+import { createSVGShape } from '../../shared/canvas/shape-renderers/create-svg-shape.js';
 import type { ComponentType, DataType, Entity } from '@atomos-web/structura-core'
-import { createLegacyPropertyRepositoryBridge } from '../../core/adapters/legacy-property-bridge.js'
-import type { EntityStore } from '../../core/create-entity-store.js'
-import type { IStorageProvider } from '../../core/storage/types/storage-provider.types.js'
-import type { GlobalConfig } from '../../core/types/global-config.types.js'
+import { createLegacyPropertyRepositoryBridge } from '../../shared/core/adapters/legacy-property-bridge.js'
+import type { EntityStore } from '../../shared/core/create-entity-store.js'
+import type { IStorageProvider } from '../../shared/core/storage/types/storage-provider.types.js'
+import type { GlobalConfig } from '../../shared/core/types/global-config.types.js'
 import { createPropertySettingsModal } from '../modal/create-property-settings-modal.js'
-import { getInstanceReduxStore } from '../../core/create-redux-store.js'
+import { getInstanceReduxStore } from '../../shared/core/create-redux-store.js'
 import { createEntityFooter } from './create-entity-footer.js'
 import { createEntityHeader } from './create-entity-header.js'
 import { createEntityPropertyRow } from './create-entity-property-row.js'
@@ -394,7 +394,6 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
             propModal.open().catch(console.error);
           },
           onDeleteClick: async () => {
-            console.log(`[ENTITY-CONTENT] Deleting property ${prop.key} via clean architecture bridge...`);
             const repository = createLegacyPropertyRepositoryBridge({
               instanceId: props.instanceId,
               entityId: store.signal.value.id,
@@ -404,7 +403,6 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
 
             try {
               await repository.delete(prop.key);
-              console.log(`[ENTITY-CONTENT] ✓ Property ${prop.key} deleted and persisted`);
             } catch (err) {
               console.error(`[ENTITY-CONTENT] ✗ Failed to delete property ${prop.key}:`, err);
             }
@@ -459,7 +457,6 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
     color: undefined,
     isReadonly: !!props.isReadonly,
     onAddProperty: async () => {
-      console.log('[ENTITY-CONTENT] Adding new property via clean architecture bridge...');
       const repository = createLegacyPropertyRepositoryBridge({
         instanceId: props.instanceId,
         entityId: store.signal.value.id,
@@ -474,7 +471,6 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
           dataType: 'string',
           componentType: 'input',
         });
-        console.log('[ENTITY-CONTENT] ✓ Property added and persisted:', newProp.key);
       } catch (err) {
         console.error('[ENTITY-CONTENT] ✗ Failed to add property:', err);
       }

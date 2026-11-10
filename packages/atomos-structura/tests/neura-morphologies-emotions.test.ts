@@ -2,8 +2,8 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createNeuraInstance } from '../src/neura/create-neura-instance.js';
-import type { NeuraNode, NeuraEdge } from '../src/neura/core/neura-store.js';
+import { createNeuraInstance } from '../src/widgets/neura/create-neura-instance.js';
+import type { NeuraNode, NeuraEdge } from '../src/widgets/neura/core/neura-store.js';
 
 function createMockWebGLContext() {
   return {

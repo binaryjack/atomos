@@ -8,6 +8,7 @@ export type { EntityShape } from './types/entity-shape.types.js';
 export type { BoundaryType, Dimensions, Entity, Position, StickyNoteEntity, ZoneEntity } from './types/entity.types.js';
 export type { LinkProps, Waypoint } from './types/link.types.js';
 export type { Property } from './types/property.types.js';
+export type { PortDirection, PortSpec } from './shared/port.types.js';
 export type { SettingsProps } from './types/settings.types.js';
 export type { ConnectionConstraint, TopologicalRules } from './types/topology.types.js';
 export type { WorkspaceConfig } from './types/workspace-config.types.js';
@@ -57,8 +58,9 @@ export {
 export type { ProposedDiff, DiffApplicationResult } from './shared/architecture-diff.js';
 export { createProposedDiff, applyArchitectureDiff } from './shared/architecture-diff.js';
 
-// Headless CLI & SdkEnvelope
-export type { SdkEnvelope } from './shared/cli.js';
-export { successEnvelope, errorEnvelope, executeStructuraCli, runCli } from './shared/cli.js';
+// SdkEnvelope (browser-safe). The headless CLI (`executeStructuraCli`, `runCli`) imports `fs`
+// and lives in the separate Node-only entry `@atomos-web/structura-core/cli`.
+export type { SdkEnvelope } from './shared/sdk-envelope.js';
+export { successEnvelope, errorEnvelope } from './shared/sdk-envelope.js';
 
 

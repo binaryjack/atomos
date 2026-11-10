@@ -1,8 +1,8 @@
 import { createButton } from '@atomos-web/prime'
 import type { RenderType } from '@atomos-web/structura-core'
-import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
-import { getAppearanceSettings, setAppearanceSettings } from '../../core/adapters/toolbox-config-manager.js'
-import { applyAppearanceTokens, DEFAULT_LINK_STYLE } from '../../core/presentation/design-system.js'
+import { getCanvasAdapter } from '../../shared/core/adapters/canvas-adapter.js'
+import { getAppearanceSettings, setAppearanceSettings } from '../../shared/core/adapters/toolbox-config-manager.js'
+import { applyAppearanceTokens, DEFAULT_LINK_STYLE } from '../../shared/core/presentation/design-system.js'
 
 import type { AtpModal } from '@atomos-web/prime'
 

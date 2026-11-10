@@ -1,21 +1,13 @@
+import { CANVAS_SHORTCUTS } from '../canvas-keyboard/bind-canvas-keyboard.js';
+
 export interface ShortcutsPanelResult {
   readonly open: () => void;
   readonly close: () => void;
   readonly cleanup: { destroy: () => void };
 }
 
-const SHORTCUTS: ReadonlyArray<{ keys: readonly string[]; description: string }> = [
-  { keys: ['Ctrl', 'Z'], description: 'Undo' },
-  { keys: ['Ctrl', 'Y'], description: 'Redo' },
-  { keys: ['Ctrl', 'Shift', 'Z'], description: 'Redo (alt)' },
-  { keys: ['Ctrl', 'K'], description: 'Search entities' },
-  { keys: ['Ctrl', 'C'], description: 'Copy selected entity' },
-  { keys: ['Ctrl', 'V'], description: 'Paste entity' },
-  { keys: ['Delete'], description: 'Delete selected/multi-selected' },
-  { keys: ['Drag', 'canvas'], description: 'Rubber-band multi-select' },
-  { keys: ['Escape'], description: 'Cancel link drawing' },
-  { keys: ['Shift', '?'], description: 'Open this shortcuts panel' },
-];
+// Lists only shortcuts that are actually bound on the canvas host.
+const SHORTCUTS = CANVAS_SHORTCUTS;
 
 export const createShortcutsPanel = (): ShortcutsPanelResult => {
   let active = false;
@@ -87,9 +79,14 @@ export const createShortcutsPanel = (): ShortcutsPanelResult => {
   backdrop.appendChild(panel);
   document.body.appendChild(backdrop);
 
+  backdrop.setAttribute('tabindex', '-1');
+  backdrop.setAttribute('role', 'dialog');
+  backdrop.setAttribute('aria-label', 'Keyboard shortcuts');
+
   const open = (): void => {
     active = true;
     backdrop.style.display = 'flex';
+    backdrop.focus({ preventScroll: true });
   };
 
   const close = (): void => {
@@ -102,14 +99,15 @@ export const createShortcutsPanel = (): ShortcutsPanelResult => {
   const onKeyDown = (e: KeyboardEvent): void => {
     if (active && e.key === 'Escape') { e.preventDefault(); close(); }
   };
-  document.addEventListener('keydown', onKeyDown);
+  // Scoped to the dialog itself (focused on open), never to `document`.
+  backdrop.addEventListener('keydown', onKeyDown);
 
   return {
     open,
     close,
     cleanup: {
       destroy: () => {
-        document.removeEventListener('keydown', onKeyDown);
+        backdrop.removeEventListener('keydown', onKeyDown);
         backdrop.remove();
       },
     },

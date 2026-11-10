@@ -1,5 +1,5 @@
 import type { ToolboxConfiguration } from '@atomos-web/prime'
-import type { SchemaGraphKernel } from '../../../core/create-schema-graph-kernel.js'
+import type { SchemaGraphKernel } from '../../../shared/core/create-schema-graph-kernel.js'
 
 export interface CustomShape {
   id: string;

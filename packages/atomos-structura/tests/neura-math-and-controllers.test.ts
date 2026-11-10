@@ -8,10 +8,10 @@ import {
   mat4LookAt,
   mat4Multiply,
   parseHexColor,
-} from '../src/neura/math/math3d.js';
-import { generateDeterministicTopology } from '../src/neura/data/deterministic-topology-generator.js';
-import { CameraController } from '../src/neura/controllers/camera-controller.js';
-import type { NeuraViewport } from '../src/neura/core/neura-store.js';
+} from '../src/widgets/neura/math/math3d.js';
+import { generateDeterministicTopology } from '../src/widgets/neura/data/deterministic-topology-generator.js';
+import { CameraController } from '../src/widgets/neura/controllers/camera-controller.js';
+import type { NeuraViewport } from '../src/widgets/neura/core/neura-store.js';
 
 describe('Neura 3D Math Engine (math3d.ts)', () => {
   it('creates a standard 4x4 identity matrix', () => {

@@ -1,274 +1,107 @@
-import type { Entity, LinkProps } from '@atomos-web/structura-core';
-import type { ReduxState, ReduxStore } from '../../types/redux-state.types.js';
-import type { AppSettings } from '../settings-page/types/settings-page.types.js';
+// Copyright (c) 2026 Tadeop / Codernic AI Engineering.
+// SPDX-License-Identifier: AGPL-3.0-or-later
+import type { ReduxStore } from '../../shared/types/redux-state.types.js';
+import type { NodeState } from '../../shared/workflow-node/model/node-state.types.js';
+import { applyMcpChange, type McpChangePayload } from './apply-mcp-change.js';
+import { applyMcpWorkspaceEvent, type McpWorkspaceEvent } from './apply-mcp-workspace-event.js';
+import type { McpStatus, McpToolResult, McpTransport } from './mcp-transport.types.js';
+import { routeMcpServerEvent } from './route-mcp-server-event.js';
 
-export const mcpEventTarget = new EventTarget();
+export type { Disposable, McpServerEvent, McpStatus, McpToolResult, McpTransport } from './mcp-transport.types.js';
+export { mountMcpStatusBadge } from './create-mcp-status-badge.js';
+
+export interface McpSyncOptions {
+  /**
+   * Host-supplied, supervised transport (connection, reconnect/backoff, delivery).
+   * Without it only in-memory actions (`vbs-mcp-action` window events) are handled.
+   */
+  readonly transport?: McpTransport;
+  /** Per-canvas target for `vbs-mcp-action` events (created when omitted). */
+  readonly events?: EventTarget;
+  /** Restricts window-level `vbs-mcp-action` proxies carrying an `instanceId` to this canvas. */
+  readonly instanceId?: string;
+  /** Receives `node-progress` events — routed to the runtime overlay, never to the document. */
+  readonly onNodeProgress?: (nodeId: string, state: NodeState) => void;
+  /** Called after remote entity/link changes were applied (lets the editor reconcile its DOM). */
+  readonly onRemoteChange?: () => void;
+}
 
 export interface McpSyncResult {
   readonly cleanup: () => void;
+  /** This canvas's MCP action bus (`vbs-mcp-action` CustomEvents). */
+  readonly events: EventTarget;
+  /** Latest transport status (`idle` when no transport was supplied). */
+  readonly status: () => McpStatus;
+  readonly onStatus: (listener: (status: McpStatus) => void) => () => void;
 }
 
-interface McpWorkspaceEvent {
-  type: 'settings-updated' | 'schema-created' | 'schema-renamed' | 'schema-deleted' | 'schema-activated' | 'state-loaded'
-    | 'canvas-created' | 'canvas-renamed' | 'canvas-deleted' | 'canvas-activated';
-  settings?: AppSettings;
-  id?: string;
-  name?: string;
-  state?: ReduxState;
-}
-
-export const createMcpSync = (
-  store: ReduxStore,
-  mcpUrl?: string,
-): McpSyncResult => {
-  let es: EventSource | null = null;
-  let syncing = false;
-
-  const applyChange = (data: { schema_id?: string; entities: Entity[]; links: LinkProps[] }): void => {
-    if (syncing) return;
-    syncing = true;
-    try {
-      const st = store.get_state();
-      const activeCanvas = st.workspace.canvases[st.workspace.active_canvas_id];
-      // Use the schema_id from the SSE payload if provided, otherwise fall back to active
-      const schemaId = data.schema_id ?? activeCanvas?.active_schema_id ?? '';
-      const schema = activeCanvas?.schemas[schemaId];
-      const existingEntityIds = new Set((schema?.entities ?? []).map(e => e.id));
-      const existingLinkIds = new Set((schema?.links ?? []).map(l => l.id));
-
-      // entity-added / entity-updated
-      data.entities.forEach(e => {
-        if (existingEntityIds.has(e.id)) {
-          store.dispatch({ type: 'entity-updated', schema_id: schemaId, entity: e });
-        } else {
-          store.dispatch({ type: 'entity-added', schema_id: schemaId, entity: e });
-        }
-      });
-
-      // entity-removed (present in Redux but missing from MCP payload)
-      const incomingEntityIds = new Set(data.entities.map(e => e.id));
-      (schema?.entities ?? []).forEach(e => {
-        if (!incomingEntityIds.has(e.id)) {
-          store.dispatch({ type: 'entity-removed', schema_id: schemaId, entity_id: e.id });
-        }
-      });
-
-      // link-created for new links
-      data.links.forEach(l => {
-        if (!existingLinkIds.has(l.id)) {
-          store.dispatch({
-            type: 'link-created',
-            schema_id: schemaId,
-            link_id: l.id,
-            from_id: l.leftEntityId,
-            to_id: l.rightEntityId,
-            from_anchor: l.leftAnchorId,
-            to_anchor: l.rightAnchorId,
-            leftCardinality: l.leftCardinality,
-            rightCardinality: l.rightCardinality,
-          });
-        }
-      });
-    } finally {
-      syncing = false;
-    }
-  };
-
-  const applyWorkspaceEvent = (ev: McpWorkspaceEvent): void => {
-    if (syncing) return;
-    syncing = true;
-    try {
-      switch (ev.type) {
-        case 'state-loaded':
-          if (ev.state) store.dispatch({ type: 'state-loaded', state: ev.state });
-          break;
-        case 'settings-updated':
-          if (ev.settings) store.dispatch({ type: 'settings-updated', settings: ev.settings });
-          break;
-        case 'schema-created':
-          if (ev.id && ev.name) store.dispatch({ type: 'schema-created', id: ev.id, name: ev.name });
-          break;
-        case 'schema-renamed':
-          if (ev.id && ev.name) store.dispatch({ type: 'schema-renamed', id: ev.id, name: ev.name });
-          break;
-        case 'schema-deleted':
-          if (ev.id) store.dispatch({ type: 'schema-deleted', id: ev.id });
-          break;
-        case 'schema-activated':
-          if (ev.id) store.dispatch({ type: 'schema-activated', id: ev.id });
-          break;
-        case 'canvas-created':
-          if (ev.id && ev.name) store.dispatch({ type: 'canvas-created', id: ev.id, name: ev.name });
-          break;
-        case 'canvas-renamed':
-          if (ev.id && ev.name) store.dispatch({ type: 'canvas-renamed', id: ev.id, name: ev.name });
-          break;
-        case 'canvas-deleted':
-          if (ev.id) store.dispatch({ type: 'canvas-deleted', id: ev.id });
-          break;
-        case 'canvas-activated':
-          if (ev.id) store.dispatch({ type: 'canvas-activated', id: ev.id });
-          break;
-      }
-    } finally {
-      syncing = false;
-    }
-  };
-
-  // ── In-memory transport handler ─────────────────────────────────────────────
-  // Processes vbs-mcp-action events dispatched by handleMcpCall() directly,
-  // without requiring the HTTP MCP server to be running.
-  const handleInMemoryAction = (e: Event) => {
-    const { action, sendResult, mcpUrl: eventMcpUrl } = (e as CustomEvent).detail;
-    
-    // Only handle in-memory calls
-    if (eventMcpUrl !== 'in-memory') return;
-
-    // Route to internal handlers (undo/redo are normally handled here by SSE)
-    if (action === 'structura_undo') {
-      store.undo();
-      if (sendResult) sendResult({});
-    } else if (action === 'structura_redo') {
-      store.redo();
-      if (sendResult) sendResult({});
-    }
-  };
-  mcpEventTarget.addEventListener('vbs-mcp-action', handleInMemoryAction);
-
-  // ── Window Proxy ────────────────────────────────────────────────────────────
-  // Allows external host applications (like the Consumer Simulator) to dispatch
-  // MCP actions directly on the window object.
-  const handleWindowProxy = (e: Event) => {
-    const detail = (e as CustomEvent).detail;
-    // Forward the external event to our internal target, marking it as in-memory
-    mcpEventTarget.dispatchEvent(new CustomEvent('vbs-mcp-action', {
-      detail: { ...detail, mcpUrl: 'in-memory' }
-    }));
-  };
-  if (typeof window !== 'undefined') {
-    window.addEventListener('vbs-mcp-action', handleWindowProxy);
-  }
-
-  if (mcpUrl && mcpUrl.trim().length > 0 && mcpUrl !== 'in-memory') {
-    try {
-      es = new EventSource(`${mcpUrl}/events`);
-      es.addEventListener('change', (e: MessageEvent) => {
-        try {
-          const data = JSON.parse(e.data) as { entities: Entity[]; links: LinkProps[] };
-          applyChange(data);
-        } catch { /* ignore malformed events */ }
-      });
-      es.addEventListener('workspace', (e: MessageEvent) => {
-        try {
-          applyWorkspaceEvent(JSON.parse(e.data) as McpWorkspaceEvent);
-        } catch { /* ignore malformed events */ }
-      });
-      es.addEventListener('node-progress', (e: MessageEvent) => {
-        try {
-          const { schema_id, node_id, status, log_stream } = JSON.parse(e.data);
-          const st = store.get_state();
-          const activeCanvas = st.workspace.canvases[st.workspace.active_canvas_id];
-          
-          // Use the schema_id from the SSE payload if provided, otherwise fall back to active
-          const schemaIdToUse = schema_id ?? activeCanvas?.active_schema_id ?? '';
-          const schema = activeCanvas?.schemas[schemaIdToUse];
-          
-          const entity = schema?.entities.find(e => e.id === node_id);
-          if (entity) {
-            store.dispatch({
-              type: 'entity-updated',
-              schema_id: schemaIdToUse,
-              entity: {
-                ...entity,
-                properties: (() => {
-                  const keys = new Set(entity.properties.map(p => p.key));
-                  const props = entity.properties.map(p => {
-                    if (p.key === 'status') return { ...p, value: status };
-                    if (p.key === 'log_stream') return { ...p, value: log_stream };
-                    return p;
-                  });
-                  if (!keys.has('status')) {
-                    props.push({ key: 'status', label: 'Status', value: status, dataType: 'string', componentType: 'input' });
-                  }
-                  if (!keys.has('log_stream')) {
-                    props.push({ key: 'log_stream', label: 'Log Stream', value: log_stream, dataType: 'string', componentType: 'textarea' });
-                  }
-                  return props;
-                })()
-              }
-            });
-          }
-        } catch { /* ignore malformed events */ }
-      });
-      es.addEventListener('viewport-updated', (e: MessageEvent) => {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.viewport) {
-            store.dispatch({ type: 'viewport-updated', viewport: data.viewport });
-          }
-        } catch { /* ignore malformed events */ }
-      });
-      es.addEventListener('canvas-appearance-updated', (e: MessageEvent) => {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.canvas_id && data.appearance !== undefined) {
-            store.dispatch({ type: 'canvas-appearance-updated', canvas_id: data.canvas_id, appearance: data.appearance });
-          }
-        } catch { /* ignore malformed events */ }
-      });
-      es.addEventListener('frontend-action-request', (e: MessageEvent) => {
-        try {
-          const data = JSON.parse(e.data) as { action: string; reqId: string; args: any };
-          const sendResult = (result: any = {}, error?: string) => {
-            fetch(`${mcpUrl}/atomos-structura/tool-result`, {
-              method: 'POST',
-              body: JSON.stringify({ reqId: data.reqId, result, error })
-            }).catch(console.error);
-          };
-          
-          if (data.action === 'structura_undo') {
-            store.undo();
-            sendResult();
-          } else if (data.action === 'structura_redo') {
-            store.redo();
-            sendResult();
-          } else {
-            // Dispatch custom event for toolbar/page to handle securely
-            mcpEventTarget.dispatchEvent(new CustomEvent('vbs-mcp-action', { 
-              detail: { ...data, mcpUrl, sendResult } 
-            }));
-          }
-        } catch { /* ignore malformed events */ }
-      });
-      
-      // Fallback for older atomos-structura-mcp versions that emit this event directly
-      es.addEventListener('structura_report_progress', (e: MessageEvent) => {
-        try {
-          const data = JSON.parse(e.data);
-          mcpEventTarget.dispatchEvent(new CustomEvent('vbs-mcp-action', { 
-            detail: { action: 'structura_report_progress', reqId: data.reqId || '', args: data, mcpUrl, sendResult: () => {} } 
-          }));
-        } catch { /* ignore malformed events */ }
-      });
-      
-      es.onerror = () => {
-        // Close the EventSource on error to prevent infinite ERR_CONNECTION_REFUSED spam
-        if (es?.readyState === EventSource.CONNECTING || es?.readyState === EventSource.CLOSED) {
-          es.close();
-        }
-      };
-    } catch { /* EventSource not available or URL invalid */ }
-  }
-
-  return {
-    cleanup: () => { 
-      mcpEventTarget.removeEventListener('vbs-mcp-action', handleInMemoryAction);
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('vbs-mcp-action', handleWindowProxy);
-      }
-      es?.close(); 
-      es = null; 
-    },
+const guarded = (options: McpSyncOptions, fn: () => void): (() => void) => {
+  let busy = false;
+  return () => {
+    if (busy) return;
+    busy = true;
+    try { fn(); } finally { busy = false; }
+    options.onRemoteChange?.();
   };
 };
 
+/** In-memory actions (handleMcpCall / window proxy) only drive undo and redo here. */
+const bindInMemory = (store: ReduxStore, events: EventTarget, options: McpSyncOptions): (() => void) => {
+  const onAction = (e: Event): void => {
+    const { action, sendResult, mcpUrl } = (e as CustomEvent).detail as { action?: string; sendResult?: (r: unknown) => void; mcpUrl?: string };
+    if (mcpUrl !== 'in-memory') return;
+    if (action === 'structura_undo') { store.undo(); sendResult?.({}); }
+    if (action === 'structura_redo') { store.redo(); sendResult?.({}); }
+  };
+  const onWindow = (e: Event): void => {
+    const detail = (e as CustomEvent).detail as { instanceId?: string } | null;
+    if (detail?.instanceId && options.instanceId && detail.instanceId !== options.instanceId) return;
+    events.dispatchEvent(new CustomEvent('vbs-mcp-action', { detail: { ...detail, mcpUrl: 'in-memory' } }));
+  };
+  events.addEventListener('vbs-mcp-action', onAction);
+  if (typeof window !== 'undefined') window.addEventListener('vbs-mcp-action', onWindow);
+  return () => {
+    events.removeEventListener('vbs-mcp-action', onAction);
+    if (typeof window !== 'undefined') window.removeEventListener('vbs-mcp-action', onWindow);
+  };
+};
+
+/**
+ * Binds a canvas store to an MCP server through an injected transport. This module never
+ * opens sockets or performs HTTP calls: it only consumes transport events and hands tool
+ * results back to `transport.send`.
+ */
+export const createMcpSync = (store: ReduxStore, options: McpSyncOptions = {}): McpSyncResult => {
+  const events = options.events ?? new EventTarget();
+  const statusListeners = new Set<(status: McpStatus) => void>();
+  let status: McpStatus = 'idle';
+  let pendingChange: McpChangePayload | undefined;
+  let pendingWorkspace: McpWorkspaceEvent | undefined;
+  const runChange = guarded(options, () => { if (pendingChange) applyMcpChange(store, pendingChange); });
+  const runWorkspace = guarded(options, () => { if (pendingWorkspace) applyMcpWorkspaceEvent(store, pendingWorkspace); });
+  const setStatus = (next: McpStatus): void => {
+    if (next === status) return;
+    status = next;
+    statusListeners.forEach(listener => listener(next));
+  };
+  const send = (result: McpToolResult): void => {
+    options.transport?.send(result).catch((error: unknown) => console.error('[Structura] MCP tool result failed:', error));
+  };
+  const unbindInMemory = bindInMemory(store, events, options);
+  const connection = options.transport?.connect(event => routeMcpServerEvent(event, {
+    store, events, send, onNodeProgress: options.onNodeProgress,
+    applyChange: data => { pendingChange = data; runChange(); },
+    applyWorkspaceEvent: data => { pendingWorkspace = data; runWorkspace(); },
+  }), setStatus);
+  return {
+    events,
+    status: () => status,
+    onStatus: listener => { statusListeners.add(listener); return () => { statusListeners.delete(listener); }; },
+    cleanup: () => {
+      unbindInMemory();
+      connection?.dispose();
+      setStatus(options.transport ? 'disconnected' : 'idle');
+      statusListeners.clear();
+    },
+  };
+};

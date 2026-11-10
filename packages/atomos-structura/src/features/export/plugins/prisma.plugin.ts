@@ -1,5 +1,5 @@
-import { createSchemaGraphKernel } from '../../../core/create-schema-graph-kernel.js';
-import { createPrismaAdapter } from '../../../adapters/create-prisma-adapter.js';
+import { createSchemaGraphKernel } from '../../../shared/core/create-schema-graph-kernel.js';
+import { createPrismaAdapter } from '../../../shared/adapters/create-prisma-adapter.js';
 import type { ExportPlugin } from '../export-plugin.types.js';
 
 export const prismaPlugin: ExportPlugin = {

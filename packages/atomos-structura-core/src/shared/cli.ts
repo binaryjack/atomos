@@ -5,26 +5,10 @@ import { computeGraphMetrics } from '../analysis/graph-metrics.js';
 import type { Entity } from '../types/entity.types.js';
 import type { LinkProps } from '../types/link.types.js';
 
-export interface SdkEnvelope<T = unknown> {
-  ok: boolean;
-  namespace: string;
-  data: T | null;
-  error: string | null;
-}
+import { errorEnvelope, type SdkEnvelope, successEnvelope } from './sdk-envelope.js';
 
-export const successEnvelope = <T>(data: T): SdkEnvelope<T> => ({
-  ok: true,
-  namespace: '@atomos-web/structura',
-  data,
-  error: null,
-});
-
-export const errorEnvelope = (error: string): SdkEnvelope<null> => ({
-  ok: false,
-  namespace: '@atomos-web/structura',
-  data: null,
-  error,
-});
+// Node-only entry (`@atomos-web/structura-core/cli`): never re-exported from the browser-safe root index.
+export { errorEnvelope, successEnvelope, type SdkEnvelope };
 
 interface SchemaJson {
   entities?: Entity[];

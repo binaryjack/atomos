@@ -1,4 +1,4 @@
-import type { ReduxStore } from '../../types/redux-state.types.js';
+import type { ReduxStore } from '../../shared/types/redux-state.types.js';
 
 export function createGroupPalette(container: HTMLElement, store: ReduxStore): { destroy: () => void } {
   const panel = document.createElement('div');

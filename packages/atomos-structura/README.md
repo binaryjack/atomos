@@ -106,43 +106,35 @@ container.appendChild(element);
 
 ---
 
-### 4. Neura 3D WebGL Neural Graph Engine
+### 4. Workflow Designer Canvas (typed ports, validation, overlay)
 
 ```typescript
-import { createNeuraInstance, type NeuraNode, type NeuraEdge } from '@atomos-web/structura';
+const canvas = createCanvasPage('flow-editor', { persistence: false });
+canvas.nodeTypes.register({ type: 'task', label: 'Task', ports: [
+  { id: 'in', direction: 'in', dataType: 'json' }, { id: 'out', direction: 'out', dataType: 'json' }] });
+const a = canvas.addNode({ type: 'task', position: { x: 0, y: 0 } });
+const b = canvas.addNode({ type: 'task', position: { x: 320, y: 0 } });
+canvas.setConnectionOptions({ preventCycles: true });
+canvas.connect({ nodeId: a, portId: 'out' }, { nodeId: b, portId: 'in' });
+canvas.on('connection:rejected', ({ reason }) => showToast(reason));
+canvas.overlay.setNodeState(a, { status: 'running', progress: 0.4 }); // runtime only, never undoable
+canvas.transaction('Bulk edit', () => { /* every change here = one undo step */ });
+const doc = canvas.exportDocument(); // { schemaVersion: 2, nodes, edges, viewport }
+const result = canvas.importDocument(doc); // validated, v1 workspace JSON migrated, never partial
+```
 
-const canvas = document.getElementById('neura-canvas') as HTMLCanvasElement;
+Full API (ports, node types, validator, overlay, events, keyboard, documents, MCP):
+[documentation/workflow-canvas.md](documentation/workflow-canvas.md).
+Deep imports moved to Feature-Sliced folders in 6.0.0 (`dist/pages`, `dist/shared`, `dist/widgets`, `dist/app`).
 
-const neura = createNeuraInstance(canvas, {
-  theme: 'cyber',
-  labelsMode: 'focus-only', // 'focus-only' (hover/click only), 'auto', or 'always'
-  physicsParams: {
-    attractionForce: 0.03,
-    appartenanceGravity: 0.05,
-    repulsionForce: 0.02,
-    restingDistance: 90,
-    idealRadius: 180,
-    zSpread: 0.85,
-    globalGravity: 0.0003,
-    alphaDecay: 0.98,
-  },
-  onNodeClick: (node) => console.log('Selected node:', node),
-  onNodeHover: (node) => console.log('Hovered node:', node),
-  onFPS: (fps) => console.log('Current FPS:', fps),
-});
+### 5. Neura 3D WebGL Neural Graph Engine
 
-// Load nodes & edges into 3D physics worker
+```typescript
+import { createNeuraInstance } from '@atomos-web/structura';
+const neura = createNeuraInstance(canvasElement, { theme: 'cyber', labelsMode: 'focus-only' });
 neura.loadGraph(nodes, edges);
-neura.setAutoRotate(true, 0.18);
-
-// Real-Time Telemetry & Synaptic Illumination
 neura.setNodeActivity('slot-0', 0.85, 'routing');
 neura.triggerEnergyBeam('slot-0', 'slot-1', '#38bdf8', 750);
-
-// Empathic Voice / Cognitive Listening Feedback
-neura.setCognitiveCharge(0.75, 0); // VAD user speech energy charge
-neura.fireThinkingPulse('#f59e0b'); // Deliberation 3D shockwave
-neura.releaseCognitiveCharge(1); // Release energy to active specialist slot
 ```
 
 ---
@@ -155,7 +147,7 @@ neura.releaseCognitiveCharge(1); // Release energy to active specialist slot
 |---|---|---|
 | `instanceId` | `string` | **Required.** Unique identifier for multi-instance store isolation. |
 | `config` | `WorkspaceConfig` | Runtime feature toggles and operational mode overrides. |
-| `mcpUrl` | `string` | Optional URL of a running MCP server for real-time synchronization. |
+| `mcpTransport` | `McpTransport` | Optional host-supplied MCP transport (atomos performs no network I/O; see documentation/workflow-canvas.md). |
 
 ### `createNeuraInstance(canvas, options)`
 

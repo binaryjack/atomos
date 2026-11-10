@@ -1,4 +1,4 @@
-import type { SchemaGraphKernel } from '../../core/create-schema-graph-kernel.js';
+import type { SchemaGraphKernel } from '../../shared/core/create-schema-graph-kernel.js';
 import {
   getExportPlugins,
   getCustomExportPlugins,

@@ -5,7 +5,7 @@
  * getConfig, subscribe/unsubscribe, isolation between calls.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { createMenuControl } from '../src/core/create-menu-control.js';
+import { createMenuControl } from '../src/shared/core/create-menu-control.js';
 import type { WorkspaceMenuConfig } from '@atomos-web/structura-core';
 
 // ── helpers ────────────────────────────────────────────────────────────────

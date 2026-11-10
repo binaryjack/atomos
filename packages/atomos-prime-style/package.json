@@ -1,35 +1,35 @@
 {
-  "name": "@atomos-web/prime-style",
-  "version": "2.3.10",
-  "license": "AGPL-3.0-or-later",
-  "type": "module",
-  "publishConfig": {
-    "access": "public"
+  "devDependencies": {
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./styles": "./src/styles/index.css",
-    "./*": "./*"
+    "./*": "./*",
+    "./styles": "./src/styles/index.css"
+  },
+  "license": "AGPL-3.0-or-later",
+  "main": "./dist/index.js",
+  "name": "@atomos-web/prime-style",
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && tailwindcss -i ./src/styles/index.css -o ./dist/styles.css",
-    "dev": "tsc -p tsconfig.build.json --watch",
     "build:css": "tailwindcss -i ./src/styles/index.css -o ./dist/styles.css --watch",
-    "test": "vitest run --passWithNoTests",
+    "clean": "powershell -Command \"Remove-Item -Force -Recurse dist -ErrorAction SilentlyContinue; exit 0\"",
+    "dev": "tsc -p tsconfig.build.json --watch",
     "lint": "eslint src --ext .ts",
-    "type-check": "tsc --noEmit",
-    "clean": "powershell -Command \"Remove-Item -Force -Recurse dist -ErrorAction SilentlyContinue; exit 0\""
+    "test": "vitest run --passWithNoTests",
+    "type-check": "tsc --noEmit"
   },
-  "devDependencies": {
-    "typescript": "^5.3.0",
-    "vitest": "^1.0.0",
-    "tailwindcss": "^3.4.0",
-    "autoprefixer": "^10.4.0",
-    "postcss": "^8.4.0"
-  }
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "version": "2.3.10"
 }

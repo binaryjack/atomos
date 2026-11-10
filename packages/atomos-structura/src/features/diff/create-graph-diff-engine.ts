@@ -1,5 +1,5 @@
-import type { DAGExchange } from '../../core/application/dag-service.js';
-import type { DomainEntity, DomainLink } from '../../core/domain/entity-aggregate.js';
+import type { DAGExchange } from '../../shared/core/application/dag-service.js';
+import type { DomainEntity, DomainLink } from '../../shared/core/domain/entity-aggregate.js';
 
 export type DiffChangeType = 'added' | 'modified' | 'deleted' | 'unchanged';
 

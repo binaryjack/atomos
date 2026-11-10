@@ -3,9 +3,9 @@ import type { DataType, Property } from '@atomos-web/structura-core'
 import { COMPONENT_TYPES, DATA_TYPES } from '@atomos-web/structura-core'
 import type { IFormular, IObjectShape } from '@binaryjack/formular.dev'
 import { f } from '@binaryjack/formular.dev'
-import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
-import { createFormularManager } from '../../core/create-formular-manager.js'
-import { selectEntityById, selectPropertyByKey } from '../../core/selectors.js'
+import { getCanvasAdapter } from '../../shared/core/adapters/canvas-adapter.js'
+import { createFormularManager } from '../../shared/core/create-formular-manager.js'
+import { selectEntityById, selectPropertyByKey } from '../../shared/core/selectors.js'
 import { createValidationBadge } from './create-validation-badge.js'
 import { createValidationModal } from './create-validation-modal.js'
 
@@ -57,7 +57,6 @@ export const createPropertySettingsModal = function(
 
   // Enhanced form initialization using FormularManager
   const initializeForm = async (preservedData?: any) => {
-    console.log('[PROPERTY-MODAL] Initializing form with FormularManager, preserved data:', preservedData);
     
     try {
       const liveProperty = selectPropertyByKey(props.instanceId, props.entityId, props.propertyKey);
@@ -192,7 +191,7 @@ export const createPropertySettingsModal = function(
         valueInputWrap.appendChild(activeValueInput);
 
         // Fetch options
-        import('../../core/create-redux-store.js').then(({ getInstanceReduxStore }) => {
+        import('../../shared/core/create-redux-store.js').then(({ getInstanceReduxStore }) => {
           try {
             const config = getInstanceReduxStore(props.instanceId).get_state().workspace.config;
             if (config?.onLoadOptions) {
@@ -264,7 +263,6 @@ export const createPropertySettingsModal = function(
     const validationBadge = createValidationBadge({
       ...(currentValidation !== undefined ? { validation: currentValidation } : {}),
       onClick: async () => {
-        console.log('[PROPERTY-MODAL] Opening validation modal with FormularManager...');
         
         // Get current form data before opening validation modal
         const currentData = form.getData();
@@ -286,7 +284,6 @@ export const createPropertySettingsModal = function(
           validationModal.modal.remove();
           
           // Recreate the form with preserved data + new validation
-          console.log('[PROPERTY-MODAL] Validation modal closed - recreating form with FormularManager...');
           await initializeForm(currentData);
           
         } catch (error) {
@@ -323,7 +320,6 @@ export const createPropertySettingsModal = function(
       size: 'md',
       children: 'Save',
       onClick: async () => {
-        console.log('[PROPERTY-MODAL-DEBUG] Save clicked! Validating form...', { entityId: props.entityId, propertyKey: props.propertyKey });
 
         if (!currentForm) {
           console.warn('[PROPERTY-MODAL-DEBUG] No form available for validation');
@@ -362,15 +358,12 @@ export const createPropertySettingsModal = function(
         console.warn('[PROPERTY-MODAL-DEBUG] Manual extraction failed:', err);
       }
 
-      console.log('[PROPERTY-MODAL-DEBUG] Final form data retrieved:', data);
 
       // Update via Clean Architecture Adapter
       const entityToUpdate = selectEntityById(props.instanceId, props.entityId);
-      console.log('[PROPERTY-MODAL-DEBUG] Entity to update found?', !!entityToUpdate, entityToUpdate);
       
       if (entityToUpdate) {
         const liveProperty = entityToUpdate.properties.find((p: any) => p.key === props.propertyKey);
-        console.log('[PROPERTY-MODAL-DEBUG] Live property found?', !!liveProperty, liveProperty);
         
         if (!liveProperty) {
           console.warn('[PROPERTY-MODAL-DEBUG] Aborting. liveProperty not found for key:', props.propertyKey);
@@ -388,7 +381,6 @@ export const createPropertySettingsModal = function(
           } : p
         );
 
-        console.log('[PROPERTY-MODAL-DEBUG] Dispatching updateEntityProperties to Clean Architecture. New props:', newProperties);
         getCanvasAdapter(props.instanceId).updateEntityProperties(props.entityId, newProperties as Property[]);
       } else {
         console.warn('[PROPERTY-MODAL-DEBUG] Aborting. entityToUpdate not found for id:', props.entityId);
@@ -404,14 +396,12 @@ export const createPropertySettingsModal = function(
     footer.appendChild(cancelBtn.element);
     footer.appendChild(saveBtn.element);
     
-    console.log('[PROPERTY-MODAL] ✓ Form fields created successfully with FormularManager');
   };
 
   // Override modal's open method to implement lazy initialization
   const originalOpen = modal.open.bind(modal);
   modal.open = async function<T = void>(options?: ModalOptions<T>): Promise<ModalResult<T>> {
     if (!isInitialized) {
-      console.log('[PROPERTY-MODAL] First open - initializing form with FormularManager...');
       try {
         await initializeForm();
         isInitialized = true;
@@ -438,7 +428,6 @@ export const createPropertySettingsModal = function(
   // Override modal's close method to ensure proper cleanup
   const originalClose = modal.close.bind(modal);
   modal.close = function(result?: any) {
-    console.log('[PROPERTY-MODAL] Closing modal - cleaning up with FormularManager');
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }

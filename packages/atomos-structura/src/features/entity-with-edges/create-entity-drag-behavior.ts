@@ -1,9 +1,8 @@
 import type { Signal } from '@atomos-web/prime'
-import type { WorkspaceManager } from '../../core/types/workspace-manager.types.js'
+import type { WorkspaceManager } from '../../shared/core/types/workspace-manager.types.js'
 import { calculateSnappedPosition } from '../alignment/create-alignment-guides.js'
-import { getGeneralSettings } from '../../core/adapters/toolbox-config-manager.js'
-import { autoRouteLinks } from '../../core/application/dag-service.js'
-import { getEntityManager } from '../../core/presentation/entity-manager.js'
+import { getGeneralSettings } from '../../shared/core/adapters/toolbox-config-manager.js'
+import { createDragGroup, type DragGroup } from './create-drag-group.js'
 
 export interface EntityDragBehaviorResult {
   readonly cleanup: () => void;
@@ -20,7 +19,7 @@ export const createEntityDragBehavior = function(
   let dragging = false;
   let didMove = false;
   let dragStart = { svgX: 0, svgY: 0, posX: 0, posY: 0 };
-  let queuedFrame: number | null = null;
+  let group: DragGroup | null = null;
 
   let activeGridSize = 16;
 
@@ -40,9 +39,10 @@ export const createEntityDragBehavior = function(
       return; 
     }
 
-    const me = e as MouseEvent;
+    const me = e as PointerEvent;
+    if (me.button !== 0) return;
     me.stopPropagation();
-    
+    group = createDragGroup(workspace, entityId, me.shiftKey);
     // Start coordinate caching to eliminate getScreenCTM layout thrashing during mousemove
     if (workspace.startCachingCoords) {
       workspace.startCachingCoords();
@@ -64,8 +64,8 @@ export const createEntityDragBehavior = function(
 
     if (bodyElement instanceof HTMLElement) bodyElement.style.cursor = 'grabbing';
     document.body.style.cursor = 'grabbing';
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('pointermove', onMouseMove);
+    document.addEventListener('pointerup', onMouseUp);
   };
 
   const onMouseMove = (e: Event): void => {
@@ -76,6 +76,7 @@ export const createEntityDragBehavior = function(
     const dy = svg.y - dragStart.svgY;
     if (!didMove && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
       didMove = true;
+      group?.begin();
       const entityRoot = bodyElement.closest('.vbs-entity');
       if (entityRoot) {
         entityRoot.classList.add('vbs-dragging');
@@ -91,6 +92,7 @@ export const createEntityDragBehavior = function(
     workspace.updateAlignmentGuides(entityId, { x: rawX, y: rawY }, currentDims);
 
     position.set({ x: rawX, y: rawY });
+    if (didMove) group?.moveCompanions(dx, dy);
   };
 
   const onMouseUp = (): void => {
@@ -138,25 +140,20 @@ export const createEntityDragBehavior = function(
       position.set({ x: finalX, y: finalY });
       workspace.clearAlignmentGuides();
 
-      // Write the final position directly to EntityManager to bypass 100ms debounce race condition
-      const em = getEntityManager(workspace.instanceId);
-      em.moveEntity(entityId, { x: finalX, y: finalY });
-
-      // Auto-optimize connections on drop if enabled (defaults to true)
-      const settings = getGeneralSettings();
-      if (!settings || settings.autoOptimizeConnections !== false) {
-        autoRouteLinks(em);
-      }
+      // Persist every moved node synchronously (no debounce race) and close the gesture
+      // transaction: one drag = one undo step. Moved nodes re-route only their own links.
+      group?.commit({ x: finalX, y: finalY }, finalX - dragStart.posX, finalY - dragStart.posY);
     } else {
       // Pure click — select this entity
+      group?.cancel();
       selected.set(true);
       workspace.behaviorManager.selectEntity(entityId);
     }
     didMove = false;
     if (bodyElement instanceof HTMLElement) bodyElement.style.cursor = '';
     document.body.style.cursor = '';
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
+    document.removeEventListener('pointermove', onMouseMove);
+    document.removeEventListener('pointerup', onMouseUp);
   };
 
   // Deselect when workspace selects a different entity
@@ -173,15 +170,15 @@ export const createEntityDragBehavior = function(
   // ghost image. Calling preventDefault() on dragstart suppresses this completely.
   const onDragStart = (e: Event): void => { e.preventDefault(); };
   bodyElement.addEventListener('dragstart', onDragStart as EventListener);
-  bodyElement.addEventListener('mousedown', onMouseDown as EventListener);
+  bodyElement.addEventListener('pointerdown', onMouseDown as EventListener);
 
   return {
     cleanup: () => {
       unsubBehavior();
       bodyElement.removeEventListener('dragstart', onDragStart as EventListener);
-      bodyElement.removeEventListener('mousedown', onMouseDown as EventListener);
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
+      bodyElement.removeEventListener('pointerdown', onMouseDown as EventListener);
+      document.removeEventListener('pointermove', onMouseMove);
+      document.removeEventListener('pointerup', onMouseUp);
     }
   };
 };

@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect } from 'vitest';
-import { createNeuraStore, STATE_HALO_COLORS } from '../src/neura/core/neura-store.js';
+import { createNeuraStore, STATE_HALO_COLORS } from '../src/widgets/neura/core/neura-store.js';
 
 describe('Neura Store Telemetry & Illumination Capabilities', () => {
   it('initializes with empty energyBeams array', () => {

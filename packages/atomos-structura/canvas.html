@@ -27,10 +27,10 @@
   
   <div id="canvas-root"></div>
   <script type="module">
-    import { createCanvasPage } from '/atomos-structura/dist/preview/create-canvas-page.js';
-    import { getEntityManager } from '/atomos-structura/dist/core/presentation/entity-manager.js';
-    import { createSchemaGraphKernel } from '/atomos-structura/dist/core/create-schema-graph-kernel.js';
-    import { createKernelAdapter } from '/atomos-structura/dist/adapters/create-kernel-adapter.js';
+    import { createCanvasPage } from '/atomos-structura/dist/pages/canvas-page/create-canvas-page.js';
+    import { getEntityManager } from '/atomos-structura/dist/shared/core/presentation/entity-manager.js';
+    import { createSchemaGraphKernel } from '/atomos-structura/dist/shared/core/create-schema-graph-kernel.js';
+    import { createKernelAdapter } from '/atomos-structura/dist/shared/adapters/create-kernel-adapter.js';
 
     console.log('🚀 Starting canvas with Kernel bridge');
     const page = createCanvasPage('demo-canvas');

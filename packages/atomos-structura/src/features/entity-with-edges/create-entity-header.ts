@@ -126,7 +126,6 @@ export const createEntityHeader = function(props: EntityHeaderProps): EntityHead
   deleteBtn.title = 'Delete entity';
   deleteBtn.appendChild(deleteIcon.element);
   deleteBtn.addEventListener('click', (e) => {
-    console.log('[DEBUG] Delete entity button clicked! Firing props.onDeleteClick()');
     props.onDeleteClick();
   });
   const stopDeleteMd = (e: Event): void => e.stopPropagation();

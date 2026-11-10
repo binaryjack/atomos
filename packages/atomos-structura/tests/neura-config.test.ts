@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createNeuraConfig, DEFAULT_NEURA_CONFIG } from '../src/neura/core/neura-config.js';
+import { createNeuraConfig, DEFAULT_NEURA_CONFIG } from '../src/widgets/neura/core/neura-config.js';
 
 describe('NeuraConfig Configuration Manager', () => {
   it('returns default configuration when no overrides are provided', () => {

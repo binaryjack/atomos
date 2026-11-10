@@ -1,36 +1,40 @@
 {
-  "name": "@atomos-web/structura-core",
-  "version": "5.0.0",
-  "license": "AGPL-3.0-or-later",
-  "type": "module",
-  "publishConfig": {
-    "access": "public"
-  },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "bin": {
     "atomos-structura": "./bin/atomos-structura.js"
+  },
+  "dependencies": {
+    "@binaryjack/formular.dev": "^2.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
   },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./cli": {
+      "types": "./dist/shared/cli.d.ts",
+      "import": "./dist/shared/cli.js"
+    },
     "./*": "./*"
+  },
+  "license": "AGPL-3.0-or-later",
+  "main": "./dist/index.js",
+  "name": "@atomos-web/structura-core",
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "clean": "powershell -Command \"Remove-Item -Force -Recurse dist -ErrorAction SilentlyContinue; Get-ChildItem src -Recurse -Include *.js,*.d.ts,*.js.map,*.d.ts.map | Remove-Item -Force\"",
     "dev": "tsc -p tsconfig.build.json --watch",
-    "test": "vitest run --passWithNoTests",
     "lint": "eslint src --ext .ts",
-    "type-check": "tsc --noEmit",
-    "clean": "powershell -Command \"Remove-Item -Force -Recurse dist -ErrorAction SilentlyContinue; Get-ChildItem src -Recurse -Include *.js,*.d.ts,*.js.map,*.d.ts.map | Remove-Item -Force\""
+    "test": "vitest run --passWithNoTests",
+    "type-check": "tsc --noEmit"
   },
-  "devDependencies": {
-    "typescript": "^5.3.0",
-    "vitest": "^1.0.0"
-  },
-  "dependencies": {
-    "@binaryjack/formular.dev": "^2.4.0"
-  }
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "version": "5.1.0"
 }

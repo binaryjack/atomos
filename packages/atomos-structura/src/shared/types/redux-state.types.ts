@@ -1,0 +1,109 @@
+import type { Entity, LinkProps, WorkspaceConfig } from '@atomos-web/structura-core'
+import type { AppSettings } from '../../features/settings-page/types/settings-page.types.js'
+
+export interface SchemaModel {
+  readonly type: 'SchemaModel';
+  readonly id: string;
+  readonly name: string;
+  readonly entities: readonly Entity[];
+  readonly links: readonly LinkProps[];
+  readonly isGroup?: boolean;
+  readonly print?: string;
+  readonly depends_on?: string;
+  readonly groupColor?: string;
+}
+
+export interface ViewportState {
+  readonly pan: { x: number; y: number };
+  readonly zoom: number;
+  readonly container?: { width: number; height: number };
+}
+
+export interface CanvasModel {
+  readonly id: string;
+  readonly name: string;
+  readonly schemas: Record<string, SchemaModel>;
+  readonly active_schema_id: string;
+  readonly viewport: ViewportState;
+  readonly appearance_override?: AppSettings['appearance'];
+}
+
+export interface WorkspaceState {
+  readonly name: string;
+  readonly version: string;
+  readonly last_modified: string;
+  readonly mode?: 1 | 2 | 3;
+  readonly settings?: AppSettings;
+  readonly config?: WorkspaceConfig;
+  readonly canvases: Record<string, CanvasModel>;
+  readonly active_canvas_id: string;
+}
+
+export interface ReduxState {
+  readonly workspace: WorkspaceState;
+  readonly is_settings_open?: boolean;
+}
+
+export type ReduxAction =
+  | { type: 'entity-moved'; schema_id: string; entity_id: string; x: number; y: number }
+  | { type: 'entity-resized'; schema_id: string; entity_id: string; width: number; height: number }
+  | { type: 'entity-toggled-collapse'; schema_id: string; entity_id: string; collapsed: boolean }
+  | { type: 'entity-updated'; schema_id: string; entity: Entity }
+  | { type: 'entity-added'; schema_id: string; entity: Entity }
+  | { type: 'entity-removed'; schema_id: string; entity_id: string }
+  | { type: 'link-created'; schema_id: string; link_id?: string; from_id: string; to_id: string; from_anchor?: string; to_anchor?: string; leftCardinality?: string; rightCardinality?: string; leftProperty?: string; rightProperty?: string; renderType?: string; direction?: 'default' | 'left' | 'right' }
+  | { type: 'link-updated'; schema_id: string; link: LinkProps }
+  | { type: 'link-removed'; schema_id: string; link_id: string }
+  /** Atomically replaces every entity and link of one schema (document import). */
+  | { type: 'schema-replaced'; schema_id: string; entities: readonly Entity[]; links: readonly LinkProps[] }
+  | { type: 'viewport-updated'; viewport: ViewportState }
+  | { type: 'settings-updated'; settings: AppSettings }
+  | { type: 'settings-toggled'; is_open: boolean }
+  | { type: 'schema-created'; id: string; name: string }
+  | { type: 'schema-renamed'; id: string; name: string }
+  | { type: 'schema-deleted'; id: string }
+  | { type: 'schema-activated'; id: string }
+  | { type: 'schema-grouped'; schema_id: string; print?: string; groupColor?: string; depends_on?: string }
+  | { type: 'workspace-mode-set'; mode: 1 | 2 | 3 }
+  | { type: 'canvas-created'; id: string; name: string }
+  | { type: 'canvas-renamed'; id: string; name: string }
+  | { type: 'canvas-deleted'; id: string }
+  | { type: 'canvas-activated'; id: string }
+  | { type: 'canvas-appearance-updated'; canvas_id: string; appearance: AppSettings['appearance'] }
+  | { type: 'state-loaded'; state: ReduxState }
+  | { type: 'state-reset' }
+  /** Intent-only action: the UI wants a new schema but does not supply an ID.
+   *  In standalone mode the reducer generates one. When MCP is connected a
+   *  dispatch hook swallows this, calls the server, and the SSE response
+   *  delivers the canonical `schema-created` with the server-assigned ID. */
+  | { type: 'schema-create-auto'; name: string };
+
+export interface TransactionOptions {
+  /** History entry id (from `historyHead()`) to merge into when it is still the latest step. */
+  readonly amend?: number | undefined;
+}
+
+export interface ReduxStore {
+  readonly get_state: () => ReduxState;
+  readonly dispatch: (action: ReduxAction) => void;
+  readonly subscribe: (listener: (state: ReduxState) => void) => () => void;
+  readonly undo: () => void;
+  readonly redo: () => void;
+  readonly can_undo: () => boolean;
+  readonly can_redo: () => boolean;
+  readonly reconcile: (fn: () => void) => void;
+  /** Register a pre-dispatch hook. Return `null` to swallow the action;
+   *  return the action (possibly modified) to let it proceed. */
+  readonly addDispatchHook: (hook: (action: ReduxAction) => ReduxAction | null) => () => void;
+  readonly flushPersistence?: () => void;
+  readonly onUndoRedo?: (listener: (type: 'undo' | 'redo') => void) => () => void;
+  /** Runs `fn` and records every undoable dispatch it makes as ONE undo step. Nestable. */
+  readonly transaction: <T>(label: string, fn: () => T, options?: TransactionOptions) => T;
+  /** Opens a transaction that spans asynchronous work (e.g. a drag gesture). Pair with `endTransaction`. */
+  readonly beginTransaction: (label: string, options?: TransactionOptions) => void;
+  /** Id of the latest undo entry; pass it as `amend` to fold an async follow-up step into it. */
+  readonly historyHead?: () => number | undefined;
+  readonly endTransaction: () => void;
+  /** Label of the step `undo()` would revert, when it was recorded by a transaction. */
+  readonly undoLabel?: () => string | undefined;
+}

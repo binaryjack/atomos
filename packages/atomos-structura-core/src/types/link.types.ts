@@ -23,4 +23,8 @@ export interface LinkProps {
   readonly direction?: 'default' | 'left' | 'right' | undefined;
   readonly waypoints?: readonly Waypoint[] | undefined;
   readonly style?: 'bezier' | 'orthogonal' | 'straight' | undefined;
+  /** Source port id when the link connects typed workflow ports. */
+  readonly sourcePortId?: string | undefined;
+  /** Target port id when the link connects typed workflow ports. */
+  readonly targetPortId?: string | undefined;
 }

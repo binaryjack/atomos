@@ -4,7 +4,7 @@
  * localStorage is mocked in-memory so these run in pure Node.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createSchemaBuilder } from '../src/core/schema-builder.js';
+import { createSchemaBuilder } from '../src/app/schema-builder/schema-builder.js';
 import type { Entity } from '@atomos-web/structura-core';
 
 // ── localStorage mock ──────────────────────────────────────────────────────

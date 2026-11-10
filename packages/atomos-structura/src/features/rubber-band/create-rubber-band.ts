@@ -1,5 +1,5 @@
-import type { CanvasViewport } from '../../core/create-canvas-viewport.js';
-import type { EntityManager } from '../../core/presentation/entity-manager.js';
+import type { CanvasViewport } from '../../shared/core/create-canvas-viewport.js';
+import type { EntityManager } from '../../shared/core/presentation/entity-manager.js';
 
 export interface RubberBandResult {
   readonly getSelectedIds: () => ReadonlySet<string>;
@@ -30,7 +30,8 @@ export const createRubberBand = (
 
   const screenToWorld = (cx: number, cy: number): { x: number; y: number } => {
     const { pan, zoom } = viewport.state.value;
-    return { x: (cx - pan.x) / zoom, y: (cy - pan.y) / zoom };
+    const rect = svgContainer.getBoundingClientRect();
+    return { x: (cx - rect.left - pan.x) / zoom, y: (cy - rect.top - pan.y) / zoom };
   };
 
   const notify = (): void => { listeners.forEach(cb => cb(selectedIds)); };
@@ -89,11 +90,15 @@ export const createRubberBand = (
 
     selectedIds = ids;
     notify();
+    // The click that ends a band gesture must not clear the selection it just made.
+    const swallowClick = (event: Event): void => event.stopImmediatePropagation();
+    svgContainer.addEventListener('click', swallowClick, { capture: true, once: true });
+    setTimeout(() => svgContainer.removeEventListener('click', swallowClick, { capture: true }), 0);
   };
 
-  svgContainer.addEventListener('mousedown', onMouseDown);
-  svgContainer.addEventListener('mousemove', onMouseMove);
-  svgContainer.addEventListener('mouseup', onMouseUp);
+  svgContainer.addEventListener('pointerdown', onMouseDown);
+  svgContainer.addEventListener('pointermove', onMouseMove);
+  svgContainer.addEventListener('pointerup', onMouseUp);
 
   return {
     getSelectedIds: () => selectedIds,
@@ -103,9 +108,9 @@ export const createRubberBand = (
     },
     cleanup: {
       destroy: () => {
-        svgContainer.removeEventListener('mousedown', onMouseDown);
-        svgContainer.removeEventListener('mousemove', onMouseMove);
-        svgContainer.removeEventListener('mouseup', onMouseUp);
+        svgContainer.removeEventListener('pointerdown', onMouseDown);
+        svgContainer.removeEventListener('pointermove', onMouseMove);
+        svgContainer.removeEventListener('pointerup', onMouseUp);
         bandRect.remove();
       },
     },

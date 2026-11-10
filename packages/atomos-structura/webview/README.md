@@ -87,7 +87,7 @@ function getNonce(): string {
 |-----------|------|---------|-------------|
 | `containerId` | `string` | `'app'` | ID of the mount point element |
 | `instanceId` | `string` | auto-generated | Unique identifier for this panel instance. When provided, ensures storage keys and design tokens are isolated (v1.2.0+). |
-| `mcpServerUrl` | `string` | — | MCP server base URL. Enables bidirectional sync when set. |
+| `mcpTransport` | `McpTransport` | — | Host-supplied MCP transport (connect / send). Enables sync when set; atomos performs no network I/O. |
 | `workspaceConfig` | `WorkspaceConfig` | — | Initial workspace schema / settings forwarded to the Redux store. |
 | `schemaId` | `string` | — | Pre-activate a specific schema once the panel is initialized. |
 
@@ -112,8 +112,9 @@ const app = await initializeStructuraWebview({ containerId: 'app' })
 
 ```ts
 const app = await initializeStructuraWebview({
+  instanceId: 'panel-1',
   containerId: 'app',
-  mcpServerUrl: 'http://localhost:3001',
+  mcpTransport: hostTransport, // supervised by the host (reconnect, backoff)
 })
 
 // Cleanup on panel dispose
@@ -124,16 +125,13 @@ panel.onDidDispose(() => app.disconnect())
 
 ## MCP Server
 
-If your extension starts an MCP server via `@atomos-web/structura-mcp`, pass its URL to `mcpServerUrl`. The canvas will open an SSE connection and apply real-time schema changes automatically.
+Since 6.1.1 the canvas opens no connections itself. The host owns the connection (for example an SSE
+stream to `@atomos-web/structura-mcp`, supervised with reconnect and backoff) and exposes it as an
+`McpTransport`: `connect(onEvent, onStatus)` delivers `{ type, data }` server events and status changes,
+`send(result)` returns tool results. See `documentation/workflow-canvas.md` (MCP sync).
 
 ```ts
-import { startMcpServer } from '@atomos-web/structura-mcp'
-
-const server = await startMcpServer({ port: 9743 })
-
-const app = await initializeStructuraWebview({
-  mcpServerUrl: 'http://localhost:9743',
-})
+const app = await initializeStructuraWebview({ instanceId: 'panel-1', mcpTransport: hostTransport })
 ```
 
 ---

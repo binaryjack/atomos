@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, vi } from 'vitest';
-import { createNeuraStore } from '../src/neura/core/neura-store.js';
+import { createNeuraStore } from '../src/widgets/neura/core/neura-store.js';
 
 describe('Neura Store Cognitive Glow & Thinking Pulse State', () => {
   it('initializes with zero cognitiveCharge and null thinkingPulse', () => {

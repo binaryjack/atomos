@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { compareDAGSchemas } from '../src/features/diff/create-graph-diff-engine.js';
-import type { DAGExchange } from '../src/core/application/dag-service.js';
+import type { DAGExchange } from '../src/shared/core/application/dag-service.js';
 
 describe('Graph Diff Engine', () => {
   it('correctly identifies added, modified, deleted, and unchanged entities', () => {

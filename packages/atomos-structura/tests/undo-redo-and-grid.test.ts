@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { createGridBackground } from '../src/preview/components/create-grid-background.js';
-import { createInstanceReduxStore } from '../src/core/create-redux-store.js';
+import { createGridBackground } from '../src/pages/canvas-page/components/create-grid-background.js';
+import { createInstanceReduxStore } from '../src/shared/core/create-redux-store.js';
 
 describe('Undo / Redo & Grid Suppression', () => {
   it('triggers onUndoRedo listener and handles undo/redo stack properly', () => {

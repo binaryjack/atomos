@@ -1,5 +1,5 @@
-import { createSchemaGraphKernel } from '../../../core/create-schema-graph-kernel.js';
-import { createSqlAdapter } from '../../../adapters/create-sql-adapter.js';
+import { createSchemaGraphKernel } from '../../../shared/core/create-schema-graph-kernel.js';
+import { createSqlAdapter } from '../../../shared/adapters/create-sql-adapter.js';
 import type { ExportPlugin } from '../export-plugin.types.js';
 
 export const sqlDdlPlugin: ExportPlugin = {

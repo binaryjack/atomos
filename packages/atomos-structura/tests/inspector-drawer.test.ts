@@ -2,9 +2,9 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { createInspectorDrawer } from '../src/viewer/create-inspector-drawer.js';
-import type { StructuraEntityInspectorData } from '../src/viewer/types/inspector.types.js';
-import { AtomosStructuraViewerElement } from '../src/viewer/atomos-structura-viewer.js';
+import { createInspectorDrawer } from '../src/widgets/structura-viewer/create-inspector-drawer.js';
+import type { StructuraEntityInspectorData } from '../src/widgets/structura-viewer/types/inspector.types.js';
+import { AtomosStructuraViewerElement } from '../src/widgets/structura-viewer/atomos-structura-viewer.js';
 
 describe('Contextual Entity Inspector Drawer', () => {
   let container: HTMLDivElement;

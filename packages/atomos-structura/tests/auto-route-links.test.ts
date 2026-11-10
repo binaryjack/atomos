@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { autoRouteLinks } from '../src/core/application/dag-service.js'
-import { createEntityManager, getEntityManager } from '../src/core/presentation/entity-manager.js'
+import { autoRouteLinks } from '../src/shared/core/application/dag-service.js'
+import { createEntityManager, getEntityManager } from '../src/shared/core/presentation/entity-manager.js'
 
 describe('autoRouteLinks & LinkEndpointsUpdated', () => {
   it('publishes LinkEndpointsUpdated and updates link anchors when entities move', () => {

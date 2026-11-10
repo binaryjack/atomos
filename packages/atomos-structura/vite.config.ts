@@ -41,7 +41,7 @@ export default defineConfig({
         outDir: 'dist/webview',
         emptyOutDir: false,
         lib: {
-          entry: resolve(__dirname, 'src/webview/index.ts'),
+          entry: resolve(__dirname, 'src/app/webview/index.ts'),
           name: 'StructuraWebview',
           fileName: () => 'index.iife.js',
           formats: ['iife'],
@@ -59,8 +59,8 @@ export default defineConfig({
         lib: {
           entry: [
             resolve(__dirname, 'src/index.ts'),
-            resolve(__dirname, 'src/neura/index.ts'),
-            resolve(__dirname, 'src/webview/index.ts')
+            resolve(__dirname, 'src/widgets/neura/index.ts'),
+            resolve(__dirname, 'src/app/webview/index.ts')
           ],
 
           name: 'Structura',
@@ -76,12 +76,16 @@ export default defineConfig({
             '@reduxjs/toolkit',
             '@atomos-web/structura-core',
             '@atomos-web/prime',
-            '@xyflow/react'
+            '@xyflow/react',
+            // Declared runtime dependency / optional peers: resolved by the consumer, never bundled.
+            /^elkjs(\/.*)?$/,
+            /^yjs$/,
+            /^y-protocols(\/.*)?$/
           ],
           output: {
             // Preserve module structure so dist/ mirrors src/:
             // canvas.html and demos import deep paths like
-            // dist/preview/create-canvas-page.js which must exist as
+            // dist/pages/canvas-page/create-canvas-page.js which must exist as
             // individual files, not merged chunks.
             preserveModules: true,
             preserveModulesRoot: 'src',

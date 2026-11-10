@@ -1,10 +1,10 @@
 import { DATA_TYPES } from '@atomos-web/structura-core'
-import { getCanvasAdapter } from '../../core/adapters/canvas-adapter.js'
-import type { DAGObserver } from '../../core/adapters/dag-observer.js'
-import type { DAGExchange } from '../../core/application/dag-service.js'
-import type { CanvasViewport } from '../../core/create-canvas-viewport.js'
-import type { DomainEntity } from '../../core/domain/entity-aggregate.js'
-import type { InteractiveBehaviorManager } from '../../core/types/interactive-behavior-manager.types.js'
+import { getCanvasAdapter } from '../../shared/core/adapters/canvas-adapter.js'
+import type { DAGObserver } from '../../shared/core/adapters/dag-observer.js'
+import type { DAGExchange } from '../../shared/core/application/dag-service.js'
+import type { CanvasViewport } from '../../shared/core/create-canvas-viewport.js'
+import type { DomainEntity } from '../../shared/core/domain/entity-aggregate.js'
+import type { InteractiveBehaviorManager } from '../../shared/core/types/interactive-behavior-manager.types.js'
 import { createPropertySettingsModal } from '../modal/create-property-settings-modal.js'
 import { openLinkSettingsModal } from '../modal/create-link-settings-modal.js'
 
@@ -603,7 +603,6 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
 
   const focusLinkOnCanvas = (edge: any, src: DomainEntity | undefined, dst: DomainEntity | undefined): void => {
     if (!src || !dst) return;
-    console.log('[SCHEMA-PANEL-LOG] focusLinkOnCanvas requested for link:', edge.id);
     const rect  = props.canvasContainer.getBoundingClientRect();
     const currentZoom = Number.isFinite(props.viewport.state.value.zoom) ? props.viewport.state.value.zoom : 1;
     const srcCx = src.position.x + (src.dimensions?.width ?? 200) / 2;
@@ -646,7 +645,6 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
   };
 
   const focusEntityOnCanvas = (entity: DomainEntity): void => {
-    console.log('[SCHEMA-PANEL-LOG] focusEntityOnCanvas requested for entity:', entity.id);
     const rect  = props.canvasContainer.getBoundingClientRect();
     const currentZoom = Number.isFinite(props.viewport.state.value.zoom) ? props.viewport.state.value.zoom : 1;
     const cx    = entity.position.x + (entity.dimensions?.width ?? 200)  / 2;
@@ -657,7 +655,6 @@ export const createSchemaPanel = function(props: SchemaPanelProps): SchemaPanelR
     const targetPanX = viewW / 2 - cx * currentZoom;
     const targetPanY = viewH / 2 - cy * currentZoom;
     
-    console.log(`[SCHEMA-PANEL-LOG] focusEntityOnCanvas center cx:${cx} cy:${cy} | targetPanX:${targetPanX} targetPanY:${targetPanY}`);
     
     props.viewport.panTo(
       Number.isFinite(targetPanX) ? targetPanX : 0, 
