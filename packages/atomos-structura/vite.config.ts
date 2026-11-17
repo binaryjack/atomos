@@ -77,7 +77,10 @@ export default defineConfig({
             '@atomos-web/structura-core',
             '@atomos-web/prime',
             '@xyflow/react',
-            // Declared runtime dependency / optional peers: resolved by the consumer, never bundled.
+            // Declared runtime dependencies / optional peers: resolved by the consumer, never bundled.
+            // Bundling formular.dev with preserveModules leaks resolver paths (node_modules/.pnpm,
+            // .codernic/packages) into dist, which consumers cannot resolve.
+            /^@binaryjack\/formular\.dev(\/.*)?$/,
             /^elkjs(\/.*)?$/,
             /^yjs$/,
             /^y-protocols(\/.*)?$/

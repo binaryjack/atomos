@@ -1,5 +1,4 @@
-import type { Signal } from '@atomos-web/prime'
-import { createEditableLabel, createSignal } from '@atomos-web/prime'
+import { createEditableLabel, createSignal, type Signal } from '@atomos-web/prime'
 import { createSVGShape } from '../../shared/canvas/shape-renderers/create-svg-shape.js';
 import type { ComponentType, DataType, Entity } from '@atomos-web/structura-core'
 import { createLegacyPropertyRepositoryBridge } from '../../shared/core/adapters/legacy-property-bridge.js'
@@ -8,6 +7,7 @@ import type { IStorageProvider } from '../../shared/core/storage/types/storage-p
 import type { GlobalConfig } from '../../shared/core/types/global-config.types.js'
 import { createPropertySettingsModal } from '../modal/create-property-settings-modal.js'
 import { getInstanceReduxStore } from '../../shared/core/create-redux-store.js'
+import { bindExecutionStatus } from './bind-execution-status.js'
 import { createEntityFooter } from './create-entity-footer.js'
 import { createEntityHeader } from './create-entity-header.js'
 import { createEntityPropertyRow } from './create-entity-property-row.js'
@@ -155,44 +155,7 @@ export const createEntityContent = function(props: EntityContentProps): EntityCo
   body.appendChild(statusBadge);
 
   if (props.executionSignal) {
-    const unsubExec = props.executionSignal.subscribe((exec) => {
-      // 1. Frame glow
-      body.classList.remove('vbs-exec-running', 'vbs-exec-success', 'vbs-exec-failed', 'vbs-exec-warning');
-      if (exec.status === 'running') body.classList.add('vbs-exec-running');
-      if (exec.status === 'success') body.classList.add('vbs-exec-success');
-      if (exec.status === 'failed') body.classList.add('vbs-exec-failed');
-      if (exec.status === 'warning') body.classList.add('vbs-exec-warning');
-
-      // 2. Progress Bar
-      if (exec.progress !== undefined) {
-        progressBar.style.width = `${Math.max(0, Math.min(100, exec.progress))}%`;
-        progressBar.style.opacity = '1';
-      } else {
-        progressBar.style.opacity = '0';
-      }
-
-      // 3. Status Badge
-      if (exec.status === 'success') {
-        statusBadge.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:12px;height:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>';
-        statusBadge.style.background = '#22c55e';
-        statusBadge.style.opacity = '1';
-        statusBadge.style.transform = 'scale(1)';
-      } else if (exec.status === 'failed') {
-        statusBadge.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:12px;height:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>';
-        statusBadge.style.background = '#ef4444';
-        statusBadge.style.opacity = '1';
-        statusBadge.style.transform = 'scale(1)';
-      } else if (exec.status === 'warning') {
-        statusBadge.innerHTML = '<span style="font-weight:bold;line-height:0">!</span>';
-        statusBadge.style.background = '#eab308';
-        statusBadge.style.opacity = '1';
-        statusBadge.style.transform = 'scale(1)';
-      } else {
-        statusBadge.style.opacity = '0';
-        statusBadge.style.transform = 'scale(0.8)';
-      }
-    });
-    cleanups.push(unsubExec);
+    cleanups.push(bindExecutionStatus({ body, progressBar, statusBadge }, props.executionSignal));
   }
 
   // ─── scrollable body ──────────────────────────────────────────────────────
