@@ -3,7 +3,7 @@ name: atomos-web
 description: Sovereign reactive UI kernel, vector renderer, and interactive canvas engine.
 ---
 <?xml version="1.0" encoding="UTF-8"?>
-<codernic_skill id="atomos-web" kind="library" package="@atomos-web/structura" version="5.0.0">
+<codernic_skill id="atomos-web" kind="library" package="@atomos-web/structura" version="6.1.2">
   <mental_model>
     @atomos-web/structura is a sovereign Codernic infrastructure library component.
     It enforces complete implementations, Pirsig AST invariants, and strict boundary discipline.
@@ -36,6 +36,7 @@ description: Sovereign reactive UI kernel, vector renderer, and interactive canv
     <invariant id="INV-002">Pirsig complexity: max 200 lines per file, max 40 lines per function, zero warnings.</invariant>
     <invariant id="INV-003">Zero vaporware: absolute production readiness and zero stubs.</invariant>
     <invariant id="INV-004">Zero MCP: all operations operate via native CLI --json or typed SDK envelopes.</invariant>
+    <invariant id="INV-005">Portable dist: runtime dependencies (@binaryjack/formular.dev, elkjs, structura-core, prime) stay external; dist never imports node_modules or .codernic paths.</invariant>
   </invariants>
 
   <verification>

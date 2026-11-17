@@ -14,5 +14,5 @@
   "name": "@atomos-web/structura",
   "peerDependencies": {},
   "schema": "https://codernic.dev/schemas/cpk-v1.json",
-  "version": "6.1.1"
+  "version": "6.1.2"
 }
