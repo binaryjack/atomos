@@ -97,3 +97,11 @@ temp/
 
 target_cos/
 target/
+
+# Sovereign runtime, caches & databases (auto-standardized)
+.coe/
+.turbo/
+*.redb
+*.db
+*.db-wal
+*.db-shm
