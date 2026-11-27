@@ -1,0 +1,91 @@
+// Copyright (c) 2026 Tadeop / Codernic AI Engineering. All rights reserved.
+use graph_topology::*;
+use graph_metrics::*;
+use architecture_linter::*;
+use contrast_and_envelope::*;
+
+#[test]
+fn test_tarjan_cycle_detection_acyclic_and_cyclic() {
+    let mut g = TopologyGraph::new();
+    g.add_entity("a", "Gateway", "service", "rect");
+    g.add_entity("b", "Auth", "service", "rect");
+    g.add_entity("c", "UsersDB", "db", "cylinder");
+    g.add_link("l1", "a", "b");
+    g.add_link("l2", "b", "c");
+    assert_eq(find_cycles(&g).has_cycles, false);
+
+    g.add_link("l3", "c", "a");
+    let cyc = find_cycles(&g);
+    assert_eq(cyc.has_cycles, true);
+    assert_eq(cyc.cycle_count, 1);
+    assert_eq(cyc.cyclic_nodes.len(), 3);
+}
+
+#[test]
+fn test_graph_metrics_and_constraints() {
+    let mut g = TopologyGraph::new();
+    g.add_entity("n1", "API Gateway", "gateway", "rect");
+    g.add_entity("n2", "Core", "service", "rect");
+    g.add_entity("n3", "Isolated", "service", "rect");
+    g.add_link("l1", "n1", "n2");
+    let m = compute_graph_metrics(&g);
+    assert_eq(m.node_count, 3);
+    assert_eq(m.edge_count, 1);
+    assert_eq(m.connected_components, 2);
+    assert_eq(m.max_in_degree, 1);
+
+    let mut allowed_src: Vec<str> = Vec::new();
+    allowed_src.push("gateway");
+    let c = ConnectionConstraint {
+        allow_any_source: false, allow_any_target: true,
+        allowed_sources: allowed_src, allowed_targets: Vec::new(),
+        max_incoming: 2, max_outgoing: 3,
+    };
+    assert_eq(validate_connection_constraint(&c, "gateway", "service", 1, 1).is_ok(), true);
+    assert_eq(validate_connection_constraint(&c, "db", "service", 0, 0).is_err(), true);
+}
+
+#[test]
+fn test_architecture_linter_and_diff_application() {
+    let mut g = TopologyGraph::new();
+    g.add_entity("pub", "Public Web", "client", "rect");
+    g.add_entity("db", "Orders Postgres", "database", "cylinder");
+    g.add_link("l1", "pub", "db");
+    let res = audit_architecture(&g);
+    assert_eq(res.passed, false);
+    assert_eq(res.critical_count, 1);
+    assert_eq(res.score, 75);
+
+    let mut del_entities: Vec<str> = Vec::new();
+    del_entities.push("pub");
+    let mut add_g = TopologyGraph::new();
+    add_g.add_entity("gw", "API Gateway", "gateway", "rect");
+    add_g.add_link("l2", "gw", "db");
+    let diff = ProposedDiff {
+        diff_id: "d1", schema_id: "s1", deleted_entity_ids: del_entities,
+        deleted_link_ids: Vec::new(), added_graph: add_g,
+    };
+    let applied = apply_architecture_diff(&g, &diff);
+    assert_eq(applied.graph.entity_ids.len(), 2);
+    assert_eq(applied.graph.link_ids.len(), 1);
+    assert_eq(audit_architecture(&applied.graph).passed, true);
+}
+
+#[test]
+fn test_wcag_contrast_and_sdk_envelope() {
+    let on_dark = compute_contrast_color("#09090b");
+    assert_eq(on_dark.use_white_text, true);
+    assert_eq(on_dark.pass_aa, true);
+    assert_eq(on_dark.pass_aaa, true);
+
+    let on_light = compute_contrast_color("#f8fafc");
+    assert_eq(on_light.use_white_text, false);
+    assert_eq(on_light.pass_aa, true);
+
+    let ok_env = AtomosSdkEnvelope::success("{\"nodes\":2}");
+    let wire = ok_env.to_json_str();
+    assert_eq(wire.contains("@atomos-web/structura"), true);
+    assert_eq(wire.contains("\"ok\":true"), true);
+    let err_env = AtomosSdkEnvelope::failure("CYCLE_DETECTED");
+    assert_eq(err_env.to_json_str().contains("CYCLE_DETECTED"), true);
+}

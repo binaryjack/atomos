@@ -1,0 +1,192 @@
+// Copyright (c) 2026 Tadeop / Codernic AI Engineering. All rights reserved.
+// Helonium v2.0 Topology Graph, Tarjan Cycle Detector & Constraints for @atomos-web/structura-core.
+
+pub struct TopologyGraph {
+    pub entity_ids: Vec<str>,
+    pub entity_names: Vec<str>,
+    pub entity_types: Vec<str>,
+    pub entity_shapes: Vec<str>,
+    pub link_ids: Vec<str>,
+    pub link_lefts: Vec<str>,
+    pub link_rights: Vec<str>,
+}
+
+pub struct ConnectionConstraint {
+    pub allow_any_source: bool,
+    pub allow_any_target: bool,
+    pub allowed_sources: Vec<str>,
+    pub allowed_targets: Vec<str>,
+    pub max_incoming: i64,
+    pub max_outgoing: i64,
+}
+
+pub struct CycleReport {
+    pub has_cycles: bool,
+    pub cycle_count: i64,
+    pub cyclic_nodes: Vec<str>,
+}
+
+impl TopologyGraph {
+    #[capabilities(pure)]
+    pub fn new() -> TopologyGraph {
+        TopologyGraph {
+            entity_ids: Vec::new(), entity_names: Vec::new(),
+            entity_types: Vec::new(), entity_shapes: Vec::new(),
+            link_ids: Vec::new(), link_lefts: Vec::new(), link_rights: Vec::new(),
+        }
+    }
+
+    #[capabilities(pure)]
+    pub fn add_entity(&mut self, id: str, name: str, node_type: str, shape: str)
+        requires id.len() > 0
+    {
+        self.entity_ids.push(id);
+        self.entity_names.push(name);
+        self.entity_types.push(node_type);
+        self.entity_shapes.push(shape);
+    }
+
+    #[capabilities(pure)]
+    pub fn add_link(&mut self, id: str, left_id: str, right_id: str)
+        requires id.len() > 0 && left_id.len() > 0 && right_id.len() > 0
+    {
+        self.link_ids.push(id);
+        self.link_lefts.push(left_id);
+        self.link_rights.push(right_id);
+    }
+
+    #[capabilities(pure)]
+    pub fn find_entity(&self, id: str) -> i64 {
+        let mut i: i64 = 0;
+        while i < self.entity_ids.len() {
+            if self.entity_ids.get(i) == id { return i; }
+            i = i + 1;
+        }
+        -1
+    }
+}
+
+#[capabilities(pure)]
+pub fn vec_contains_str(items: &Vec<str>, needle: str) -> bool {
+    let mut i: i64 = 0;
+    while i < items.len() {
+        if items.get(i) == needle { return true; }
+        i = i + 1;
+    }
+    false
+}
+
+#[capabilities(pure)]
+pub fn validate_connection_constraint(
+    constraint: &ConnectionConstraint,
+    src_type: str,
+    dst_type: str,
+    src_out_deg: i64,
+    dst_in_deg: i64,
+) -> Result<bool, str>
+    requires src_out_deg >= 0 && dst_in_deg >= 0
+{
+    if !constraint.allow_any_source && !vec_contains_str(&constraint.allowed_sources, src_type) {
+        return Result::Err("Disallowed source node type");
+    }
+    if !constraint.allow_any_target && !vec_contains_str(&constraint.allowed_targets, dst_type) {
+        return Result::Err("Disallowed target node type");
+    }
+    if constraint.max_outgoing >= 0 && src_out_deg >= constraint.max_outgoing {
+        return Result::Err("Source node exceeded max_outgoing links");
+    }
+    if constraint.max_incoming >= 0 && dst_in_deg >= constraint.max_incoming {
+        return Result::Err("Target node exceeded max_incoming links");
+    }
+    Result::Ok(true)
+}
+
+struct TarjanState {
+    next_index: i64,
+    indices: Vec<i64>,
+    lowlinks: Vec<i64>,
+    on_stack: Vec<bool>,
+    stack: Vec<i64>,
+    cycle_count: i64,
+    cyclic_nodes: Vec<str>,
+}
+
+#[capabilities(pure)]
+fn has_self_loop(g: &TopologyGraph, entity_id: str) -> bool {
+    let mut i: i64 = 0;
+    while i < g.link_ids.len() {
+        if g.link_lefts.get(i) == entity_id && g.link_rights.get(i) == entity_id {
+            return true;
+        }
+        i = i + 1;
+    }
+    false
+}
+
+#[capabilities(pure)]
+fn pop_scc(u: i64, g: &TopologyGraph, st: &mut TarjanState) {
+    let mut scc: Vec<i64> = Vec::new();
+    let mut done = false;
+    while !done && st.stack.len() > 0 {
+        let w = st.stack.pop();
+        st.on_stack.set(w, false);
+        scc.push(w);
+        if w == u { done = true; }
+    }
+    if scc.len() > 1 || (scc.len() == 1 && has_self_loop(g, g.entity_ids.get(u))) {
+        st.cycle_count = st.cycle_count + 1;
+        let mut k: i64 = 0;
+        while k < scc.len() {
+            st.cyclic_nodes.push(g.entity_ids.get(scc.get(k)));
+            k = k + 1;
+        }
+    }
+}
+
+#[capabilities(pure)]
+fn tarjan_relax_edge(u: i64, v: i64, g: &TopologyGraph, st: &mut TarjanState) {
+    if v < 0 { return; }
+    if st.indices.get(v) < 0 {
+        tarjan_visit(v, g, st);
+        if st.lowlinks.get(v) < st.lowlinks.get(u) { st.lowlinks.set(u, st.lowlinks.get(v)); }
+    } else if st.on_stack.get(v) && st.indices.get(v) < st.lowlinks.get(u) {
+        st.lowlinks.set(u, st.indices.get(v));
+    }
+}
+
+#[capabilities(pure)]
+fn tarjan_visit(u: i64, g: &TopologyGraph, st: &mut TarjanState) {
+    st.indices.set(u, st.next_index);
+    st.lowlinks.set(u, st.next_index);
+    st.next_index = st.next_index + 1;
+    st.stack.push(u);
+    st.on_stack.set(u, true);
+    let uid = g.entity_ids.get(u);
+    let mut i: i64 = 0;
+    while i < g.link_ids.len() {
+        if g.link_lefts.get(i) == uid {
+            tarjan_relax_edge(u, g.find_entity(g.link_rights.get(i)), g, st);
+        }
+        i = i + 1;
+    }
+    if st.lowlinks.get(u) == st.indices.get(u) { pop_scc(u, g, st); }
+}
+
+#[capabilities(pure)]
+pub fn find_cycles(g: &TopologyGraph) -> CycleReport {
+    let mut st = TarjanState {
+        next_index: 0, indices: Vec::new(), lowlinks: Vec::new(),
+        on_stack: Vec::new(), stack: Vec::new(), cycle_count: 0, cyclic_nodes: Vec::new(),
+    };
+    let mut i: i64 = 0;
+    while i < g.entity_ids.len() {
+        st.indices.push(-1); st.lowlinks.push(-1); st.on_stack.push(false);
+        i = i + 1;
+    }
+    let mut r: i64 = 0;
+    while r < g.entity_ids.len() {
+        if st.indices.get(r) < 0 { tarjan_visit(r, g, &mut st); }
+        r = r + 1;
+    }
+    CycleReport { has_cycles: st.cycle_count > 0, cycle_count: st.cycle_count, cyclic_nodes: st.cyclic_nodes }
+}

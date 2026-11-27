@@ -1,0 +1,171 @@
+// Copyright (c) 2026 Tadeop / Codernic AI Engineering. All rights reserved.
+// Helonium v2.0 Architecture Linter & Diff Engine for @atomos-web/structura-core.
+
+use graph_topology::*;
+
+pub struct ArchitectureAuditResult {
+    pub score: i64,
+    pub passed: bool,
+    pub total_entities: i64,
+    pub total_links: i64,
+    pub critical_count: i64,
+    pub warning_count: i64,
+    pub info_count: i64,
+    pub rule_ids: Vec<str>,
+    pub severities: Vec<i64>,
+    pub messages: Vec<str>,
+}
+
+pub struct ProposedDiff {
+    pub diff_id: str,
+    pub schema_id: str,
+    pub deleted_entity_ids: Vec<str>,
+    pub deleted_link_ids: Vec<str>,
+    pub added_graph: TopologyGraph,
+}
+
+pub struct DiffApplicationResult {
+    pub graph: TopologyGraph,
+    pub applied_count: i64,
+}
+
+#[capabilities(pure)]
+fn is_public_name(name: str) -> bool {
+    name.contains("Internet") || name.contains("internet")
+        || name.contains("Public") || name.contains("public")
+        || name.contains("Web") || name.contains("web")
+        || name.contains("Browser") || name.contains("browser")
+}
+
+#[capabilities(pure)]
+fn is_database_node(name: str, shape: str) -> bool {
+    shape == "cylinder"
+        || name.contains("DB") || name.contains("db")
+        || name.contains("Postgres") || name.contains("postgres")
+        || name.contains("SQL") || name.contains("sql")
+        || name.contains("Redis") || name.contains("redis")
+}
+
+#[capabilities(pure)]
+fn is_gateway_or_bus(name: str) -> bool {
+    name.contains("Gateway") || name.contains("gateway")
+        || name.contains("Bus") || name.contains("bus")
+        || name.contains("Broker") || name.contains("broker")
+        || name.contains("Router") || name.contains("router")
+}
+
+#[capabilities(pure)]
+fn push_violation(res: &mut ArchitectureAuditResult, rule_id: str, sev: i64, msg: str) {
+    res.rule_ids.push(rule_id);
+    res.severities.push(sev);
+    res.messages.push(msg);
+    if sev == 3 { res.critical_count = res.critical_count + 1; }
+    else if sev == 2 { res.warning_count = res.warning_count + 1; }
+    else { res.info_count = res.info_count + 1; }
+}
+
+#[capabilities(pure)]
+fn check_security_links(g: &TopologyGraph, res: &mut ArchitectureAuditResult) {
+    let mut i: i64 = 0;
+    while i < g.link_ids.len() {
+        let s = g.find_entity(g.link_lefts.get(i));
+        let d = g.find_entity(g.link_rights.get(i));
+        if s >= 0 && d >= 0 {
+            if is_public_name(g.entity_names.get(s))
+                && is_database_node(g.entity_names.get(d), g.entity_shapes.get(d))
+            {
+                push_violation(res, "SEC-001-UNPROTECTED-DATABASE", 3,
+                    "Public node directly connected to database without gateway guard");
+            }
+        }
+        i = i + 1;
+    }
+}
+
+#[capabilities(pure)]
+fn check_spof_and_orphans(g: &TopologyGraph, res: &mut ArchitectureAuditResult) {
+    let mut i: i64 = 0;
+    while i < g.entity_ids.len() {
+        let eid = g.entity_ids.get(i);
+        let ename = g.entity_names.get(i);
+        let etype = g.entity_types.get(i);
+        let mut in_deg: i64 = 0;
+        let mut out_deg: i64 = 0;
+        let mut j: i64 = 0;
+        while j < g.link_ids.len() {
+            if g.link_rights.get(j) == eid { in_deg = in_deg + 1; }
+            if g.link_lefts.get(j) == eid { out_deg = out_deg + 1; }
+            j = j + 1;
+        }
+        if in_deg >= 4 && !is_gateway_or_bus(ename) && etype != "zone" {
+            push_violation(res, "REL-002-SPOF-BOTTLENECK", 2,
+                "Entity has >= 4 incoming connections without gateway/broker redundancy");
+        }
+        if in_deg == 0 && out_deg == 0 && etype != "zone" && etype != "sticky-note" {
+            push_violation(res, "ARCH-004-ORPHAN-NODE", 1,
+                "Entity is disconnected from the architecture graph");
+        }
+        i = i + 1;
+    }
+}
+
+#[capabilities(pure)]
+pub fn audit_architecture(g: &TopologyGraph) -> ArchitectureAuditResult
+    ensures result.score >= 0 && result.score <= 100
+{
+    let mut res = ArchitectureAuditResult {
+        score: 100, passed: true, total_entities: g.entity_ids.len(),
+        total_links: g.link_ids.len(), critical_count: 0, warning_count: 0,
+        info_count: 0, rule_ids: Vec::new(), severities: Vec::new(), messages: Vec::new(),
+    };
+    check_security_links(g, &mut res);
+    check_spof_and_orphans(g, &mut res);
+    let cyc = find_cycles(g);
+    if cyc.has_cycles {
+        push_violation(&mut res, "ARCH-003-CIRCULAR-DEPENDENCY", 3,
+            "Circular dependency detected in architecture topology");
+    }
+    let raw = 100 - res.critical_count * 25 - res.warning_count * 10 - res.info_count * 2;
+    res.score = if raw < 0 { 0 } else if raw > 100 { 100 } else { raw };
+    res.passed = res.critical_count == 0;
+    res
+}
+
+#[capabilities(pure)]
+pub fn apply_architecture_diff(current: &TopologyGraph, diff: &ProposedDiff) -> DiffApplicationResult {
+    let mut out = TopologyGraph::new();
+    let mut applied: i64 = diff.deleted_entity_ids.len() + diff.deleted_link_ids.len();
+    let mut i: i64 = 0;
+    while i < current.entity_ids.len() {
+        let eid = current.entity_ids.get(i);
+        if !vec_contains_str(&diff.deleted_entity_ids, eid) {
+            out.add_entity(eid, current.entity_names.get(i), current.entity_types.get(i), current.entity_shapes.get(i));
+        }
+        i = i + 1;
+    }
+    let mut j: i64 = 0;
+    while j < current.link_ids.len() {
+        let lid = current.link_ids.get(j);
+        let l = current.link_lefts.get(j);
+        let r = current.link_rights.get(j);
+        let dead = vec_contains_str(&diff.deleted_entity_ids, l) || vec_contains_str(&diff.deleted_entity_ids, r);
+        if !dead && !vec_contains_str(&diff.deleted_link_ids, lid) { out.add_link(lid, l, r); }
+        j = j + 1;
+    }
+    let mut a: i64 = 0;
+    while a < diff.added_graph.entity_ids.len() {
+        let aid = diff.added_graph.entity_ids.get(a);
+        if out.find_entity(aid) < 0 {
+            out.add_entity(aid, diff.added_graph.entity_names.get(a), diff.added_graph.entity_types.get(a), diff.added_graph.entity_shapes.get(a));
+            applied = applied + 1;
+        }
+        a = a + 1;
+    }
+    let mut b: i64 = 0;
+    while b < diff.added_graph.link_ids.len() {
+        out.add_link(diff.added_graph.link_ids.get(b), diff.added_graph.link_lefts.get(b), diff.added_graph.link_rights.get(b));
+        applied = applied + 1;
+        b = b + 1;
+    }
+    DiffApplicationResult { graph: out, applied_count: applied }
+}

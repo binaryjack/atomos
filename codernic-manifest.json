@@ -8,6 +8,11 @@
       "entry": "layers/frontend/package.json",
       "kind": "bundle",
       "language": "typescript-react"
+    },
+    "helonium": {
+      "entry": "helonium/src/graph_topology.hl",
+      "kind": "source",
+      "language": "helonium"
     }
   },
   "license": "Proprietary",

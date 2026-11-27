@@ -1,0 +1,140 @@
+// Copyright (c) 2026 Tadeop / Codernic AI Engineering. All rights reserved.
+// Helonium v2.0 WCAG 2.1 Contrast & SDK Envelope Contracts for @atomos-web/prime & structura.
+
+#[derive(Copy)]
+pub enum ContrastGrade { Aaa, Aa, AaLarge, Fail }
+
+#[derive(Copy)]
+pub struct RgbColor {
+    pub r: i64,
+    pub g: i64,
+    pub b: i64,
+}
+
+#[derive(Copy)]
+pub struct ContrastResult {
+    pub use_white_text: bool,
+    pub ratio_on_white: f64,
+    pub ratio_on_dark: f64,
+    pub ratio: f64,
+    pub pass_aa: bool,
+    pub pass_aaa: bool,
+    pub grade: ContrastGrade,
+}
+
+#[capabilities(pure)]
+fn hex_nibble(ch: i64) -> i64 {
+    if ch >= 48 && ch <= 57 { ch - 48 }
+    else if ch >= 65 && ch <= 70 { ch - 55 }
+    else if ch >= 97 && ch <= 102 { ch - 87 }
+    else { -1 }
+}
+
+#[capabilities(pure)]
+pub fn parse_hex_rgb(hex: str) -> Result<RgbColor, str> {
+    let b = Bytes::from_str(hex);
+    let offset: i64 = if b.len() > 0 && b.get(0) == 35 { 1 } else { 0 };
+    let rem = b.len() - offset;
+    if rem != 6 {
+        return Result::Err("Expected 6-digit hex color #RRGGBB");
+    }
+    let r1 = hex_nibble(b.get(offset));
+    let r2 = hex_nibble(b.get(offset + 1));
+    let g1 = hex_nibble(b.get(offset + 2));
+    let g2 = hex_nibble(b.get(offset + 3));
+    let b1 = hex_nibble(b.get(offset + 4));
+    let b2 = hex_nibble(b.get(offset + 5));
+    if r1 < 0 || r2 < 0 || g1 < 0 || g2 < 0 || b1 < 0 || b2 < 0 {
+        return Result::Err("Invalid hex character in color");
+    }
+    Result::Ok(RgbColor { r: r1 * 16 + r2, g: g1 * 16 + g2, b: b1 * 16 + b2 })
+}
+
+#[capabilities(pure)]
+pub fn srgb_to_linear(channel: i64) -> f64
+    requires channel >= 0 && channel <= 255
+    ensures result >= 0.0 && result <= 1.0
+{
+    let s = channel.to_f64() / 255.0;
+    if s <= 0.04045 {
+        return s / 12.92;
+    }
+    ((s + 0.055) / 1.055).powf(2.4)
+}
+
+#[capabilities(pure)]
+pub fn relative_luminance(r: i64, g: i64, b: i64) -> f64
+    requires r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255
+    ensures result >= 0.0 && result <= 1.0
+{
+    0.2126 * srgb_to_linear(r) + 0.7152 * srgb_to_linear(g) + 0.0722 * srgb_to_linear(b)
+}
+
+#[capabilities(pure)]
+pub fn contrast_ratio(l1: f64, l2: f64) -> f64
+    requires l1 >= 0.0 && l2 >= 0.0
+    ensures result >= 1.0
+{
+    let lighter = if l1 > l2 { l1 } else { l2 };
+    let darker = if l1 < l2 { l1 } else { l2 };
+    (lighter + 0.05) / (darker + 0.05)
+}
+
+#[capabilities(pure)]
+pub fn compute_contrast_color(bg_hex: str) -> ContrastResult {
+    let parsed = match parse_hex_rgb(bg_hex) {
+        Result::Ok(c) => c,
+        Result::Err(_) => {
+            return ContrastResult {
+                use_white_text: true, ratio_on_white: 1.0, ratio_on_dark: 1.0,
+                ratio: 1.0, pass_aa: false, pass_aaa: false, grade: ContrastGrade::Fail,
+            };
+        }
+    };
+    let white_l = relative_luminance(248, 250, 252);
+    let dark_l = relative_luminance(15, 23, 42);
+    let bg_l = relative_luminance(parsed.r, parsed.g, parsed.b);
+    let ratio_w = contrast_ratio(white_l, bg_l);
+    let ratio_d = contrast_ratio(dark_l, bg_l);
+    let use_w = ratio_w >= ratio_d;
+    let ratio = if use_w { ratio_w } else { ratio_d };
+    let grade = if ratio >= 7.0 { ContrastGrade::Aaa }
+        else if ratio >= 4.5 { ContrastGrade::Aa }
+        else if ratio >= 3.0 { ContrastGrade::AaLarge }
+        else { ContrastGrade::Fail };
+    ContrastResult {
+        use_white_text: use_w, ratio_on_white: ratio_w, ratio_on_dark: ratio_d,
+        ratio, pass_aa: ratio >= 4.5, pass_aaa: ratio >= 7.0, grade,
+    }
+}
+
+pub struct AtomosSdkEnvelope {
+    pub ok: bool,
+    pub namespace: str,
+    pub data_json: str,
+    pub error: str,
+}
+
+impl AtomosSdkEnvelope {
+    #[capabilities(pure)]
+    pub fn success(data_json: str) -> AtomosSdkEnvelope {
+        AtomosSdkEnvelope { ok: true, namespace: "@atomos-web/structura", data_json, error: "" }
+    }
+
+    #[capabilities(pure)]
+    pub fn failure(err: str) -> AtomosSdkEnvelope
+        requires err.len() > 0
+    {
+        AtomosSdkEnvelope { ok: false, namespace: "@atomos-web/structura", data_json: "null", error: err }
+    }
+
+    #[capabilities(pure)]
+    pub fn to_json_str(&self) -> str {
+        let mut obj = json::object();
+        obj.set_bool("ok", self.ok);
+        obj.set_str("namespace", self.namespace);
+        obj.set_str("data", self.data_json);
+        if self.error.len() > 0 { obj.set_str("error", self.error); }
+        obj.stringify()
+    }
+}

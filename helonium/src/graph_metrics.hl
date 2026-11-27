@@ -1,0 +1,115 @@
+// Copyright (c) 2026 Tadeop / Codernic AI Engineering. All rights reserved.
+// Helonium v2.0 Graph Metrics & Connected Component Analysis for @atomos-web/structura-core.
+
+use graph_topology::*;
+
+pub struct GraphMetrics {
+    pub node_count: i64,
+    pub edge_count: i64,
+    pub density: f64,
+    pub average_degree: f64,
+    pub max_in_degree: i64,
+    pub max_out_degree: i64,
+    pub connected_components: i64,
+}
+
+#[capabilities(pure)]
+fn bfs_component(start: i64, g: &TopologyGraph, visited: &mut Vec<bool>) {
+    let mut queue: Vec<i64> = Vec::new();
+    queue.push(start);
+    visited.set(start, true);
+    let mut head: i64 = 0;
+    while head < queue.len() {
+        let u = queue.get(head);
+        head = head + 1;
+        let uid = g.entity_ids.get(u);
+        let mut i: i64 = 0;
+        while i < g.link_ids.len() {
+            let mut nxt: i64 = -1;
+            if g.link_lefts.get(i) == uid { nxt = g.find_entity(g.link_rights.get(i)); }
+            else if g.link_rights.get(i) == uid { nxt = g.find_entity(g.link_lefts.get(i)); }
+            if nxt >= 0 && !visited.get(nxt) {
+                visited.set(nxt, true);
+                queue.push(nxt);
+            }
+            i = i + 1;
+        }
+    }
+}
+
+#[capabilities(pure)]
+fn count_components(g: &TopologyGraph) -> i64
+    ensures result >= 0
+{
+    let mut visited: Vec<bool> = Vec::new();
+    let mut i: i64 = 0;
+    while i < g.entity_ids.len() {
+        visited.push(false);
+        i = i + 1;
+    }
+    let mut count: i64 = 0;
+    let mut r: i64 = 0;
+    while r < g.entity_ids.len() {
+        if !visited.get(r) {
+            count = count + 1;
+            bfs_component(r, g, &mut visited);
+        }
+        r = r + 1;
+    }
+    count
+}
+
+#[capabilities(pure)]
+fn max_of_vec(xs: &Vec<i64>) -> i64 {
+    let mut m: i64 = 0;
+    let mut k: i64 = 0;
+    while k < xs.len() {
+        if xs.get(k) > m { m = xs.get(k); }
+        k = k + 1;
+    }
+    m
+}
+
+#[capabilities(pure)]
+fn populate_degrees(g: &TopologyGraph, in_deg: &mut Vec<i64>, out_deg: &mut Vec<i64>) {
+    let mut j: i64 = 0;
+    while j < g.link_ids.len() {
+        let s = g.find_entity(g.link_lefts.get(j));
+        let d = g.find_entity(g.link_rights.get(j));
+        if s >= 0 {
+            let prev_out = out_deg.get(s);
+            out_deg.set(s, prev_out + 1);
+        }
+        if d >= 0 {
+            let prev_in = in_deg.get(d);
+            in_deg.set(d, prev_in + 1);
+        }
+        j = j + 1;
+    }
+}
+
+#[capabilities(pure)]
+pub fn compute_graph_metrics(g: &TopologyGraph) -> GraphMetrics {
+    let n = g.entity_ids.len();
+    let e = g.link_ids.len();
+    if n == 0 {
+        return GraphMetrics {
+            node_count: 0, edge_count: 0, density: 0.0, average_degree: 0.0,
+            max_in_degree: 0, max_out_degree: 0, connected_components: 0,
+        };
+    }
+    let mut in_deg: Vec<i64> = Vec::new();
+    let mut out_deg: Vec<i64> = Vec::new();
+    let mut i: i64 = 0;
+    while i < n { in_deg.push(0); out_deg.push(0); i = i + 1; }
+    populate_degrees(g, &mut in_deg, &mut out_deg);
+    let max_edges = if n > 1 { (n * (n - 1)).to_f64() } else { 1.0 };
+    GraphMetrics {
+        node_count: n, edge_count: e,
+        density: e.to_f64() / max_edges,
+        average_degree: (2.0 * e.to_f64()) / n.to_f64(),
+        max_in_degree: max_of_vec(&in_deg),
+        max_out_degree: max_of_vec(&out_deg),
+        connected_components: count_components(g),
+    }
+}
